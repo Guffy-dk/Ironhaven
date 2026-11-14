@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.5.0';
+export const CURRENT_VERSION = '0.5.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.5.1',date:'2026-11-14',title:'Local development handoff',
+  changes:[
+   'Converted test fixture URLs to native filesystem paths, supporting Windows drive letters and folders containing spaces when opening the repository in a local Codex project.',
+   'The consolidated project handoff is included for continuing in another conversation. Gameplay and dispatch plans are unchanged from 0.5.'
+  ]
+ },
  {
   version:'0.5.0',date:'2026-11-14',title:'Dispatch the expedition',
   changes:[

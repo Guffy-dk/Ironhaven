@@ -11,7 +11,7 @@ This note transfers the development context to another ChatGPT/Codex conversatio
 - Maintain development versions 0.2 → 0.3 → 0.4 → 0.5, with patches such as 0.4.1. Do not move to 1.x until the first full stable release is ready.
 - Every release and patch must update the **in-game patch-history menu**. `public/shared/releases.js` is the source of truth and build validation enforces it.
 
-## Latest work: 0.5 — Dispatch the expedition
+## Latest work: 0.5 — Dispatch the expedition (0.5.1 development patch)
 
 - **Transfer relay** (internal type `inserter`): a custom hovering cargo-capsule station, placed in the tile between a conveyor behind it and a machine ahead. Forward means leaving matching cargo to continue on that source conveyor; Return uses the relay’s right-side port and requires a separate line.
 - **Dispatch hub** (internal type `splitter`): a one-tile programmable junction in the main conveyor. Rear input, Machine branch to its left, Forward ahead, Return to its right.
@@ -54,7 +54,7 @@ npm run build
 npm start
 ```
 
-Development uses Node.js 22+. Players download `Ironhaven.html` from Releases and open it directly. Generated output is `release/Ironhaven.html`, `release/RELEASE_NOTES.md`, `dist/index.html`, plus `public/vendor/`; these are ignored in Git.
+Development uses Node.js 22+. The 0.5.1 patch converts test fixture URLs to native filesystem paths for Windows and paths containing spaces; an actual Windows test run remains unverified. Players download `Ironhaven.html` from Releases and open it directly. Generated output is `release/Ironhaven.html`, `release/RELEASE_NOTES.md`, `dist/index.html`, plus `public/vendor/`; these are ignored in Git.
 
 Optional direct networking test:
 

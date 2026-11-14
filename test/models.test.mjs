@@ -1,11 +1,12 @@
 // Geometry and projection checks use real Three.js, without a GPU or browser rendering.
 import {test} from 'node:test';
+import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {Window} from 'happy-dom';
 import {createGame,DIRS,TYPES} from '../public/shared/sim.js';
 const dom=new Window();dom.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:(t,k)=>k in t?t[k]:()=>{}});globalThis.document=dom.document;
-const bundled=await build({entryPoints:[new URL('../public/render.js',import.meta.url).pathname],bundle:true,format:'esm',write:false,plugins:[{name:'local-three',setup(b){b.onResolve({filter:/vendor\/three\.module\.js$/},()=>({path:new URL('../node_modules/three/build/three.module.js',import.meta.url).pathname}));}}]});
+const bundled=await build({entryPoints:[fileURLToPath(new URL('../public/render.js',import.meta.url))],bundle:true,format:'esm',write:false,plugins:[{name:'local-three',setup(b){b.onResolve({filter:/vendor\/three\.module\.js$/},()=>({path:fileURLToPath(new URL('../node_modules/three/build/three.module.js',import.meta.url))}));}}]});
 const {makeModel,View}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
 // Export matching math types from the installed package; methods operate structurally.
 const T=await import('three');
