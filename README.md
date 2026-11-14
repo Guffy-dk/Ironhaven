@@ -1,96 +1,94 @@
 # IRONHAVEN
 
-**Byg. Befæst. Overlev.** En spilbar, original low-poly 3D-prototype inspireret af automatiseringen i Factorio og baseforsvaret i They Are Billions.
+**Build. Fortify. Survive.** Original, lightweight 3D factory survival for one host and three LAN guests.
 
-**[Hent den selvstændige udgave — ingen installation](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
+**[Download the latest standalone game](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
 
-## Spil uden installation
+Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-Hent **Ironhaven.html** fra den seneste udgivelse, og dobbeltklik på filen. Den indeholder hele spillet, inklusive grafik og motor. Ingen serverapp, Node.js, CDN eller eksterne spilaktiver er nødvendige. Brug en nyere Chrome, Edge eller Firefox med WebGL aktiveret. Filen er omkring 590 KB; komprimeret er den mindre.
+## Version 0.2
 
-Den downloadede udgave virker offline og kan deles med dine medspillere på en USB-nøgle eller via en lokal mappe. Se opsætning af valgfri browserhosting nedenfor.
+Smart turning conveyors and Shift-click/drag routes, north-up player-follow camera, diagonal movement, personal building inventory, in-place rotation, clear factory ports, visible damage and ammunition warnings, turret upgrades and a complete English interface.
 
-## Åbn din verden til LAN — inde i spillet
+Open **Menu → Patch notes & version history** to see changes for every version. The same history drives GitHub release notes. Development versions progress through **0.2, 0.3, …**; patches use **0.2.1, …**. Version 1 is reserved for the first full stable release. Build validation requires a matching version and patch-note entry for every release.
 
-1. Alle åbner spillet i deres browser på samme lokale netværk.
-2. Værten starter eller fortsætter en ekspedition og vælger **Menu → Åbn verden til LAN**.
-3. Værten klikker **Lav invitation** og sender koden til én ven.
-4. Vennen vælger **LAN Co-op → Tilslut en verden**, indsætter invitationen og klikker **Lav svarkode**.
-5. Vennen sender svarkoden tilbage. Værten indsætter den og vælger **Forbind med ven**.
-6. Gentag med en ny invitation til hver ekstra spiller. Der er plads til **én vært og tre gæster**.
+## LAN inside the game
 
-Verdenen fortsætter fra solospillet, og alle deler materialer, bygninger, fjender og tid. Værten beregner spillet; gæster sender kommandoer og modtager verdensstatus 10 gange i sekundet. Kun værten kan pause, ændre hastighed, genstarte og gemme verdenen. En almindelig gæst kan forlade og tilslutte igen via en ny invitation.
+1. Everyone opens the same version on the same local network.
+2. The host starts or resumes a world and chooses **Menu → Open world to LAN**.
+3. Create one invitation per guest and send it to that friend.
+4. The guest opens **LAN Co-op → Join a world**, pastes the invitation and creates an answer.
+5. The guest sends the answer to the host, who pastes it and chooses **Connect friend**.
+6. Repeat for up to three guests.
 
-Direkte WebRTC-dataforbindelser bruger **ingen signaleringsserver, STUN eller TURN**. Koderne udveksler lokale forbindelsesoplysninger; spiltrafikken går direkte mellem browserne. Browserudgaven finder ikke automatisk andre spil på LAN. Værten skal holde spillet åbent, og alle bør holde fanen aktiv. Gæstenet, VPN, firewall eller netværk med klientisolering kan blokere forbindelsen. Koderne giver adgang til verdenen og skal kun deles med dine medspillere. Hvis en forbindelse fejler, fjern den ubrugte invitation og lav en ny. Værtens afgang afslutter LAN-sessionen; der er ingen automatisk værtsoverdragelse i WebRTC-udgaven.
+You share materials, buildings, enemies and time. Packed buildings are personal inventory; a departing guest returns them to the host. Only the host controls time, saves and restarts. The host must keep the game open; use **Close LAN** to continue solo.
 
-## Spillet
+Networking is direct WebRTC with **no STUN/TURN or signalling service**. Codes exchange connection information; they are not an internet relay. Internet play is not reliable in this edition. Guest Wi-Fi, VPNs, firewalls or client isolation may block direct connections. Normal and incognito browser windows can be used as separate players for a same-computer test, but do not test reachability between physical computers or different networks. There is no automatic host migration.
 
-Forsvar kommandocentralen gennem **8 stigende fjendebølger**. To fungerende produktionslinjer er bygget fra start:
+## Factory and defense
 
-- **Jernmine → bånd → smelter → bånd → central:** giver jernplader til fælles lager.
-- **Jernmine → bånd → smelter → bånd → fabrik → bånd → central:** 2 plader bliver til 1 tandhjul.
-- **Savværk:** producerer 3 træ hvert 3. sekund, hvis der står træer inden for 5 felter.
-- **Generator:** bruger 1 træ hvert 12. sekund og tilfører 18 energi. Centralen giver selv 18 energi.
-- **Vagttårn:** 1 tandhjul giver 12 skud. Rækkevidde: 10 felter.
-- **Barrikader:** stopper fjender og køber tid. Reparer før næste angreb.
+Protect the core through eight swarms. The starter colony has two working lines:
 
-Maskiner afleverer i pilens retning. Brug bånd mellem maskiner og helt frem til centralens felt. Overbelastning af strømnettet stopper de senest byggede maskiner. Afmonter træer for 8 træ; savværker er en vedvarende trækilde. Afmontering af bygninger giver 60 % af byggematerialerne tilbage, afrundet ned. Ingeniørerne skyder automatisk og genopstår ved centralen efter 8 sekunder.
+- Drill → conveyor → smelter → core: iron plates for construction.
+- Drill → conveyor → smelter → assembler → core: two plates become one gear, used for turret ammunition and upgrades.
+- Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
+- Cyan **IN** ports accept items. Gold **OUT** ports deliver them. Machine outputs and conveyor arrows reflect their actual directions.
+- Select a turret to upgrade to Mk II or Mk III. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
+- Dismantling packs a building into your inventory, preserving damage, upgrades, cargo and ammo. Placement consumes inventory before raw materials. Hotbar numbers show your count.
 
-| Betjening | Handling |
+| Controls | Action |
 |---|---|
-| WASD | Flyt din ingeniør |
-| Piletaster | Flyt kamera |
-| Musehjul / + / − | Zoom |
-| Mellemrum / ⌖ | Centrér basen |
-| 1–8 | Vælg bånd, mine, smelter, fabrik, savværk, generator, tårn, barrikade |
-| 9 / 0 | Reparer / afmonter og ryd træer eller sten |
-| R | Drej byggeplanens udgang |
-| Venstreklik | Byg eller inspicér |
-| Shift + træk | Byg en række bånd eller barrikader |
-| Højreklik / Esc | Annullér værktøj |
-| P | Pause (kun vært) |
-| ? | Felthåndbog |
+| WASD, including W+A | Move in screen directions; diagonals have equal total speed |
+| Arrow keys / minimap | Free camera |
+| Space / ⌖ | Follow your engineer |
+| Wheel / + / − | Zoom |
+| 1–8 | Conveyor, drill, smelter, assembler, sawmill, generator, turret, barricade |
+| 9 / 0 | Repair / dismantle; dismantle trees for wood |
+| Left click | Build or inspect |
+| Shift-click endpoint | Route from your last conveyor/barricade placement |
+| Shift-drag | Preview a new route; release to build |
+| R | Rotate a conveyor under the pointer or a selected directional building; otherwise rotate the blueprint |
+| U | Upgrade selected turret |
+| Q / Esc / right click | Exit build mode / cancel route |
+| P | Pause, host only |
+| ? | Field guide |
 
-Soloverdener og værtens verden gemmes lokalt i browseren hvert 30. sekund. Du kan også gemme manuelt. Der er én gemmeplads pr. browser/origin; en ny ekspedition erstatter den ved næste gemning. Gemt verden deles ikke automatisk mellem den downloadede fil og den hostede udgave. Lokal lagring skal være tilladt i browseren. Undgå at slette browserdata, hvis du vil bevare verdenen.
+Smart routes avoid trees, rocks and buildings, fill every tile and connect to machine inputs. A route is built atomically: insufficient resources reject the whole operation. Routes have a maximum of 128 tiles.
 
-## Valgfri browserhosting med GitHub Pages
+## Where worlds are saved
 
-GitHub-integrationen kan skrive kode og udgivelser, men afviser aktivering af Pages med HTTP 403. Repositoryets ejer kan aktivere hosting under **Settings → Pages → Source: GitHub Actions**. Kør derefter workflowet **Publish playable game** under fanen Actions. Den forventede adresse er `https://guffy-dk.github.io/Ironhaven/`; den virker først efter en vellykket deployment. Downloadudgaven fungerer uafhængigt af denne indstilling.
+Worlds save automatically every thirty seconds and manually with **Save** into browser **localStorage**, key `ironhaven.save.v1`. This key remains the same while the save schema is migrated. Old 0.1 saves migrate when resumed in the same browser storage.
 
-## Udvikling
+Only the host saves a multiplayer world. Browser profiles and incognito sessions have separate storage. Incognito saves usually disappear when all incognito windows close. GitHub stores source and releases, not your world. Different sites or local-file paths may use different storage; when updating the downloaded edition, retain its original folder and filename. Deleting browser data deletes the save. There is one local save slot.
 
-Node.js 22+ er kun nødvendigt, hvis du vil ændre kildekoden.
+## Development and checks
+
+Node.js 22+ is for development only:
 
 ```sh
 npm ci
+npm test
 npm run build
 npm start
 ```
 
-Åbn `http://localhost:3000`. Bygning genererer `public/vendor/`, den selvstændige `release/Ironhaven.html` og browserudgaven i `dist/`. `release/` og `dist/` er genererede og ikke versionsstyrede.
+Open `http://localhost:3000`. Build creates `public/vendor/`, `dist/index.html`, `release/Ironhaven.html` and `release/RELEASE_NOTES.md`. Generated artifacts are ignored in Git.
 
-Den valgfrie udviklingsserver indeholder også en autoritativ WebSocket-server på `/play`, som bruges af integrationstests. Den er **ikke nødvendig for spillets LAN-funktion**; spilklienten bruger direkte WebRTC.
-
-## Verifikation
-
-```sh
-npm test
-npm run build
-```
-
-Automatiske tests dækker deterministisk produktion, komplette transportkæder, strøm, materialer, terræn, reparation, kamp, død/genopståen, værtsrettigheder, grænsen på fire spillere, koder og en WebSocket-session med fire klienter.
-
-En separat test af direkte WebRTC-forbindelser kan køres med en valgfri native testafhængighed:
+Tests cover the simulation, live UI controls with the GPU stubbed, real Three.js geometry/projection, and a four-client development WebSocket session. Optional direct WebRTC integration:
 
 ```sh
 npm install --no-save --package-lock=false @roamhq/wrtc@0.9.1
 node scripts/check-rtc.mjs
 ```
 
-Den tester én vært og tre gæster med den samme `Lan`-kode som spillet, invitation/svar, delte byggekommandoer og synkroniserede verdensbilleder. Det verificerer netværksprotokollen lokalt; forskellige browsere og faktiske LAN/firewall-konfigurationer skal stadig afprøves på de anvendte computere. Ingen visuel browsertest er udført i bygge-miljøet.
+The WebSocket development server is not needed for the game's in-browser LAN hosting. Tests establish protocol behavior and rendering math; **visual browser QA and two physical LAN computers remain unverified** in this environment.
 
-## Teknik og grafik
+Release metadata lives in `public/shared/releases.js`. Update it and `package.json` together for every version or patch. `npm run build` validates history, generates notes and verifies release tags. Push a matching `v0.x.y` tag to publish the tested, standalone file through GitHub Actions. Main-branch CI tests and builds without publishing a release.
 
-Three.js renderer ortografisk 3D. Grafik, ikoner, bygninger, terræn og figurer er originale og skabes af kode; ingen lånte spilaktiver. Træer, terræn og fjender bruger instancing. Simuleringen kører ved 20 ticks/sekund. Grafikindstillingen **let** slår skygger fra. Kortet er 56 × 56 felter med højst 700 bygninger og 280 fjender i sidste bølge. Dette er en alpha-prototype med én sektor, én produktionskæde og otte bølger; ikke et fuldt Factorio-/RTS-spil med forskning og kampagner.
+Optional Pages hosting: the owner can enable **Settings → Pages → Source: GitHub Actions**, then run **Publish playable game**. The integration cannot enable Pages administration itself. The downloaded edition works independently.
 
-Three.js distribueres under MIT; licensen følger med i den genererede klient og i `THREE-LICENSE.txt`.
+## Graphics and scope
+
+Three.js, original procedural rounded machine models, connected conveyor geometry, continuous ground, varied vegetation and animated engineers. No borrowed game assets. Terrain, trees and enemies use instancing. The simulation runs at twenty ticks/second; guests receive ten snapshots/second. **Graphics: light** disables shadows.
+
+This is an alpha with one sector and eight waves. Three.js is MIT-licensed; its full license is embedded in the standalone HTML and included in hosted build output.

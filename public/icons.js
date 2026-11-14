@@ -18,4 +18,4 @@ const paths={
  mute:'M3 10h4l5-5v16l-5-5H3v-6Zm13 0 6 6m0-6-6 6'
 };
 export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.hq}"/></svg>`;}
-export const RESOURCE_NAMES={wood:'TRÆ',plate:'JERNPLADER',gear:'TANDHJUL',power:'ENERGI'};
+export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',power:'POWER'};

@@ -20,4 +20,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" release/Ironhaven.html --title "Ironhaven $RELEASE_TAG — Factory survival + LAN co-op" --notes-file RELEASE_NOTES.md --verify-tag
+        run: gh release create "$RELEASE_TAG" release/Ironhaven.html --title "Ironhaven $RELEASE_TAG — Factory survival + LAN co-op" --notes-file release/RELEASE_NOTES.md --verify-tag

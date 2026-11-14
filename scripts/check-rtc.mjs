@@ -14,7 +14,7 @@ try{
   const offer=await host.invite();const answer=await client.join(offer.code);await host.accept(answer);await until(()=>result.welcome);
   assert.equal(result.welcome.state.players.length,i+2);
  }
- assert.equal(state.players.length,4);await assert.rejects(()=>host.invite(),/optaget/);
+ assert.equal(state.players.length,4);await assert.rejects(()=>host.invite(),/occupied/);
  clients[2].send(clients[2].peers.get('host'),{type:'command',command:{type:'build',building:'belt',x:3,z:4,dir:2}});
  await until(()=>received[2].result);assert.equal(received[2].result.error,null);assert.ok(state.buildings.some(b=>b.x===3&&b.z===4));
  host.broadcast({type:'state',state});await until(()=>received.every(r=>r.state));

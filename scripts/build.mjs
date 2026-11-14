@@ -1,5 +1,7 @@
 import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
+import {validateRelease,releaseMarkdown} from './release-metadata.mjs';
+const currentRelease=await validateRelease();
 await mkdir('public/vendor',{recursive:true});
 await cp('node_modules/three/build/three.module.js','public/vendor/three.module.js');
 await cp('node_modules/three/build/three.core.js','public/vendor/three.core.js');
@@ -17,6 +19,7 @@ const html=(await readFile('public/index.html','utf8'))
  .replace('<script type="module" src="./app.js"></script>',`<script>${result.outputFiles[0].text.replaceAll('</script','<\\/script')}</script>`);
 await mkdir('release',{recursive:true});
 await writeFile('release/Ironhaven.html',html);
+await writeFile('release/RELEASE_NOTES.md',releaseMarkdown(currentRelease));
 // The hosted game is the same self-contained artifact as the offline edition.
 await writeFile('dist/index.html',html);
 console.log(`Built dist/index.html and release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);
