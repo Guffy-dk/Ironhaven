@@ -36,9 +36,9 @@ test('dismantled upgraded turrets retain state and are placed without raw materi
 });
 test('turret upgrades affect range, damage and health and extend past Mk III and stop after ten upgrades',()=>{
  const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret'&&b.x===6);s.buildings=s.buildings.filter(v=>v===b||v.type==='hq');b.ammo=3;
- s.enemies=[{id:999,x:b.x+11.5,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
- b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),500);assert.equal(b.hp,450);step(s);assert.equal(s.enemies[0].hp,160);
- s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,14);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
+ s.enemies=[{id:999,x:b.x+10.25,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
+ b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),500);assert.equal(b.hp,450);step(s);assert.equal(s.enemies[0].hp,152);
+ s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,11);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
  assert.equal(command(s,p.id,{type:'repair',x:b.x,z:b.z}),null);assert.equal(b.hp,maxHp(b));
 });
 test('W+A movement is diagonal and normalized, with no diagonal speed boost',()=>{

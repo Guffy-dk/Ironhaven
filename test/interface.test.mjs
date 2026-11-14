@@ -43,6 +43,18 @@ test('hotbar inventory counts rise on dismantle and fall on free placement; sele
   h.key('q');const turret=placed.buildings.find(b=>b.type==='turret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
  }finally{await h.close();}
 });
+test('R rotates the active blueprint without turning a conveyor under the cursor',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();
+  h.tool('belt');
+  h.point('pointermove',-7,-3);
+  h.key('r');
+  h.point('pointerdown',3,4);
+  const state=h.save();
+  assert.equal(state.buildings.find(b=>b.x===-7&&b.z===-3).dir,0);
+  assert.equal(state.buildings.find(b=>b.x===3&&b.z===4).dir,1);
+ }finally{await h.close();}
+});
 test('damage bars hide at full health; empty ammo and the final 20-second warning are visible',async()=>{
  const state=createGame(),p=addPlayer(state);state.time=80;state.resources.gear=0;const core=state.buildings[0];core.hp=2000;const turret=state.buildings.find(b=>b.type==='turret');turret.ammo=0;
  const h=harness({state,playerId:p.id});try{

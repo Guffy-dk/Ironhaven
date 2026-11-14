@@ -6,7 +6,13 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.6 — a clearer front
+## Version 0.6.1 — terrain, balance and conveyor fixes
+
+New colonies start with 180 iron plates and an exposed iron deposit near the core. Iron drills and smelters cost fewer plates, and each iron production cycle takes 1.6 seconds. Starter barricades leave the deposits clear. New maps group trees into groves. Hostiles move at 45% speed through trees, including on saved maps.
+
+Turret upgrades give more damage per shot with smaller range increases. Range grows from 10 tiles at Mk I to 13 at Mk XI. Manual conveyor placement keeps the blueprint direction. In build mode, **R** rotates the blueprint. Exit build mode to rotate a conveyor in place. Smart routes join existing belts at endpoints and avoid crossing or redirecting connected lines.
+
+## Included from 0.6 — a clearer front
 
 Each swarm spawns on one edge. The arrow above the playfield points toward that edge and turns red in the final twenty seconds and during the attack. The HUD, inspector, build bar and menus use larger, higher-contrast text.
 
@@ -118,7 +124,7 @@ Protect the core through eight swarms. The starter colony has two working lines:
 | Left click | Build or inspect |
 | Shift-click endpoint | Route from your last conveyor/barricade placement |
 | Shift-drag | Preview a new route; release to build |
-| R | Rotate a conveyor under the pointer or a selected directional building; otherwise rotate the blueprint |
+| R | Rotate the blueprint in build mode. Otherwise rotate a conveyor under the pointer or a selected directional building |
 | U | Upgrade selected building |
 | E | Program selected relay / hub |
 | Left-drag without a build tool | Box-select buildings |

@@ -183,7 +183,7 @@ function commitRoute(){
 function buildAt(cell){
  if(!cell||!tool||!started)return;const b=state.buildings.find(b=>b.x===cell.x&&b.z===cell.z);
  if(tool==='belt'&&b?.type==='belt'){rowAnchor={...cell,type:tool};toast('Conveyor anchor set. Shift-click an endpoint to extend the route.');return;}
- const cmd=tool==='demolish'||tool==='repair'?{type:tool,x:cell.x,z:cell.z}:{type:'build',building:tool,x:cell.x,z:cell.z,dir,connectFrom:rowAnchor};
+ const cmd=tool==='demolish'||tool==='repair'?{type:tool,x:cell.x,z:cell.z}:{type:'build',building:tool,x:cell.x,z:cell.z,dir};
  if(execute(cmd)!==false){rowAnchor={...cell,type:tool};tone(tool==='demolish'?190:700,.035,.015,'triangle');}updateHover();
 }
 $('world').addEventListener('pointermove',e=>{
@@ -219,7 +219,7 @@ window.addEventListener('keydown',e=>{
  if(document.querySelector('dialog[open]'))return;
  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(!started||e.repeat)return;
  const i=SHORTCUT.indexOf(e.key);if(i>=0)setTool(tool===TOOL_LIST[i]?null:TOOL_LIST[i]);
- if(e.key.toLowerCase()==='r'){if(!rotateExisting()&&tool){dir=(dir+1)%4;view.setTool(tool,dir);lastRouteKey='';updateHover();}}
+ if(e.key.toLowerCase()==='r'){if(tool){dir=(dir+1)%4;view.setTool(tool,dir);lastRouteKey='';updateHover();}else rotateExisting();}
  if(e.key.toLowerCase()==='e'&&selected)openProgram();
  if(e.key.toLowerCase()==='b')$('toggle-diagnostics').click();if(e.key.toLowerCase()==='i')$('production-overview').click();
  if(e.key.toLowerCase()==='m'&&areaIds.length)beginMove();
