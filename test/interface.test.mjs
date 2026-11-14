@@ -19,7 +19,7 @@ function harness(saved,{tutorial=false}={}){
  dom.eval(bundle.outputFiles[0].text);
  const $=id=>dom.document.getElementById(id),tool=t=>dom.document.querySelector(`[data-type="${t}"]`).click();
  const point=(type,x,z,shift=false)=>$('world').dispatchEvent(new dom.PointerEvent(type,{button:0,clientX:x,clientY:z,shiftKey:shift,bubbles:true}));
- const key=k=>dom.dispatchEvent(new dom.KeyboardEvent('keydown',{key:k,bubbles:true}));
+ const key=(k,shiftKey=false)=>dom.dispatchEvent(new dom.KeyboardEvent('keydown',{key:k,shiftKey,bubbles:true}));
  const frame=n=>frames.shift()?.(n),save=()=>{$('save').click();return JSON.parse(dom.localStorage.getItem('ironhaven.save.v1')).state;};
  return{dom,$,tool,point,key,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
@@ -39,7 +39,7 @@ test('Shift-click constructs a continuous turning route; Q and Esc cancel buildi
 test('hotbar inventory counts rise on dismantle and fall on free placement; selected turret upgrades',async()=>{
  const h=harness();try{
   h.$('start-solo').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
-  assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
+ assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
   h.key('q');const turret=placed.buildings.find(b=>b.type==='turret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
  }finally{await h.close();}
 });
@@ -50,9 +50,29 @@ test('R rotates the active blueprint without turning a conveyor under the cursor
   h.point('pointermove',-7,-3);
   h.key('r');
   h.point('pointerdown',3,4);
+  h.point('pointerup',3,4);
   const state=h.save();
   assert.equal(state.buildings.find(b=>b.x===-7&&b.z===-3).dir,0);
   assert.equal(state.buildings.find(b=>b.x===3&&b.z===4).dir,1);
+ }finally{await h.close();}
+});
+test('normal drag locks to the belt direction, previews turns, and builds only on release',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.tool('belt');
+  h.point('pointerdown',3,4);h.point('pointermove',6,5);
+  assert.equal(h.dom.__view.route.map(c=>`${c.x},${c.z},${c.dir}`).join(';'),'3,4,0;4,4,0;5,4,0;6,4,0');
+  h.point('pointermove',5,5);
+  assert.equal(h.dom.__view.route.length,3);
+  h.key('r');h.point('pointermove',5,7);
+  assert.equal(h.dom.__view.route.map(c=>`${c.x},${c.z},${c.dir}`).join(';'),'3,4,0;4,4,0;5,4,1;5,5,1;5,6,1;5,7,1');
+  assert.ok(!h.save().buildings.some(b=>b.x===3&&b.z===4));
+  h.point('pointerup',5,7);
+  const state=h.save();
+  assert.equal(state.buildings.find(b=>b.x===5&&b.z===4).dir,1);
+  assert.equal(state.buildings.find(b=>b.x===5&&b.z===7).dir,1);
+  assert.ok(!state.buildings.some(b=>b.x===6&&b.z===4));
+  h.point('pointerdown',3,6);h.key('r',true);h.point('pointermove',6,6);h.key('Escape');h.point('pointerup',6,6);
+  assert.ok(!h.save().buildings.some(b=>b.x===3&&b.z===6));
  }finally{await h.close();}
 });
 test('damage bars hide at full health; empty ammo and the final 20-second warning are visible',async()=>{

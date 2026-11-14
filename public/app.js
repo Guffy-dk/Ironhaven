@@ -1,5 +1,5 @@
 import { View } from './render.js';
-import { createGame,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,planRoute,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
+import { createGame,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
 import { CURRENT_VERSION,RELEASE_STAGE,RELEASES,displayVersion } from './shared/releases.js';
 import { TUTORIAL_STEPS } from './shared/tutorial.js';
 import { initWindows } from './windows.js';
@@ -46,11 +46,11 @@ function updateToolbar(){
 function setTool(t){if(t)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
 function updateHover(){
  if(movingArea){previewMove();return;}
- if(rowGesture){refreshRoute();return;}
+ if(rowGesture&&refreshRoute())return;
  if(!hover||!tool){view.cursor.visible=false;if(view.ghost)view.ghost.visible=false;return;}
  let error;if(['repair','demolish'].includes(tool))error=null;else error=canBuild(state,tool,hover.x,hover.z,playerId);
  view.hover(hover,!error,tool);$('coords').textContent=`${hover.x}, ${hover.z}`;
- $('tool-hint').textContent=error||`${TYPES[tool].name} · ${['→ EAST','↓ SOUTH','← WEST','↑ NORTH'][dir]} · Click to ${tool==='demolish'?'clear':tool==='repair'?'repair':'build'} · R rotates · Q / Esc exits`; 
+ $('tool-hint').textContent=error||`${TYPES[tool].name} · ${['→ EAST','↓ SOUTH','← WEST','↑ NORTH'][dir]} · Click to ${tool==='demolish'?'clear':tool==='repair'?'repair':'build'} · ${tool==='belt' ? 'Drag to lay a line · ' : ''}R rotates · Q / Esc exits`;
  $('tool-hint').classList.toggle('invalid',!!error);
 }
 function execute(cmd){
@@ -165,31 +165,52 @@ const mini=$('minimap'),ctx=mini.getContext('2d');
 function drawMinimap(){const w=mini.width,h=mini.height,sx=w/56,sz=h/56;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+28)*sx,(b.z+28)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect((e.x+28)*sx,(e.z+28)*sz,2,2);ctx.fillStyle='#ffdc98';for(const p of state.players)ctx.fillRect((p.x+28)*sx-1,(p.z+28)*sz-1,3,3);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+28-cw/2)*sx,(view.center.z+28-ch/2)*sz,cw*sx,ch*sz);}
 mini.onclick=e=>{followCamera=false;const rect=mini.getBoundingClientRect();view.center.set((e.clientX-rect.left)/rect.width*56-28,0,(e.clientY-rect.top)/rect.height*56-28);};
 function focusEngineer(snap=false){followCamera=true;const p=state.players.find(p=>p.id===playerId);if(p&&snap)view.center.set(p.x,0,p.z);}
+function dragEndpoint(origin,cell){
+ const [dx,dz]=DIRS[dir],distance=Math.max(0,(cell.x-origin.x)*dx+(cell.z-origin.z)*dz);
+ return {x:origin.x+dx*distance,z:origin.z+dz*distance};
+}
 function refreshRoute(){
  if(!rowGesture||!hover)return;
- const start=rowGesture.moved?rowGesture.down:(rowGesture.anchor||rowGesture.down),signature=[tool,start.x,start.z,hover.x,hover.z,dir,state.buildings.length].join(':');
- if(signature!==lastRouteKey){lastRouteKey=signature;routePlan=planRoute(state,tool,start,hover,dir);}
+ const drag=rowGesture.points,start=drag?.at(-1)??(rowGesture.moved?rowGesture.down:rowGesture.anchor||rowGesture.down);
+ const end=drag?dragEndpoint(start,hover):hover;
+ const signature=[tool,start.x,start.z,end.x,end.z,dir,state.buildings.length].join(':');
+ if(signature!==lastRouteKey){
+  lastRouteKey=signature;
+  const single=drag?.length===1&&start.x===end.x&&start.z===end.z;
+  routePlan=single?null:drag?planBeltDrag(state,[...drag,end],dir):planRoute(state,tool,start,end,dir);
+ }
+ if(drag&&!routePlan){view.previewRoute([]);return false;}
  if(!routePlan)return;
  const grid=new Map(state.buildings.map(b=>[key(b.x,b.z),b])),fresh=routePlan.cells.filter(c=>!grid.has(key(c.x,c.z))).length,packed=Math.min(fresh,inventoryCount(state,playerId,tool)),craft=fresh-packed;
  const missing=Object.entries(TYPES[tool].cost).some(([r,n])=>state.resources[r]<n*craft),error=routePlan.error||(missing?'Not enough materials for the entire route':null);
- view.previewRoute(routePlan.cells,!error);$('tool-hint').classList.toggle('invalid',!!error);$('tool-hint').textContent=error||`${routePlan.cells.length} tiles · ${packed} from inventory · ${Object.entries(TYPES[tool].cost).map(([r,n])=>`${n*craft} ${RESOURCE_NAMES[r].toLowerCase()}`).join(' + ')} · Release to build · Q / Esc cancels`;
+ view.previewRoute(routePlan.cells,!error,tool==='belt');$('tool-hint').classList.toggle('invalid',!!error);$('tool-hint').textContent=error||`${routePlan.cells.length} tiles · ${packed} from inventory · ${Object.entries(TYPES[tool].cost).map(([r,n])=>`${n*craft} ${RESOURCE_NAMES[r].toLowerCase()}`).join(' + ')} · Release to build · ${drag?'R turns · ':''}Q / Esc cancels`;
  view.cursor.visible=false;if(view.ghost)view.ghost.visible=false;
+ return true;
 }
+function clearRoute(){rowGesture=null;routePlan=null;lastRouteKey='';view.previewRoute([]);}
 function commitRoute(){
- if(!rowGesture||!hover)return;const start=rowGesture.moved?rowGesture.down:(rowGesture.anchor||rowGesture.down),end={...hover};
- if(execute({type:'buildRow',building:tool,start,end,dir})!==false){rowAnchor={...end,type:tool};tone(700,.06,.02,'triangle');}
- rowGesture=null;routePlan=null;lastRouteKey='';view.previewRoute([]);updateHover();
+ const gesture=rowGesture;
+ clearRoute();
+ if(!hover){updateHover();return;}
+ const points=gesture.points,start=points?.at(-1)??(gesture.moved?gesture.down:gesture.anchor||gesture.down);
+ const end=points?dragEndpoint(start,hover):hover;
+ if(points?.length===1&&start.x===end.x&&start.z===end.z){
+  if(!gesture.moved)buildAt(gesture.down);
+ }else if(execute({type:'buildRow',building:tool,start,end,dir,...(points?{points:[...points,end]}:{})})!==false){
+  rowAnchor={...end,type:tool};tone(700,.06,.02,'triangle');
+ }
+ updateHover();
 }
 function buildAt(cell){
  if(!cell||!tool||!started)return;const b=state.buildings.find(b=>b.x===cell.x&&b.z===cell.z);
- if(tool==='belt'&&b?.type==='belt'){rowAnchor={...cell,type:tool};toast('Conveyor anchor set. Shift-click an endpoint to extend the route.');return;}
+ if(tool==='belt'&&b?.type==='belt'){rowAnchor={...cell,type:tool};toast('Conveyor anchor set. Drag from here or Shift-click an endpoint.');return;}
  const cmd=tool==='demolish'||tool==='repair'?{type:tool,x:cell.x,z:cell.z}:{type:'build',building:tool,x:cell.x,z:cell.z,dir};
  if(execute(cmd)!==false){rowAnchor={...cell,type:tool};tone(tool==='demolish'?190:700,.035,.015,'triangle');}updateHover();
 }
 $('world').addEventListener('pointermove',e=>{
  pointer={x:e.clientX,y:e.clientY};hover=view.point(e.clientX,e.clientY);
  if(selectionGesture){if(Math.hypot(e.clientX-selectionGesture.screen.x,e.clientY-selectionGesture.screen.y)>5){selectionGesture.moved=true;const box=$('selection-box');box.hidden=false;box.style.left=Math.min(e.clientX,selectionGesture.screen.x)+'px';box.style.top=Math.min(e.clientY,selectionGesture.screen.y)+'px';box.style.width=Math.abs(e.clientX-selectionGesture.screen.x)+'px';box.style.height=Math.abs(e.clientY-selectionGesture.screen.y)+'px';}return;}
- if(rowGesture&&Math.hypot(e.clientX-rowGesture.screen.x,e.clientY-rowGesture.screen.y)>4)rowGesture.moved=true;
+ if(rowGesture&&(Math.hypot(e.clientX-rowGesture.screen.x,e.clientY-rowGesture.screen.y)>4||hover&&(hover.x!==rowGesture.down.x||hover.z!==rowGesture.down.z)))rowGesture.moved=true;
  updateHover();
 });
 $('world').addEventListener('pointerdown',e=>{
@@ -197,11 +218,15 @@ $('world').addEventListener('pointerdown',e=>{
  pointer={x:e.clientX,y:e.clientY};hover=view.point(e.clientX,e.clientY);if(!hover)return;
  if(movingArea){placeArea(e.shiftKey);return;}
  if(tool){
-  if(e.shiftKey&&['belt','wall'].includes(tool)){rowGesture={down:{...hover},anchor:rowAnchor?.type===tool?{x:rowAnchor.x,z:rowAnchor.z}:null,screen:{x:e.clientX,y:e.clientY},moved:false};lastRouteKey='';refreshRoute();}
+  if(tool==='belt'||e.shiftKey&&tool==='wall'){
+   rowGesture={down:{...hover},anchor:rowAnchor?.type===tool?{x:rowAnchor.x,z:rowAnchor.z}:null,screen:{x:e.clientX,y:e.clientY},moved:false,points:e.shiftKey?null:[{...hover}]};
+   lastRouteKey='';updateHover();
+  }
   else buildAt(hover);
  }else{selectionGesture={down:{...hover},screen:{x:e.clientX,y:e.clientY},moved:false};const b=state.buildings.find(b=>b.x===hover.x&&b.z===hover.z);selected=b?.id||null;areaIds=b?[b.id]:[];view.select(b);if(b)$('intel').hidden=false;updateAreaTools();updateInspector();}
 });
 window.addEventListener('pointerup',e=>{if(selectionGesture){const g=selectionGesture;selectionGesture=null;$('selection-box').hidden=true;if(g.moved){const end=view.point(e.clientX,e.clientY)||hover;areaIds=state.buildings.filter(b=>b.x>=Math.min(g.down.x,end.x)&&b.x<=Math.max(g.down.x,end.x)&&b.z>=Math.min(g.down.z,end.z)&&b.z<=Math.max(g.down.z,end.z)).map(b=>b.id);selected=areaIds.length===1?areaIds[0]:null;view.select(state.buildings.find(b=>b.id===selected));updateAreaTools();}return;}if(rowGesture&&e.button===0){hover=view.point(e.clientX,e.clientY)||hover;commitRoute();}});
+window.addEventListener('pointercancel',()=>{if(rowGesture){clearRoute();updateHover();}});
 $('world').addEventListener('contextmenu',e=>e.preventDefault());
 $('world').addEventListener('pointerleave',()=>{if(!rowGesture&&!selectionGesture&&!movingArea){pointer=null;hover=null;updateHover();}});
 function rotateExisting(){
@@ -219,13 +244,19 @@ window.addEventListener('keydown',e=>{
  if(document.querySelector('dialog[open]'))return;
  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(!started||e.repeat)return;
  const i=SHORTCUT.indexOf(e.key);if(i>=0)setTool(tool===TOOL_LIST[i]?null:TOOL_LIST[i]);
- if(e.key.toLowerCase()==='r'){if(tool){dir=(dir+1)%4;view.setTool(tool,dir);lastRouteKey='';updateHover();}else rotateExisting();}
+ if(e.key.toLowerCase()==='r'){
+  if(tool){
+   const points=rowGesture?.points;
+   if(points&&hover){const start=points.at(-1),turn=dragEndpoint(start,hover);if(turn.x!==start.x||turn.z!==start.z)points.push(turn);}
+   dir=(dir+(e.shiftKey?3:1))%4;view.setTool(tool,dir);lastRouteKey='';updateHover();
+  }else rotateExisting();
+ }
  if(e.key.toLowerCase()==='e'&&selected)openProgram();
  if(e.key.toLowerCase()==='b')$('toggle-diagnostics').click();if(e.key.toLowerCase()==='i')$('production-overview').click();
  if(e.key.toLowerCase()==='m'&&areaIds.length)beginMove();
  if(e.key.toLowerCase()==='u'&&selected)$('upgrade-turret').click();
  if(e.key.toLowerCase()==='p')execute({type:'pause'});if(e.key===' ')focusEngineer(true);if(e.key==='?')$('help-dialog').showModal();
-});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();if(started)execute({type:'move',x:0,z:0});});
+});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();if(rowGesture){clearRoute();updateHover();}if(started)execute({type:'move',x:0,z:0});});
 $('start-solo').onclick=()=>startGame();$('resume').onclick=()=>startGame(true);$('start-lan').onclick=()=>showLan();$('open-lan').onclick=()=>showLan();$('help').onclick=()=>$('help-dialog').showModal();$('menu').onclick=()=>$('menu-dialog').showModal();$('brand').onclick=e=>{e.preventDefault();if(started)$('menu-dialog').showModal();};$('continue').onclick=()=>$('menu-dialog').close();$('pause').onclick=()=>execute({type:'pause'});$('speed').onclick=()=>execute({type:'speed'});$('save').onclick=()=>saveGame();$('menu-save').onclick=()=>saveGame();$('early-wave').onclick=()=>execute({type:'wave'});$('zoom-in').onclick=()=>view.setZoom(-2);$('zoom-out').onclick=()=>view.setZoom(2);$('focus').onclick=()=>focusEngineer(true);$('restart').onclick=()=>{$('menu-dialog').close();restart();};$('end-restart').onclick=restart;
 $('quality').onclick=()=>{lowQuality=!lowQuality;view.setQuality(lowQuality);$('quality').textContent='Graphics: '+(lowQuality?'light (no shadows)':'standard');};
 function updateSound(){$('sound').innerHTML=icon(muted?'mute':'sound',19);$('sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');}

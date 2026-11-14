@@ -176,6 +176,44 @@ function beltExit(grid,cell,d){
  if(target.type==='belt'||Object.hasOwn(RECIPES,target.type))return target.dir!==(d+2)%4;
  return ['hq','storage','launchpad'].includes(target.type);
 }
+const routeTile=cell=>cell&&Number.isInteger(cell.x)&&Number.isInteger(cell.z)&&Math.abs(cell.x)<=26&&Math.abs(cell.z)<=26;
+export function planBeltDrag(s,points,dir){
+ const invalid=error=>({error,cells:[]});
+ if(!Array.isArray(points)||points.length<2||points.length>128||!points.every(routeTile)||!DIRS[dir])return invalid('Invalid conveyor drag');
+ const start=points[0],path=[{x:start.x,z:start.z,dir}],used=new Set([key(start.x,start.z)]);
+ for(let i=1;i<points.length;i++){
+  const from=points[i-1],to=points[i],dx=to.x-from.x,dz=to.z-from.z;
+  if(dx&&dz)return invalid('Conveyor drag segments must be straight');
+  if(!dx&&!dz)continue;
+  const out=DIRS.findIndex(([x,z])=>x===Math.sign(dx)&&z===Math.sign(dz));
+  path.at(-1).dir=out;
+  for(let j=1;j<=Math.abs(dx)+Math.abs(dz);j++){
+   const x=from.x+Math.sign(dx)*j,z=from.z+Math.sign(dz)*j,k=key(x,z);
+   if(used.has(k)||path.length===128)return invalid('Drag cannot cross itself or exceed 128 tiles');
+   used.add(k);path.push({x,z,dir:out});
+  }
+ }
+ if(path.length<2)return invalid('Drag to another tile to lay a conveyor line');
+ const last=path.at(-1),incoming=last.dir;
+ if(dir!==(incoming+2)%4)last.dir=dir;
+ const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
+ const blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(b=>key(b.x,b.z)));
+ const cells=[];
+ for(const [i,cell] of path.entries()){
+  const k=key(cell.x,cell.z),b=grid.get(k);
+  if(blocked.has(k))return {error:'Conveyor drag is blocked by terrain',cells:path};
+  if(!b){cells.push(cell);continue;}
+  if(cell===last&&beltExit(grid,path.at(-2),incoming))continue;
+  if(i===0){
+   if(b.type==='belt'){
+    const next=path[1],neighbor=grid.get(key(next.x,next.z));
+    if(b.dir===cell.dir||(!beltExit(grid,b,b.dir)&&!(neighbor&&outputPointsAt(neighbor,b.x,b.z)))){cells.push(cell);continue;}
+   }else if(outputPointsAt(b,path[1].x,path[1].z))continue;
+  }
+  return {error:'Conveyor drag is blocked by a building or an opposing port',cells:path};
+ }
+ return {error:null,cells};
+}
 // An orthogonal A* route with turn penalties; avoids obstacles and fills every tile.
 export function planRoute(s,type,start,end,dir=0){
  if(!['belt','wall'].includes(type))return{error:'Rows are available for conveyors and barricades',cells:[]};
@@ -237,7 +275,8 @@ export function command(s,playerId,cmd){
  }
  if(cmd.type==='moveArea')return moveArea(s,p,cmd);
  if(cmd.type==='buildRow'){
-  const plan=planRoute(s,cmd.building,cmd.start,cmd.end,Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:0);if(plan.error)return plan.error;
+  const dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:0;
+  const plan=cmd.building==='belt'&&cmd.points!==undefined?planBeltDrag(s,cmd.points,dir):planRoute(s,cmd.building,cmd.start,cmd.end,dir);if(plan.error)return plan.error;
   const existing=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),fresh=plan.cells.filter(c=>!existing.has(key(c.x,c.z))),count=Math.max(0,fresh.length-inventoryCount(s,p.id,cmd.building));
   if(s.buildings.length+fresh.length>700)return 'Building limit reached (700)';
   for(const[r,n]of Object.entries(TYPES[cmd.building].cost))if(s.resources[r]<n*count)return 'Not enough materials for the entire route';

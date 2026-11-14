@@ -122,6 +122,7 @@ Protect the core through eight swarms. The starter colony has two working lines:
 | 1–8 | Conveyor, drill, smelter, assembler, sawmill, generator, turret, barricade |
 | 9 / 0 | Repair / dismantle; dismantle trees for wood |
 | Left click | Build or inspect |
+| Hold left-click and drag a conveyor | Preview a straight line along the blueprint arrow. Press R or Shift+R to set a corner, then continue. Release to build |
 | Shift-click endpoint | Route from your last conveyor/barricade placement |
 | Shift-drag | Preview a new route; release to build |
 | R | Rotate the blueprint in build mode. Otherwise rotate a conveyor under the pointer or a selected directional building |

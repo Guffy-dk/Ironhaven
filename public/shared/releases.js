@@ -1,9 +1,17 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.6.1';
+export const CURRENT_VERSION = '0.6.2';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.6.2',date:'2026-11-14',title:'Conveyor drag building',
+  changes:[
+   'Hold left click and drag to preview a conveyor line along the current arrow. Press R to turn clockwise or Shift+R to turn counterclockwise, then keep dragging. Release to build the whole line.',
+   'Each preview tile shows its output arrow. Dragging back shortens the current segment. Blocked lines do not partially build or change existing conveyor directions.',
+   'Shift-click and Shift-drag still plan routes around obstacles.'
+  ]
+ },
  {
   version:'0.6.1',date:'2026-11-14',title:'Better ground to defend',
   changes:[
