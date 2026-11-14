@@ -1,9 +1,9 @@
 {
   "name": "ironhaven",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Lightweight procedural 3D factory survival for 1–4 players on LAN",
+  "description": "Lightweight procedural 3D factory survival for 1\u20134 players on LAN",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",

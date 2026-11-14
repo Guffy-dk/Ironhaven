@@ -1,4 +1,10 @@
 const paths={
+ copper:'M4 7c0-5 16-5 16 0v10c0 5-16 5-16 0V7Zm0 0c0 5 16 5 16 0M4 12c0 5 16 5 16 0',
+ steel:'M3 3h18v4h-6v10h6v4H3v-4h6V7H3V3Z',
+ circuit:'M6 6h12v12H6V6ZM9 9h6v6H9V9ZM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4',
+ module:'m12 2 9 5v10l-9 5-9-5V7l9-5Zm0 0v10m9-5-9 5-9-5m9 5v10',
+ storage:'M3 9 12 3l9 6v12H3V9Zm4 12V11h10v10M7 15h10M7 18h10',
+ launchpad:'M9 17V8l3-6 3 6v9H9Zm0-5-4 4v5l4-3m6-6 4 4v5l-4-3M10 20v3m4-3v3M3 23h18',
  hq:'M4 21V8l8-5 8 5v13H4Zm4-1v-7h8v7M8 9h8M12 3v5',
  wood:'m4 18 12-12 4 4L8 22l-4-4Zm3-2 4 4M14 8l4 4M5 8V3m-2 3h4',
  plate:'m3 8 13-4 5 4-13 4-5-4Zm0 5 5 4 13-4M3 18l5 4 13-4M8 12v5',
@@ -17,5 +23,5 @@ const paths={
  sound:'M3 10h4l5-5v16l-5-5H3v-6Zm13-2c4 3 4 7 0 10m3-13c6 5 6 12 0 16',
  mute:'M3 10h4l5-5v16l-5-5H3v-6Zm13 0 6 6m0-6-6 6'
 };
-export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.hq}"/></svg>`;}
-export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',power:'POWER'};
+export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({copperDrill:'drill',copperSmelter:'smelter',foundry:'smelter',circuitLab:'circuit',componentFactory:'assembler'})[name]]||paths.hq}"/></svg>`;}
+export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',power:'POWER'};

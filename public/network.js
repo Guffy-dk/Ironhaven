@@ -27,7 +27,7 @@ export class Lan{
  wire(peer,channel){peer.channel=channel;
   channel.onopen=()=>{peer.ready=true;this.onPeerOpen?.(peer);this.onStatus?.();};
   channel.onmessage=e=>{if(typeof e.data!=='string'||e.data.length>1500000)return;
-   if(this.role==='host'){if(e.data.length>4096)return;const now=Date.now();if(now-peer.budgetAt>1000){peer.budget=0;peer.budgetAt=now;}if(++peer.budget>80)return;}
+   if(this.role==='host'){if(e.data.length>16384)return;const now=Date.now();if(now-peer.budgetAt>1000){peer.budget=0;peer.budgetAt=now;}if(++peer.budget>80)return;}
    let message;try{message=JSON.parse(e.data);}catch{return;}this.onMessage?.(peer,message);
   };
   channel.onclose=()=>this.drop(peer.id);channel.onerror=()=>this.onStatus?.();

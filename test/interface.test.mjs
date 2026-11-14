@@ -7,7 +7,7 @@ import {build} from 'esbuild';
 import {createGame,addPlayer,maxHp} from '../public/shared/sim.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
-const bundle=await build({entryPoints:[new URL('../public/app.js',import.meta.url).pathname],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
+const bundle=await build({entryPoints:[new URL('../public/app.js',import.meta.url).pathname],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
 function harness(saved){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
@@ -51,5 +51,20 @@ test('damage bars hide at full health; empty ammo and the final 20-second warnin
 test('W+A sends both movement axes and the camera follows the engineer',async()=>{
  const h=harness();try{h.$('start-solo').click();h.key('w');h.key('a');h.frame(1000);let s=h.save();assert.deepEqual(s.players[0].input,{x:0,z:0}); // saves intentionally stop movement
  for(let i=0;i<10;i++)h.ticks[0]();h.frame(1400);assert.ok(h.dom.__view.followed);s=h.save();assert.ok(s.players[0].x<2&&s.players[0].z<2);assert.equal(h.dom.__view.followed.id,s.players[0].id);
+ }finally{await h.close();}
+});
+test('drag-selection moves an area and Shift override asks once before packing invalid drills',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.point('pointerdown',-9,-4);h.point('pointermove',-4,-2);h.point('pointerup',-4,-2);assert.equal(h.$('area-tools').hidden,false);assert.ok(h.dom.__view.area.length>1);
+  h.$('move-selection').click();h.point('pointermove',3,7);h.point('pointerdown',3,7,true);assert.ok(h.$('move-confirm').hasAttribute('open'));assert.match(h.$('move-invalid-list').textContent,/iron deposits/);
+  h.$('move-dont-ask').checked=true;h.$('confirm-move').click();assert.equal(h.dom.localStorage.getItem('ironhaven.skipMoveConfirm'),'true');assert.ok(h.save().players[0].inventory.drill.length>0);assert.equal(h.$('area-tools').hidden,true);
+  h.$('reset-move-confirm').click();assert.equal(h.dom.localStorage.getItem('ironhaven.skipMoveConfirm'),'');
+ }finally{await h.close();}
+});
+test('panels can be moved, minimized, closed and restored without changing the world',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();const before=h.save().buildings.length,handle=h.$('intel').querySelector('.window-handle');
+  handle.dispatchEvent(new h.dom.PointerEvent('pointerdown',{button:0,clientX:20,clientY:30,bubbles:true}));h.dom.dispatchEvent(new h.dom.PointerEvent('pointermove',{clientX:100,clientY:100}));h.dom.dispatchEvent(new h.dom.PointerEvent('pointerup',{button:0}));assert.equal(h.$('intel').style.position,'fixed');assert.ok(parseFloat(h.$('intel').style.width)>0);assert.ok(h.dom.localStorage.getItem('ironhaven.windows.v1'));
+  h.dom.document.querySelector('[data-window-minimize="intel"]').click();assert.ok(h.$('intel').classList.contains('window-minimized'));h.dom.document.querySelector('[data-window-close="intel"]').click();assert.equal(h.$('intel').hidden,true);h.dom.document.querySelector('[data-window-toggle="intel"]').click();assert.equal(h.$('intel').hidden,false);h.$('reset-windows').click();assert.equal(h.$('intel').style.position,'');assert.equal(h.$('intel').style.width,'');assert.equal(h.save().buildings.length,before);
  }finally{await h.close();}
 });

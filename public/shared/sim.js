@@ -14,37 +14,67 @@ export const TYPES = {
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
  demolish:{name:'Dismantle',cost:{},desc:'Packs a building into your personal inventory. Damage, upgrades and ammo are preserved. Clear a tree to collect eight wood.'}
 };
-export const DIRECTIONAL = ['belt','drill','smelter','assembler'];
+Object.assign(TYPES,{
+ copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'Extracts copper ore from orange deposits. Route it through a copper smelter to supply electronics.'},
+ copperSmelter:{name:'Copper smelter',hp:260,power:3,cost:{wood:12,plate:20},desc:'Smelts copper ore into copper. Copper is required by circuit assemblers.'},
+ foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel reinforces advanced upgrades and evacuation hardware.'},
+ circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'Combines two copper and one plate into a circuit. Circuits unlock advanced upgrades and ship components.'},
+ componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'Combines two steel, two circuits and a gear into a ship component. Components power the evacuation objective.'},
+ storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Adds 300 storage per material. Upgrades expand capacity further. Conveyors can deliver any processed material here.'},
+ launchpad:{name:'Evacuation pad',hp:1200,power:6,cost:{plate:80,steel:20,circuit:15,gear:10},desc:'After eight swarms, spend 30 components, 60 steel and 40 circuits to begin the final evacuation defense. Keep the core and pad alive.'}
+});
+export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module'];
+export const MAX_UPGRADES=10;
+export const RECIPES={
+ smelter:{input:{ore:1},output:'plate',seconds:2},assembler:{input:{plate:2},output:'gear',seconds:3},
+ copperSmelter:{input:{copperOre:1},output:'copper',seconds:2},foundry:{input:{plate:3},output:'steel',seconds:3.5},
+ circuitLab:{input:{copper:2,plate:1},output:'circuit',seconds:4},componentFactory:{input:{steel:2,circuit:2,gear:1},output:'module',seconds:5}
+};
+export const DIRECTIONAL = ['belt','drill','copperDrill',...Object.keys(RECIPES)];
 export const TURRET_LEVELS = [
  {name:'Mk I',hp:350,damage:28,range:10,interval:.38,cost:null},
  {name:'Mk II',hp:500,damage:40,range:12,interval:.30,cost:{plate:35,gear:8}},
  {name:'Mk III',hp:700,damage:56,range:14,interval:.23,cost:{plate:60,gear:16}}
 ];
-export const turretStats = b => TURRET_LEVELS[Math.max(0,Math.min(2,(b.level||1)-1))];
-export const maxHp = b => b.type==='turret' ? turretStats(b).hp : TYPES[b.type].hp;
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:56+(i-2)*14,range:14+(i-2)*.5,interval:.23/(1+(i-2)*.1),cost:{plate:Math.ceil(60*1.45**(i-2)),gear:Math.ceil(16*1.4**(i-2))}});
+export const turretStats = b => TURRET_LEVELS[Math.max(0,Math.min(MAX_UPGRADES,(b.level||1)-1))];
+export const maxHp = b => b.type==='turret' ? turretStats(b).hp : Math.round(TYPES[b.type].hp*(1+((b.level||1)-1)*.25));
+export const productionSpeed = b => 1+((b.level||1)-1)*.18;
+export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*.08));
+export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+(b.type==='storage'?Math.round(300*(1+((b.level||1)-1)*.35)):b.type==='hq'?((b.level||1)-1)*50:0),0);
+export const LAUNCH_COST={module:30,steel:60,circuit:40};
+export function upgradeCost(b){
+ const level=b.level||1;if(level>MAX_UPGRADES)return null;
+ const cost=b.type==='turret'?{...TURRET_LEVELS[level].cost}:Object.fromEntries(Object.entries(Object.keys(TYPES[b.type].cost).length?TYPES[b.type].cost:{plate:35,gear:5}).map(([r,n])=>[r,Math.ceil(n*.65*1.45**level)]));
+ if(b.type!=='turret'){cost.plate=(cost.plate||0)+Math.ceil(5*level**1.35);cost.gear=(cost.gear||0)+Math.ceil(level**1.25);}
+ if(level>=3){cost.steel=(cost.steel||0)+(level-2)*3;cost.circuit=(cost.circuit||0)+(level-2)*2;}return cost;
+}
 export const inventoryCount = (s,id,type) => s.players.find(p=>p.id===id)?.inventory?.[type]?.length||0;
 export function migrateGame(s){
- if(!s||![1,2].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
- s.version=2;for(const p of s.players){p.inventory||={};p.input={x:0,z:0};}
- for(const b of s.buildings)if(b.type==='turret')b.level||=1;
+ if(!s||![1,2,3].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ if(s.version<3&&s.status==='victory')s.status='playing';
+ s.version=3;s.evacuation||=null;s.terrain.copper||=makeTerrain(s.seed).copper;for(const r of RESOURCE_KEYS)s.resources[r]??=0;for(const p of s.players){p.inventory||={};p.input={x:0,z:0};p.sprinting=false;}
+ for(const b of s.buildings)b.level||=1;
  return s;
 }
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function rng(seed){let n=seed|0;return()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;};}
 export const key=(x,z)=>`${x},${z}`;
 export function makeTerrain(seed=2026){
- const rand=rng(seed),trees=[],ore=[],rocks=[];
+ const rand=rng(seed),trees=[],ore=[],rocks=[],copper=[];
  for(let x=-27;x<=27;x++)for(let z=-27;z<=27;z++){
   const d=Math.hypot(x,z),v=rand();
   if(d>11&&v<.19&&Math.sin(x*.24)+Math.cos(z*.22)>.1)trees.push({x,z,h:.8+rand()*.8});
   else if(d>13&&v>.966)rocks.push({x,z,h:.3+rand()*.6});
  }
  for(const [cx,cz] of [[-8,-3],[-10,9],[10,-9],[15,7],[-19,-13]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<7)ore.push({x:cx+x,z:cz+z});
- return{trees,ore,rocks};
+ for(const[cx,cz]of [[8,-4],[17,12],[-18,3]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<6)copper.push({x:cx+x,z:cz+z});
+ return{trees,ore,rocks,copper};
 }
 function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};s.buildings.push(b);return b;}
 export function createGame(seed=2026){
- const s={version:2,seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:150,gear:20},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:100,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[]};
+ const s={version:3,seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:150,gear:20,copper:0,steel:0,circuit:0,module:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:100,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[],evacuation:null};
  building(s,'hq',0,0);
  // Two working starter chains: ore → plate → shared storage / gears.
  for(const z of [-3,3]){
@@ -74,6 +104,7 @@ function placementError(s,type,x,z,ignoreBelts=false){
  if(occupied&&!(ignoreBelts&&occupied.type==='belt'))return 'Tile is occupied';
  if(s.terrain.trees.some(b=>b.x===x&&b.z===z)||s.terrain.rocks.some(b=>b.x===x&&b.z===z))return 'Clear the tile with Dismantle first';
  if(type==='drill'&&!s.terrain.ore.some(b=>b.x===x&&b.z===z))return 'Drills must be placed on iron deposits';
+ if(type==='copperDrill'&&!s.terrain.copper?.some(b=>b.x===x&&b.z===z))return 'Copper drills must be placed on copper deposits';
  if(type==='sawmill'&&!s.terrain.trees.some(b=>Math.hypot(b.x-x,b.z-z)<5))return 'A sawmill needs trees within five tiles';
  return null;
 }
@@ -94,7 +125,7 @@ function endpointDirection(s,cell,fallback,previous){
  const existing=grid.get(key(cell.x,cell.z));if(existing?.type==='belt'&&(!previous||!outputPointsAt(existing,previous.x,previous.z)))return existing.dir;
  const options=[fallback,(fallback+1)%4,(fallback+3)%4,(fallback+2)%4];
  for(const d of options){const[dx,dz]=DIRS[d],target=grid.get(key(cell.x+dx,cell.z+dz));if(!target||target===previous)continue;
-  if(target.type==='hq'||['smelter','assembler'].includes(target.type)&&target.dir!==(d+2)%4||target.type==='belt'&&target.dir!==(d+2)%4)return d;
+  if(['hq','storage','launchpad'].includes(target.type)||Object.hasOwn(RECIPES,target.type)&&target.dir!==(d+2)%4||target.type==='belt'&&target.dir!==(d+2)%4)return d;
  }return fallback;
 }
 // An orthogonal A* route with turn penalties; avoids obstacles and fills every tile.
@@ -104,7 +135,7 @@ export function planRoute(s,type,start,end,dir=0){
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(v=>key(v.x,v.z)));
  const first=grid.get(key(start.x,start.z)),last=grid.get(key(end.x,end.z));
  // A machine at an endpoint is connected rather than overwritten.
- const allowed=(x,z)=>{if(Math.abs(x)>26||Math.abs(z)>26||blocked.has(key(x,z)))return false;const b=grid.get(key(x,z));return !b||b.type===type||type==='belt'&&(b===first&&DIRECTIONAL.includes(b.type)||b===last&&['hq','smelter','assembler'].includes(b.type));};
+ const allowed=(x,z)=>{if(Math.abs(x)>26||Math.abs(z)>26||blocked.has(key(x,z)))return false;const b=grid.get(key(x,z));return !b||b.type===type||type==='belt'&&(b===first&&DIRECTIONAL.includes(b.type)||b===last&&(['hq','storage','launchpad'].includes(b.type)||Object.hasOwn(RECIPES,b.type)));};
  if(!allowed(start.x,start.z)||!allowed(end.x,end.z))return{error:'Route endpoint is blocked',cells:[]};
  const initial={x:start.x,z:start.z,d:dir,g:0,f:Math.abs(start.x-end.x)+Math.abs(start.z-end.z),prev:null},open=[initial],best=new Map([[`${start.x},${start.z},${dir}`,0]]);let goal=null,visits=0;
  while(open.length&&visits++<14000){
@@ -113,7 +144,7 @@ export function planRoute(s,type,start,end,dir=0){
   for(const d of [cur.d,(cur.d+1)%4,(cur.d+3)%4,(cur.d+2)%4]){
    if(cur===initial&&first&&first.type!=='belt'&&DIRECTIONAL.includes(first.type)&&d!==first.dir)continue;
    const[dx,dz]=DIRS[d],x=cur.x+dx,z=cur.z+dz;if(!allowed(x,z))continue;
-   if(last&&['smelter','assembler'].includes(last.type)&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
+   if(last&&Object.hasOwn(RECIPES,last.type)&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
    if(grid.get(key(cur.x,cur.z))&&grid.get(key(cur.x,cur.z))!==first&&grid.get(key(cur.x,cur.z)).type!==type)continue;
    const g=cur.g+1+(d===cur.d?0:.15),k=`${x},${z},${d}`;if((best.get(k)??Infinity)<=g)continue;best.set(k,g);
    open.push({x,z,d,g,f:g+Math.abs(x-end.x)+Math.abs(z-end.z),prev:cur});
@@ -136,13 +167,14 @@ function place(s,p,type,x,z,dir){
 }
 export function command(s,playerId,cmd){
  const p=s.players.find(p=>p.id===playerId);if(!p||!cmd||typeof cmd!=='object')return 'Invalid player';p.inventory||={};
- if(cmd.type==='move'){p.input={x:Number.isFinite(cmd.x)?Math.max(-1,Math.min(1,cmd.x)):0,z:Number.isFinite(cmd.z)?Math.max(-1,Math.min(1,cmd.z)):0};return null;}
+ if(cmd.type==='move'){p.sprinting=!!cmd.sprint;p.input={x:Number.isFinite(cmd.x)?Math.max(-1,Math.min(1,cmd.x)):0,z:Number.isFinite(cmd.z)?Math.max(-1,Math.min(1,cmd.z)):0};return null;}
  if(s.status!=='playing')return 'The expedition has ended';
  if(['pause','speed','wave'].includes(cmd.type)){
   if(p.id!==s.players[0]?.id)return 'Only the host can control time';
   if(cmd.type==='pause')s.paused=!s.paused;if(cmd.type==='speed')s.speed=s.speed===1?2:1;
   if(cmd.type==='wave'&&s.enemies.length===0&&s.nextWave>s.time+3)s.nextWave=s.time+3;return null;
  }
+ if(cmd.type==='moveArea')return moveArea(s,p,cmd);
  if(cmd.type==='buildRow'){
   const plan=planRoute(s,cmd.building,cmd.start,cmd.end,Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:0);if(plan.error)return plan.error;
   const existing=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),fresh=plan.cells.filter(c=>!existing.has(key(c.x,c.z))),count=Math.max(0,fresh.length-inventoryCount(s,p.id,cmd.building));
@@ -164,10 +196,19 @@ export function command(s,playerId,cmd){
   b.dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:(b.dir+1)%4;return null;
  }
  if(cmd.type==='upgrade'){
-  if(b?.type!=='turret')return 'Select a turret to upgrade';const next=TURRET_LEVELS[b.level||1];if(!next)return 'Turret is fully upgraded';
-  for(const[r,n]of Object.entries(next.cost))if(s.resources[r]<n)return 'Not enough materials to upgrade';
-  for(const[r,n]of Object.entries(next.cost))s.resources[r]-=n;
-  const missing=maxHp(b)-b.hp;b.level=(b.level||1)+1;b.hp=maxHp(b)-missing;return null;
+  if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return 'Building is fully upgraded (10/10)';
+  for(const[r,n]of Object.entries(cost))if(s.resources[r]<n)return 'Not enough materials to upgrade';
+  for(const[r,n]of Object.entries(cost))s.resources[r]-=n;
+  const missing=maxHp(b)-b.hp;b.level=(b.level||1)+1;b.hp=maxHp(b)-missing;updatePower(s);return null;
+ }
+ if(cmd.type==='launch'){
+  if(p.id!==s.players[0]?.id)return 'Only the host can begin evacuation';
+  if(b?.type!=='launchpad')return 'Select an evacuation pad';
+  if(s.wave<FINAL_WAVE||s.enemies.length)return 'Survive the first eight swarms before launching';
+  if(s.evacuation?.status==='charging')return 'Evacuation is already charging';
+  for(const[r,n]of Object.entries(LAUNCH_COST))if(s.resources[r]<n)return 'Evacuation needs 30 components, 60 steel and 40 circuits';
+  for(const[r,n]of Object.entries(LAUNCH_COST))s.resources[r]-=n;
+  s.evacuation={status:'charging',remaining:90,padId:b.id};spawnWave(s);return null;
  }
  if(cmd.type==='demolish'){
   if(b?.type==='hq')return 'The command core cannot be dismantled';
@@ -181,19 +222,22 @@ export function command(s,playerId,cmd){
  }return 'Unknown command';
 }
 export function updatePower(s){
- const generators=s.buildings.filter(b=>b.type==='generator').length;
- s.power={used:s.buildings.reduce((n,b)=>n+TYPES[b.type].power,0),total:18+(s.resources.wood>0?generators*18:0)};
- let available=s.power.total;for(const b of s.buildings){const n=TYPES[b.type].power;b.active=available>=n;if(b.active)available-=n;}
+ const core=s.buildings.find(b=>b.type==='hq'),base=18+(core?((core.level||1)-1)*3:0);
+ const generatorPower=s.resources.wood>0?s.buildings.filter(b=>b.type==='generator').reduce((n,b)=>n+18*(1+((b.level||1)-1)*.3),0):0;
+ s.power={used:s.buildings.reduce((n,b)=>n+buildingPower(b),0),total:Math.round(base+generatorPower)};
+ let available=s.power.total;for(const b of s.buildings){const n=buildingPower(b);b.active=available>=n;if(b.active)available-=n;}
 }
+function store(s,item,amount=1){if(!RESOURCE_KEYS.includes(item)||s.resources[item]+amount>storageCapacity(s))return false;s.resources[item]+=amount;if(item==='plate'||item==='gear')s.produced[item]++;return true;}
 function accept(s,b,item,from){
  if(!b)return false;
- if(from&&['belt','smelter','assembler'].includes(b.type)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
- if(b.type==='hq'){if(item==='plate'||item==='gear'||item==='wood'){s.resources[item]++;if(item!=='wood')s.produced[item]++;return true;}return false;}
+ if(from&&(b.type==='belt'||Object.hasOwn(RECIPES,b.type))){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
+ if(['hq','storage'].includes(b.type)||b.type==='launchpad'&&item==='module')return store(s,item);
  if(b.type==='belt'&&!b.item){b.item=item;b.itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;b.itemTick=s.tick;return true;}
- if((b.type==='smelter'&&item==='ore'||b.type==='assembler'&&item==='plate')&&b.input.length<8){b.input.push(item);return true;}return false;
+ const recipe=RECIPES[b.type];if(recipe&&recipe.input[item]&&b.input.filter(v=>v===item).length<recipe.input[item]*4){b.input.push(item);return true;}
+ return false;
 }
 function spawnWave(s){
- s.wave++;const count=12+s.wave*s.wave*4;
+ s.wave++;const count=Math.min(336,12+s.wave*s.wave*4);
  for(let i=0;i<count;i++){
   const side=(s.wave+i%2)%4,t=(i*7.31+s.wave*3)%46-23;
   const x=side===0?-26:side===2?26:t,z=side===1?-26:side===3?26:t;
@@ -206,22 +250,23 @@ export function step(s,dt=STEP){
  if(s.tick%20===0)updatePower(s);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
  // Transport uses a snapshot to prevent an item travelling through a whole line in one pulse.
- if(s.tick%8===0){
-  const moving=s.buildings.filter(b=>b.type==='belt'&&b.item).map(b=>({b,item:b.item}));
-  const busy=new Set(moving.map(v=>v.b.id));
+ if(true){
+  const moving=s.buildings.filter(b=>b.type==='belt'&&b.item&&s.tick%Math.max(2,8-Math.floor(((b.level||1)-1)*.5))===0).map(b=>({b,item:b.item}));
+  const busy=new Set(s.buildings.filter(b=>b.type==='belt'&&b.item).map(b=>b.id));
   for(const{b,item}of moving){const[dX,dZ]=DIRS[b.dir],target=grid.get(key(b.x+dX,b.z+dZ));if(target&&!busy.has(target.id)&&accept(s,target,item,b))b.item=null;}
  }
  for(const b of s.buildings){
   if(b.type==='generator'){b.progress+=dt;if(b.progress>=12){b.progress=0;if(s.resources.wood>0)s.resources.wood--;}}
   if(!b.active)continue;
   const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
-  if(b.type==='drill'||b.type==='smelter'||b.type==='assembler'){
+  const recipe=RECIPES[b.type],extract=b.type==='drill'?'ore':b.type==='copperDrill'?'copperOre':null;
+  if(extract||recipe){
    if(b.item){if(accept(s,out,b.item,b))b.item=null;continue;}
-   const need=b.type==='assembler'?2:b.type==='smelter'?1:0;
-   if(b.input.length<need)continue;b.progress+=dt;
-   if(b.progress>=(b.type==='assembler'?3:2)){b.progress=0;b.input.splice(0,need);b.item=b.type==='drill'?'ore':b.type==='smelter'?'plate':'gear';}
+   if(recipe&&Object.entries(recipe.input).some(([r,n])=>b.input.filter(v=>v===r).length<n))continue;
+   b.progress+=dt*productionSpeed(b);
+   if(b.progress>=(recipe?.seconds||2)){b.progress=0;if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);b.item=extract||recipe.output;}
   }
-  if(b.type==='sawmill'){if(s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt;if(b.progress>=3){b.progress=0;s.resources.wood+=3;}}}
+  if(b.type==='sawmill'&&s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt*productionSpeed(b);if(b.progress>=3){b.progress=0;const room=Math.max(0,storageCapacity(s)-s.resources.wood);s.resources.wood+=Math.min(3,room);}}
   if(b.type==='turret'){
    const stats=turretStats(b);b.cooldown-=dt;if(b.ammo<=0&&s.resources.gear>0){s.resources.gear--;b.ammo=12;}
    if(b.cooldown<=0&&b.ammo>0){let target=null,closest=stats.range;for(const e of s.enemies){const d=dist(e,b);if(e.hp>0&&d<closest){closest=d;target=e;}}
@@ -230,7 +275,7 @@ export function step(s,dt=STEP){
  }
  for(const p of s.players){
   if(p.hp<=0){p.respawn-=dt;if(p.respawn<=0){p.hp=100;p.x=2;p.z=2;}continue;}
-  const len=Math.max(1,Math.hypot(p.input.x,p.input.z)),speed=4.5;
+  const len=Math.max(1,Math.hypot(p.input.x,p.input.z)),speed=4.5*(p.sprinting?1.65:1);
   const nx=Math.max(-26,Math.min(26,p.x+p.input.x/len*speed*dt)),nz=Math.max(-26,Math.min(26,p.z+p.input.z/len*speed*dt));
   // Disc-versus-building collision gives engineers space to slide around corners.
   const blocked=(x,z)=>{for(let ix=Math.floor(x-.65);ix<=Math.ceil(x+.65);ix++)for(let iz=Math.floor(z-.65);iz<=Math.ceil(z+.65);iz++){const b=grid.get(key(ix,iz));if(!b||b.type==='belt')continue;const r=b.type==='hq'?.68:.38,dx=Math.max(Math.abs(x-b.x)-r,0),dz=Math.max(Math.abs(z-b.z)-r,0);if(dx*dx+dz*dz<.17*.17)return true;}return false;};
@@ -251,7 +296,24 @@ export function step(s,dt=STEP){
  const dead=s.enemies.filter(e=>e.hp<=0).length;s.totalKills+=dead;s.enemies=s.enemies.filter(e=>e.hp>0);
  const destroyed=s.buildings.filter(b=>b.hp<=0);if(destroyed.length){s.buildings=s.buildings.filter(b=>b.hp>0);updatePower(s);}
  if(hq.hp<=0){s.status='defeat';event(s,'The command core has fallen');}
- else if(s.wave===FINAL_WAVE&&s.enemies.length===0){s.status='victory';event(s,'The colony survived. Ironhaven endures.');}
+ else if(s.evacuation?.status==='charging'){const pad=s.buildings.find(b=>b.id===s.evacuation.padId);if(!pad){s.evacuation.status='failed';event(s,'Evacuation pad lost. Rebuild and try again.');}else if(pad.active){s.evacuation.remaining=Math.max(0,s.evacuation.remaining-dt*(1+((pad.level||1)-1)*.1));if(s.evacuation.remaining===0&&s.enemies.length===0){s.status='victory';s.evacuation.status='complete';event(s,'Evacuation complete. The colony survives.');}}}
  else if(s.time>=s.nextWave&&s.enemies.length===0&&s.wave<FINAL_WAVE)spawnWave(s);
+}
+export function planMove(s,ids,dx,dz){
+ if(!Array.isArray(ids)||ids.length>700||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
+ const selected=s.buildings.filter(b=>ids.includes(b.id));if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
+ const stationary={...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))},valid=[],invalid=[];
+ for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>26||Math.abs(b.z+dz)>26?'Core is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Core destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the core destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);
+  (reason?invalid:valid).push({id:b.id,type:b.type,x:b.x+dx,z:b.z+dz,reason});
+ }return{error:null,valid,invalid};
+}
+function moveArea(s,p,cmd){
+ const plan=planMove(s,cmd.ids,cmd.dx,cmd.dz);if(plan.error)return plan.error;
+ if(plan.invalid.some(v=>v.type==='hq'))return 'The command core cannot be removed. Choose a valid destination for it.';
+ if(plan.invalid.length&&!cmd.override)return plan.invalid.length+' buildings cannot be placed here. Hold Shift to pack invalid buildings into inventory.';
+ if(!plan.valid.length&&!cmd.override)return 'No valid buildings to move';
+ for(const target of plan.valid){const b=s.buildings.find(b=>b.id===target.id);b.x=target.x;b.z=target.z;}
+ if(cmd.override)for(const target of plan.invalid){const b=s.buildings.find(b=>b.id===target.id),{id,x,z,dir,type,active,...packed}=b;(p.inventory[type]||=[]).push(packed);s.buildings=s.buildings.filter(v=>v.id!==id);}
+ updatePower(s);return null;
 }
 export function snapshot(s){return JSON.parse(JSON.stringify(s));}

@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createGame,addPlayer,removePlayer,command,step,canBuild,planRoute,beltInputs,key,inventoryCount,migrateGame,maxHp,turretStats} from '../public/shared/sim.js';
+import {createGame,addPlayer,removePlayer,command,step,canBuild,planRoute,beltInputs,key,inventoryCount,migrateGame,maxHp,turretStats,RESOURCE_KEYS,MAX_UPGRADES} from '../public/shared/sim.js';
 import {encodeCode,decodeCode} from '../public/network.js';
 import {validateRelease,releaseMarkdown} from '../scripts/release-metadata.mjs';
 import {CURRENT_VERSION,RELEASES} from '../public/shared/releases.js';
@@ -31,15 +31,15 @@ test('dismantled upgraded turrets retain state and are placed without raw materi
  const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret');const x=b.x,z=b.z;
  assert.equal(command(s,p.id,{type:'upgrade',x,z}),null);b.hp=417;b.ammo=3;
  const resources={...s.resources};assert.equal(command(s,p.id,{type:'demolish',x,z}),null);assert.equal(inventoryCount(s,p.id,'turret'),1);assert.deepEqual(s.resources,resources);
- s.resources={wood:0,plate:0,gear:0};assert.equal(canBuild(s,'turret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'turret',x,z,dir:0}),null);
- const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'turret'),0);assert.deepEqual(s.resources,{wood:0,plate:0,gear:0});
+ s.resources=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));assert.equal(canBuild(s,'turret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'turret',x,z,dir:0}),null);
+ const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'turret'),0);assert.deepEqual(s.resources,Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])));
 });
-test('turret upgrades affect range, damage and health and stop at Mk III',()=>{
+test('turret upgrades affect range, damage and health and extend past Mk III and stop after ten upgrades',()=>{
  const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret'&&b.x===6);s.buildings=s.buildings.filter(v=>v===b||v.type==='hq');b.ammo=3;
  s.enemies=[{id:999,x:b.x+11.5,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
  b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),500);assert.equal(b.hp,450);step(s);assert.equal(s.enemies[0].hp,160);
- s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,14);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
- assert.equal(command(s,p.id,{type:'repair',x:b.x,z:b.z}),null);assert.equal(b.hp,700);
+ s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,14);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
+ assert.equal(command(s,p.id,{type:'repair',x:b.x,z:b.z}),null);assert.equal(b.hp,maxHp(b));
 });
 test('W+A movement is diagonal and normalized, with no diagonal speed boost',()=>{
  const a=make(),b=make();for(const q of[a,b]){q.p.x=15;q.p.z=15;}
@@ -48,7 +48,7 @@ test('W+A movement is diagonal and normalized, with no diagonal speed boost',()=
 });
 test('0.1 saves migrate without losing production, resources or built buildings',()=>{
  const{s,p}=make();s.version=1;delete p.inventory;for(const b of s.buildings)delete b.level;
- const before=JSON.stringify(s.resources),ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,2);assert.deepEqual(migrated.players[0].inventory,{});assert.equal(JSON.stringify(migrated.resources),before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
+ const before=JSON.stringify(s.resources),ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,3);assert.deepEqual(migrated.players[0].inventory,{});assert.equal(JSON.stringify(migrated.resources),before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
 });
 test('a departing guest returns packed buildings to the remaining host',()=>{
  const{s,p}=make(),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});removePlayer(s,guest.id);assert.equal(inventoryCount(s,p.id,'belt'),1);

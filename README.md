@@ -6,7 +6,31 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.2
+## Version 0.3
+
+Drag to select buildings, press **M** to move the area, and click a valid destination. Moves check deposits, terrain, collisions and boundaries before changing the world. **Shift-click** allows invalid buildings to be packed into inventory after a confirmation. The popup offers **Don’t ask again**; reset this preference in the menu. The command core is never removed by an override.
+
+Every building supports **ten upgrades** (base level plus ten upgrades), with increasing costs and additional health. Production buildings gain speed, generators gain output, conveyor upgrades improve transfer speed, and warehouses/core upgrades expand storage. Higher upgrades consume steel and circuits.
+
+Hold **Shift + WASD** to sprint. Drag panel headers to move the inspector, minimap, colony panel and dialogs. Minimize/close panels with their header buttons; restore them or reset layout in the menu. The default right-side dock keeps the inspector and minimap separate.
+
+### New production and endgame
+
+| Production | Purpose |
+|---|---|
+| Copper drill → copper smelter → copper | Feed circuit assemblers |
+| 2 copper + 1 plate → circuit | Advanced upgrades and evacuation components |
+| 3 plates → steel | Advanced upgrades and evacuation structures |
+| 2 steel + 2 circuits + 1 gear → ship component | Complete the evacuation objective |
+| Warehouse | Adds 300 capacity for **each** material; upgrades increase this |
+
+Storage starts at 300 per material. Full storage stops deliveries; reducing capacity never deletes an existing surplus. Hover material counters to inspect capacity.
+
+**Endgame:** survive the first eight swarms, build an evacuation pad, gather **30 components + 60 steel + 40 circuits**, select the pad and begin evacuation. Defend the core and pad through the final swarm and a 90-second charge. The charge requires power; upgrading the pad shortens it. Victory requires the charge to finish and remaining enemies to be defeated. If the pad is lost, rebuild and restart; losing the core ends the expedition.
+
+Enemies show health bars. The menu now includes **Export world backup** and **Import world backup** for JSON files, so you can transfer a world between browser profiles or computers.
+
+### Included from 0.2
 
 Smart turning conveyors and Shift-click/drag routes, north-up player-follow camera, diagonal movement, personal building inventory, in-place rotation, clear factory ports, visible damage and ammunition warnings, turret upgrades and a complete English interface.
 
@@ -33,7 +57,7 @@ Protect the core through eight swarms. The starter colony has two working lines:
 - Drill → conveyor → smelter → assembler → core: two plates become one gear, used for turret ammunition and upgrades.
 - Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
 - Cyan **IN** ports accept items. Gold **OUT** ports deliver them. Machine outputs and conveyor arrows reflect their actual directions.
-- Select a turret to upgrade to Mk II or Mk III. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
+- Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
 - Dismantling packs a building into your inventory, preserving damage, upgrades, cargo and ammo. Placement consumes inventory before raw materials. Hotbar numbers show your count.
 
 | Controls | Action |
@@ -48,7 +72,10 @@ Protect the core through eight swarms. The starter colony has two working lines:
 | Shift-click endpoint | Route from your last conveyor/barricade placement |
 | Shift-drag | Preview a new route; release to build |
 | R | Rotate a conveyor under the pointer or a selected directional building; otherwise rotate the blueprint |
-| U | Upgrade selected turret |
+| U | Upgrade selected building |
+| Left-drag without a build tool | Box-select buildings |
+| M | Move the selected area |
+| Shift while moving | Sprint |
 | Q / Esc / right click | Exit build mode / cancel route |
 | P | Pause, host only |
 | ? | Field guide |
@@ -57,9 +84,9 @@ Smart routes avoid trees, rocks and buildings, fill every tile and connect to ma
 
 ## Where worlds are saved
 
-Worlds save automatically every thirty seconds and manually with **Save** into browser **localStorage**, key `ironhaven.save.v1`. This key remains the same while the save schema is migrated. Old 0.1 saves migrate when resumed in the same browser storage.
+Worlds save automatically every thirty seconds and manually with **Save** into browser **localStorage**, key `ironhaven.save.v1`. This key remains the same while the save schema is migrated. Old 0.1 and 0.2 saves migrate when resumed in the same browser storage.
 
-Only the host saves a multiplayer world. Browser profiles and incognito sessions have separate storage. Incognito saves usually disappear when all incognito windows close. GitHub stores source and releases, not your world. Different sites or local-file paths may use different storage; when updating the downloaded edition, retain its original folder and filename. Deleting browser data deletes the save. There is one local save slot.
+Only the host saves a multiplayer world. Browser profiles and incognito sessions have separate storage. Incognito saves usually disappear when all incognito windows close. GitHub stores source and releases, not your world. Different sites or local-file paths may use different storage; when updating the downloaded edition, retain its original folder and filename. Deleting browser data deletes the save. There is one local save slot. Export JSON backups from the menu before clearing data or changing browser profiles. Importing a backup replaces that browser’s current save. Close LAN before importing.
 
 ## Development and checks
 
