@@ -6,7 +6,25 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.6.1 — terrain, balance and conveyor fixes
+## Version 0.7 — swarm round bonuses
+
+Every swarm activates a shared colony bonus. It lasts through the attack and the preparation time until the next swarm begins. The HUD shows the active and upcoming bonuses. Starting preparation has no active bonus.
+
+| Round | Bonus |
+|---|---|
+| 1 | +15% iron and copper mining speed |
+| 2 | +25% smelting speed for both ores |
+| 3 | Turrets reload 15 shots per gear instead of 12 |
+| 4 | Barricades take 30% less damage |
+| 5 | +45% sawmill speed |
+| 6 | Repairs use 1 iron plate instead of 2, with the usual wood cost |
+| 7 | +50% ship component production speed |
+| 8 | +10% speed for all production buildings |
+| Evacuation | +6 colony power |
+
+Speed bonuses multiply machine upgrades. Recipes still use their usual inputs and need power and room for their outputs. The HUD follows the saved swarm when you resume or restore a checkpoint.
+
+## Included from 0.6.1 — terrain, balance and conveyor fixes
 
 New colonies start with 180 iron plates and an exposed iron deposit near the core. Iron drills and smelters cost fewer plates, and each iron production cycle takes 1.6 seconds. Starter barricades leave the deposits clear. New maps group trees into groves. Hostiles move at 45% speed through trees, including on saved maps.
 

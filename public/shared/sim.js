@@ -6,7 +6,7 @@ export const DIFFICULTIES={
  standard:{name:'Standard',count:1,health:1,damage:1,prep:100,interval:95},
  veteran:{name:'Veteran',count:1.22,health:1.12,damage:1.15,prep:100,interval:95}
 };
-export function waveForecast(s,wave=s.wave+1){const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1),count=Math.min(480,Math.round(Math.min(336,12+wave*wave*4)*d.count*(1+guests*.1)));return{wave,count,side:wave%4,health:d.health,damage:d.damage};}
+export function waveForecast(s,wave=s.wave+1){const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1),count=Math.min(480,Math.round(Math.min(336,12+wave*wave*4)*d.count*(1+guests*.1)));return{wave,count,side:wave%4,health:d.health,damage:d.damage,bonus:roundBonus(wave)};}
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
  belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries items toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
@@ -69,7 +69,26 @@ const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:Math.ceil(60*1.45**(i-2)),gear:Math.ceil(16*1.4**(i-2))}});
 export const turretStats = b => TURRET_LEVELS[Math.max(0,Math.min(MAX_UPGRADES,(b.level||1)-1))];
 export const maxHp = b => b.type==='turret' ? turretStats(b).hp : Math.round(TYPES[b.type].hp*(1+((b.level||1)-1)*.25));
-export const productionSpeed = b => 1+((b.level||1)-1)*.18;
+const EXTRACTORS=['drill','copperDrill'];
+const PRODUCERS=[...EXTRACTORS,'sawmill',...Object.keys(RECIPES)];
+const ROUND_BONUSES=[
+ {label:'+15% mining speed',speed:1.15,types:EXTRACTORS},
+ {label:'+25% smelting speed',speed:1.25,types:['smelter']},
+ {label:'15 shots per gear',shotsPerGear:15},
+ {label:'Barricades take 30% less damage',wallDamage:.7},
+ {label:'+45% sawmill speed',speed:1.45,types:['sawmill']},
+ {label:'Repairs cost 1 iron plate instead of 2',repairPlates:1},
+ {label:'+50% ship component speed',speed:1.5,types:['componentFactory']},
+ {label:'+10% production speed',speed:1.1,types:PRODUCERS}
+];
+const EVACUATION_BONUS={label:'+6 colony power',power:6};
+export function roundBonus(wave){return wave>FINAL_WAVE?EVACUATION_BONUS:ROUND_BONUSES[wave-1]??null;}
+export function shotsPerGear(bonus){return bonus?.shotsPerGear??12;}
+export function repairCost(bonus){return {...TYPES.repair.cost,plate:bonus?.repairPlates??TYPES.repair.cost.plate};}
+export function productionSpeed(b,bonus){
+ const upgrade=1+((b.level||1)-1)*.18;
+ return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
+}
 export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(b.type==='turret'?.2:.1)));
 export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+(b.type==='storage'?Math.round(300*(1+((b.level||1)-1)*.35)):b.type==='hq'?((b.level||1)-1)*50:0),0);
 export const LAUNCH_COST={module:30,steel:60,circuit:40};
@@ -96,6 +115,7 @@ export function migrateGame(s){
   (p.inventory.smelter||=[]).push(...packed);
   delete p.inventory.copperSmelter;
  }
+ if(roundBonus(s.wave)?.power)updatePower(s);
  return s;
 }
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -324,13 +344,16 @@ export function command(s,playerId,cmd){
  }
  if(cmd.type==='repair'){
   if(!b)return 'Select a building';if(b.hp>=maxHp(b))return 'Building is at full health';
-  if(s.resources.wood<4||s.resources.plate<2)return 'Not enough materials';s.resources.wood-=4;s.resources.plate-=2;b.hp=Math.min(maxHp(b),b.hp+300);return null;
+  const cost=Object.entries(repairCost(roundBonus(s.wave)));
+  if(cost.some(([r,n])=>s.resources[r]<n))return 'Not enough materials';
+  for(const[r,n]of cost)s.resources[r]-=n;
+  b.hp=Math.min(maxHp(b),b.hp+300);return null;
  }return 'Unknown command';
 }
 export function updatePower(s){
  const core=s.buildings.find(b=>b.type==='hq'),base=18+(core?((core.level||1)-1)*3:0);
  const generatorPower=s.resources.wood>0?s.buildings.filter(b=>b.type==='generator').reduce((n,b)=>n+18*(1+((b.level||1)-1)*.3),0):0;
- s.power={used:s.buildings.reduce((n,b)=>n+buildingPower(b),0),total:Math.round(base+generatorPower)};
+ s.power={used:s.buildings.reduce((n,b)=>n+buildingPower(b),0),total:Math.round(base+generatorPower)+(roundBonus(s.wave)?.power??0)};
  let available=s.power.total;for(const b of s.buildings){const n=buildingPower(b);b.active=available>=n;if(b.active)available-=n;}
 }
 function store(s,item,amount=1){if(!RESOURCE_KEYS.includes(item)||s.resources[item]+amount>storageCapacity(s))return false;s.resources[item]+=amount;if(item==='plate'||item==='gear')s.produced[item]++;return true;}
@@ -385,11 +408,12 @@ function spawnWave(s){
   const x=side===0?-26:side===2?26:t,z=side===1?-26:side===3?26:t;
   const brute=i%11===0,hp=Math.round((35+s.wave*8)*forecast.health*(brute?2:1));
   s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage:forecast.damage,speed:1.0+(i%4)*.12+s.wave*.025,cooldown:0,brute:i%11===0});
- }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;event(s,`Swarm ${s.wave} · ${count} hostiles approaching`);
+ }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;if(forecast.bonus.power)updatePower(s);event(s,`Swarm ${s.wave} · ${count} hostiles approaching · ${forecast.bonus.label}`);
 }
 function event(s,text){s.events.push({id:s.nextId++,text,time:s.time});if(s.events.length>6)s.events.shift();}
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
+ const bonus=roundBonus(s.wave);
  if(s.tick%20===0)updatePower(s);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
@@ -412,12 +436,13 @@ export function step(s,dt=STEP){
    if(b.item){if(accept(s,out,b.item,b))b.item=null;continue;}
    const recipe=productionRecipe(b);
    if(!extract&&!recipe)continue;
-   b.progress+=dt*productionSpeed(b);
-   if(b.progress+1e-9>=(recipe?.seconds??(b.type==='drill'?1.6:2))){b.progress=0;if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);b.item=extract||recipe.output;s.stats.totals[b.item]=(s.stats.totals[b.item]||0)+1;}
+   const seconds=recipe?.seconds??(b.type==='drill'?1.6:2);
+   b.progress+=dt*productionSpeed(b,bonus);
+   if(b.progress+1e-9>=seconds){b.progress=Math.max(0,b.progress-seconds);if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);b.item=extract||recipe.output;s.stats.totals[b.item]=(s.stats.totals[b.item]||0)+1;}
   }
-  if(b.type==='sawmill'&&s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt*productionSpeed(b);if(b.progress>=3){b.progress=0;const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;s.stats.totals.wood=(s.stats.totals.wood||0)+made;}}
+  if(b.type==='sawmill'&&s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt*productionSpeed(b,bonus);if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;s.stats.totals.wood=(s.stats.totals.wood||0)+made;}}
   if(b.type==='turret'){
-   const stats=turretStats(b);b.cooldown-=dt;if(b.ammo<=0&&s.resources.gear>0){s.resources.gear--;b.ammo=12;}
+   const stats=turretStats(b);b.cooldown-=dt;if(b.ammo<=0&&s.resources.gear>0){s.resources.gear--;b.ammo=shotsPerGear(bonus);}
    if(b.cooldown<=0&&b.ammo>0){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}
     if(target){target.hp-=stats.damage;b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);s.shots.push({x:b.x,z:b.z,tx:target.x,tz:target.z,time:s.time});}}
   }
@@ -442,7 +467,7 @@ export function step(s,dt=STEP){
   const inTrees=woodland.has(key(Math.round(e.x),Math.round(e.z)))||woodland.has(key(Math.round(nextX),Math.round(nextZ)));
   const move=speed*dt*(inTrees?.45:1),nx=e.x+dx*move,nz=e.z+dz*move;
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
-  if(obstacle||d<.85){const victim=obstacle||target;if(e.cooldown<=0){victim.hp-=(e.brute?24:10)*(e.damage||1);victim.lastHit=s.time;e.cooldown=.8;if(victim.input&&victim.hp<=0)victim.respawn=8;}}
+  if(obstacle||d<.85){const victim=obstacle||target;if(e.cooldown<=0){const armor=victim.type==='wall'?(bonus?.wallDamage??1):1;victim.hp-=(e.brute?24:10)*(e.damage||1)*armor;victim.lastHit=s.time;e.cooldown=.8;if(victim.input&&victim.hp<=0)victim.respawn=8;}}
   else{e.x=nx;e.z=nz;}
  }
  const dead=s.enemies.filter(e=>e.hp<=0).length;s.totalKills+=dead;s.enemies=s.enemies.filter(e=>e.hp>0);
