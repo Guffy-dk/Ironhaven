@@ -1,9 +1,17 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.4.0';
+export const CURRENT_VERSION = '0.4.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.4.1',date:'2026-11-14',title:'Standalone packaging fix',
+  changes:[
+   'Fixed standalone HTML packaging: dollar-sign sequences in generated JavaScript are now preserved literally instead of being expanded by string replacement.',
+   'Release builds now verify the exact embedded JavaScript, reject external or duplicate loaders and compile the final inline script before writing the download.',
+   'Added packaging regression tests. This patch supersedes the 0.4.0 download; gameplay features and balance are unchanged.'
+  ]
+ },
  {
   version:'0.4.0',date:'2026-11-14',title:'Readable pressure',
   changes:[
