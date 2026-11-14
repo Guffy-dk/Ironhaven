@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.6.0';
+export const CURRENT_VERSION = '0.6.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.6.1',date:'2026-11-14',title:'Better ground to defend',
+  changes:[
+   'New colonies start with 180 iron plates and an exposed iron deposit near the core. Starter barricades leave iron and copper deposits clear.',
+   'Iron drills and smelters cost fewer plates. Iron ore and plates take 1.6 seconds per production cycle.',
+   'New maps group trees into dense groves. Hostiles move at 45% speed through tree tiles on both new and saved maps.',
+   'Turret upgrades add more damage per shot. Range increases in smaller steps from 10 to 13 tiles.',
+   'Manual conveyor placement keeps previously built arrows intact. R rotates the blueprint in build mode. Smart routes avoid redirecting connected belts and merge into existing belt endpoints without flipping them.'
+  ]
+ },
  {
   version:'0.6.0',date:'2026-11-14',title:'A clearer front',
   changes:[
