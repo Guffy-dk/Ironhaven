@@ -72,3 +72,25 @@ test('manual placement and routes preserve existing belt exits and avoid head-on
  assert.match(route({x:5,z:5},{x:4,z:5}),/No clear route/);
  assert.equal(crossing.dir,0);
 });
+
+test('belt drags join existing lines without flipping them or partly building a blocked route',()=>{
+ const state=createGame(),player=addPlayer(state);
+ state.buildings=state.buildings.filter(b=>b.type==='hq');
+ state.terrain.trees=[];
+ state.terrain.rocks=[];
+ const drag=(points,dir)=>command(state,player.id,{type:'buildRow',building:'belt',points,dir});
+ assert.equal(drag([{x:4,z:4},{x:8,z:4}],0),null);
+ const belt=state.buildings.find(b=>b.x===6&&b.z===4);
+ assert.equal(drag([{x:6,z:2},{x:6,z:4}],1),null);
+ assert.equal(belt.dir,0);
+ const before=JSON.stringify(state);
+ assert.match(drag([{x:6,z:1},{x:6,z:8}],1),/blocked/);
+ assert.match(drag([{x:10,z:4},{x:8,z:4}],2),/opposing port/);
+ assert.match(drag([{x:5,z:4},{x:5,z:7}],1),/blocked/);
+ assert.match(drag([{x:7,z:7},{x:8,z:8}],0),/straight/);
+ assert.match(drag([{x:7,z:7},{x:9,z:7},{x:8,z:7}],2),/cross itself/);
+ assert.equal(JSON.stringify(state),before);
+ state.resources.wood=0;
+ assert.match(drag([{x:7,z:7},{x:9,z:7}],0),/materials/);
+ assert.ok(!state.buildings.some(b=>b.x===7&&b.z===7));
+});

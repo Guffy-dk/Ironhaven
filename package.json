@@ -1,6 +1,6 @@
 {
   "name": "ironhaven",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "type": "module",
   "description": "Lightweight procedural 3D factory survival for 1\u20134 players on LAN",

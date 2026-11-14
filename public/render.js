@@ -120,11 +120,18 @@ export class View{
  setZoom(d){this.zoom=Math.max(8,Math.min(35,this.zoom+d));this.resize();}
  centerBase(){this.center.set(0,0,0);}
  follow(player,dt){this.center.lerp(new T.Vector3(player.x,0,player.z),1-Math.exp(-dt*9));}
- previewRoute(cells,valid=true){
-  const signature=cells.map(c=>`${c.x},${c.z},${c.dir}`).join(';')+valid;if(signature===this.routeKey)return;this.routeKey=signature;
-  if(this.routeMesh){this.scene.remove(this.routeMesh);this.routeMesh.geometry.dispose();this.routeMesh.material.dispose();this.routeMesh.dispose();this.routeMesh=null;}
+ previewRoute(cells,valid=true,arrows=false){
+  const signature=cells.map(c=>`${c.x},${c.z},${c.dir}`).join(';')+valid+arrows;if(signature===this.routeKey)return;this.routeKey=signature;
+  if(this.routeMesh){this.scene.remove(this.routeMesh);this.routeMesh.traverse(mesh=>{mesh.geometry.dispose();mesh.material.dispose();mesh.dispose();});this.routeMesh=null;}
   if(!cells.length)return;const mesh=new T.InstancedMesh(new T.PlaneGeometry(.9,.9),new T.MeshBasicMaterial({color:valid?C.mint:0xf5816d,side:T.DoubleSide,transparent:true,opacity:.4,depthWrite:false}),cells.length);
   cells.forEach((c,i)=>{this.dummy.position.set(c.x,.25,c.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.routeMesh=mesh;this.scene.add(mesh);
+  if(arrows){
+   const shape=new T.Shape();
+   shape.moveTo(-.26,-.07);shape.lineTo(.03,-.07);shape.lineTo(.03,-.16);shape.lineTo(.28,0);shape.lineTo(.03,.16);shape.lineTo(.03,.07);shape.lineTo(-.26,.07);shape.closePath();
+   const arrow=new T.InstancedMesh(new T.ShapeGeometry(shape),new T.MeshBasicMaterial({color:valid?C.light:0xf5816d,side:T.DoubleSide}),cells.length);
+   cells.forEach((c,i)=>{this.dummy.position.set(c.x,.34,c.z);this.dummy.rotation.set(-Math.PI/2,0,-c.dir*Math.PI/2,'XYZ');this.dummy.updateMatrix();arrow.setMatrixAt(i,this.dummy.matrix);});
+   arrow.frustumCulled=false;mesh.add(arrow);
+  }
  }
  markArea(ids,s){
   const bs=s.buildings.filter(b=>ids.includes(b.id)),signature=bs.map(b=>`${b.id}:${b.x},${b.z}`).join(';');if(signature===this.areaKey)return;this.areaKey=signature;
