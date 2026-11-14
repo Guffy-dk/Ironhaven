@@ -1,4 +1,4 @@
-import {RECIPES,DIRS,key,RESOURCE_KEYS,productionSpeed,storageCapacity,turretStats,LOGISTICS_TYPES,logisticsStatus} from './sim.js';
+import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,storageCapacity,turretStats,LOGISTICS_TYPES,logisticsStatus,canAcceptItem} from './sim.js';
 export const STATUS_LABELS={running:'Running',input:'Waiting for inputs',output:'Output blocked',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
 export function factoryStatus(s,b,grid){
  if(LOGISTICS_TYPES.includes(b.type))return logisticsStatus(s,b,grid);
@@ -6,9 +6,9 @@ export function factoryStatus(s,b,grid){
  if(!b.active)return 'power';
  if(b.type==='turret')return b.ammo||s.resources.gear?'running':'ammo';
  if(b.type==='sawmill')return s.resources.wood>=storageCapacity(s)?'storage':'running';
- if(b.item){const[dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));if(['hq','storage','launchpad'].includes(out?.type)&&RESOURCE_KEYS.includes(b.item)&&s.resources[b.item]>=storageCapacity(s))return 'storage';if(out){const[ox,oz]=DIRS[out.dir||0],wrongSide=(out.type==='belt'||RECIPES[out.type])&&b.x===out.x+ox&&b.z===out.z+oz;if(!wrongSide&&(out.type==='belt'&&!out.item||['hq','storage'].includes(out.type)&&RESOURCE_KEYS.includes(b.item)||out.type==='launchpad'&&b.item==='module'||RECIPES[out.type]?.input[b.item]&&out.input.filter(v=>v===b.item).length<RECIPES[out.type].input[b.item]*4))return 'running';}return 'output';}
- const recipe=RECIPES[b.type];if(recipe&&Object.entries(recipe.input).some(([r,n])=>b.input.filter(v=>v===r).length<n))return 'input';
- return recipe||['drill','copperDrill'].includes(b.type)?'running':'idle';
+ if(b.item){const[dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));if(['hq','storage','launchpad'].includes(out?.type)&&RESOURCE_KEYS.includes(b.item)&&s.resources[b.item]>=storageCapacity(s))return 'storage';return canAcceptItem(s,out,b.item,b)?'running':'output';}
+ if(RECIPES[b.type])return productionRecipe(b)?'running':'input';
+ return ['drill','copperDrill'].includes(b.type)?'running':'idle';
 }
 export function productionReport(s){
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),counts={},demand=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));

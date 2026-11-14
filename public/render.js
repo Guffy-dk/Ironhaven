@@ -9,7 +9,7 @@ const box=(p,c,x,y,z,w,h,d,b=false)=>part(p,'round',c,x,y,z,w,h,d,b);
 const cyl=(p,c,x,y,z,r,h,n=8,b=false)=>part(p,'cyl',c,x,y,z,r,h,n,b);
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
 export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
- const originalType=type;type=({copperDrill:'drill',copperSmelter:'smelter',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
+ const originalType=type;type=({copperDrill:'drill',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
   // Each incoming lane curves into the output; geometry ends exactly at tile edges.
@@ -80,7 +80,7 @@ export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
   port(g,0,'OUT',C.gold);if(type!=='drill')for(const side of [1,2,3])port(g,side,'IN',0x79d8d0);
   if(type==='smelter'){cyl(g,C.steel,.2,.53,.18,.2,.5,12);cyl(g,C.gold,.2,.8,.18,.21,.05,12);}
  }
- if(originalType==='copperDrill'||originalType==='copperSmelter')cyl(g,0xd49260,0,.87,.26,.16,.15,12);
+ if(originalType==='copperDrill')cyl(g,0xd49260,0,.87,.26,.16,.15,12);
  if(originalType==='foundry')for(const x of[-.23,.23])cyl(g,0x91aeb7,x,.8,0,.15,.5,12);
  if(originalType==='circuitLab')box(g,0x69d5c6,0,.77,-.25,.55,.06,.22,true);
  if(originalType==='componentFactory')for(const x of[-.24,.24])cyl(g,0xb2a1cc,x,.9,.2,.12,.35,8);

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
-import {createGame,addPlayer,maxHp} from '../public/shared/sim.js';
+import {createGame,addPlayer,maxHp,step} from '../public/shared/sim.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
 const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
@@ -54,6 +54,25 @@ test('W+A sends both movement axes and the camera follows the engineer',async()=
  const h=harness();try{h.$('start-solo').click();h.key('w');h.key('a');h.frame(1000);let s=h.save();assert.deepEqual(s.players[0].input,{x:0,z:0}); // saves intentionally stop movement
  for(let i=0;i<10;i++)h.ticks[0]();h.frame(1400);assert.ok(h.dom.__view.followed);s=h.save();assert.ok(s.players[0].x<2&&s.players[0].z<2);assert.equal(h.dom.__view.followed.id,s.players[0].id);
  }finally{await h.close();}
+});
+test('the playfield warning announces its forecast and attack independently of the minimap',async()=>{
+ const h=harness();try{
+  const warning=h.$('swarm-warning');
+  assert.ok(warning.hidden);
+  h.$('start-solo').click();
+  h.dom.document.querySelector('[data-window-close="map-panel"]').click();
+  assert.ok(!warning.hidden);
+  assert.equal(warning.dataset.side,'north');
+  assert.equal(h.$('swarm-warning-text').textContent,'Next swarm from North');
+  assert.equal(h.dom.document.querySelectorAll('#hotbar [data-type="smelter"]').length,1);
+  assert.equal(h.dom.document.querySelector('#hotbar [data-type="copperSmelter"]'),null);
+ }finally{await h.close();}
+ const s=createGame(),p=addPlayer(s);s.nextWave=0;step(s);
+ const active=harness({state:s,playerId:p.id});try{
+  active.$('resume').click();
+  assert.ok(active.$('swarm-warning').classList.contains('urgent'));
+  assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from North');
+ }finally{await active.close();}
 });
 test('drag-selection moves an area and Shift override asks once before packing invalid drills',async()=>{
  const h=harness();try{

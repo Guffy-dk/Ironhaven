@@ -6,12 +6,12 @@ export const DIFFICULTIES={
  standard:{name:'Standard',count:1,health:1,damage:1,prep:100,interval:95},
  veteran:{name:'Veteran',count:1.22,health:1.12,damage:1.15,prep:100,interval:95}
 };
-export function waveForecast(s,wave=s.wave+1){const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1),count=Math.min(480,Math.round(Math.min(336,12+wave*wave*4)*d.count*(1+guests*.1)));return{wave,count,sides:[wave%4,(wave+1)%4],health:d.health,damage:d.damage};}
+export function waveForecast(s,wave=s.wave+1){const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1),count=Math.min(480,Math.round(Math.min(336,12+wave*wave*4)*d.count*(1+guests*.1)));return{wave,count,side:wave%4,health:d.health,damage:d.damage};}
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
  belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries items toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:12},desc:'Place on blue iron deposits. Mines one ore every two seconds. The gold OUT port is its delivery side.'},
- smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:15},desc:'Feed ore into any cyan IN port. Produces one iron plate every two seconds and sends it through the gold OUT port.'},
+ smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:15},desc:'Feed iron or copper ore into any cyan IN port. Processes one ore at a time, in arrival order, and sends iron plates or copper through the gold OUT port.'},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
  sawmill:{name:'Sawmill',hp:180,power:2,cost:{wood:20,plate:8},desc:'Requires trees within five tiles. Delivers three wood directly to the colony every three seconds.'},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'Consumes one wood every twelve seconds to add eighteen power to the colony network.'},
@@ -24,7 +24,6 @@ Object.assign(TYPES,{
  inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A programmable cargo capsule. Place between a conveyor behind it and a machine ahead. Default: one item into the machine, one left on the belt. The right-side port feeds a separate return line.'},
  splitter:{name:'Dispatch hub',hp:160,power:0,cost:{wood:2,plate:6,gear:2},desc:'Place on the main conveyor. Input at the rear, Forward ahead, Machine to the left and Return to the right. Program exact batches; default 1 Machine / 1 Forward / 0 Return.'},
  copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'Extracts copper ore from orange deposits. Route it through a copper smelter to supply electronics.'},
- copperSmelter:{name:'Copper smelter',hp:260,power:3,cost:{wood:12,plate:20},desc:'Smelts copper ore into copper. Copper is required by circuit assemblers.'},
  foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel reinforces advanced upgrades and evacuation hardware.'},
  circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'Combines two copper and one plate into a circuit. Circuits unlock advanced upgrades and ship components.'},
  componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'Combines two steel, two circuits and a gear into a ship component. Components power the evacuation objective.'},
@@ -33,7 +32,7 @@ Object.assign(TYPES,{
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module'];
 export const MAX_UPGRADES=10;
-export const SAVE_SCHEMA=5;
+export const SAVE_SCHEMA=6;
 export const LOGISTICS_TYPES=['inserter','splitter'];
 export const PROGRAM_ROLES=['machine','forward','return'];
 export const ITEM_KEYS=['ore','copperOre',...RESOURCE_KEYS];
@@ -46,14 +45,20 @@ function advanceProgram(b,role){
  if(--b.remaining<=0){b.phase=(b.phase+1)%3;b.remaining=0;programRole(b);}
 }
 function logTransfer(b,role,item,s,bypassed=false){b.lastTransfer={role,item,time:s.time};if(bypassed){b.shipments||={machine:0,forward:0,return:0,bypassed:0};b.shipments.bypassed++;}else advanceProgram(b,role);}
-function programMatches(b,item,grid){const p=programFor(b);if(p.filter==='any')return true;if(p.filter!=='auto')return item===p.filter;const d=logisticsPorts(b).machine,[dx,dz]=DIRS[d],target=grid.get(key(b.x+dx,b.z+dz));return RECIPES[target?.type]?!!RECIPES[target.type].input[item]:true;}
+function programMatches(b,item,grid){const p=programFor(b);if(p.filter==='any')return true;if(p.filter!=='auto')return item===p.filter;const target=programTarget(b,'machine',grid);return RECIPES[target?.type]?recipeInput(target,item)>0:true;}
 function programTarget(b,role,grid){const d=logisticsPorts(b)[role],[dx,dz]=DIRS[d];return grid.get(key(b.x+dx,b.z+dz));}
 
 export const RECIPES={
  smelter:{input:{ore:1},output:'plate',seconds:2},assembler:{input:{plate:2},output:'gear',seconds:3},
- copperSmelter:{input:{copperOre:1},output:'copper',seconds:2},foundry:{input:{plate:3},output:'steel',seconds:3.5},
+ foundry:{input:{plate:3},output:'steel',seconds:3.5},
  circuitLab:{input:{copper:2,plate:1},output:'circuit',seconds:4},componentFactory:{input:{steel:2,circuit:2,gear:1},output:'module',seconds:5}
 };
+const COPPER_RECIPE={input:{copperOre:1},output:'copper',seconds:2};
+export function recipeInput(b,item){return b.type==='smelter'&&item==='copperOre'?1:RECIPES[b.type]?.input[item]||0;}
+export function productionRecipe(b){
+ const recipe=b.type==='smelter'&&b.input[0]==='copperOre'?COPPER_RECIPE:RECIPES[b.type];
+ return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
+}
 export const DIRECTIONAL = ['inserter','splitter','belt','drill','copperDrill',...Object.keys(RECIPES)];
 export const TURRET_LEVELS = [
  {name:'Mk I',hp:350,damage:28,range:10,interval:.38,cost:null},
@@ -75,11 +80,22 @@ export function upgradeCost(b){
  if(level>=3){cost.steel=(cost.steel||0)+(level-2)*3;cost.circuit=(cost.circuit||0)+(level-2)*2;}return cost;
 }
 export const inventoryCount = (s,id,type) => s.players.find(p=>p.id===id)?.inventory?.[type]?.length||0;
+function migrateCopperSmelterHealth(b){
+ const scale=1+((b.level||1)-1)*.25;
+ b.hp=Math.max(1,b.hp-(Math.round(260*scale)-Math.round(TYPES.smelter.hp*scale)));
+}
 export function migrateGame(s){
- if(!s||![1,2,3,4,5].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ if(!s||![1,2,3,4,5,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  if(s.version<3&&s.status==='victory')s.status='playing';
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];s.evacuation||=null;s.terrain.copper||=makeTerrain(s.seed).copper;for(const r of RESOURCE_KEYS)s.resources[r]??=0;for(const p of s.players){p.inventory||={};p.input={x:0,z:0};p.sprinting=false;}
- for(const b of s.buildings){b.level||=1;if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}}
+ for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}}
+ for(const p of s.players){
+  const packed=p.inventory.copperSmelter;
+  if(!Array.isArray(packed))continue;
+  for(const b of packed)migrateCopperSmelterHealth(b);
+  (p.inventory.smelter||=[]).push(...packed);
+  delete p.inventory.copperSmelter;
+ }
  return s;
 }
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -270,7 +286,7 @@ export function canAcceptItem(s,b,item,from,cycles=4){
  if(['hq','storage'].includes(b.type)||b.type==='launchpad'&&item==='module')return RESOURCE_KEYS.includes(item)&&(s.resources[item]||0)<storageCapacity(s);
  if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
  if(b.type==='belt')return !b.item;
- const recipe=RECIPES[b.type];return !!(recipe&&recipe.input[item]&&b.input.filter(v=>v===item).length<recipe.input[item]*cycles);
+ const required=recipeInput(b,item);return required>0&&b.input.filter(v=>v===item).length<required*cycles;
 }
 function accept(s,b,item,from,cycles=4){
  if(!canAcceptItem(s,b,item,from,cycles))return false;
@@ -309,9 +325,9 @@ export function logisticsStatus(s,b,grid){
  return 'output';
 }
 function spawnWave(s){
- const forecast=waveForecast(s);s.wave++;const count=forecast.count;
+ const forecast=waveForecast(s);s.wave++;s.waveSide=forecast.side;const count=forecast.count;
  for(let i=0;i<count;i++){
-  const side=(s.wave+i%2)%4,t=(i*7.31+s.wave*3)%46-23;
+  const side=forecast.side,t=(i*7.31+s.wave*3)%46-23;
   const x=side===0?-26:side===2?26:t,z=side===1?-26:side===3?26:t;
   const brute=i%11===0,hp=Math.round((35+s.wave*8)*forecast.health*(brute?2:1));
   s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage:forecast.damage,speed:1.0+(i%4)*.12+s.wave*.025,cooldown:0,brute:i%11===0});
@@ -337,10 +353,11 @@ export function step(s,dt=STEP){
   if(b.type==='generator'){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress>=12){b.progress=0;if(s.resources.wood>0)s.resources.wood--;}}
   if(!b.active)continue;
   const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
-  const recipe=RECIPES[b.type],extract=b.type==='drill'?'ore':b.type==='copperDrill'?'copperOre':null;
-  if(extract||recipe){
+  const extract=b.type==='drill'?'ore':b.type==='copperDrill'?'copperOre':null;
+  if(extract||RECIPES[b.type]){
    if(b.item){if(accept(s,out,b.item,b))b.item=null;continue;}
-   if(recipe&&Object.entries(recipe.input).some(([r,n])=>b.input.filter(v=>v===r).length<n))continue;
+   const recipe=productionRecipe(b);
+   if(!extract&&!recipe)continue;
    b.progress+=dt*productionSpeed(b);
    if(b.progress>=(recipe?.seconds||2)){b.progress=0;if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);b.item=extract||recipe.output;s.stats.totals[b.item]=(s.stats.totals[b.item]||0)+1;}
   }
