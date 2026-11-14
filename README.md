@@ -2,13 +2,13 @@
 
 **Byg. Befæst. Overlev.** En spilbar, original low-poly 3D-prototype inspireret af automatiseringen i Factorio og baseforsvaret i They Are Billions.
 
-**[Spil i browseren](https://guffy-dk.github.io/Ironhaven/) · [Hent den selvstændige udgave](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
+**[Hent den selvstændige udgave — ingen installation](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
 
 ## Spil uden installation
 
 Hent **Ironhaven.html** fra den seneste udgivelse, og dobbeltklik på filen. Den indeholder hele spillet, inklusive grafik og motor. Ingen serverapp, Node.js, CDN eller eksterne spilaktiver er nødvendige. Brug en nyere Chrome, Edge eller Firefox med WebGL aktiveret. Filen er omkring 590 KB; komprimeret er den mindre.
 
-Du kan også spille via browserlinket ovenfor. Den downloadede udgave virker offline og kan deles med dine medspillere på en USB-nøgle eller via en lokal mappe.
+Den downloadede udgave virker offline og kan deles med dine medspillere på en USB-nøgle eller via en lokal mappe. Se opsætning af valgfri browserhosting nedenfor.
 
 ## Åbn din verden til LAN — inde i spillet
 
@@ -52,6 +52,10 @@ Maskiner afleverer i pilens retning. Brug bånd mellem maskiner og helt frem til
 | ? | Felthåndbog |
 
 Soloverdener og værtens verden gemmes lokalt i browseren hvert 30. sekund. Du kan også gemme manuelt. Der er én gemmeplads pr. browser/origin; en ny ekspedition erstatter den ved næste gemning. Gemt verden deles ikke automatisk mellem den downloadede fil og den hostede udgave. Lokal lagring skal være tilladt i browseren. Undgå at slette browserdata, hvis du vil bevare verdenen.
+
+## Valgfri browserhosting med GitHub Pages
+
+GitHub-integrationen kan skrive kode og udgivelser, men afviser aktivering af Pages med HTTP 403. Repositoryets ejer kan aktivere hosting under **Settings → Pages → Source: GitHub Actions**. Kør derefter workflowet **Publish playable game** under fanen Actions. Den forventede adresse er `https://guffy-dk.github.io/Ironhaven/`; den virker først efter en vellykket deployment. Downloadudgaven fungerer uafhængigt af denne indstilling.
 
 ## Udvikling
 
