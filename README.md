@@ -6,7 +6,13 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.5 — programmable expedition logistics
+## Version 0.6 — a clearer front
+
+Each swarm spawns on one edge. The arrow above the playfield points toward that edge and turns red in the final twenty seconds and during the attack. The HUD, inspector, build bar and menus use larger, higher-contrast text.
+
+One **Smelter** accepts both iron and copper ore through its cyan IN ports. It processes mixed ore in arrival order and sends both products out of the same gold OUT port. Existing placed and packed copper smelters become universal smelters when a world loads.
+
+## Included from 0.5 — programmable expedition logistics
 
 **New here?** The first-world tutorial can be skipped with the remembered **Skip tutorial** checkbox or replayed from the menu. For a new Codex/ChatGPT conversation or local checkout, read [the complete project handoff](docs/PROJECT_HANDOFF.md).
 
@@ -39,7 +45,7 @@ Throughput is still finite. Each base smelter consumes one ore every two seconds
 
 **I** opens a production report: measured output, theoretical recipe demand and stock. **B** toggles machine labels that distinguish missing ingredients, blocked output, full storage, no power, no ammo and no fuel. [Community sources and decisions](docs/COMMUNITY_RESEARCH.md) explain what was adopted and why.
 
-Choose **Relaxed**, **Standard** or **Veteran** before starting. Veteran increases enemy pressure without shortening Standard preparation time. Co-op adds 10% enemies per connected guest, with no extra health multiplier. Attack directions and counts are forecast; minimap edges highlight in the final twenty seconds.
+Choose **Relaxed**, **Standard** or **Veteran** before starting. Veteran increases enemy pressure without shortening Standard preparation time. Co-op adds 10% enemies per connected guest, with no extra health multiplier. The projected number of attackers is shown in the colony panel.
 
 Three rolling checkpoints are stored before swarms, separately from ordinary autosave. Choose a checkpoint in the menu, or retry the latest after defeat. Restoring returns the actual earlier world with at least twenty seconds to prepare. The host restores all connected guests as well. Local checkpoints, like ordinary saves, are separate in normal/incognito profiles and are not uploaded to GitHub.
 
@@ -59,7 +65,7 @@ Hold **Shift + WASD** to sprint. Drag panel headers to move the inspector, minim
 
 | Production | Purpose |
 |---|---|
-| Copper drill → copper smelter → copper | Feed circuit assemblers |
+| Copper drill → smelter → copper | Feed circuit assemblers |
 | 2 copper + 1 plate → circuit | Advanced upgrades and evacuation components |
 | 3 plates → steel | Advanced upgrades and evacuation structures |
 | 2 steel + 2 circuits + 1 gear → ship component | Complete the evacuation objective |

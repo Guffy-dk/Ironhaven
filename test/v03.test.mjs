@@ -30,7 +30,7 @@ test('occupied destinations and an invalid core cannot silently destroy the colo
  const t=s.buildings.find(b=>b.type==='turret');assert.ok(planMove(s,[t.id],-t.x,-t.z).invalid.length);assert.match(command(s,p.id,{type:'moveArea',ids:[t.id],dx:-t.x,dz:-t.z}),/cannot be placed/);
 });
 test('every new factory consumes its exact ingredients and delivers a useful processed material',()=>{
- for(const type of ['copperSmelter','foundry','circuitLab','componentFactory']){
+ for(const type of ['foundry','circuitLab','componentFactory']){
   const{s,p}=make();s.buildings=s.buildings.filter(b=>b.type==='hq');rich(s);assert.equal(command(s,p.id,{type:'build',building:type,x:-1,z:0,dir:0}),null);
   const b=s.buildings.find(b=>b.type===type),recipe=RECIPES[type];for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n*2;i++)b.input.push(r);
   for(const r of RESOURCE_KEYS)s.resources[r]=0;run(s,recipe.seconds*2+1);assert.equal(s.resources[recipe.output],2,type+' should deliver two outputs');assert.equal(b.input.length,0);
@@ -58,7 +58,7 @@ test('world exports round-trip and old wins migrate to the new evacuation object
  s.version=2;s.status='victory';s.wave=8;const old=parseSave(JSON.stringify({state:s,playerId:p.id}));assert.equal(old.state.status,'playing');assert.throws(()=>parseSave('not json'),/JSON/);assert.throws(()=>parseSave(JSON.stringify({state:{}})),/world save/);
 });
 test('a complete copper line mines, smelts and transports copper to the core',()=>{
- const{s,p}=make();assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'belt',x:9,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'copperSmelter',x:10,z:-4,dir:3}),null);assert.equal(command(s,p.id,{type:'buildRow',building:'belt',start:{x:10,z:-5},end:{x:0,z:0},dir:2}),null);run(s,60);assert.ok(s.resources.copper>=10);assert.ok(s.produced.plate>0);
+ const{s,p}=make();assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'belt',x:9,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'smelter',x:10,z:-4,dir:3}),null);assert.equal(command(s,p.id,{type:'buildRow',building:'belt',start:{x:10,z:-5},end:{x:0,z:0},dir:2}),null);run(s,60);assert.ok(s.resources.copper>=10);assert.ok(s.produced.plate>0);
 });
 test('full storage causes backpressure and a new warehouse resumes delivery',()=>{
  const{s,p}=make(),smelter=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(b=>b.type==='hq'||b===smelter);smelter.x=-1;smelter.z=0;smelter.dir=0;smelter.item='plate';s.resources.plate=300;step(s);assert.equal(s.resources.plate,300);assert.equal(smelter.item,'plate');
