@@ -1,6 +1,7 @@
 import { View } from './render.js';
-import { createGame,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,planRoute,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,DIFFICULTIES,waveForecast } from './shared/sim.js';
+import { createGame,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,planRoute,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,DIFFICULTIES,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
 import { CURRENT_VERSION,RELEASE_STAGE,RELEASES,displayVersion } from './shared/releases.js';
+import { TUTORIAL_STEPS } from './shared/tutorial.js';
 import { initWindows } from './windows.js';
 import { factoryStatus,STATUS_LABELS,productionReport } from './shared/diagnostics.js';
 import { parseSave,packWorldSave } from './shared/saves.js';
@@ -13,6 +14,7 @@ const keys=new Set();
 let followCamera=true,rowAnchor=null,rowGesture=null,routePlan=null,lastRouteKey='',pointer=null;
 let areaIds=[],selectionGesture=null,movingArea=false,pendingMove=null,showDiagnostics=false,checkpointCache=null,lastAutoCheckpoint='';
 const CHECKPOINTS='ironhaven.checkpoints.v1';
+let programTargetId=null,tutorialIndex=0,tutorialPaused=false,tutorialWasPaused=false;
 initWindows();
 $('version-label').textContent=displayVersion(CURRENT_VERSION)+' '+RELEASE_STAGE.toUpperCase();
 $('start-patch-notes').textContent=RELEASE_STAGE.toUpperCase()+' '+displayVersion(CURRENT_VERSION)+' · WHAT’S NEW ↗';
@@ -25,10 +27,11 @@ function tone(freq=440,duration=.08,volume=.025,type='sine'){
 try{view=new View($('world'));}catch(e){$('loading').innerHTML='<p>3D could not start. Enable WebGL / hardware acceleration in your browser and reload.</p>';throw e;}
 function readStorage(key){try{return localStorage.getItem(key);}catch{return null;}}
 function writeStorage(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
+$('skip-tutorial').checked=readStorage('ironhaven.skipTutorial')==='true';
 $('player-name').value=readStorage(NAME)||'Engineer';$('difficulty').value=readStorage('ironhaven.difficulty')||'standard';
 if(readStorage(SAVE))$('resume').hidden=false;
 document.body.classList.add('at-start');
-const TOOL_LIST=['belt','drill','smelter','assembler','sawmill','generator','turret','wall','repair','demolish','copperDrill','copperSmelter','foundry','circuitLab','componentFactory','storage','launchpad'];
+const TOOL_LIST=['belt','drill','smelter','assembler','sawmill','generator','turret','wall','repair','demolish','copperDrill','copperSmelter','foundry','circuitLab','componentFactory','storage','launchpad','inserter','splitter'];
 const SHORTCUT=['1','2','3','4','5','6','7','8','9','0'];
 function costText(type){return Object.entries(TYPES[type].cost).map(([r,n])=>`${n}${r==='wood'?'W':r==='plate'?'P':'⚙'}`).join(' · ')||'FREE';}
 function initHotbar(){
@@ -38,7 +41,7 @@ function initHotbar(){
 }
 function updateToolbar(){
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
- document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type,production=['drill','copperDrill',...Object.keys(RECIPES)].includes(t),defense=['turret','wall','repair','demolish'].includes(t),logistics=['belt','generator','sawmill','storage','launchpad','repair','demolish'].includes(t);el.hidden=tab==='production'&&!production||tab==='defense'&&!defense||tab==='logistics'&&!logistics;el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
+ document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type,production=['drill','copperDrill',...Object.keys(RECIPES)].includes(t),defense=['turret','wall','repair','demolish'].includes(t),logistics=['inserter','splitter','belt','generator','sawmill','storage','launchpad','repair','demolish'].includes(t);el.hidden=tab==='production'&&!production||tab==='defense'&&!defense||tab==='logistics'&&!logistics;el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
 }
 function setTool(t){if(t)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
 function updateHover(){
@@ -65,7 +68,7 @@ function saveGame(quiet=false){
 function startGame(resume=false){
  if(resume){try{const data=parseSave(readStorage(SAVE));state=data.state;playerId=data.playerId;state.paused=false;state.players=state.players.filter(p=>p.id===playerId);state.players[0].input={x:0,z:0};}catch{toast('Could not open the saved world.',true);return false;}}
  else{state=createGame(undefined,{difficulty:$('difficulty').value});writeStorage(CHECKPOINTS,'[]');checkpointCache=[];lastAutoCheckpoint='';const p=addPlayer(state,$('player-name').value);playerId=p.id;}
- mode='solo';finishStart();checkpoint(resume?'Resumed world':'Expedition start');return true;
+ mode='solo';finishStart();checkpoint(resume?'Resumed world':'Expedition start');if(!resume){writeStorage('ironhaven.skipTutorial',String($('skip-tutorial').checked));if(!$('skip-tutorial').checked)showTutorial();}return true;
 }
 function finishStart(){started=true;ended=false;lastWave=state.wave;lastEvent=0;writeStorage(NAME,$('player-name').value);$('difficulty').value=state.difficulty||'standard';writeStorage('ironhaven.difficulty',$('difficulty').value);$('start-screen').hidden=true;document.body.classList.remove('at-start');$('end-dialog').close();clearArea();setTool(null);focusEngineer(true);updateUi();view.sync(state);tone(520,.15);}
 function restart(){
@@ -75,7 +78,7 @@ function restart(){
   for(const peer of lan.peers.values())if(peer.ready&&peer.playerId){const p=addPlayer(state,peer.name);peer.playerId=p.id;lan.send(peer,{type:'welcome',id:p.id,state,version:CURRENT_VERSION});}
   ended=false;lastWave=0;$('end-dialog').close();clearArea();setTool(null);view.terrainKey='';focusEngineer(true);updateUi();
  }else startGame();
- checkpoint('Expedition start');toast('A new colony has been founded.');
+ checkpoint('Expedition start');if(mode==='host'&&!$('skip-tutorial').checked)showTutorial();toast('A new colony has been founded.');
 }
 const lan=new Lan({
  onPeerOpen(peer){if(lan.role==='client')lan.send(peer,{type:'hello',name:$('player-name').value||readStorage(NAME)||'Engineer',version:CURRENT_VERSION});updatePeers();},
@@ -120,14 +123,15 @@ $('create-answer').onclick=async()=>{
 };
 for(const button of document.querySelectorAll('[data-copy]'))button.onclick=async()=>{const input=$(button.dataset.copy);try{await navigator.clipboard.writeText(input.value);toast('Code copied.');}catch{input.focus();input.select();if(document.execCommand('copy'))toast('Code copied.');else toast('Select the code and copy it with Ctrl+C.');}};
 function updateInspector(){
- const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b&&!tool);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool;$('launch-colony').hidden=b?.type!=='launchpad'||!!tool;
+ const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b&&!tool);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool;$('launch-colony').hidden=b?.type!=='launchpad'||!!tool;$('program-building').hidden=!b||!!tool||!LOGISTICS_TYPES.includes(b.type);
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade ${b.level||1} / ${MAX_UPGRADES} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:'Fully upgraded · 10/10';btn.disabled=!cost||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
  if(b?.type==='launchpad'){$('launch-colony').disabled=mode==='client'||state.wave<FINAL_WAVE||state.enemies.length>0||state.evacuation?.status==='charging'||Object.entries(LAUNCH_COST).some(([r,n])=>state.resources[r]<n);$('launch-colony').textContent=state.evacuation?.status==='charging'?'Evacuation charging…':'Begin evacuation · 30 components + 60 steel + 40 circuits';}
- $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'From a single spark to a self-sufficient fortress. Keep production running — and the swarm outside.';
+ $('program-building').textContent='Program flow (E) ↗';
+ $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'Keep the expedition supplied, protect the crew and build the route home.';
  const row=(a,v,cls='')=>`<div class="stat-row"><span>${a}</span><span class="${cls}">${v}</span></div>`;
  if(tool){$('intel-stats').innerHTML=Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join('')+(def.power?row('Power',def.power):'')+(!['repair','demolish'].includes(type)?row('In your inventory',inventoryCount(state,playerId,type),'ok'):'');}
- else{const bb=b||state.buildings.find(b=>b.type==='hq');$('intel-stats').innerHTML=bb?row('Health',`${Math.max(0,Math.ceil(bb.hp))} / ${maxHp(bb)}`)+`<div class="hp-bar"><i style="width:${Math.max(0,bb.hp/maxHp(bb)*100)}%"></i></div>`+row('Status',STATUS_LABELS[factoryStatus(state,bb,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))],bb.active?'ok':'bad')+(bb.type==='turret'?row('Ammo',bb.ammo,bb.ammo<=3?'bad':'ok')+row('Turret level',turretStats(bb).name)+row('Damage / range',`${turretStats(bb).damage} / ${turretStats(bb).range}`):'')+(bb.input?.length?row('Input buffer',bb.input.length+'/'+(Object.values(RECIPES[bb.type]?.input||{}).reduce((n,v)=>n+v,0)*4||8)):'')+(buildingPower(bb)?row('Power used',buildingPower(bb)):'')+(RECIPES[bb.type]||['drill','copperDrill','sawmill'].includes(bb.type)?row('Production speed',productionSpeed(bb).toFixed(2)+'×'):'')+(bb.type==='generator'?row('Power supplied',Math.round(18*(1+((bb.level||1)-1)*.3))):'')+row('Upgrades',`${(bb.level||1)-1} / ${MAX_UPGRADES}`)+(bb.type==='storage'||bb.type==='hq'?row('Storage / material',storageCapacity(state)):'')+row('Position',`${bb.x}, ${bb.z}`):row('Status','Core destroyed','bad');}
- const recipes={copperDrill:'COPPER ORE → COPPER SMELTER',copperSmelter:'1 COPPER ORE → 1 COPPER',foundry:'3 IRON PLATES → 1 STEEL',circuitLab:'2 COPPER + 1 PLATE → 1 CIRCUIT',componentFactory:'2 STEEL + 2 CIRCUITS + 1 GEAR → 1 COMPONENT',storage:'STORAGE CAPACITY +300 / MATERIAL',launchpad:'8 SWARMS → 90 SEC. FINAL DEFENSE',drill:'IRON ORE → CONVEYOR',smelter:'1 ORE → 1 IRON PLATE',assembler:'2 IRON PLATES → 1 GEAR',turret:'1 GEAR → 12 SHOTS',sawmill:'FOREST → 3 WOOD / 3 SEC.',generator:'1 WOOD / 12 SEC. → 18 POWER'};
+ else{const bb=b||state.buildings.find(b=>b.type==='hq');$('intel-stats').innerHTML=bb?row('Health',`${Math.max(0,Math.ceil(bb.hp))} / ${maxHp(bb)}`)+`<div class="hp-bar"><i style="width:${Math.max(0,bb.hp/maxHp(bb)*100)}%"></i></div>`+row('Status',STATUS_LABELS[factoryStatus(state,bb,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))],bb.active?'ok':'bad')+(bb.type==='turret'?row('Ammo',bb.ammo,bb.ammo<=3?'bad':'ok')+row('Turret level',turretStats(bb).name)+row('Damage / range',`${turretStats(bb).damage} / ${turretStats(bb).range}`):'')+(bb.input?.length?row('Input buffer',bb.input.length+'/'+(Object.values(RECIPES[bb.type]?.input||{}).reduce((n,v)=>n+v,0)*4||8)):'')+(buildingPower(bb)?row('Power used',buildingPower(bb)):'')+(RECIPES[bb.type]||['drill','copperDrill','sawmill'].includes(bb.type)?row('Production speed',productionSpeed(bb).toFixed(2)+'×'):'')+(bb.type==='generator'?row('Power supplied',Math.round(18*(1+((bb.level||1)-1)*.3))):'')+row('Upgrades',`${(bb.level||1)-1} / ${MAX_UPGRADES}`)+(bb.type==='storage'||bb.type==='hq'?row('Storage / material',storageCapacity(state)):'')+(LOGISTICS_TYPES.includes(bb.type)?row('Plan M / F / R',`${programFor(bb).machine} / ${programFor(bb).forward} / ${programFor(bb).return}`)+row('Batch remaining',bb.remaining||0)+row('Delivered M / F / R',`${bb.shipments?.machine||0} / ${bb.shipments?.forward||0} / ${bb.shipments?.return||0}`)+row('Bypassed',bb.shipments?.bypassed||0):'')+row('Position',`${bb.x}, ${bb.z}`):row('Status','Core destroyed','bad');}
+ const recipes={inserter:'BELT → RECIPE-AWARE CARGO CAPSULE',splitter:'PROGRAMMED MACHINE / FORWARD / RETURN',copperDrill:'COPPER ORE → COPPER SMELTER',copperSmelter:'1 COPPER ORE → 1 COPPER',foundry:'3 IRON PLATES → 1 STEEL',circuitLab:'2 COPPER + 1 PLATE → 1 CIRCUIT',componentFactory:'2 STEEL + 2 CIRCUITS + 1 GEAR → 1 COMPONENT',storage:'STORAGE CAPACITY +300 / MATERIAL',launchpad:'8 SWARMS → 90 SEC. FINAL DEFENSE',drill:'IRON ORE → CONVEYOR',smelter:'1 ORE → 1 IRON PLATE',assembler:'2 IRON PLATES → 1 GEAR',turret:'1 GEAR → 12 SHOTS',sawmill:'FOREST → 3 WOOD / 3 SEC.',generator:'1 WOOD / 12 SEC. → 18 POWER'};
  $('recipe').textContent=recipes[type]||'';$('intel-tip').textContent=tool?'R rotates. Q or Esc exits build mode. Blue rocks mark iron deposits.':b?'R rotates directional buildings. U upgrades the selected building. 9 repairs; 0 packs into inventory.':'Choose a building from the hotbar to expand your colony.';
 }
 function updateUi(){
@@ -198,12 +202,13 @@ $('launch-colony').onclick=()=>{const b=state.buildings.find(b=>b.id===selected)
 $('upgrade-turret').onclick=()=>{const b=state.buildings.find(b=>b.id===selected);if(b&&execute({type:'upgrade',x:b.x,z:b.z})!==false){tone(880,.16);updateUi();}};
 $('world').addEventListener('wheel',e=>{e.preventDefault();view.setZoom(e.deltaY*.015);},{passive:false});
 window.addEventListener('keydown',e=>{
- if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+ if(e.ctrlKey||e.metaKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
  if(e.key==='Escape'||e.key.toLowerCase()==='q'){setTool(null);clearArea();keys.clear();return;}
  if(document.querySelector('dialog[open]'))return;
  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(!started||e.repeat)return;
  const i=SHORTCUT.indexOf(e.key);if(i>=0)setTool(tool===TOOL_LIST[i]?null:TOOL_LIST[i]);
  if(e.key.toLowerCase()==='r'){if(!rotateExisting()&&tool){dir=(dir+1)%4;view.setTool(tool,dir);lastRouteKey='';updateHover();}}
+ if(e.key.toLowerCase()==='e'&&selected)openProgram();
  if(e.key.toLowerCase()==='b')$('toggle-diagnostics').click();if(e.key.toLowerCase()==='i')$('production-overview').click();
  if(e.key.toLowerCase()==='m'&&areaIds.length)beginMove();
  if(e.key.toLowerCase()==='u'&&selected)$('upgrade-turret').click();
@@ -219,7 +224,7 @@ function buildingLabels(){
  const root=$('building-labels'),wanted=new Set(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
  for(const b of state.buildings){
   const damaged=b.hp<maxHp(b),ammoLow=b.type==='turret'&&(b.ammo<=3||state.resources.gear<=1&&b.ammo<=6);
-  const status=showDiagnostics&&(RECIPES[b.type]||['drill','copperDrill','sawmill','generator','turret'].includes(b.type))?factoryStatus(state,b,grid):null;
+  const status=showDiagnostics&&(RECIPES[b.type]||['inserter','splitter','drill','copperDrill','sawmill','generator','turret'].includes(b.type))?factoryStatus(state,b,grid):null;
   if(!damaged&&!ammoLow&&!status)continue;
   const pos=view.project(b.x,b.z,b.type==='hq'?2.8:1.65);if(!pos.visible)continue;
   const id='building-'+b.id;wanted.add(id);let el=$(id);if(!el){el=document.createElement('div');el.className='building-label';el.id=id;root.append(el);}
@@ -245,6 +250,19 @@ $('import-save').onclick=()=>$('save-file').click();
 $('save-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(lan.peers.size)throw Error('Close LAN before importing a world.');const data=parseSave(await file.text());writeStorage(SAVE,JSON.stringify(data));$('menu-dialog').close();startGame(true);toast('World backup imported.');}catch(error){toast(error.message,true);}finally{e.target.value='';}};
 const enemyCanvas=$('enemy-health'),enemyCtx=enemyCanvas.getContext('2d');
 function enemyHealth(){if(enemyCanvas.width!==innerWidth||enemyCanvas.height!==innerHeight){enemyCanvas.width=innerWidth;enemyCanvas.height=innerHeight;}enemyCtx.clearRect(0,0,innerWidth,innerHeight);for(const e of state.enemies){const p=view.project(e.x,e.z,1.35*(e.brute?1.4:1));if(!p.visible)continue;enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}}
+const ITEM_NAMES={ore:'Iron ore',copperOre:'Copper ore',...Object.fromEntries(Object.entries(RESOURCE_NAMES).map(([k,v])=>[k,v.toLowerCase()]))};
+$('program-filter').innerHTML='<option value="auto">Auto · machine recipe ingredients</option><option value="any">Any item</option>'+ITEM_KEYS.map(k=>`<option value="${k}">${escape(ITEM_NAMES[k])}</option>`).join('');
+function updateProgramPreview(){const values=PROGRAM_ROLES.map(role=>[role,Number($('quota-'+role).value)]);$('program-preview').textContent=values.filter(([k,v])=>v>0).map(([k,v])=>`${k.toUpperCase()} × ${v}`).join(' → ')+' → repeat';}
+function openProgram(){const b=state.buildings.find(b=>b.id===selected);if(!b||!LOGISTICS_TYPES.includes(b.type))return;programTargetId=b.id;const p=programFor(b),ports=logisticsPorts(b),dirs=['EAST','SOUTH','WEST','NORTH'];$('program-title').textContent=TYPES[b.type].name+' · dispatch plan';$('program-ports').textContent=b.type==='inserter'?`Input conveyor: ${dirs[ports.input]}. Machine: ${dirs[ports.machine]}. Forward follows the source conveyor. Return: ${dirs[ports.return]}. Leave one tile for the relay between belt and machine.`:`Input: ${dirs[ports.input]}. Machine branch: ${dirs[ports.machine]}. Forward: ${dirs[ports.forward]}. Return line: ${dirs[ports.return]}. Place directly in the conveyor line.`;for(const role of PROGRAM_ROLES)$('quota-'+role).value=String(p[role]);$('program-filter').value=p.filter;$('program-buffer').value=String(p.buffer);$('program-wait').checked=!p.bypass;$('program-error').textContent='';updateProgramPreview();$('program-dialog').showModal();}
+$('program-building').onclick=openProgram;
+for(const role of PROGRAM_ROLES)$('quota-'+role).oninput=updateProgramPreview;
+for(const btn of document.querySelectorAll('[data-program-preset]'))btn.onclick=()=>{const v=btn.dataset.programPreset.split(',').map(Number);PROGRAM_ROLES.forEach((role,i)=>$('quota-'+role).value=v[i]);updateProgramPreview();};
+$('apply-program').onclick=()=>{const b=state.buildings.find(b=>b.id===programTargetId);if(!b){$('program-error').textContent='This unit was moved or removed. Select it again.';return;}const program={...Object.fromEntries(PROGRAM_ROLES.map(role=>[role,Number($('quota-'+role).value)])),filter:$('program-filter').value,buffer:Number($('program-buffer').value),bypass:!$('program-wait').checked};if(PROGRAM_ROLES.some(r=>!Number.isInteger(program[r])||program[r]<0||program[r]>100)||PROGRAM_ROLES.every(r=>program[r]===0)){$('program-error').textContent='Use whole numbers from 0 to 100, with at least one output enabled.';return;}if(execute({type:'configureLogistics',id:b.id,x:b.x,z:b.z,program})!==false){$('program-dialog').close();updateUi();toast('Dispatch plan updated.');}};
+function tutorialStep(){const step=TUTORIAL_STEPS[tutorialIndex];$('tutorial-tag').textContent=step.tag;$('tutorial-step').textContent=`${tutorialIndex+1} / ${TUTORIAL_STEPS.length}`;$('tutorial-title').textContent=step.title;$('tutorial-body').textContent=step.body;$('tutorial-back').disabled=tutorialIndex===0;$('tutorial-next').textContent=tutorialIndex===TUTORIAL_STEPS.length-1?'Begin expedition ↗':'Next ↗';document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));$(step.focus)?.classList.add('tutorial-focus');}
+function showTutorial(){if($('tutorial-dialog').open)return;$('menu-dialog').close();tutorialIndex=0;tutorialWasPaused=state.paused;tutorialPaused=started&&mode!=='client';if(tutorialPaused)state.paused=true;$('tutorial-pause').textContent=tutorialPaused?'The expedition is paused while you read. Close the guide when ready.':'This guide is local. The host controls expedition time.';$('tutorial-dont-show').checked=$('skip-tutorial').checked;tutorialStep();$('tutorial-dialog').showModal();}
+function closeTutorial(){const skip=$('tutorial-dont-show').checked;writeStorage('ironhaven.skipTutorial',String(skip));$('skip-tutorial').checked=skip;if(tutorialPaused&&mode!=='client')state.paused=tutorialWasPaused;tutorialPaused=false;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));}
+function dismissTutorial(){$('tutorial-dialog').close();closeTutorial();}
+$('tutorial-dialog').addEventListener('close',closeTutorial);$('tutorial-dialog').addEventListener('cancel',()=>closeTutorial());$('tutorial-close').onclick=dismissTutorial;$('tutorial-skip').onclick=dismissTutorial;$('tutorial-back').onclick=()=>{if(tutorialIndex>0)tutorialIndex--;tutorialStep();};$('tutorial-next').onclick=()=>{if(tutorialIndex<TUTORIAL_STEPS.length-1){tutorialIndex++;tutorialStep();}else dismissTutorial();};$('show-tutorial').onclick=showTutorial;
 function readCheckpoints(){if(checkpointCache)return checkpointCache;try{const v=JSON.parse(readStorage(CHECKPOINTS)||'[]');return checkpointCache=Array.isArray(v)?v:[];}catch{return checkpointCache=[];}}
 function writeCheckpoint(data,label){if(mode==='client')return;const items=[{label,time:data.state.time,save:data},...readCheckpoints()].slice(0,3);checkpointCache=items;if(!writeStorage(CHECKPOINTS,JSON.stringify(items)))writeStorage(CHECKPOINTS,JSON.stringify(items.slice(0,1)));}
 function checkpoint(label){if(started&&mode!=='client')writeCheckpoint(packWorldSave(state,playerId),label);}

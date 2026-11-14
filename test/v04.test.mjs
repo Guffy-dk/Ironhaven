@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,command,step,waveForecast,DIFFICULTIES,upgradeCost,buildingPower,planMove} from '../public/shared/sim.js';
+import {createGame,addPlayer,command,step,waveForecast,DIFFICULTIES,upgradeCost,buildingPower,planMove,SAVE_SCHEMA} from '../public/shared/sim.js';
 import {factoryStatus,productionReport} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 const run=(s,n)=>{for(let i=0;i<n*20;i++)step(s);};
@@ -27,7 +27,7 @@ test('recently attacked buildings cannot teleport or be dismantled to escape dam
 });
 test('world snapshots stop input and preserve guest inventories without changing the live game',()=>{
  const s=createGame(),host=addPlayer(s),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});command(s,host.id,{type:'move',x:1,z:-1,sprint:true});const before=JSON.stringify(s);
- const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].sprinting,false);assert.deepEqual(data.state.players[0].input,{x:0,z:0});assert.equal(parseSave(JSON.stringify(data)).state.version,4);
+ const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].sprinting,false);assert.deepEqual(data.state.players[0].input,{x:0,z:0});assert.equal(parseSave(JSON.stringify(data)).state.version,SAVE_SCHEMA);
 });
 test('late turret gains cost more power while upgrade prices remain increasing',()=>{
  const s=createGame(),b=s.buildings.find(b=>b.type==='turret');const basePower=buildingPower(b),first=Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0);b.level=10;assert.ok(buildingPower(b)>basePower*2);assert.ok(Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0)>first*5);

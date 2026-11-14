@@ -24,6 +24,17 @@ export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
   }
   const arrow=new T.Shape();arrow.moveTo(-.08,-.09);arrow.lineTo(.08,-.09);arrow.lineTo(.08,-.16);arrow.lineTo(.27,0);arrow.lineTo(.08,.16);arrow.lineTo(.08,.09);arrow.lineTo(-.08,.09);arrow.closePath();const a=new T.Mesh(new T.ShapeGeometry(arrow),mat(C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);a.position.set(DIRS[dir][0]*.14,.19,DIRS[dir][1]*.14);g.add(a);return g;
  }
+ if(type==='inserter'){
+  cyl(g,C.dark,0,.13,0,.42,.22,8);cyl(g,0x76aeb4,0,.27,0,.31,.08,8);
+  for(const z of[-.25,.25]){box(g,C.steel,0,.46,z,.12,.43,.1);box(g,0x8ce8d6,0,.68,z,.13,.06,.14,true);}
+  const capsule=new T.Group();capsule.name='cargoCapsule';capsule.position.y=.58;g.add(capsule);const shell=cyl(capsule,C.light,0,0,0,.13,.28,8);shell.rotation.z=Math.PI/2;box(capsule,0x76e6d2,0,.01,.12,.17,.08,.035,true);
+  port(g,2,'IN',0x79d8d0);port(g,0,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
+ }
+ if(type==='splitter'){
+  cyl(g,C.dark,0,.15,0,.53,.22,6);cyl(g,C.steel,0,.32,0,.44,.14,6);
+  const dial=cyl(g,0x91d8d0,0,.43,0,.23,.055,3,true);dial.name='dispatchDial';
+  port(g,2,'IN',0x79d8d0);port(g,0,'FWD',C.gold);port(g,3,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
+ }
  if(type==='wall'){
   box(g,C.dark,0,.1,0,.99,.2,.76);box(g,0x70827b,0,.5,0,.91,.75,.55);box(g,C.light,0,.9,0,.98,.12,.68);
   for(const x of [-.31,.31])box(g,C.dark,x,.48,-.3,.07,.68,.06);
@@ -147,6 +158,8 @@ export class View{
    if(!g){g=makeModel(b.type,b.dir,inputs,b.level||1);g.userData.signature=signature;g.position.set(b.x,0,b.z);this.scene.add(g);this.buildings.set(b.id,g);}
    g.position.set(b.x,0,b.z);
    const rotor=g.getObjectByName('rotor');if(rotor&&b.active)rotor.rotation.y=s.time*(b.type==='generator'?5:2)*productionSpeed(b);
+   const capsule=g.getObjectByName('cargoCapsule');if(capsule){const age=s.time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(s.time*3)*.03:0),0);}
+   const dial=g.getObjectByName('dispatchDial');if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
    const head=g.getObjectByName('head');if(head)head.rotation.y=b.aim||0;
    const beacon=g.getObjectByName('beacon');if(beacon){beacon.position.y=1.73+Math.sin(s.time*2)*.06;beacon.rotation.z=s.time*.2;}
    if(b.item){let item=this.items.get(b.id);if(!item){item=new T.Mesh(geometry('box',.21,.16,.21),mat(({ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc})[b.item]||C.light));this.items.set(b.id,item);this.scene.add(item);}let ox=0,oz=0;if(b.type==='belt'){const t=Math.min(1,Math.max(0,(s.tick-(b.itemTick??s.tick))/Math.max(2,8-Math.floor(((b.level||1)-1)*.5)))),side=Number.isInteger(b.itemSide)&&b.itemSide!==b.dir?b.itemSide:(b.dir+2)%4;ox=(1-t)**2*DIRS[side][0]*.5+t*t*DIRS[b.dir][0]*.5;oz=(1-t)**2*DIRS[side][1]*.5+t*t*DIRS[b.dir][1]*.5;}item.position.set(b.x+ox,.3,b.z+oz);item.visible=true;}

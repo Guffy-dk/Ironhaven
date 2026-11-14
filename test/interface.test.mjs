@@ -8,12 +8,13 @@ import {createGame,addPlayer,maxHp} from '../public/shared/sim.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
 const bundle=await build({entryPoints:[new URL('../public/app.js',import.meta.url).pathname],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
-function harness(saved){
+function harness(saved,{tutorial=false}={}){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
  dom.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:(t,k)=>k in t?t[k]:()=>{}});
  for(const d of dom.document.querySelectorAll('dialog')){d.showModal=()=>d.setAttribute('open','');d.close=()=>d.removeAttribute('open');}
  if(saved)dom.localStorage.setItem('ironhaven.save.v1',JSON.stringify(saved));
+ if(!tutorial)dom.localStorage.setItem('ironhaven.skipTutorial','true');
  dom.eval(bundle.outputFiles[0].text);
  const $=id=>dom.document.getElementById(id),tool=t=>dom.document.querySelector(`[data-type="${t}"]`).click();
  const point=(type,x,z,shift=false)=>$('world').dispatchEvent(new dom.PointerEvent(type,{button:0,clientX:x,clientY:z,shiftKey:shift,bubbles:true}));
@@ -74,4 +75,20 @@ test('production report and bottleneck overlay work, and pre-swarm checkpoints c
   for(let attempt=0;attempt<5;attempt++){h.$('early-wave').click();for(let i=0;i<62;i++)h.ticks[0]();h.$('retry-checkpoint').click();const saved=h.save();assert.equal(saved.wave,0);assert.equal(saved.enemies.length,0);assert.ok(saved.nextWave-saved.time>=19.9);}
   const checkpoints=JSON.parse(h.dom.localStorage.getItem('ironhaven.checkpoints.v1'));assert.ok(checkpoints.length<=3);assert.match(checkpoints[0].label,/Before swarm/);
  }finally{await h.close();}
+});
+test('logistics units expose editable quotas, presets, filter and wait behavior',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.tool('splitter');h.point('pointerdown',3,4);h.key('q');h.point('pointerdown',3,4);h.point('pointerup',3,4);assert.equal(h.$('program-building').hidden,false);h.key('e');assert.ok(h.$('program-dialog').open);assert.equal(h.$('quota-machine').value,'1');assert.equal(h.$('quota-forward').value,'1');assert.equal(h.$('quota-return').value,'0');
+  h.$('quota-machine').value='2';h.$('quota-forward').value='3';h.$('quota-return').value='1';h.$('program-wait').checked=true;h.$('program-filter').value='ore';assert.equal(h.$('program-buffer').value,'2','buffer select must retain its value');h.$('apply-program').click();const b=h.save().buildings.find(b=>b.x===3&&b.z===4);assert.deepEqual(b.program,{machine:2,forward:3,return:1,bypass:false,filter:'ore',buffer:2});
+ }finally{await h.close();}
+});
+test('new-world tutorial pauses, advances and remembers the skip checkbox; it can be replayed',async()=>{
+ const h=harness(undefined,{tutorial:true});try{
+  h.$('start-solo').click();assert.ok(h.$('tutorial-dialog').open);assert.equal(h.save().paused,true);assert.match(h.$('tutorial-title').textContent,/expedition/);h.$('tutorial-next').click();assert.equal(h.$('tutorial-step').textContent,'2 / 8');h.$('tutorial-back').click();assert.equal(h.$('tutorial-step').textContent,'1 / 8');h.$('tutorial-dont-show').checked=true;h.$('tutorial-skip').click();assert.equal(h.save().paused,false);assert.equal(h.dom.localStorage.getItem('ironhaven.skipTutorial'),'true');assert.equal(h.$('skip-tutorial').checked,true);
+  h.$('restart').click();assert.ok(!h.$('tutorial-dialog').open);h.$('show-tutorial').click();assert.ok(h.$('tutorial-dialog').open);h.$('tutorial-close').click();assert.equal(h.save().paused,false);
+ }finally{await h.close();}
+});
+test('skip checkbox bypasses onboarding and resuming a saved world does not trigger the new-world tutorial',async()=>{
+ const h=harness(undefined,{tutorial:true});try{h.$('skip-tutorial').checked=true;h.$('start-solo').click();assert.ok(!h.$('tutorial-dialog').open);assert.equal(h.save().paused,false);}finally{await h.close();}
+ const s=createGame(),p=addPlayer(s),resumed=harness({state:s,playerId:p.id},{tutorial:true});try{resumed.$('resume').click();assert.ok(!resumed.$('tutorial-dialog').open);}finally{await resumed.close();}
 });

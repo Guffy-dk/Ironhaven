@@ -1,9 +1,23 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.4.1';
+export const CURRENT_VERSION = '0.5.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.5.0',date:'2026-11-14',title:'Dispatch the expedition',
+  changes:[
+   'Added Transfer relays: original cargo-capsule stations that load a machine from a shared conveyor across a one-tile gap.',
+   'Added Dispatch hubs: compact programmable junctions with rear input, a Machine branch on the left, Forward ahead and a separate Return port on the right.',
+   'Both units run configurable Machine / Forward / Return batches, from 0 to 100 per destination. Default is 1 / 1 / 0; select a unit and press E or choose Program flow.',
+   'Choose exact waiting or blocked-output bypass, a recipe-aware or explicit item filter, and one, two or four recipe cycles of input reserve.',
+   'Delivery counters, current batch and blocked-source diagnostics explain actual flow. Items advance quotas only on successful delivery; filtered-out and bypassed items are counted separately.',
+   'For equal supply to three stations, use 1:2, then 1:1, then 1:0 along the shared conveyor. The tutorial and field guide explain this layout and throughput limits.',
+   'New expeditions open an eight-step tutorial. Skip tutorial is a remembered checkbox, and the guide can be replayed from the menu. The host expedition pauses while reading.',
+   'Refocused the presentation on Ironhaven’s expedition, programmable dispatch plans and crew evacuation, with original relay and hub models rather than borrowed artwork.',
+   'Logistics programs and progress survive pickup, area movement, saves and co-op synchronization. Older world saves migrate automatically.'
+  ]
+ },
  {
   version:'0.4.1',date:'2026-11-14',title:'Standalone packaging fix',
   changes:[

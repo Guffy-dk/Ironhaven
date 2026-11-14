@@ -25,9 +25,11 @@ try{
   ['place',{type:'build',building:'belt',x:5,z:5,dir:0}]
  ]){guest.send(peer,{type:'command',id,command:cmd});await until(()=>received[2].result?.requestId===id);assert.equal(received[2].result.error,null);}
  assert.equal(state.buildings.find(b=>b.x===5&&b.z===5).level,2);
+ guest.send(peer,{type:'command',id:'build-hub',command:{type:'build',building:'splitter',x:3,z:4,dir:0}});await until(()=>received[2].result?.requestId==='build-hub');assert.equal(received[2].result.error,null);
+ const hub=state.buildings.find(b=>b.x===3&&b.z===4);guest.send(peer,{type:'command',id:'program',command:{type:'configureLogistics',id:hub.id,x:3,z:4,program:{machine:2,forward:3,return:1,bypass:false,filter:'ore',buffer:2}}});await until(()=>received[2].result?.requestId==='program');assert.equal(received[2].result.error,null);assert.equal(hub.program.forward,3);
  host.broadcast({type:'state',state});await until(()=>received.every(r=>r.state));
- for(const r of received){assert.equal(r.state.state.players.length,4);assert.equal(r.state.state.resources.wood,state.resources.wood);}
- console.log('PASS: 1 browser-style host + 3 direct RTC guests, invitation/answer exchange, fourth guest rejected, shared construction, area movement, upgrades, inventory reuse and synchronized snapshots.');
+ for(const r of received){assert.equal(r.state.state.players.length,4);assert.equal(r.state.state.resources.wood,state.resources.wood);assert.equal(r.state.state.buildings.find(b=>b.x===3&&b.z===4).program.forward,3);}
+ console.log('PASS: 1 browser-style host + 3 direct RTC guests, invitation/answer exchange, fourth guest rejected, shared construction, area movement, upgrades, inventory reuse, programmable dispatch and synchronized snapshots.');
 }catch(e){console.error(e);process.exitCode=1;}finally{for(const c of clients)c.close();host.close();}
 // libwebrtc owns long-lived native threads; all channels and connections above are closed.
 setTimeout(()=>process.exit(process.exitCode||0),100);

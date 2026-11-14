@@ -1,6 +1,7 @@
-import {RECIPES,DIRS,key,RESOURCE_KEYS,productionSpeed,storageCapacity,turretStats} from './sim.js';
-export const STATUS_LABELS={running:'Running',input:'Waiting for inputs',output:'Output blocked',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational'};
+import {RECIPES,DIRS,key,RESOURCE_KEYS,productionSpeed,storageCapacity,turretStats,LOGISTICS_TYPES,logisticsStatus} from './sim.js';
+export const STATUS_LABELS={running:'Running',input:'Waiting for inputs',output:'Output blocked',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
 export function factoryStatus(s,b,grid){
+ if(LOGISTICS_TYPES.includes(b.type))return logisticsStatus(s,b,grid);
  if(b.type==='generator')return s.resources.wood>0?'running':'fuel';
  if(!b.active)return 'power';
  if(b.type==='turret')return b.ammo||s.resources.gear?'running':'ammo';

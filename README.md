@@ -6,7 +6,36 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.4 — community-informed clarity and balance
+## Version 0.5 — programmable expedition logistics
+
+**New here?** The first-world tutorial can be skipped with the remembered **Skip tutorial** checkbox or replayed from the menu. For a new Codex/ChatGPT conversation or local checkout, read [the complete project handoff](docs/PROJECT_HANDOFF.md).
+
+Ironhaven’s focus is supplying, defending and evacuating an expedition. The new logistics units are **Transfer relays** with hovering cargo capsules and **Dispatch hubs** with explicit dispatch plans, using original procedural models.
+
+### One conveyor, three machines
+
+A **Transfer relay** occupies the tile between the conveyor behind it and the machine ahead. Rotate with R to point toward the machine. Its Forward quota leaves items moving along the source conveyor; Return loads a separate conveyor to its right.
+
+A **Dispatch hub** sits directly on the main conveyor. Its rear accepts input, **Machine** branches left, **Forward** continues ahead and **Return** branches right. You can connect the Machine branch straight into a neighboring machine’s IN side or run a branch conveyor farther.
+
+Select either unit and press **E** / **Program flow**:
+
+| Setting | Meaning |
+|---|---|
+| Machine / Forward / Return | Successful deliveries per repeated batch, 0–100 each |
+| Default 1 / 1 / 0 | One to the machine, one onward |
+| 2 / 3 / 1 | Two to the machine, three onward, one into the return line, then repeat |
+| Wait when blocked | Exact sequencing; no quota advances until that delivery succeeds |
+| Waiting off | Try safe enabled alternatives; bypassed items do not consume the pending quota |
+| Auto filter | Count only ingredients used by the connected machine’s recipe |
+| Explicit filter | Count only the chosen item; other items pass forward |
+| Input reserve | One, two or four recipe cycles of buffering |
+
+For equal distribution to three identical stations, use **1:2 → 1:1 → 1:0** along the bus with Return 0. The return port requires its own connected route; do not point a belt back against incoming traffic. A blocked machine never causes cargo to disappear. Programs, partial batches and delivery counters survive packing, moving and saves, and synchronize in co-op.
+
+Throughput is still finite. Each base smelter consumes one ore every two seconds; three at full load need 1.5 ore/second. Add or upgrade mining and transport capacity instead of expecting a dispatch plan to create missing ore. Relays consume power; hubs do not.
+
+## Included from 0.4 — community-informed clarity and balance
 
 **I** opens a production report: measured output, theoretical recipe demand and stock. **B** toggles machine labels that distinguish missing ingredients, blocked output, full storage, no power, no ammo and no fuel. [Community sources and decisions](docs/COMMUNITY_RESEARCH.md) explain what was adopted and why.
 
@@ -85,6 +114,7 @@ Protect the core through eight swarms. The starter colony has two working lines:
 | Shift-drag | Preview a new route; release to build |
 | R | Rotate a conveyor under the pointer or a selected directional building; otherwise rotate the blueprint |
 | U | Upgrade selected building |
+| E | Program selected relay / hub |
 | Left-drag without a build tool | Box-select buildings |
 | M | Move the selected area |
 | Shift while moving | Sprint |

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,TYPES,inventoryCount} from '../public/shared/sim.js';
+import {createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
 import {parseSave} from '../public/shared/saves.js';
 const make=()=>{const s=createGame();s.nextWave=9999;return{s,p:addPlayer(s)};};
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=10000000;};
@@ -54,7 +54,7 @@ test('evacuation requires advanced goods and a final defense before victory',()=
  s.enemies=[];run(s,91);assert.equal(s.status,'victory');assert.equal(s.evacuation.status,'complete');
 });
 test('world exports round-trip and old wins migrate to the new evacuation objective',()=>{
- const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,4);assert.deepEqual(loaded.state.resources,s.resources);
+ const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,SAVE_SCHEMA);assert.deepEqual(loaded.state.resources,s.resources);
  s.version=2;s.status='victory';s.wave=8;const old=parseSave(JSON.stringify({state:s,playerId:p.id}));assert.equal(old.state.status,'playing');assert.throws(()=>parseSave('not json'),/JSON/);assert.throws(()=>parseSave(JSON.stringify({state:{}})),/world save/);
 });
 test('a complete copper line mines, smelts and transports copper to the core',()=>{

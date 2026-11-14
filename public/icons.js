@@ -1,4 +1,6 @@
 const paths={
+ inserter:'M3 18h18M7 18V8m10 10V8M6 8h3m6 0h3M9 4h6v7H9V4Zm-4 9h14M2 21h4m12 0h4',
+ splitter:'m12 3 8 5v9l-8 4-8-4V8l8-5Zm0 8h8m-8 0V3m0 8v10M4 12h8',
  copper:'M4 7c0-5 16-5 16 0v10c0 5-16 5-16 0V7Zm0 0c0 5 16 5 16 0M4 12c0 5 16 5 16 0',
  steel:'M3 3h18v4h-6v10h6v4H3v-4h6V7H3V3Z',
  circuit:'M6 6h12v12H6V6ZM9 9h6v6H9V9ZM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4',

@@ -21,6 +21,8 @@ export const TYPES = {
  demolish:{name:'Dismantle',cost:{},desc:'Packs a building into your personal inventory. Damage, upgrades and ammo are preserved. Clear a tree to collect eight wood.'}
 };
 Object.assign(TYPES,{
+ inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A programmable cargo capsule. Place between a conveyor behind it and a machine ahead. Default: one item into the machine, one left on the belt. The right-side port feeds a separate return line.'},
+ splitter:{name:'Dispatch hub',hp:160,power:0,cost:{wood:2,plate:6,gear:2},desc:'Place on the main conveyor. Input at the rear, Forward ahead, Machine to the left and Return to the right. Program exact batches; default 1 Machine / 1 Forward / 0 Return.'},
  copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'Extracts copper ore from orange deposits. Route it through a copper smelter to supply electronics.'},
  copperSmelter:{name:'Copper smelter',hp:260,power:3,cost:{wood:12,plate:20},desc:'Smelts copper ore into copper. Copper is required by circuit assemblers.'},
  foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel reinforces advanced upgrades and evacuation hardware.'},
@@ -31,12 +33,28 @@ Object.assign(TYPES,{
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module'];
 export const MAX_UPGRADES=10;
+export const SAVE_SCHEMA=5;
+export const LOGISTICS_TYPES=['inserter','splitter'];
+export const PROGRAM_ROLES=['machine','forward','return'];
+export const ITEM_KEYS=['ore','copperOre',...RESOURCE_KEYS];
+export const DEFAULT_PROGRAM={machine:1,forward:1,return:0,bypass:true,filter:'auto',buffer:2};
+export function programFor(b){return b.program||DEFAULT_PROGRAM;}
+export function logisticsPorts(b){const m=b.type==='splitter'?(b.dir+3)%4:b.dir;return{input:(b.dir+2)%4,machine:m,forward:b.dir,return:(b.dir+1)%4};}
+function programRole(b){const p=programFor(b);let phase=Number.isInteger(b.phase)?((b.phase%3)+3)%3:0;for(let i=0;i<3;i++){if(p[PROGRAM_ROLES[phase]]>0){b.phase=phase;if(!(b.remaining>0))b.remaining=p[PROGRAM_ROLES[phase]];return PROGRAM_ROLES[phase];}phase=(phase+1)%3;}return 'forward';}
+function advanceProgram(b,role){
+ b.shipments||={machine:0,forward:0,return:0,bypassed:0};b.shipments[role]=(b.shipments[role]||0)+1;
+ if(--b.remaining<=0){b.phase=(b.phase+1)%3;b.remaining=0;programRole(b);}
+}
+function logTransfer(b,role,item,s,bypassed=false){b.lastTransfer={role,item,time:s.time};if(bypassed){b.shipments||={machine:0,forward:0,return:0,bypassed:0};b.shipments.bypassed++;}else advanceProgram(b,role);}
+function programMatches(b,item,grid){const p=programFor(b);if(p.filter==='any')return true;if(p.filter!=='auto')return item===p.filter;const d=logisticsPorts(b).machine,[dx,dz]=DIRS[d],target=grid.get(key(b.x+dx,b.z+dz));return RECIPES[target?.type]?!!RECIPES[target.type].input[item]:true;}
+function programTarget(b,role,grid){const d=logisticsPorts(b)[role],[dx,dz]=DIRS[d];return grid.get(key(b.x+dx,b.z+dz));}
+
 export const RECIPES={
  smelter:{input:{ore:1},output:'plate',seconds:2},assembler:{input:{plate:2},output:'gear',seconds:3},
  copperSmelter:{input:{copperOre:1},output:'copper',seconds:2},foundry:{input:{plate:3},output:'steel',seconds:3.5},
  circuitLab:{input:{copper:2,plate:1},output:'circuit',seconds:4},componentFactory:{input:{steel:2,circuit:2,gear:1},output:'module',seconds:5}
 };
-export const DIRECTIONAL = ['belt','drill','copperDrill',...Object.keys(RECIPES)];
+export const DIRECTIONAL = ['inserter','splitter','belt','drill','copperDrill',...Object.keys(RECIPES)];
 export const TURRET_LEVELS = [
  {name:'Mk I',hp:350,damage:28,range:10,interval:.38,cost:null},
  {name:'Mk II',hp:500,damage:40,range:12,interval:.30,cost:{plate:35,gear:8}},
@@ -58,10 +76,10 @@ export function upgradeCost(b){
 }
 export const inventoryCount = (s,id,type) => s.players.find(p=>p.id===id)?.inventory?.[type]?.length||0;
 export function migrateGame(s){
- if(!s||![1,2,3,4].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ if(!s||![1,2,3,4,5].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  if(s.version<3&&s.status==='victory')s.status='playing';
- s.version=4;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];s.evacuation||=null;s.terrain.copper||=makeTerrain(s.seed).copper;for(const r of RESOURCE_KEYS)s.resources[r]??=0;for(const p of s.players){p.inventory||={};p.input={x:0,z:0};p.sprinting=false;}
- for(const b of s.buildings)b.level||=1;
+ s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];s.evacuation||=null;s.terrain.copper||=makeTerrain(s.seed).copper;for(const r of RESOURCE_KEYS)s.resources[r]??=0;for(const p of s.players){p.inventory||={};p.input={x:0,z:0};p.sprinting=false;}
+ for(const b of s.buildings){b.level||=1;if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}}
  return s;
 }
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -78,10 +96,10 @@ export function makeTerrain(seed=2026){
  for(const[cx,cz]of [[8,-4],[17,12],[-18,3]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<6)copper.push({x:cx+x,z:cz+z});
  return{trees,ore,rocks,copper};
 }
-function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};s.buildings.push(b);return b;}
+function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};if(LOGISTICS_TYPES.includes(type)){b.program={...DEFAULT_PROGRAM};programRole(b);}s.buildings.push(b);return b;}
 export function createGame(seed=2026,{difficulty='standard'}={}){
  if(!Object.hasOwn(DIFFICULTIES,difficulty))difficulty='standard';
- const s={version:4,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:150,gear:20,copper:0,steel:0,circuit:0,module:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[],evacuation:null};
+ const s={version:SAVE_SCHEMA,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:150,gear:20,copper:0,steel:0,circuit:0,module:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[],evacuation:null};
  building(s,'hq',0,0);
  // Two working starter chains: ore → plate → shared storage / gears.
  for(const z of [-3,3]){
@@ -122,7 +140,10 @@ export function canBuild(s,type,x,z,playerId){
  for(const[r,n]of Object.entries(TYPES[type].cost))if(s.resources[r]<n)return 'Not enough materials';
  return null;
 }
-export function outputPointsAt(b,x,z){const [dx,dz]=DIRS[b.dir||0];return DIRECTIONAL.includes(b.type)&&b.x+dx===x&&b.z+dz===z;}
+export function outputPointsAt(b,x,z){
+ if(LOGISTICS_TYPES.includes(b.type)){const p=programFor(b),ports=logisticsPorts(b);return PROGRAM_ROLES.some(role=>p[role]>0&&(b.type==='splitter'||role!=='forward')&&b.x+DIRS[ports[role]][0]===x&&b.z+DIRS[ports[role]][1]===z);}
+ const [dx,dz]=DIRS[b.dir||0];return DIRECTIONAL.includes(b.type)&&b.x+dx===x&&b.z+dz===z;
+}
 export function beltInputs(b,grid){
  const inputs=[];for(let d=0;d<4;d++){if(d===b.dir)continue;const[dx,dz]=DIRS[d],other=grid.get(key(b.x+dx,b.z+dz));if(other&&outputPointsAt(other,b.x,b.z))inputs.push(d);}
  return inputs.length?inputs:[(b.dir+2)%4];
@@ -132,7 +153,7 @@ function endpointDirection(s,cell,fallback,previous){
  const existing=grid.get(key(cell.x,cell.z));if(existing?.type==='belt'&&(!previous||!outputPointsAt(existing,previous.x,previous.z)))return existing.dir;
  const options=[fallback,(fallback+1)%4,(fallback+3)%4,(fallback+2)%4];
  for(const d of options){const[dx,dz]=DIRS[d],target=grid.get(key(cell.x+dx,cell.z+dz));if(!target||target===previous)continue;
-  if(['hq','storage','launchpad'].includes(target.type)||Object.hasOwn(RECIPES,target.type)&&target.dir!==(d+2)%4||target.type==='belt'&&target.dir!==(d+2)%4)return d;
+  if(target.type==='splitter'&&target.dir===d||['hq','storage','launchpad'].includes(target.type)||Object.hasOwn(RECIPES,target.type)&&target.dir!==(d+2)%4||target.type==='belt'&&target.dir!==(d+2)%4)return d;
  }return fallback;
 }
 // An orthogonal A* route with turn penalties; avoids obstacles and fills every tile.
@@ -142,7 +163,7 @@ export function planRoute(s,type,start,end,dir=0){
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(v=>key(v.x,v.z)));
  const first=grid.get(key(start.x,start.z)),last=grid.get(key(end.x,end.z));
  // A machine at an endpoint is connected rather than overwritten.
- const allowed=(x,z)=>{if(Math.abs(x)>26||Math.abs(z)>26||blocked.has(key(x,z)))return false;const b=grid.get(key(x,z));return !b||b.type===type||type==='belt'&&(b===first&&DIRECTIONAL.includes(b.type)||b===last&&(['hq','storage','launchpad'].includes(b.type)||Object.hasOwn(RECIPES,b.type)));};
+ const allowed=(x,z)=>{if(Math.abs(x)>26||Math.abs(z)>26||blocked.has(key(x,z)))return false;const b=grid.get(key(x,z));return !b||b.type===type||type==='belt'&&(b===first&&DIRECTIONAL.includes(b.type)||b===last&&(['hq','storage','launchpad','splitter'].includes(b.type)||Object.hasOwn(RECIPES,b.type)));};
  if(!allowed(start.x,start.z)||!allowed(end.x,end.z))return{error:'Route endpoint is blocked',cells:[]};
  const initial={x:start.x,z:start.z,d:dir,g:0,f:Math.abs(start.x-end.x)+Math.abs(start.z-end.z),prev:null},open=[initial],best=new Map([[`${start.x},${start.z},${dir}`,0]]);let goal=null,visits=0;
  while(open.length&&visits++<14000){
@@ -151,6 +172,7 @@ export function planRoute(s,type,start,end,dir=0){
   for(const d of [cur.d,(cur.d+1)%4,(cur.d+3)%4,(cur.d+2)%4]){
    if(cur===initial&&first&&first.type!=='belt'&&DIRECTIONAL.includes(first.type)&&d!==first.dir)continue;
    const[dx,dz]=DIRS[d],x=cur.x+dx,z=cur.z+dz;if(!allowed(x,z))continue;
+   if(last&&last.type==='splitter'&&x===end.x&&z===end.z&&d!==last.dir)continue;
    if(last&&Object.hasOwn(RECIPES,last.type)&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
    if(grid.get(key(cur.x,cur.z))&&grid.get(key(cur.x,cur.z))!==first&&grid.get(key(cur.x,cur.z)).type!==type)continue;
    const g=cur.g+1+(d===cur.d?0:.15),k=`${x},${z},${d}`;if((best.get(k)??Infinity)<=g)continue;best.set(k,g);
@@ -198,6 +220,12 @@ export function command(s,playerId,cmd){
   updatePower(s);return null;
  }
  const b=s.buildings.find(b=>b.x===x&&b.z===z);
+ if(cmd.type==='configureLogistics'){
+  if(!b||!LOGISTICS_TYPES.includes(b.type)||cmd.id!==undefined&&cmd.id!==b.id)return 'Select a transfer relay or dispatch hub to program';
+  const v=cmd.program;if(!v||PROGRAM_ROLES.some(r=>!Number.isInteger(v[r])||v[r]<0||v[r]>100)||PROGRAM_ROLES.every(r=>v[r]===0))return 'Each quota must be 0–100, with at least one output enabled';
+  if(!['auto','any',...ITEM_KEYS].includes(v.filter)||![1,2,4].includes(v.buffer)||typeof v.bypass!=='boolean')return 'Invalid filter, input buffer or blocked-output behavior';
+  b.program={machine:v.machine,forward:v.forward,return:v.return,bypass:v.bypass,filter:v.filter,buffer:v.buffer};b.phase=0;b.remaining=0;programRole(b);return null;
+ }
  if(cmd.type==='rotate'){
   if(!b||!DIRECTIONAL.includes(b.type))return 'Select a conveyor, drill, smelter or assembler to rotate';
   b.dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:(b.dir+1)%4;return null;
@@ -236,13 +264,49 @@ export function updatePower(s){
  let available=s.power.total;for(const b of s.buildings){const n=buildingPower(b);b.active=available>=n;if(b.active)available-=n;}
 }
 function store(s,item,amount=1){if(!RESOURCE_KEYS.includes(item)||s.resources[item]+amount>storageCapacity(s))return false;s.resources[item]+=amount;if(item==='plate'||item==='gear')s.produced[item]++;return true;}
-function accept(s,b,item,from){
+export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
  if(from&&(b.type==='belt'||Object.hasOwn(RECIPES,b.type))){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
- if(['hq','storage'].includes(b.type)||b.type==='launchpad'&&item==='module')return store(s,item);
- if(b.type==='belt'&&!b.item){b.item=item;b.itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;b.itemTick=s.tick;return true;}
- const recipe=RECIPES[b.type];if(recipe&&recipe.input[item]&&b.input.filter(v=>v===item).length<recipe.input[item]*4){b.input.push(item);return true;}
- return false;
+ if(['hq','storage'].includes(b.type)||b.type==='launchpad'&&item==='module')return RESOURCE_KEYS.includes(item)&&(s.resources[item]||0)<storageCapacity(s);
+ if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
+ if(b.type==='belt')return !b.item;
+ const recipe=RECIPES[b.type];return !!(recipe&&recipe.input[item]&&b.input.filter(v=>v===item).length<recipe.input[item]*cycles);
+}
+function accept(s,b,item,from,cycles=4){
+ if(!canAcceptItem(s,b,item,from,cycles))return false;
+ if(['hq','storage','launchpad'].includes(b.type))return store(s,item);
+ if(['belt','splitter'].includes(b.type)){b.item=item;b.itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;b.itemTick=s.tick;return true;}
+ b.input.push(item);return true;
+}
+function relayControls(s,grid,dt){
+ const controls=new Map();
+ for(const b of s.buildings.filter(v=>v.type==='inserter').sort((a,b)=>a.id-b.id)){
+  b.cooldown=Math.max(0,b.cooldown-dt);if(!b.active)continue;
+  const ports=logisticsPorts(b),[dx,dz]=DIRS[ports.input],source=grid.get(key(b.x+dx,b.z+dz));
+  if(source?.type!=='belt'||controls.has(source.id))continue;controls.set(source.id,b);
+  if(!source.item||b.cooldown>0)continue;
+  const role=programRole(b),p=programFor(b);if(role==='forward'||!programMatches(b,source.item,grid))continue;
+  const target=programTarget(b,role,grid),item=source.item;
+  if(accept(s,target,item,b,role==='machine'?p.buffer:4)){source.item=null;b.cooldown=.6/productionSpeed(b);logTransfer(b,role,item,s);}
+ }
+ return controls;
+}
+function dispatch(s,b,item,grid,busy){
+ const role=programRole(b),p=programFor(b),matches=programMatches(b,item,grid),planned=matches?role:'forward';
+ const options=[planned];if(matches&&p.bypass)for(const fallback of ['forward','machine','return'])if(!options.includes(fallback)&&p[fallback]>0)options.push(fallback);
+ for(const output of options){const target=programTarget(b,output,grid);if(!target||busy.has(target.id))continue;
+  if(accept(s,target,item,b,output==='machine'?p.buffer:4)){b.item=null;logTransfer(b,output,item,s,!matches||output!==role);return true;}
+ }return false;
+}
+export function logisticsStatus(s,b,grid){
+ if(!b.active)return 'power';const p=programFor(b),ports=logisticsPorts(b);let source=b;
+ if(b.type==='inserter'){const[dx,dz]=DIRS[ports.input];source=grid.get(key(b.x+dx,b.z+dz));if(source?.type!=='belt')return 'source';for(const[ox,oz]of DIRS){const other=grid.get(key(source.x+ox,source.z+oz));if(other?.type==='inserter'&&other.active&&other.id<b.id){const[ax,az]=DIRS[logisticsPorts(other).input];if(other.x+ax===source.x&&other.z+az===source.z)return 'claimed';}}}
+ if(!source.item)return 'input';if(!programMatches(b,source.item,grid)){if(b.type==='inserter'){const[dx,dz]=DIRS[source.dir];return canAcceptItem(s,grid.get(key(source.x+dx,source.z+dz)),source.item,source)?'bypass':'output';}return canAcceptItem(s,programTarget(b,'forward',grid),source.item,b)?'bypass':'output';}
+ let phase=Number.isInteger(b.phase)?((b.phase%3)+3)%3:0;for(let i=0;i<3&&p[PROGRAM_ROLES[phase]]===0;i++)phase=(phase+1)%3;const role=PROGRAM_ROLES[phase];
+ if(b.type==='inserter'&&role==='forward'){const[dx,dz]=DIRS[source.dir];return canAcceptItem(s,grid.get(key(source.x+dx,source.z+dz)),source.item,source)?'running':'output';}
+ if(canAcceptItem(s,programTarget(b,role,grid),source.item,b,role==='machine'?p.buffer:4))return 'running';
+ if(p.bypass){if(b.type==='inserter'&&p.forward>0){const[dx,dz]=DIRS[source.dir];if(canAcceptItem(s,grid.get(key(source.x+dx,source.z+dz)),source.item,source))return 'bypass';}else if(b.type==='splitter'&&PROGRAM_ROLES.some(r=>p[r]>0&&canAcceptItem(s,programTarget(b,r,grid),source.item,b,r==='machine'?p.buffer:4)))return 'bypass';}
+ return 'output';
 }
 function spawnWave(s){
  const forecast=waveForecast(s);s.wave++;const count=forecast.count;
@@ -258,11 +322,16 @@ export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
  if(s.tick%20===0)updatePower(s);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
- // Transport uses a snapshot to prevent an item travelling through a whole line in one pulse.
- if(true){
-  const moving=s.buildings.filter(b=>b.type==='belt'&&b.item&&s.tick%Math.max(2,8-Math.floor(((b.level||1)-1)*.5))===0).map(b=>({b,item:b.item}));
-  const busy=new Set(s.buildings.filter(b=>b.type==='belt'&&b.item).map(b=>b.id));
-  for(const{b,item}of moving){const[dX,dZ]=DIRS[b.dir],target=grid.get(key(b.x+dX,b.z+dZ));if(target&&!busy.has(target.id)&&accept(s,target,item,b))b.item=null;}
+ // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
+ const moving=s.buildings.filter(b=>['belt','splitter'].includes(b.type)&&b.item&&s.tick%Math.max(2,8-Math.floor(((b.level||1)-1)*.5))===0).map(b=>({b,item:b.item}));
+ const busy=new Set(s.buildings.filter(b=>['belt','splitter'].includes(b.type)&&b.item).map(b=>b.id)),controls=relayControls(s,grid,dt);
+ for(const{b,item}of moving){
+  if(b.item!==item||b.itemTick===s.tick)continue;
+  if(b.type==='splitter'){dispatch(s,b,item,grid,busy);continue;}
+  const relay=controls.get(b.id),matches=relay&&programMatches(relay,item,grid),role=relay&&programRole(relay);
+  if(relay&&matches&&role!=='forward'&&(!programFor(relay).bypass||programFor(relay).forward===0))continue;
+  const[dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
+  if(target&&!busy.has(target.id)&&accept(s,target,item,b)){b.item=null;if(relay)logTransfer(relay,'forward',item,s,!matches||role!=='forward');}
  }
  for(const b of s.buildings){
   if(b.type==='generator'){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress>=12){b.progress=0;if(s.resources.wood>0)s.resources.wood--;}}
@@ -287,7 +356,7 @@ export function step(s,dt=STEP){
   const len=Math.max(1,Math.hypot(p.input.x,p.input.z)),speed=4.5*(p.sprinting?1.65:1);
   const nx=Math.max(-26,Math.min(26,p.x+p.input.x/len*speed*dt)),nz=Math.max(-26,Math.min(26,p.z+p.input.z/len*speed*dt));
   // Disc-versus-building collision gives engineers space to slide around corners.
-  const blocked=(x,z)=>{for(let ix=Math.floor(x-.65);ix<=Math.ceil(x+.65);ix++)for(let iz=Math.floor(z-.65);iz<=Math.ceil(z+.65);iz++){const b=grid.get(key(ix,iz));if(!b||b.type==='belt')continue;const r=b.type==='hq'?.68:.38,dx=Math.max(Math.abs(x-b.x)-r,0),dz=Math.max(Math.abs(z-b.z)-r,0);if(dx*dx+dz*dz<.17*.17)return true;}return false;};
+  const blocked=(x,z)=>{for(let ix=Math.floor(x-.65);ix<=Math.ceil(x+.65);ix++)for(let iz=Math.floor(z-.65);iz<=Math.ceil(z+.65);iz++){const b=grid.get(key(ix,iz));if(!b||['belt','inserter','splitter'].includes(b.type))continue;const r=b.type==='hq'?.68:.38,dx=Math.max(Math.abs(x-b.x)-r,0),dz=Math.max(Math.abs(z-b.z)-r,0);if(dx*dx+dz*dz<.17*.17)return true;}return false;};
   if(!blocked(nx,nz)){p.x=nx;p.z=nz;}else{if(!blocked(nx,p.z))p.x=nx;if(!blocked(p.x,nz))p.z=nz;}
   p.cooldown-=dt;if(p.cooldown<=0){const e=s.enemies.find(e=>e.hp>0&&dist(e,p)<6);if(e){e.hp-=14;p.cooldown=.5;s.shots.push({x:p.x,z:p.z,tx:e.x,tz:e.z,time:s.time});}}
  }
@@ -298,7 +367,7 @@ export function step(s,dt=STEP){
   let target=hq;for(const p of s.players)if(p.hp>0&&dist(e,p)<4)target=p;
   const d=dist(e,target),dx=(target.x-e.x)/(d||1),dz=(target.z-e.z)/(d||1),speed=e.speed*(e.brute?.7:1);
   const nx=e.x+dx*speed*dt,nz=e.z+dz*speed*dt;
-  let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(obstacle?.type==='belt')obstacle=null;
+  let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
   if(obstacle||d<.85){const victim=obstacle||target;if(e.cooldown<=0){victim.hp-=(e.brute?24:10)*(e.damage||1);victim.lastHit=s.time;e.cooldown=.8;if(victim.input&&victim.hp<=0)victim.respawn=8;}}
   else{e.x=nx;e.z=nz;}
  }
