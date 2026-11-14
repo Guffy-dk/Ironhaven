@@ -106,6 +106,22 @@ test('the playfield warning announces its forecast and attack independently of t
   assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from North');
  }finally{await active.close();}
 });
+test('the round HUD forecasts the next bonus and announces activation once',async()=>{
+ const h=harness();try{
+  assert.ok(h.$('round-bonuses').hidden);
+  h.$('start-solo').click();
+  assert.equal(h.$('round-bonus-active').textContent,'Active · No bonus yet');
+  assert.equal(h.$('round-bonus-next').textContent,'Next · +15% mining speed');
+  h.$('early-wave').click();
+  for(let i=0;i<62;i++)h.ticks[0]();
+  h.frame(1000);h.frame(1400);
+  assert.equal(h.$('round-bonus-active').textContent,'Active · +15% mining speed');
+  assert.equal(h.$('round-bonus-next').textContent,'Next · +25% smelting speed');
+  const announcements=[...h.$('toasts').children].filter(node=>node.textContent.includes('Bonus activated'));
+  assert.equal(announcements.length,1);
+  assert.match(announcements[0].textContent,/\+15% mining speed/);
+ }finally{await h.close();}
+});
 test('drag-selection moves an area and Shift override asks once before packing invalid drills',async()=>{
  const h=harness();try{
   h.$('start-solo').click();h.point('pointerdown',-9,-4);h.point('pointermove',-4,-2);h.point('pointerup',-4,-2);assert.equal(h.$('area-tools').hidden,false);assert.ok(h.dom.__view.area.length>1);

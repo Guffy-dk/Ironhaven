@@ -1,9 +1,17 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.6.2';
+export const CURRENT_VERSION = '0.7.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.7.0',date:'2026-11-15',title:'Swarm round bonuses',
+  changes:[
+   'Every swarm activates a colony bonus that lasts until the next swarm. The HUD shows the active and upcoming bonuses, and a notification appears when a new one starts.',
+   'Bonuses rotate between faster production, 15 shots per gear, reduced barricade damage and cheaper repairs. The evacuation swarm adds six colony power.',
+   'Round bonuses are shared in co-op and follow the current swarm when a save or checkpoint is loaded.'
+  ]
+ },
  {
   version:'0.6.2',date:'2026-11-14',title:'Conveyor drag building',
   changes:[
