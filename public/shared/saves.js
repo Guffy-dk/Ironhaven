@@ -9,3 +9,8 @@ export function parseSave(text){
  for(const r of RESOURCE_KEYS)if(s.resources[r]!==undefined&&(!Number.isFinite(s.resources[r])||s.resources[r]<0))throw Error('Save contains an invalid material count.');
  data.state=migrateGame(s);return data;
 }
+export function packWorldSave(state,playerId){
+ const data=JSON.parse(JSON.stringify(state)),p=data.players.find(p=>p.id===playerId);if(!p)throw Error('No local engineer to save.');p.inventory||={};
+ for(const other of data.players)if(other.id!==p.id)for(const[type,items]of Object.entries(other.inventory||{}))(p.inventory[type]||=[]).push(...items);
+ p.input={x:0,z:0};p.sprinting=false;data.players=[p];return{state:data,playerId};
+}

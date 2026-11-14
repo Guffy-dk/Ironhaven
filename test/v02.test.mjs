@@ -48,7 +48,7 @@ test('W+A movement is diagonal and normalized, with no diagonal speed boost',()=
 });
 test('0.1 saves migrate without losing production, resources or built buildings',()=>{
  const{s,p}=make();s.version=1;delete p.inventory;for(const b of s.buildings)delete b.level;
- const before=JSON.stringify(s.resources),ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,3);assert.deepEqual(migrated.players[0].inventory,{});assert.equal(JSON.stringify(migrated.resources),before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
+ const before=JSON.stringify(s.resources),ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,4);assert.deepEqual(migrated.players[0].inventory,{});assert.equal(JSON.stringify(migrated.resources),before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
 });
 test('a departing guest returns packed buildings to the remaining host',()=>{
  const{s,p}=make(),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});removePlayer(s,guest.id);assert.equal(inventoryCount(s,p.id,'belt'),1);

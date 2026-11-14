@@ -1,9 +1,23 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.3.0';
+export const CURRENT_VERSION = '0.4.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.4.0',date:'2026-11-14',title:'Readable pressure',
+  changes:[
+   'Community-inspired diagnostics: I opens measured production versus maximum recipe demand, and B toggles machine bottleneck labels.',
+   'Added Relaxed, Standard and Veteran threat presets. Veteran increases enemy strength without shortening Standard preparation time.',
+   'Swarms preview their attack directions and head count. The minimap marks threatened edges during the last twenty seconds.',
+   'Co-op adds ten percent more enemies per connected guest at spawn, without additional health inflation. Enemy count is capped at 480 to stay within the lightweight rendering budget.',
+   'Brutes now have real extra health. Higher turret upgrades have moderated damage and firing-rate gains; stronger turrets draw more power and upgraded generators consume more fuel.',
+   'Three rolling local checkpoints are kept separately from autosave. Retry the latest checkpoint after a loss with at least twenty seconds of preparation; the host restores the co-op world for all connected guests.',
+   'Recently attacked buildings cannot be relocated or dismantled for five seconds, preventing free escape from combat. The core cannot move during an active swarm.',
+   'Production history is bounded to sixty seconds, checkpoint reads are cached, and turret targeting uses squared-distance comparisons.',
+   'Added community-source notes and reproducible simulation balance/performance checks. Actual player testing is still needed to tune difficulty further.'
+  ]
+ },
  {
   version:'0.3.0',date:'2026-11-14',title:'Industry to evacuation',
   changes:[

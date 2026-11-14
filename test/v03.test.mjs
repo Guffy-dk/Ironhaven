@@ -54,7 +54,7 @@ test('evacuation requires advanced goods and a final defense before victory',()=
  s.enemies=[];run(s,91);assert.equal(s.status,'victory');assert.equal(s.evacuation.status,'complete');
 });
 test('world exports round-trip and old wins migrate to the new evacuation objective',()=>{
- const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,3);assert.deepEqual(loaded.state.resources,s.resources);
+ const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,4);assert.deepEqual(loaded.state.resources,s.resources);
  s.version=2;s.status='victory';s.wave=8;const old=parseSave(JSON.stringify({state:s,playerId:p.id}));assert.equal(old.state.status,'playing');assert.throws(()=>parseSave('not json'),/JSON/);assert.throws(()=>parseSave(JSON.stringify({state:{}})),/world save/);
 });
 test('a complete copper line mines, smelts and transports copper to the core',()=>{

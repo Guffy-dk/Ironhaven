@@ -68,3 +68,10 @@ test('panels can be moved, minimized, closed and restored without changing the w
   h.dom.document.querySelector('[data-window-minimize="intel"]').click();assert.ok(h.$('intel').classList.contains('window-minimized'));h.dom.document.querySelector('[data-window-close="intel"]').click();assert.equal(h.$('intel').hidden,true);h.dom.document.querySelector('[data-window-toggle="intel"]').click();assert.equal(h.$('intel').hidden,false);h.$('reset-windows').click();assert.equal(h.$('intel').style.position,'');assert.equal(h.$('intel').style.width,'');assert.equal(h.save().buildings.length,before);
  }finally{await h.close();}
 });
+test('production report and bottleneck overlay work, and pre-swarm checkpoints can be retried',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,7);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
+  for(let attempt=0;attempt<5;attempt++){h.$('early-wave').click();for(let i=0;i<62;i++)h.ticks[0]();h.$('retry-checkpoint').click();const saved=h.save();assert.equal(saved.wave,0);assert.equal(saved.enemies.length,0);assert.ok(saved.nextWave-saved.time>=19.9);}
+  const checkpoints=JSON.parse(h.dom.localStorage.getItem('ironhaven.checkpoints.v1'));assert.ok(checkpoints.length<=3);assert.match(checkpoints[0].label,/Before swarm/);
+ }finally{await h.close();}
+});

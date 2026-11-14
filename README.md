@@ -6,7 +6,19 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.3
+## Version 0.4 — community-informed clarity and balance
+
+**I** opens a production report: measured output, theoretical recipe demand and stock. **B** toggles machine labels that distinguish missing ingredients, blocked output, full storage, no power, no ammo and no fuel. [Community sources and decisions](docs/COMMUNITY_RESEARCH.md) explain what was adopted and why.
+
+Choose **Relaxed**, **Standard** or **Veteran** before starting. Veteran increases enemy pressure without shortening Standard preparation time. Co-op adds 10% enemies per connected guest, with no extra health multiplier. Attack directions and counts are forecast; minimap edges highlight in the final twenty seconds.
+
+Three rolling checkpoints are stored before swarms, separately from ordinary autosave. Choose a checkpoint in the menu, or retry the latest after defeat. Restoring returns the actual earlier world with at least twenty seconds to prepare. The host restores all connected guests as well. Local checkpoints, like ordinary saves, are separate in normal/incognito profiles and are not uploaded to GitHub.
+
+Brutes now have extra HP. Late turret gains are moderated; upgraded defenses consume more power and upgraded generators burn more fuel. A recently hit building cannot move or be dismantled for five seconds, and the core cannot move during a swarm. These rules prevent free escape without adding repair resources.
+
+See [balance parameters and limits](docs/BALANCE.md) and the [recorded simulation run](docs/balance-0.4.json). The synthetic CPU test uses 700 buildings and 480 enemies; GPU performance and human game balance still require player testing.
+
+## Included from 0.3
 
 Drag to select buildings, press **M** to move the area, and click a valid destination. Moves check deposits, terrain, collisions and boundaries before changing the world. **Shift-click** allows invalid buildings to be packed into inventory after a confirmation. The popup offers **Don’t ask again**; reset this preference in the menu. The command core is never removed by an override.
 
@@ -79,12 +91,14 @@ Protect the core through eight swarms. The starter colony has two working lines:
 | Q / Esc / right click | Exit build mode / cancel route |
 | P | Pause, host only |
 | ? | Field guide |
+| I | Production report |
+| B | Machine bottleneck overlay |
 
 Smart routes avoid trees, rocks and buildings, fill every tile and connect to machine inputs. A route is built atomically: insufficient resources reject the whole operation. Routes have a maximum of 128 tiles.
 
 ## Where worlds are saved
 
-Worlds save automatically every thirty seconds and manually with **Save** into browser **localStorage**, key `ironhaven.save.v1`. This key remains the same while the save schema is migrated. Old 0.1 and 0.2 saves migrate when resumed in the same browser storage.
+Worlds save automatically every thirty seconds and manually with **Save** into browser **localStorage**, key `ironhaven.save.v1`. Rolling checkpoints use `ironhaven.checkpoints.v1`; window layout uses `ironhaven.windows.v1`. This key remains the same while the save schema is migrated. Old 0.1 and 0.2 saves migrate when resumed in the same browser storage.
 
 Only the host saves a multiplayer world. Browser profiles and incognito sessions have separate storage. Incognito saves usually disappear when all incognito windows close. GitHub stores source and releases, not your world. Different sites or local-file paths may use different storage; when updating the downloaded edition, retain its original folder and filename. Deleting browser data deletes the save. There is one local save slot. Export JSON backups from the menu before clearing data or changing browser profiles. Importing a backup replaces that browser’s current save. Close LAN before importing.
 
@@ -113,6 +127,8 @@ The WebSocket development server is not needed for the game's in-browser LAN hos
 Release metadata lives in `public/shared/releases.js`. Update it and `package.json` together for every version or patch. `npm run build` validates history, generates notes and verifies release tags. Push a matching `v0.x.y` tag to publish the tested, standalone file through GitHub Actions. Main-branch CI tests and builds without publishing a release.
 
 Optional Pages hosting: the owner can enable **Settings → Pages → Source: GitHub Actions**, then run **Publish playable game**. The integration cannot enable Pages administration itself. The downloaded edition works independently.
+
+Run `node scripts/check-balance.mjs` for deterministic balance scenarios and a bounded CPU stress check.
 
 ## Graphics and scope
 

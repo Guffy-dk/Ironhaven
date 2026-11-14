@@ -1,0 +1,85 @@
+{
+  "scenarios": [
+    {
+      "difficulty": "relaxed",
+      "players": 1,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 6,
+      "survivalSeconds": 747,
+      "outcome": "defeat",
+      "cpuMs": 712
+    },
+    {
+      "difficulty": "relaxed",
+      "players": 4,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 6,
+      "survivalSeconds": 750,
+      "outcome": "defeat",
+      "cpuMs": 450
+    },
+    {
+      "difficulty": "standard",
+      "players": 1,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 5,
+      "survivalSeconds": 516,
+      "outcome": "defeat",
+      "cpuMs": 254
+    },
+    {
+      "difficulty": "standard",
+      "players": 4,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 5,
+      "survivalSeconds": 514,
+      "outcome": "defeat",
+      "cpuMs": 272
+    },
+    {
+      "difficulty": "veteran",
+      "players": 1,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 5,
+      "survivalSeconds": 503,
+      "outcome": "defeat",
+      "cpuMs": 224
+    },
+    {
+      "difficulty": "veteran",
+      "players": 4,
+      "policy": "No construction, upgrades or repairs",
+      "wave": 5,
+      "survivalSeconds": 505,
+      "outcome": "defeat",
+      "cpuMs": 307
+    },
+    {
+      "difficulty": "standard",
+      "players": 1,
+      "policy": "Only upgrade turrets to Mk III; repair core/turrets below half health when affordable",
+      "wave": 7,
+      "survivalSeconds": 704,
+      "outcome": "defeat",
+      "cpuMs": 389
+    },
+    {
+      "difficulty": "standard",
+      "players": 4,
+      "policy": "Only upgrade turrets to Mk III; repair core/turrets below half health when affordable",
+      "wave": 5,
+      "survivalSeconds": 549,
+      "outcome": "defeat",
+      "cpuMs": 298
+    }
+  ],
+  "stress": {
+    "buildings": 700,
+    "enemies": 480,
+    "ticks": 240,
+    "meanMs": 2.105,
+    "p95Ms": 4.033,
+    "tickBudgetMs": 50
+  },
+  "caveat": "CPU simulation on this machine only. No browser/GPU measurements and no claim of final human-playtested balance."
+}
