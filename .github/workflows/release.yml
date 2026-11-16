@@ -1,4 +1,4 @@
-name: Release offline game
+name: Release Windows game
 on:
   push:
     tags: ['v*']
@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,9 +15,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
-      - name: Publish standalone game
+      - run: ./scripts/build-windows.ps1
+      - name: Publish Windows game and patcher
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" release/Ironhaven.html --title "Ironhaven $RELEASE_TAG — Factory survival + LAN co-op" --notes-file release/RELEASE_NOTES.md --verify-tag
+        run: gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
