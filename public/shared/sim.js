@@ -1,6 +1,7 @@
 // Pure, deterministic simulation. The exact same module runs in Node and solo browsers.
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
+import {turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
 
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
@@ -23,7 +24,7 @@ export function waveForecast(s,wave=s.wave+1){
  return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
- hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
+ hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:'Keep the lighthouse standing through 25 swarms. It powers the colony and receives materials. Press L and click on the map to aim its light.'},
  belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries up to four items in a row toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'Place on blue iron deposits. Mines one ore every 1.6 seconds. The gold OUT port is its delivery side.'},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'Feed iron or copper ore into any cyan IN port. Processes iron in 1.6 seconds and copper in 2 seconds, in arrival order.'},
@@ -543,6 +544,13 @@ export function command(s,playerId,cmd){
   s.status='playing';s.paused=false;s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;return null;
  }
  if(s.status!=='playing')return 'The expedition has ended';
+ if(cmd.type==='aimLighthouse'){
+  const core=s.buildings.find(b=>b.type==='hq');
+  if(!core)return 'The lighthouse has fallen';
+  if(!routeTile(cmd)||cmd.x===core.x&&cmd.z===core.z)return 'Choose a direction away from the lighthouse';
+  core.lighthouseAim=Math.atan2(cmd.x-core.x,cmd.z-core.z);
+  return null;
+ }
  if(cmd.type==='finishTutorial'){
   if(p!==s.players[0]||s.tutorialStep===undefined)return 'Only the host can finish active training';
   if(cmd.skip!==true&&s.tutorialStep!==TUTORIAL_STEPS.length-1)return 'Complete the current training task first';
@@ -781,6 +789,9 @@ function hunterForest(s){
 }
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
+ const hq=s.buildings.find(b=>b.type==='hq');
+ turnLighthouse(hq,dt);
+ const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
  updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
@@ -844,7 +855,12 @@ export function step(s,dt=STEP){
   }
   if(TURRETS.includes(b.type)){
    const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
-   if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}
+   if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){
+    let target=null,closest=(stats.range*LIT_RANGE_MULTIPLIER)**2;
+    for(const e of s.enemies){
+     const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;
+     if(e.hp>0&&d<closest&&(d<stats.range**2||lit.has(e))){closest=d;target=e;}
+    }
     if(target){
      target.hp-=stats.damage;target.lastHit=s.time;
      if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=stats.damage*.65;
@@ -853,7 +869,7 @@ export function step(s,dt=STEP){
     }}
   }
  }
- const hq=s.buildings.find(b=>b.type==='hq');if(!hq){s.status='defeat';return;}
+ if(!hq){s.status='defeat';return;}
  const forest=s.enemies.length?woodland(s.terrain):null,enemyDestination={x:0,z:0};
  const coreRoutes=s.enemies.some(e=>e.coreHunter)?hunterForest(s):null;
  const industry=s.enemies.length?s.buildings.filter(b=>hasOutputBuffer(b.type)||b.type==='sawmill'||Object.hasOwn(GENERATORS,b.type)):[];

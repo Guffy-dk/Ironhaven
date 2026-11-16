@@ -104,13 +104,22 @@ export function makeQuarryModel(type,paint){
  const g=new T.Group();
  g.userData.type=type;
  if(type==='hq'){
-  shed(g,paint(0xd3c8b5),0xd9dddd,1.36,1.06,.8,true);
-  box(g,mortar,0,.13,.67,.57,.18,.27);
-  door(g,0,.41,.535,.23,.43,iron);
-  for(const x of [-.46,-.25,.25,.46])window(g,x,.63,.544,.14);
-  chimney(g,-.42,-.22,1.28,.17);
-  cyl(g,iron,.46,1.4,.18,.025,.89,6);
-  box(g,0x456175,.565,1.78,.18,.21,.15,.02);
+  cyl(g,0x4a5555,0,.15,0,.69,.3,12);
+  cyl(g,paint(0x9ba4a0),0,1.01,0,.46,1.65,18);
+  for(const y of [.46,1.13,1.78])cyl(g,0x576464,0,y,0,.468,.049,18);
+  box(g,0x888e89,.49,.12,0,.5,.22,.54);
+  box(g,0x515b5b,.53,.33,0,.36,.25,.46);
+  cyl(g,0x384244,0,1.91,0,.59,.15,18);
+  const lantern=new T.Group();lantern.name='lantern';lantern.position.y=2.19;g.add(lantern);
+  cyl(lantern,0x835d38,0,-.045,0,.25,.27,12);
+  const lens=cyl(lantern,0xffd38d,0,.025,.29,.17,.085,14,true);lens.rotation.x=Math.PI/2;
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4;
+   cyl(g,0x3b4d50,Math.sin(a)*.42,2.15,Math.cos(a)*.42,.035,.46,7);
+  }
+  cyl(g,0x466365,0,2.42,0,.52,.16,16);
+  cyl(g,0x30424c,0,2.54,0,.26,.13,12);
+  cyl(g,0x764c36,0,2.68,0,.042,.25,8);
  }else if(type==='storage'){
   shed(g,paint(0xd2c8b6),0xd7dbd6,.82,.78,.53);
   for(const x of [-.34,-.29,-.24,.24,.29,.34])box(g,0x8e8170,x,.4,.385,.014,.44,.02);

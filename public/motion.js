@@ -1,4 +1,5 @@
 import {conveyorProgress} from './shared/sim.js';
+import {lighthouseHeading} from './shared/lighthouse.js';
 
 // Render between completed simulation updates. Simulation and LAN state stay authoritative.
 export class RenderMotion {
@@ -6,10 +7,13 @@ export class RenderMotion {
  reset(){
   this.current=new Map();this.previous=new Map();this.cargo=new Map();this.previousCargo=new Map();
   this.tick=undefined;this.time=undefined;this.sampledAt=0;this.duration=50;this.alpha=1;
+  this.light=undefined;this.previousLight=undefined;
  }
  update(state,now){
   if(this.tick!==state.tick){
    const advancing=this.tick!==undefined&&state.tick>this.tick;
+   const heading=lighthouseHeading(state.buildings?.find(b=>b.type==='hq'));
+   this.previousLight=advancing?this.light:heading;this.light=heading;
    this.previous=advancing?this.current:new Map();
    this.previousTick=advancing?this.tick:state.tick;
    this.previousTime=advancing?this.time:state.time;
@@ -26,6 +30,8 @@ export class RenderMotion {
   this.alpha=Math.max(0,Math.min(1,(now-this.sampledAt)/this.duration));
   this.renderTick=this.previousTick+(this.tick-this.previousTick)*this.alpha;
   this.renderTime=this.previousTime+(this.time-this.previousTime)*this.alpha;
+  const turn=this.light-this.previousLight;
+  this.lighthouseAngle=this.previousLight+Math.atan2(Math.sin(turn),Math.cos(turn))*this.alpha;
  }
  drawBeltItems(b,draw){
   const current=this.cargo.get(b.id)??[];

@@ -17,6 +17,8 @@ import {mat,geometry,box,cyl} from './render-primitives.js';
 import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
 import {quarryTerrainMaterial,quarrySpruce,quarryTexture} from './quarry-textures.js';
 import {createQuarryEffects,quarryActorGeometry,updateQuarryEffects} from './quarry-effects.js';
+import {LighthouseFog} from './lighthouse-fog.js';
+import {isInLighthouseBeam,lighthouseBeam,lighthouseHeading} from './shared/lighthouse.js';
 const actorSkin=new T.MeshStandardMaterial({vertexColors:true,color:0xb5a38d,roughness:.91});
 const actorHead=new T.MeshStandardMaterial({vertexColors:true,color:0xa29382,roughness:.88});
 const easeAngle=(current,target,weight)=>current+Math.atan2(Math.sin(target-current),Math.cos(target-current))*weight;
@@ -241,6 +243,7 @@ export class View{
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
   this.dust=createQuarryEffects();this.scene.add(this.dust);
+  this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
   this.beltItems=new T.InstancedMesh(geometry('box',.15,.13,.15),mat(0xffffff),700*BELT_CAPACITY);
   this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);this.beltItems.frustumCulled=false;this.beltItems.count=0;this.scene.add(this.beltItems);
@@ -406,6 +409,9 @@ export class View{
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   const quarry=this.style==='quarry';
   const shotsByOrigin=quarry?new Map(s.shots.map(shot=>[key(shot.x,shot.z),shot])):null;
+  const core=s.buildings.find(b=>b.type==='hq'),heading=motion?.lighthouseAngle??lighthouseHeading(core);
+  const beam=lighthouseBeam(core,heading);
+  this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
@@ -414,14 +420,15 @@ export class View{
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;
-    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon']){
+    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern']){
      const part=g.getObjectByName(name);
      if(part){g.userData[name]=part;part.traverse(o=>{o.castShadow=false;});}
     }
     g.position.set(b.x,0,b.z);sizePortBadges(g,this.worldPerPixel,b.id===this.selected);
     this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
    }else if(g.position.x!==b.x||g.position.z!==b.z){g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
-   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon}=g.userData;
+   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon,lantern}=g.userData;
+   if(lantern)lantern.rotation.y=heading;
    if(rotor&&b.active)rotor.rotation.y=time*(GENERATORS[b.type]?5:2)*productionSpeed(b);
    if(capsule){const age=time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(time*3)*.03:0),0);}
    if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
@@ -457,6 +464,7 @@ export class View{
   for(let i=0;i<n;i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
+   if(quarry)this.enemyBody.setColorAt(i,this.enemyColor.multiplyScalar(isInLighthouseBeam(beam,{x,z})?1.21:.77));
    if(quarry){
     const previous=motion?.previous.get(e.id),old=this.actorHeading.get(e.id);
     const moving=previous&&Math.abs(e.x-previous.x)+Math.abs(e.z-previous.z)>.001;
