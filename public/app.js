@@ -65,7 +65,7 @@ function saveGame(quiet=false){
  if(!started||mode==='client'){if(!quiet)toast('Only the host can save the world.',true);return;}
  const {state:data}=packWorldSave(state,playerId);
  if(!writeStorage(SAVE,JSON.stringify({state:data,playerId}))){if(!quiet)toast('Could not save. Browser storage is disabled or full.',true);return;}
- if(!quiet)toast('World saved in this browser.');$('resume').hidden=false;
+ if(!quiet)toast('World saved on this device.');$('resume').hidden=false;
 }
 function newExpedition(name,difficulty){
  const skipTutorial=$('skip-tutorial').checked;

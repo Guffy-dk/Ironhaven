@@ -1,9 +1,17 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.8.0';
+export const CURRENT_VERSION = '0.8.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.8.1',date:'2026-11-16',title:'Windows playtest',
+  changes:[
+   'Added a standalone Windows x64 build that starts from Ironhaven.exe without a browser window or separate server.',
+   'Added Ironhaven Patcher to download and verify the latest Windows build on GitHub and install it into a versioned folder.',
+   'Desktop saves and checkpoints are shared across installed game versions. Export a JSON world backup from the browser edition to bring an existing world over.'
+  ]
+ },
  {
   version:'0.8.0',date:'2026-11-16',title:'Field training',
   changes:[

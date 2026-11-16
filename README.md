@@ -2,11 +2,17 @@
 
 **Build. Fortify. Survive.** Original, lightweight 3D factory survival for one host and three LAN guests.
 
-**[Download the latest standalone game](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
+**[Download the Windows playtest](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
 
-Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
+Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven**. Open the patcher again whenever you want to check for updates. It verifies the downloaded ZIP and installs each version under `%LOCALAPPDATA%\IronhavenPatcher\versions`.
 
-## Version 0.8 — field training
+For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
+
+## Version 0.8.1 — Windows playtest
+
+The game runs in its own window and hosts direct LAN from the in-game menu. The patcher and portable ZIP target 64-bit Windows. For a local Windows package and automated startup and patcher tests, run `pwsh -File scripts/build-windows.ps1` after `npm ci`.
+
+## Included from 0.8 — field training
 
 New expeditions start with a core and a starter kit in the host's inventory. Follow the in-world markers to move, build iron and gear lines, deliver items to storage and build defenses. The swarm countdown starts when you finish or skip training. Skipping gives you the same kit, ready to place. Existing worlds keep their buildings, and training saves resume at the current task.
 
@@ -189,7 +195,7 @@ node scripts/check-rtc.mjs
 
 The WebSocket development server is not needed for the game's in-browser LAN hosting. Tests establish protocol behavior and rendering math; **visual browser QA and two physical LAN computers remain unverified** in this environment.
 
-Release metadata lives in `public/shared/releases.js`. Update it and `package.json` together for every version or patch. `npm run build` validates history, generates notes and verifies release tags. Push a matching `v0.x.y` tag to publish the tested, standalone file through GitHub Actions. Main-branch CI tests and builds without publishing a release.
+Release metadata lives in `public/shared/releases.js`. Update it and `package.json` together for every version or patch. `npm run build` validates history, generates notes and verifies release tags. Run `./scripts/build-windows.ps1` on Windows to build and test the patcher and Windows game archive. Push a matching `v0.x.y` tag to publish both files through GitHub Actions. Main-branch CI tests and builds without publishing a release.
 
 Optional Pages hosting: the owner can enable **Settings → Pages → Source: GitHub Actions**, then run **Publish playable game**. The integration cannot enable Pages administration itself. The downloaded edition works independently.
 
