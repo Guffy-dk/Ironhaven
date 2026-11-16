@@ -61,6 +61,7 @@ async function start() {
     throw Error('Desktop game did not initialize: ' + JSON.stringify(result));
   }
   const styles = await gameWindow.webContents.executeJavaScript(`(async () => {
+    await Promise.all(['quarry-materials', 'quarry-spruce'].map(id => document.getElementById(id).decode()));
     const select = document.getElementById('start-visual-style');
     const gl = document.getElementById('world').getContext('webgl2');
     const applied = [];

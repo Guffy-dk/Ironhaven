@@ -1,21 +1,42 @@
 import * as T from './vendor/three.module.js';
 import {box,cyl} from './render-primitives.js';
-import {rng} from './shared/sim.js';
+import {quarryTexture} from './quarry-textures.js';
 
 const iron=0x454848, steel=0x6c7476, stone=0x868179, mortar=0xa09b8b;
-const timber=0x755c42, wood=0xaf8860, roof=0x555f62, slate=0x65747c;
-const brick=0x8d513d, sand=0xa0906d, cream=0xc5b69a, copper=0xa8734c;
+const timber=0x755c42, wood=0xaf8860, roof=0xc8cac5, slate=0x65747c;
+const sand=0xa0906d, cream=0xc5b69a, copper=0xa8734c;
 const structures=new Map();
 const structureMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:.86});
+const surfaceMaterials=new Map();
+
+function surface(g,name,color,x,y,z,w,h,d){
+ const part=box(g,color,x,y,z,w,h,d);
+ part.userData.surface=name;
+ return part;
+}
+function materialFor(name){
+ if(name==='plain')return structureMaterial;
+ if(!surfaceMaterials.has(name)){
+  const map=quarryTexture(name),metal=name==='roof';
+  surfaceMaterials.set(name,new T.MeshStandardMaterial({
+   vertexColors:true,map,bumpMap:map,bumpScale:metal?.018:.041,roughness:metal?.62:.94,metalness:metal?.34:.02
+  }));
+ }
+ return surfaceMaterials.get(name);
+}
 
 // Consolidate the fixed parts of each building while keeping its moving parts and ports separate.
 export function batchQuarryModel(g,key){
  const parts=g.children.filter(o=>o.isMesh&&!o.name&&o.material.isMeshStandardMaterial);
  if(parts.length<2)return;
- let body=structures.get(key);
- if(!body){
-  const positions=[],normals=[],colors=[],point=new T.Vector3(),normal=new T.Vector3(),normalMatrix=new T.Matrix3();
+ let groups=structures.get(key);
+ if(!groups){
+  groups=new Map();
+  const vertices=new Map(),point=new T.Vector3(),normal=new T.Vector3(),normalMatrix=new T.Matrix3();
   for(const part of parts){
+   const name=part.userData.surface??'plain';
+   if(!vertices.has(name))vertices.set(name,{positions:[],normals:[],colors:[],uv:[]});
+   const {positions,normals,colors,uv}=vertices.get(name);
    part.updateMatrix();normalMatrix.getNormalMatrix(part.matrix);
    const {position,normal:direction}=part.geometry.attributes,{index}=part.geometry;
    const {r,g,b}=part.material.color;
@@ -24,24 +45,34 @@ export function batchQuarryModel(g,key){
     point.fromBufferAttribute(position,vertex).applyMatrix4(part.matrix);
     normal.fromBufferAttribute(direction,vertex).applyNormalMatrix(normalMatrix);
     positions.push(point.x,point.y,point.z);normals.push(normal.x,normal.y,normal.z);colors.push(r,g,b);
+    if(name==='roof'||Math.abs(normal.y)>.63)uv.push(point.x*.93,point.z*.93);
+    else if(Math.abs(normal.z)>Math.abs(normal.x))uv.push(point.x,point.y);
+    else uv.push(point.z,point.y);
    }
   }
-  body=new T.BufferGeometry();
+  for(const [name,{positions,normals,colors,uv}] of vertices){
+  const body=new T.BufferGeometry();
   body.setAttribute('position',new T.Float32BufferAttribute(positions,3));
   body.setAttribute('normal',new T.Float32BufferAttribute(normals,3));
   body.setAttribute('color',new T.Float32BufferAttribute(colors,3));
-  structures.set(key,body);
+  body.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
+  groups.set(name,body);
+  }
+  structures.set(key,groups);
  }
  g.remove(...parts);
- const mesh=new T.Mesh(body,structureMaterial);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);
+ for(const [name,body] of groups){
+  const mesh=new T.Mesh(body,materialFor(name));mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);
+ }
 }
 
-function shed(g,color,cover,width=.82,depth=.76,height=.63){
+function shed(g,color,cover,width=.82,depth=.76,height=.63,masonry=false){
  box(g,stone,0,.095,0,width+.07,.19,depth+.06);
- box(g,color,0,height/2+.14,0,width,height,depth);
+ if(masonry)surface(g,'brick',color,0,height/2+.14,0,width,height,depth);
+ else box(g,color,0,height/2+.14,0,width,height,depth);
  const pitch=.29;
  for(const side of [-1,1]){
-  const panel=box(g,cover,0,height+.22,side*depth*.255,width+.12,.064,depth*.6);
+  const panel=surface(g,'roof',cover,0,height+.22,side*depth*.255,width+.12,.064,depth*.6);
   panel.rotation.x=side*pitch;
   for(let x=-width*.4;x<=width*.41;x+=Math.max(.17,width*.17)){
    const seam=box(g,steel,x,height+.255,side*depth*.262,.022,.018,depth*.58);
@@ -65,7 +96,7 @@ function axle(g,height){
  return rotor;
 }
 function chimney(g,x,z,height,diameter=.13){
- box(g,brick,x,height/2,z,diameter,height,diameter);
+ surface(g,'brick',0xded3c4,x,height/2,z,diameter,height,diameter);
  box(g,iron,x,height,z,diameter+.04,.075,diameter+.04);
 }
 
@@ -73,7 +104,7 @@ export function makeQuarryModel(type,paint){
  const g=new T.Group();
  g.userData.type=type;
  if(type==='hq'){
-  shed(g,paint(0x806950),roof,1.36,1.06,.8);
+  shed(g,paint(0xd3c8b5),0xd9dddd,1.36,1.06,.8,true);
   box(g,mortar,0,.13,.67,.57,.18,.27);
   door(g,0,.41,.535,.23,.43,iron);
   for(const x of [-.46,-.25,.25,.46])window(g,x,.63,.544,.14);
@@ -81,7 +112,8 @@ export function makeQuarryModel(type,paint){
   cyl(g,iron,.46,1.4,.18,.025,.89,6);
   box(g,0x456175,.565,1.78,.18,.21,.15,.02);
  }else if(type==='storage'){
-  shed(g,paint(0x8c8576),roof,.82,.78,.53);
+  shed(g,paint(0xd2c8b6),0xd7dbd6,.82,.78,.53);
+  for(const x of [-.34,-.29,-.24,.24,.29,.34])box(g,0x8e8170,x,.4,.385,.014,.44,.02);
   door(g,.01,.35,.398,.43,.35,0x506473);
   box(g,wood,-.31,.13,.44,.17,.17,.15);
   box(g,timber,.32,.1,.44,.14,.12,.15);
@@ -92,34 +124,44 @@ export function makeQuarryModel(type,paint){
    const strut=box(g,accent,x*.8,.66,z,.084,1.09,.083);
    strut.rotation.z=Math.sign(x)*.16;
   }
-  box(g,roof,0,1.22,0,.52,.075,.62);
-  for(const z of [-.27,.27])box(g,iron,0,.56,z,.53,.1,.072);
+  surface(g,'roof',roof,-.11,1.23,0,.61,.06,.65).rotation.z=.17;
+  for(const z of [-.27,.27]){
+   box(g,timber,0,.56,z,.53,.065,.072);
+   for(const sign of [-1,1])box(g,accent,0,.61,z,.052,.7,.038).rotation.z=sign*.66;
+  }
+  box(g,stone,-.34,.21,.18,.145,.26,.32);
+  cyl(g,iron,-.37,.86,.246,.138,.07,12).rotation.x=Math.PI/2;
+  cyl(g,steel,-.37,.86,.29,.071,.03,10).rotation.x=Math.PI/2;
   const rotor=axle(g,.6);
   cyl(rotor,steel,0,0,0,.075,.75,8);
   for(const y of [-.24,-.09])box(rotor,iron,0,y,0,.26,.06,.13);
   box(g,timber,.34,.23,0,.31,.13,.28);
  }else if(type==='smelter'||type==='foundry'){
   const foundry=type==='foundry';
-  shed(g,paint(foundry?0x9b7558:brick),roof,.79,.72,foundry?.65:.57);
+  shed(g,paint(foundry?0xd5c0ab:0xf5e3d3),0xc8cccd,.79,.72,foundry?.65:.57,true);
   door(g,.07,.34,.367,.35,.39,iron);
   box(g,0xc77c3e,.07,.35,.41,.25,.19,.017,true);
   box(g,iron,.07,.32,.429,.29,.035,.025);
   chimney(g,-.24,-.17,1.31,.15);
   if(foundry)chimney(g,.24,-.2,1.19,.12);
+  cyl(g,iron,.37,.33,-.19,.093,.48,12);
+  cyl(g,steel,.37,.57,-.19,.1,.038,12);
+  for(const x of [-.32,.31])window(g,x,.48,.367,.11);
   box(g,mortar,-.28,.19,.43,.16,.07,.17);
  }else if(['assembler','circuitLab','componentFactory'].includes(type)){
   const panels={assembler:wood,circuitLab:0x798c7e,componentFactory:0x6f8090};
   shed(g,paint(panels[type]),type==='componentFactory'?slate:roof,.83,.77,.61);
   door(g,.15,.35,.391,.29,.33,iron);
   window(g,-.23,.53,.403,.2);
-  box(g,timber,0,.57,.46,.84,.08,.23);
+  surface(g,'roof',0xaab4b6,0,.57,.46,.84,.05,.23);
+  for(const x of [-.39,.39])box(g,timber,x,.38,.47,.052,.45,.053);
   box(g,wood,-.25,.19,.44,.18,.22,.15);
   if(type==='componentFactory')box(g,iron,.25,.91,-.17,.32,.09,.23);
  }else if(type==='sawmill'){
   box(g,paint(stone),0,.08,0,.86,.16,.85);
   for(const x of [-.37,.37])for(const z of [-.31,.31])box(g,timber,x,.42,z,.083,.67,.088);
   for(const z of [-.22,.22]){
-   const cover=box(g,roof,0,.82,z,.88,.063,.47);
+   const cover=surface(g,'roof',roof,0,.82,z,.88,.063,.47);
    cover.rotation.x=Math.sign(z)*.23;
   }
   for(const z of [-.18,.18,.36]){
@@ -142,6 +184,7 @@ export function makeQuarryModel(type,paint){
   box(g,stone,0,.087,0,.84,.174,.84);
   box(g,paint(sand),0,.21,0,.76,.11,.76);
   cyl(g,iron,0,.295,0,.3,.1,10);
+  for(const x of [-.34,.34])for(const z of [-.29,0,.29])box(g,0x9d9279,x,.255,z,.146,.143,.25);
   const head=new T.Group();head.name='head';head.position.y=.42;g.add(head);
   if(type==='mortar'){
    box(head,iron,0,-.03,0,.43,.12,.42);
@@ -150,10 +193,13 @@ export function makeQuarryModel(type,paint){
    box(head,paint(steel),0,-.01,-.1,.34,.17,.24);
   }else{
    const sentry=type==='turret',pulse=type==='pulseTurret';
-   box(head,paint(sentry?slate:pulse?0x777362:steel),0,.03,0,sentry?.37:.53,sentry?.23:.32,.36);
+   const shield=paint(sentry?slate:pulse?0x777362:steel),width=sentry?.37:.53;
+   box(head,shield,0,.005,0,width,sentry?.17:.22,.36);
+   cyl(head,shield,0,.092,0,sentry?.145:.183,width,16).rotation.z=Math.PI/2;
    box(head,iron,0,.028,.185,sentry?.22:.38,.13,.03);
    for(const x of pulse?[-.115,.115]:[0]){
-    const barrel=cyl(head,iron,x,.045,.33,sentry?.035:.052,.45,8);barrel.rotation.x=Math.PI/2;
+    const barrel=cyl(head,iron,x,.045,.33,sentry?.035:.052,.45,12);barrel.rotation.x=Math.PI/2;
+    cyl(head,steel,x,.045,.531,sentry?.044:.067,.052,12).rotation.x=Math.PI/2;
    }
    for(const x of [-.18,.18])box(head,mortar,x,.11,.173,.03,.03,.022);
   }
@@ -170,24 +216,4 @@ export function makeQuarryModel(type,paint){
   const dial=cyl(g,cream,0,.28,0,.22,.04,3);dial.name='dispatchDial';
  }
  return g;
-}
-
-let groundTexture;
-export function quarryGroundTexture(){
- if(groundTexture)return groundTexture;
- const size=256,random=rng(82375),data=new Uint8Array(size*size*4);
- for(let z=0;z<size;z++)for(let x=0;x<size;x++){
-  const wave=Math.sin(x*Math.PI/32+2*Math.cos(z*Math.PI/32))*11+Math.sin(z*Math.PI/8+x*Math.PI/16)*7;
-  const grit=random(),stone=Math.max(0,Math.sin(x*Math.PI/8)*Math.cos(z*Math.PI/16)-.38)*23;
-  const value=Math.round(Math.min(255,181+wave+grit*42+stone-(grit<.07?19:0)));
-  const index=(z*size+x)*4;
-  data[index]=data[index+1]=data[index+2]=value;data[index+3]=255;
- }
- groundTexture=new T.DataTexture(data,size,size);
- groundTexture.wrapS=groundTexture.wrapT=T.RepeatWrapping;
- groundTexture.repeat.set(65,65);
- groundTexture.generateMipmaps=true;
- groundTexture.minFilter=T.LinearMipmapLinearFilter;groundTexture.magFilter=T.LinearFilter;
- groundTexture.needsUpdate=true;
- return groundTexture;
 }

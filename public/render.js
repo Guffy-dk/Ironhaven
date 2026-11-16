@@ -14,7 +14,26 @@ const beltArrow=(()=>{
 const cyan=0x79d8d0;
 const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
 import {mat,geometry,box,cyl} from './render-primitives.js';
-import {batchQuarryModel,makeQuarryModel,quarryGroundTexture} from './quarry-art.js';
+import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
+import {quarryTerrainMaterial,quarrySpruce,quarryTexture} from './quarry-textures.js';
+import {createQuarryEffects,quarryActorGeometry,updateQuarryEffects} from './quarry-effects.js';
+const actorSkin=new T.MeshStandardMaterial({vertexColors:true,color:0xb5a38d,roughness:.91});
+const actorHead=new T.MeshStandardMaterial({vertexColors:true,color:0xa29382,roughness:.88});
+const easeAngle=(current,target,weight)=>current+Math.atan2(Math.sin(target-current),Math.cos(target-current))*weight;
+let quarryStone;
+function quarryStoneSurface(){
+ if(quarryStone)return quarryStone;
+ const shape=new T.IcosahedronGeometry(1,1),positions=shape.attributes.position;
+ for(let i=0;i<positions.count;i++){
+  const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),worn=1+.09*Math.sin(x*13+z*7)*Math.cos(y*8-z*5);
+  positions.setXYZ(i,x*worn,Math.min(.72,y*worn),z*worn);
+ }
+ shape.computeVertexNormals();
+ const map=quarryTexture('gravel');
+ const material=new T.MeshStandardMaterial({map,color:0xeee8dc,roughness:.95});
+ quarryStone={shape,material};
+ return quarryStone;
+}
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
 export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
  const quarry=style==='quarry';
@@ -70,11 +89,15 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
   const section=(left,right,top,bottom)=>{
    const x=(left+right)/2,z=(top+bottom)/2,w=right-left,d=bottom-top;
    if(quarry){
-    box(g,0x615d50,x,.13,z,w,.26,d);
-    box(g,painted(0x908b77),x,.32,z,w,.16,d);
-    box(g,0xa99b7d,x,.46,z,w,.112,d);
-    const alongX=w>=d;
-    box(g,0x6d6759,x,.503,z,alongX?.036:w,.032,alongX?d:.036);
+    box(g,0x635c51,x,.096,z,w,.192,d).userData.surface='brick';
+    box(g,painted(0x8a826c),x,.24,z,w,.112,d);
+    const alongX=w>=d,length=alongX?w:d,blocks=Math.max(1,Math.round(length/.24));
+    for(let row=0;row<2;row++)for(let i=0;i<blocks;i++){
+     const span=length/blocks,offset=(i+.5)*span-length/2;
+     const shade=[0x8b816e,0xa79a7e,0x978b71][(i+row)%3],width=span*.96;
+     box(g,shade,x+(alongX?offset:0),.32+row*.105,z+(alongX?0:offset),
+      alongX?width:w*.87,.128,alongX?d*.83:width);
+    }
     return;
    }
    box(g,C.dark,x,.11,z,w,.22,d);
@@ -212,10 +235,13 @@ export class View{
   const points=new Float32Array(1200*6);this.shotsGeometry=new T.BufferGeometry();this.shotsGeometry.setAttribute('position',new T.BufferAttribute(points,3));this.shotLines=new T.LineSegments(this.shotsGeometry,new T.LineBasicMaterial({color:0xffd890,transparent:true,opacity:.85}));this.shotLines.frustumCulled=false;this.scene.add(this.shotLines);
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
+  this.dust=createQuarryEffects();this.scene.add(this.dust);
+  this.actorHeading=new Map();
   this.beltItems=new T.InstancedMesh(geometry('box',.15,.13,.15),mat(0xffffff),700*BELT_CAPACITY);
   this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);this.beltItems.frustumCulled=false;this.beltItems.count=0;this.scene.add(this.beltItems);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
+  document.getElementById('quarry-spruce')?.addEventListener('load',()=>{if(this.style==='quarry')this.terrainKey='';});
  }
  resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.updateProjection();}
  updateProjection(){const w=innerWidth,h=innerHeight,aspect=w/h;this.camera.left=-this.zoom*aspect;this.camera.right=this.zoom*aspect;this.camera.top=this.zoom;this.camera.bottom=-this.zoom;this.camera.updateProjectionMatrix();
@@ -229,16 +255,28 @@ export class View{
   this.style=style;
   const quarry=style==='quarry',skyColor=quarry?0x454c48:0x172d31;
   this.scene.background.setHex(skyColor);this.scene.fog.color.setHex(skyColor);this.scene.fog.density=quarry?.0065:.011;
-  this.sky.color.setHex(quarry?0xe5e8dd:0xd5e3c4);this.sky.groundColor.setHex(quarry?0x6b6656:0x294548);this.sky.intensity=quarry?1.76:2.2;
-  this.sun.color.setHex(quarry?0xffebcd:0xffd89c);this.sun.intensity=quarry?2.55:3;this.sun.shadow.normalBias=quarry?.037:.07;
-  this.fill.color.setHex(quarry?0xb5c2d1:0x83b8b2);this.fill.intensity=quarry?.65:1.3;
-  this.renderer.toneMappingExposure=quarry?1.05:1.18;this.renderer.shadowMap.needsUpdate=true;
-  this.enemyBody.geometry=quarry?geometry('ico',1):geometry('box',.3,.48,.24);
-  this.enemyBody.material=mat(quarry?0xc7b9a3:0xc18a74);
-  this.enemyHead.geometry=quarry?geometry('ico',1):geometry('box',.24,.24,.24);
-  this.enemyHead.material=mat(quarry?0xa39885:0xc7b696);
+  this.sky.color.setHex(quarry?0xdce3eb:0xd5e3c4);this.sky.groundColor.setHex(quarry?0x857768:0x294548);this.sky.intensity=quarry?1.46:2.2;
+  this.sun.color.setHex(quarry?0xffe8ce:0xffd89c);this.sun.intensity=quarry?2.5:3;this.sun.shadow.normalBias=quarry?.018:.07;
+  this.fill.color.setHex(quarry?0xc2ccda:0x83b8b2);this.fill.intensity=quarry?.51:1.3;
+  this.renderer.toneMappingExposure=quarry?1.12:1.18;this.renderer.shadowMap.needsUpdate=true;
+  this.shadowKey='';
+  if(!quarry)this.setShadowArea(0,0,95);
+  this.enemyBody.geometry=quarry?quarryActorGeometry('body'):geometry('box',.3,.48,.24);
+  this.enemyBody.material=quarry?actorSkin:mat(0xc18a74);
+  this.enemyHead.geometry=quarry?quarryActorGeometry('head'):geometry('box',.24,.24,.24);
+  this.enemyHead.material=quarry?actorHead:mat(0xc7b696);
   this.enemyLegs.geometry=quarry?geometry('cyl',.044,.22,6):geometry('box',.11,.25,.13);
   this.enemyLegs.material=mat(quarry?0x64564b:0x3e4b47);
+  this.actorHeading.clear();this.dust.visible=false;
+  this.shotLines.material.color.setHex(quarry?0xffb763:0xffd890);this.shotLines.material.opacity=quarry?.61:.85;
+ }
+ setShadowArea(x,z,radius){
+  this.sun.position.set(x-14,27,z+13);this.sun.target.position.set(x,0,z);
+  this.sun.target.updateMatrixWorld();
+  const camera=this.sun.shadow.camera;
+  Object.assign(camera,{left:-radius,right:radius,top:radius,bottom:-radius});
+  camera.updateProjectionMatrix();
+  this.renderer.shadowMap.needsUpdate=true;
  }
  point(clientX,clientY){this.mouse.set(clientX/innerWidth*2-1,-clientY/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);if(!this.ray.ray.intersectPlane(this.plane,this.hit))return null;return{x:Math.round(this.hit.x),z:Math.round(this.hit.z)};}
  pan(x,z){this.center.x=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.x+x));this.center.z=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.z+z));}
@@ -288,50 +326,87 @@ export class View{
   const quarry=this.style==='quarry';
   this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
-  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,104,104);groundGeometry.rotateX(-Math.PI/2);const colors=[],vertices=groundGeometry.attributes.position;
-  const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x91816c);
+  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,104,104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
+  const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x91816c),albedoTint=new T.Color(0xe8e1d5);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
     const exposed=Math.sin(x*.53+z*.28)+Math.cos(z*.51-x*.32)+.43*Math.sin(x*.96-z*.76);
     color.lerp(gravel,Math.min(.78,Math.max(0,.43*exposed-.12)));
+    color.lerp(albedoTint,.76);
+    const meadow=Math.sin(x*.47-z*.21)+Math.cos(z*.49+x*.23)+Math.sin(x*1.28-z*.66)*.2;
+    growth.push(T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16));
    }colors.push(color.r,color.g,color.b);vertices.setY(i,-.026+(d>12?Math.sin(x*.7)*Math.cos(z*.6)*.017:0));}
-  groundGeometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();const ground=new T.Mesh(groundGeometry,new T.MeshStandardMaterial({vertexColors:true,roughness:quarry?.94:1,map:quarry?quarryGroundTexture():null}));ground.receiveShadow=true;this.ground.add(ground);let i=0;
+  groundGeometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();
+  if(quarry)groundGeometry.setAttribute('quarryGrowth',new T.Float32BufferAttribute(growth,1));
+  const ground=new T.Mesh(groundGeometry,quarry?quarryTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
+  ground.receiveShadow=true;this.ground.add(ground);let i=0;
   const grass=new T.InstancedMesh(geometry('cone',quarry?.075:.12,.25,3),mat(quarry?0x8a8051:0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12)continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
   const groves=new Map();
   for(const tree of s.terrain.trees){const chunk=key(Math.floor(tree.x/24),Math.floor(tree.z/24));if(!groves.has(chunk))groves.set(chunk,[]);groves.get(chunk).push(tree);}
+  const spruce=quarry?quarrySpruce():null;
   for(const trees of groves.values()){
+  if(spruce){
+   const stand=new T.InstancedMesh(spruce.geometry,spruce.material,trees.length);
+   const tint=new T.Color();
+   trees.forEach((tree,i)=>{
+    const scale=tree.h*(.81+rand()*.25),brightness=.72+rand()*.28;
+    this.dummy.position.set(tree.x+(rand()-.5)*.23,0,tree.z+(rand()-.5)*.23);
+    this.dummy.rotation.set(0,0,(rand()-.5)*.09);
+    this.dummy.scale.set(scale*(.88+rand()*.22),scale,scale);this.dummy.updateMatrix();
+    stand.setMatrixAt(i,this.dummy.matrix);stand.setColorAt(i,tint.setScalar(brightness));
+   });
+   stand.castShadow=true;stand.receiveShadow=true;this.terrain.add(stand);
+   continue;
+  }
   const trunks=new T.InstancedMesh(geometry('cyl',quarry?.084:.1,.6,5),mat(quarry?0x665441:C.wood),trees.length),leaves=new T.InstancedMesh(quarry?geometry('cone',.54,1.22,7):geometry('ico',.72),mat(quarry?0x3e4e36:C.tree),trees.length),tops=new T.InstancedMesh(quarry?geometry('cone',.39,1.26,7):geometry('ico',.56),mat(quarry?0x596247:C.treeTop),trees.length);
   trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
   }
   if(quarry){
-   this.quarryDeposit(s.terrain.ore,0x788b8b,0x505b55,rand);
-   this.quarryDeposit(s.terrain.copper??[],0xa27658,0x634d3e,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x4d4c4a,0x312f2b,rand);
+   this.quarryDeposit(s.terrain.ore,0x9db6ba,0x6d7269,rand);
+   this.quarryDeposit(s.terrain.copper??[],0xd1a17b,0x796c60,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x585764,0x49484d,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
    if(s.terrain.coal?.length){const coal=new T.InstancedMesh(geometry('ico',.42),mat(0x4b505c),s.terrain.coal.length);s.terrain.coal.forEach((v,i)=>{this.dummy.position.set(v.x,.16,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.92,.68,.92);this.dummy.updateMatrix();coal.setMatrixAt(i,this.dummy.matrix);});coal.castShadow=true;this.terrain.add(coal);}
   }
-  const rocks=new T.InstancedMesh(geometry('ico',.5),mat(quarry?0x777671:0x657873),s.terrain.rocks.length);s.terrain.rocks.forEach((v,i)=>{this.dummy.position.set(v.x,v.h*.25,v.z);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.rotation.set(0,rand()*6,0);this.dummy.updateMatrix();rocks.setMatrixAt(i,this.dummy.matrix);});rocks.castShadow=true;this.terrain.add(rocks);
+  const stone=quarry?quarryStoneSurface():null;
+  const rocks=new T.InstancedMesh(stone?.shape??geometry('ico',.5),stone?.material??mat(0x657873),s.terrain.rocks.length);
+  s.terrain.rocks.forEach((v,i)=>{
+   this.dummy.position.set(v.x,v.h*.25,v.z);
+   this.dummy.scale.set((.8+rand()*.4)*(quarry?.48:1),v.h*(quarry?.76:1.15),(.8+rand()*.4)*(quarry?.48:1));
+   this.dummy.rotation.set(0,rand()*6,0);this.dummy.updateMatrix();rocks.setMatrixAt(i,this.dummy.matrix);
+  });
+  rocks.castShadow=true;this.terrain.add(rocks);
  }
  quarryDeposit(tiles,vein,bedrock,random){
-  if(!tiles.length)return;
-  const scatter=new T.InstancedMesh(geometry('ico',1),mat(0xffffff),tiles.length*4);
+  const chunks=new Map();
+  for(const tile of tiles){
+   const chunk=key(Math.floor(tile.x/16),Math.floor(tile.z/16));
+   if(!chunks.has(chunk))chunks.set(chunk,[]);
+   chunks.get(chunk).push(tile);
+  }
+  const {shape,material}=quarryStoneSurface();
   const highlight=new T.Color(vein),bed=new T.Color(bedrock),color=new T.Color(),pose=this.dummy;
-  let index=0;
-  for(const {x,z} of tiles)for(let fragment=0;fragment<4;fragment++){
-   const base=fragment===0,size=base?.42:.11+random()*.235;
-   pose.position.set(x+(random()-.5)*(base?.4:.79),base?.038:.067+size*.21,z+(random()-.5)*(base?.4:.79));
+  for(const patch of chunks.values()){
+   const scatter=new T.InstancedMesh(shape,material,patch.length*3);
+   let index=0;
+   for(const {x,z} of patch)for(let fragment=0;fragment<3;fragment++){
+   const base=fragment===0,size=base?.35+random()*.16:.08+random()*.21;
+   pose.position.set(x+(random()-.5)*(base?.47:.83),base?.062:.051+size*.17,z+(random()-.5)*(base?.47:.83));
    pose.rotation.set(random()*.4,random()*6,random()*.31);
-   pose.scale.set(size*1.28,size*(base?.18:.58),size*.88);pose.updateMatrix();
+   pose.scale.set(size*1.16,size*(base?.39:.56),size*.88);pose.updateMatrix();
    scatter.setMatrixAt(index,pose.matrix);
    scatter.setColorAt(index++,color.copy(bed).lerp(highlight,base?.11:random()*.63+.31));
+   }
+   scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
   }
-  scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
  }
  sync(s,motion,nowTime=s.time){
   const time=motion?.renderTime??nowTime;
+  const dt=Math.max(0,Math.min(.12,time-(this.lastRenderTime??time)));this.lastRenderTime=time;
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   const quarry=this.style==='quarry';
+  const shotsByOrigin=quarry?new Map(s.shots.map(shot=>[key(shot.x,shot.z),shot])):null;
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
@@ -351,7 +426,16 @@ export class View{
    if(rotor&&b.active)rotor.rotation.y=time*(GENERATORS[b.type]?5:2)*productionSpeed(b);
    if(capsule){const age=time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(time*3)*.03:0),0);}
    if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
-   if(head)head.rotation.y=b.aim||0;
+   if(head){
+    const aim=b.aim||0;
+    head.rotation.y=quarry&&g.userData.aimSeen?easeAngle(head.rotation.y,aim,1-Math.exp(-dt*18)):aim;
+    g.userData.aimSeen=true;
+    if(quarry){
+     const age=time-(shotsByOrigin.get(key(b.x,b.z))?.time??-10);
+     const recoil=age>=0&&age<.22?.105*Math.sin(Math.PI*Math.min(1,age/.22))*(1-age/.28):0;
+     head.position.set(-Math.sin(aim)*recoil,head.position.y,-Math.cos(aim)*recoil);
+    }
+   }
    if(beacon){beacon.position.y=1.73+Math.sin(time*2)*.06;beacon.rotation.z=time*.2;}
    if(b.type==='belt'){
     const draw=(cargo,t)=>{
@@ -370,11 +454,19 @@ export class View{
   this.beltItems.count=cargoCount;
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
-  const n=Math.min(s.enemies.length,500);
+  const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
   for(let i=0;i<n;i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
-   if(quarry){this.placeQuarryHostile(i,x,z,scale,angle,sway,time);continue;}
+   if(quarry){
+    const previous=motion?.previous.get(e.id),old=this.actorHeading.get(e.id);
+    const moving=previous&&Math.abs(e.x-previous.x)+Math.abs(e.z-previous.z)>.001;
+    const aim=moving?Math.atan2(e.x-previous.x,e.z-previous.z):old??angle;
+    const heading=old===undefined?aim:easeAngle(old,aim,1-Math.exp(-dt*12));
+    headings.set(e.id,heading);
+    this.placeQuarryHostile(i,x,z,scale,heading,sway,time);
+    continue;
+   }
    this.dummy.rotation.set(0,angle,0);this.dummy.scale.setScalar(scale);this.dummy.position.set(x,.5*scale+sway,z);
    this.dummy.updateMatrix();this.enemyBody.setMatrixAt(i,this.dummy.matrix);
    this.dummy.position.y=.88*scale+sway;this.dummy.updateMatrix();this.enemyHead.setMatrixAt(i,this.dummy.matrix);
@@ -385,6 +477,11 @@ export class View{
   }
   for(const[o,count]of[[this.enemyBody,n],[this.enemyHead,n],[this.enemyLegs,n*(quarry?4:2)]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
   if(this.enemyBody.instanceColor)this.enemyBody.instanceColor.needsUpdate=true;
+  if(quarry){
+   this.actorHeading=headings;
+   updateQuarryEffects(this.dust,s,time,this.center,this.camera.right+6,
+    this.renderer.domElement.height/Math.max(1,this.zoom*2));
+  }
   const shots=s.shots.slice(-1200),pos=this.shotsGeometry.attributes.position;
   let blasts=0;
   shots.forEach((v,i)=>{
@@ -400,18 +497,30 @@ export class View{
  }
  placeQuarryHostile(i,x,z,scale,angle,sway,time){
   const sin=Math.sin(angle),cos=Math.cos(angle),pose=this.dummy;
-  pose.rotation.set(0,angle,0);pose.position.set(x,.28*scale+sway,z);pose.scale.set(.23*scale,.16*scale,.38*scale);
+  pose.rotation.set(-.04+sway*.8,angle,0,'YXZ');pose.position.set(x,.28*scale+sway,z);pose.scale.set(.23*scale,.162*scale,.41*scale);
   pose.updateMatrix();this.enemyBody.setMatrixAt(i,pose.matrix);
-  pose.position.set(x+sin*.34*scale,.23*scale+sway,z+cos*.34*scale);pose.scale.set(.135*scale,.116*scale,.21*scale);
+  pose.position.set(x+sin*.37*scale,.21*scale+sway,z+cos*.37*scale);pose.scale.set(.135*scale,.116*scale,.17*scale);
   pose.updateMatrix();this.enemyHead.setMatrixAt(i,pose.matrix);
   pose.scale.setScalar(scale);
   for(let leg=0;leg<4;leg++){
    const side=(leg%2===0?-.21:.21)*scale,front=(leg<2?-.21:.21)*scale;
-   pose.position.set(x+cos*side+sin*front,.13*scale+sway*.4,z-sin*side+cos*front);
-   pose.rotation.set(Math.sin(time*11+i+(leg===0||leg===3?Math.PI:0))*.57,angle,side*.8,'YXZ');
+   const stride=Math.sin(time*11+i+(leg===0||leg===3?Math.PI:0));
+   const lift=Math.max(0,stride)*.032,reach=front+stride*scale*.045;
+   pose.position.set(x+cos*side+sin*reach,.13*scale+lift+sway*.4,z-sin*side+cos*reach);
+   pose.rotation.set(stride*.63,angle,side*.78,'YXZ');
    pose.updateMatrix();this.enemyLegs.setMatrixAt(i*4+leg,pose.matrix);
   }
  }
- draw(){this.camera.position.copy(this.center).add(this.style==='quarry'?QUARRY_CAMERA:CAMERA_OFFSET);this.camera.lookAt(this.center);this.camera.updateMatrixWorld();this.renderer.render(this.scene,this.camera);}
+ draw(){
+  const quarry=this.style==='quarry';
+  this.camera.position.copy(this.center).add(quarry?QUARRY_CAMERA:CAMERA_OFFSET);
+  this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
+  if(quarry&&this.renderer.shadowMap.enabled){
+   const x=Math.round(this.center.x/6)*6,z=Math.round(this.center.z/6)*6;
+   const radius=Math.ceil(Math.max(this.camera.right,this.zoom)*1.1+9),key=`${x}:${z}:${radius}`;
+   if(this.shadowKey!==key){this.shadowKey=key;this.setShadowArea(x,z,radius);}
+  }
+  this.renderer.render(this.scene,this.camera);
+ }
  project(x,z,y=1.3){const v=(this.projected??=new T.Vector3()).set(x,y,z).project(this.camera);return{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight,visible:v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}
 }
