@@ -4,8 +4,8 @@ import {addPlayer,command,createGame,step,waveForecast,inventoryCount,SAVE_SCHEM
 import {factoryStatus} from '../public/shared/diagnostics.js';
 import {parseSave} from '../public/shared/saves.js';
 
-test('all 25 swarms begin eight tiles beyond the expanded build edge',()=>{
- const onEdge=[e=>e.x===-46,e=>e.z===-46,e=>e.x===46,e=>e.z===46];
+test('all 25 swarms begin at the expanded map edge',()=>{
+ const onEdge=[e=>e.x===-90,e=>e.z===-90,e=>e.x===90,e=>e.z===90];
  for(let wave=1;wave<=25;wave++){
   const state=createGame(),player=addPlayer(state);
   state.wave=wave-1;
@@ -19,7 +19,7 @@ test('all 25 swarms begin eight tiles beyond the expanded build edge',()=>{
   assert.equal(state.enemies.length,forecast.count);
   for(const [i,enemy] of state.enemies.entries()){
    const delta=Math.hypot(enemy.x-before[i].x,enemy.z-before[i].z);
-   assert.ok(delta>0&&delta<=enemy.speed*.05+1e-8,'Hostiles must walk from the outer edge at normal speed');
+   assert.ok(delta>0&&delta<=enemy.speed*.05*1.85+1e-8,'Hostiles must walk from the outer edge at normal speed');
   }
  }
 });

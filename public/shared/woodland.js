@@ -1,7 +1,7 @@
 // Cache a small distance field per target tile. Every hostile can use the same field.
-export const BUILD_EDGE=38;
+export const BUILD_EDGE=90;
 export const MAP_SIZE=(BUILD_EDGE+2)*2;
-export const SWARM_SPAWN_EDGE=BUILD_EDGE+8;
+export const SWARM_SPAWN_EDGE=BUILD_EDGE;
 const EDGE=SWARM_SPAWN_EDGE+1, WIDTH=EDGE*2+1, CELLS=WIDTH*WIDTH;
 const directions=[[1,0],[-1,0],[0,1],[0,-1]];
 const cache=new WeakMap();
@@ -40,7 +40,7 @@ function straightPath(forest,x,z,tx,tz){
 function distanceField(forest,tx,tz){
  const origin=index(tx,tz);
  if(forest.fields.has(origin))return forest.fields.get(origin);
- const distance=new Int16Array(CELLS).fill(-1),queue=new Int16Array(CELLS);
+ const distance=new Int16Array(CELLS).fill(-1),queue=new Int32Array(CELLS);
  distance[origin]=0;queue[0]=origin;
  for(let head=0,tail=1;head<tail;head++){
   const current=queue[head],x=current%WIDTH-EDGE,z=Math.floor(current/WIDTH)-EDGE;

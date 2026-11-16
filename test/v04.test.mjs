@@ -18,7 +18,7 @@ test('diagnostics distinguish input shortage, full storage, free delivery and bl
  b.item='plate';assert.equal(factoryStatus(s,b,grid),'running');s.resources.plate=300;assert.equal(factoryStatus(s,b,grid),'buffering');b.outputBuffer=Array(4).fill('plate');assert.equal(factoryStatus(s,b,grid),'storage');b.dir=3;assert.equal(factoryStatus(s,b,grid),'output');b.active=false;assert.equal(factoryStatus(s,b,grid),'power');
 });
 test('measured production uses bounded history and reports theoretical demand',()=>{
- const s=createGame();addPlayer(s);s.nextWave=9999;run(s,100);assert.equal(s.stats.history.length,61);const report=productionReport(s);assert.ok(report.seconds>59&&report.seconds<61);const plate=report.materials.find(v=>v.resource==='plate');assert.ok(plate.perMinute>0);assert.ok(plate.demand>0);assert.ok(report.materials.find(v=>v.resource==='gear').demand>0);
+ const s=createGame();addPlayer(s);s.nextWave=9999;s.buildings.find(b=>b.type==='turret').type='gunTurret';run(s,100);assert.equal(s.stats.history.length,61);const report=productionReport(s);assert.ok(report.seconds>59&&report.seconds<61);const plate=report.materials.find(v=>v.resource==='plate');assert.ok(plate.perMinute>0);assert.ok(plate.demand>0);assert.ok(report.materials.find(v=>v.resource==='gear').demand>0);
 });
 test('recently attacked buildings cannot teleport or be dismantled to escape damage',()=>{
  const s=createGame(),p=addPlayer(s),b=s.buildings.find(b=>b.type==='turret');s.time=100;b.lastHit=99;const before=JSON.stringify(s);
@@ -30,5 +30,5 @@ test('world snapshots preserve guest inventories without changing the live game'
  const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].input,undefined);assert.equal(parseSave(JSON.stringify(data)).state.version,SAVE_SCHEMA);
 });
 test('late turret gains cost more power while upgrade prices remain increasing',()=>{
- const s=createGame(),b=s.buildings.find(b=>b.type==='turret');const basePower=buildingPower(b),first=Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0);b.level=10;assert.ok(buildingPower(b)>basePower*2);assert.ok(Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0)>first*5);
+ const s=createGame(),b=s.buildings.find(b=>b.type==='turret');b.type='gunTurret';const basePower=buildingPower(b),first=Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0);b.level=10;assert.ok(buildingPower(b)>basePower*2);assert.ok(Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0)>first*5);
 });

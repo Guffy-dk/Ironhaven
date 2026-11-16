@@ -27,6 +27,15 @@ function harness(saved,{tutorial=false}={}){
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
 function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
+test('Space toggles pause and F selects the dismantle tool from any category',async()=>{
+ const h=harness(starterWorld());try{
+  h.$('resume').click();h.key(' ');assert.ok(h.save().paused);
+  h.release(' ');h.key(' ');assert.ok(!h.save().paused);
+  const belt=h.save().buildings.find(b=>b.type==='belt');
+  h.key('f');assert.equal(h.dom.__view.tool,'demolish');h.point('pointerdown',belt.x,belt.z);
+  assert.ok(!h.save().buildings.some(b=>b.id===belt.id));
+ }finally{await h.close();}
+});
 test('category keys swap the hotbar and number keys select a building in that category',async()=>{
  const h=harness();try{
   h.$('start-solo').click();
@@ -74,10 +83,10 @@ test('Shift-click constructs a continuous turning route; Q and Esc cancel buildi
  }finally{await h.close();}
 });
 test('hotbar inventory counts rise on dismantle and fall on free placement; selected turret upgrades',async()=>{
- const h=harness(starterWorld());try{
+ const saved=starterWorld();saved.state.buildings.find(b=>b.type==='turret').type='gunTurret';const h=harness(saved);try{
   h.$('resume').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
   assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
-  h.key('q');const turret=placed.buildings.find(b=>b.type==='turret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
+  h.key('q');const turret=placed.buildings.find(b=>b.type==='gunTurret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
  }finally{await h.close();}
 });
 test('R rotates the active blueprint without turning a conveyor under the cursor',async()=>{
@@ -113,7 +122,7 @@ test('normal drag locks to the belt direction, previews turns, and builds only o
  }finally{await h.close();}
 });
 test('damage bars hide at full health; empty ammo and the final 20-second warning are visible',async()=>{
- const state=createGame(),p=addPlayer(state);state.time=80;state.resources.gear=0;const core=state.buildings[0];core.hp=2000;const turret=state.buildings.find(b=>b.type==='turret');turret.ammo=0;
+ const state=createGame(),p=addPlayer(state);state.time=80;state.resources.gear=0;const core=state.buildings[0];core.hp=2000;const turret=state.buildings.find(b=>b.type==='turret');turret.type='gunTurret';turret.ammo=0;
  const h=harness({state,playerId:p.id});try{
   h.$('resume').click();h.frame(1000);assert.ok(h.$('wave-panel').classList.contains('imminent'));assert.equal(h.$('ammo-alert').hidden,false);assert.match(h.$('ammo-alert').textContent,/AMMO EMPTY/);assert.ok(h.$('building-'+core.id).querySelector('.world-health'));assert.match(h.$('building-'+turret.id).textContent,/NO AMMO/);
   h.tool('repair');h.point('pointerdown',0,0);h.point('pointerdown',0,0);h.frame(1400);assert.equal(h.save().buildings[0].hp,maxHp(core));assert.equal(h.$('building-'+core.id),null);

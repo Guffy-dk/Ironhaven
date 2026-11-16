@@ -40,7 +40,9 @@ test('a return-only relay uses its separate right port and never duplicates carg
  const f=fixture(),relay=f.build('inserter',6,3,3),source=f.build('belt',6,4),back=f.build('belt',7,3,1);setProgram(f.s,f.p,relay,{machine:0,forward:0,return:1,bypass:false,filter:'any'});source.item='ore';source.itemTick=0;step(f.s);assert.equal(source.item,null);assert.equal(back.item,'ore');assert.equal(relay.shipments.return,1);for(let t=0;t<30;t++)step(f.s);assert.equal(relay.shipments.return,1);
 });
 test('no power leaves the main conveyor flowing without a false machine delivery',()=>{
- const f=fixture(),relay=f.build('inserter',6,3,3),source=f.build('belt',6,4),out=f.build('belt',7,4);f.build('storage',6,2);relay.active=false;source.item='plate';source.itemTick=0;for(let t=0;t<8;t++)step(f.s);assert.equal(out.item,'plate');assert.equal(relay.shipments,undefined);
+ const f=fixture();for(let i=0;i<6;i++)f.build('smelter',i-6,8);
+ const relay=f.build('inserter',6,3,3),source=f.build('belt',6,4),out=f.build('belt',7,4);f.build('storage',6,2);
+ source.item='plate';source.itemTick=0;for(let t=0;t<8;t++)step(f.s);assert.equal(out.item,'plate');assert.equal(relay.active,false);assert.equal(relay.shipments,undefined);
 });
 test('three real smelters share one conveyor equally with 1:2 → 1:1 → 1:0',()=>{
  for(const mode of ['splitter','inserter']){

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,FINAL_WAVE,step,waveForecast} from '../public/shared/sim.js';
+import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,FINAL_WAVE,makeTerrain,POWER_CAPACITY,step,waveForecast} from '../public/shared/sim.js';
 import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
+import {Lan} from '../public/network.js';
 
 function world(){
  const s=createGame(),p=addPlayer(s);
@@ -15,6 +16,63 @@ function world(){
   return s.buildings.at(-1);
  }};
 }
+
+test('seeded large maps vary beyond the clear center and keep starter deposits available',()=>{
+ const first=makeTerrain(123),second=makeTerrain(456);
+ assert.equal(BUILD_EDGE*2+1,181);
+ assert.deepEqual(first,makeTerrain(123));
+ assert.notDeepEqual(first.trees,second.trees);
+ assert.notDeepEqual(first.coal,second.coal);
+ for(const terrain of [first,second]){
+  assert.ok(terrain.ore.some(t=>t.x===4&&t.z===3));
+  assert.ok(terrain.copper.some(t=>Math.hypot(t.x,t.z)<12));
+  assert.ok(terrain.coal.some(t=>Math.hypot(t.x,t.z)<16));
+  assert.ok(!terrain.trees.some(t=>Math.hypot(t.x,t.z)<11));
+  assert.ok(terrain.trees.some(t=>Math.abs(t.x)>60||Math.abs(t.z)>60));
+ }
+});
+
+test('large LAN maps are delivered in small ordered chunks and reconstructed for the guest',()=>{
+ const message={type:'welcome',state:createGame()};
+ assert.ok(JSON.stringify(message).length>262144);
+ const host=new Lan({}),received=[];
+ const guest=new Lan({onMessage:(_,value)=>received.push(value)});
+ host.role='host';guest.role='client';
+ const outbound={readyState:'open',bufferedAmount:0,send(data){
+  assert.ok(Buffer.byteLength(data,'utf8')<65536);
+  inbound.onmessage({data});
+ }};
+ const inbound={};
+ guest.wire({},inbound);
+ assert.ok(host.send({channel:outbound},message));
+ assert.deepEqual(received,[message]);
+});
+
+test('stored power covers a shortage until drained, and wood can recover with an unpowered sawmill',()=>{
+ const {s,p,build}=world(),generator=build('generator',8,1);
+ for(let i=0;i<8;i++)build('smelter',i-4,4);
+ for(let i=0;i<400;i++)step(s);
+ assert.equal(s.resources.power,POWER_CAPACITY);
+ s.resources.wood=0;
+ step(s);assert.ok(s.resources.power<POWER_CAPACITY);
+ assert.ok(s.buildings.filter(b=>b.type==='smelter').every(b=>b.active));
+ for(let i=0;i<900;i++)step(s);
+ assert.ok(s.buildings.some(b=>b.type==='smelter'&&!b.active));
+ s.terrain.trees.push({x:8,z:5,h:1});
+ const mill=build('sawmill',7,5);
+ assert.equal(mill.active,true);
+ for(let i=0;i<74;i++)step(s);
+ assert.ok(s.resources.wood>0);assert.ok(generator.active);assert.equal(s.power.total,36);
+ assert.equal(command(s,p.id,{type:'demolish',x:8,z:5}),null);
+});
+
+test('sentries fire without consuming gears or power and cannot be upgraded',()=>{
+ const {s,p,build}=world(),sentry=build('turret',4,4);
+ s.resources.gear=0;s.resources.wood=0;
+ s.enemies=[{id:900,x:5,z:4,hp:100,speed:0,cooldown:1}];
+ step(s);assert.equal(s.resources.gear,0);assert.ok(s.enemies[0].hp<100);
+ assert.match(command(s,p.id,{type:'upgrade',x:4,z:4}),/cannot be upgraded/);assert.equal(sentry.level,1);
+});
 
 test('coal mines feed a coal generator through storage and fuel consumption appears in stock flow',()=>{
  const {s,build}=world();

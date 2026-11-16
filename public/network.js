@@ -1,4 +1,5 @@
 import { CURRENT_VERSION } from './shared/releases.js';
+const CHUNK=16000,MAX_STATE=1500000,PART='IH:part:',END='IH:end:';
 // Direct LAN data channels. Signalling is exchanged by the players, not a service.
 export function encodeCode(description){return'IH2.'+btoa(JSON.stringify({type:description.type,sdp:description.sdp,version:CURRENT_VERSION}));}
 export function decodeCode(code,expected){
@@ -26,9 +27,17 @@ export class Lan{
  }
  wire(peer,channel){peer.channel=channel;
   channel.onopen=()=>{peer.ready=true;this.onPeerOpen?.(peer);this.onStatus?.();};
-  channel.onmessage=e=>{if(typeof e.data!=='string'||e.data.length>1500000)return;
+  channel.onmessage=e=>{if(typeof e.data!=='string'||e.data.length>MAX_STATE)return;
    if(this.role==='host'){if(e.data.length>16384)return;const now=Date.now();if(now-peer.budgetAt>1000){peer.budget=0;peer.budgetAt=now;}if(++peer.budget>80)return;}
-   let message;try{message=JSON.parse(e.data);}catch{return;}this.onMessage?.(peer,message);
+   let raw=e.data;
+   if(this.role==='client'&&(raw.startsWith(PART)||raw.startsWith(END))){
+    const final=raw.startsWith(END),part=raw.slice(final?END.length:PART.length);
+    peer.partial=(peer.partial||'')+part;
+    if(peer.partial.length>MAX_STATE){peer.partial='';return;}
+    if(!final)return;
+    raw=peer.partial;peer.partial='';
+   }
+   let message;try{message=JSON.parse(raw);}catch{return;}this.onMessage?.(peer,message);
   };
   channel.onclose=()=>this.drop(peer.id);channel.onerror=()=>this.onStatus?.();
  }
@@ -46,7 +55,21 @@ export class Lan{
   peer.pc.ondatachannel=e=>this.wire(peer,e.channel);
   try{await peer.pc.setRemoteDescription(description);await peer.pc.setLocalDescription(await peer.pc.createAnswer());await iceReady(peer.pc);return encodeCode(peer.pc.localDescription);}catch(e){this.close();throw e;}
  }
- send(peer,message){if(peer?.channel?.readyState==='open'&&peer.channel.bufferedAmount<1000000){peer.channel.send(typeof message==='string'?message:JSON.stringify(message));return true;}return false;}
+ send(peer,message){
+  const channel=peer?.channel;
+  if(channel?.readyState!=='open'||channel.bufferedAmount>=1000000)return false;
+  const raw=typeof message==='string'?message:JSON.stringify(message);
+  if(raw.length>MAX_STATE)return false;
+  if(this.role==='host'&&raw.length>CHUNK){
+   for(let start=0;start<raw.length;){
+    let end=Math.min(start+CHUNK,raw.length);
+    const last=raw.charCodeAt(end-1);
+    if(end<raw.length&&last>=0xd800&&last<=0xdbff)end--;
+    channel.send((end===raw.length?END:PART)+raw.slice(start,end));start=end;
+   }
+  }else channel.send(raw);
+  return true;
+ }
  broadcast(message){const raw=JSON.stringify(message);for(const p of this.peers.values())if(p.ready)this.send(p,raw);}
  drop(id){const peer=this.peers.get(id);if(!peer)return;this.peers.delete(id);clearTimeout(peer.disconnectTimer);peer.channel&&(peer.channel.onclose=null);peer.channel?.close();peer.pc.onconnectionstatechange=null;peer.pc.close();this.onPeerClose?.(peer);this.onStatus?.();}
  close(){for(const id of [...this.peers.keys()])this.drop(id);this.role=null;this.pending=null;}
