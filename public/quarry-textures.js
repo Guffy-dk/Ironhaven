@@ -2,7 +2,8 @@ import * as T from './vendor/three.module.js';
 
 const materials={
  gravel:[0,0,'#6b6256'], moss:[1,0,'#505743'],
- brick:[0,1,'#876350'], roof:[1,1,'#8b8e8d']
+ brick:[0,1,'#876350'], roof:[1,1,'#8b8e8d'],
+ metal:[1,1,'#8b8e8d'], timber:[0,0,'#aa9478']
 };
 let cells,spruce,terrainGravel;
 
@@ -23,6 +24,7 @@ export function quarryTexture(name){
    for(const [key,[x,y]] of Object.entries(materials)){
     const texture=cells.get(key),region=atlas.naturalWidth/2;
     texture.image.getContext('2d').drawImage(atlas,x*region+3,y*region+3,region-6,region-6,0,0,512,512);
+    if(key==='metal'||key==='timber')paintWeathering(texture.image,key);
     texture.needsUpdate=true;
    }
    if(terrainGravel)terrainGravel.needsUpdate=true;
@@ -63,4 +65,20 @@ export function quarrySpruce(){
  const geometry=new T.PlaneGeometry(1.43,2.33).translate(0,1.165,0).rotateX(-1.026);
  spruce={material,geometry};
  return spruce;
+}
+
+// Subtle grain and oxidation break up broad, otherwise uniform machine surfaces.
+function paintWeathering(canvas,kind){
+ const ctx=canvas.getContext('2d');
+ let seed=7291;
+ const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ ctx.fillStyle=kind==='timber'?'rgba(170,148,120,.82)':'rgba(145,148,146,.76)';
+ ctx.fillRect(0,0,512,512);
+ for(let i=0;i<1700;i++){
+  const x=random()*512,y=random()*512;
+  ctx.strokeStyle=kind==='timber'?`rgba(65,48,32,${.025+random()*.09})`:`rgba(65,53,43,${.015+random()*.065})`;
+  ctx.lineWidth=.4+random()*.8;
+  ctx.beginPath();ctx.moveTo(x,y);
+  ctx.lineTo(x+(kind==='timber'?random()*3:random()*12),y+random()*(kind==='timber'?85:8));ctx.stroke();
+ }
 }

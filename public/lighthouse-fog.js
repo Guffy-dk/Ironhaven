@@ -24,10 +24,19 @@ export class LighthouseFog{
      uniform float time,active,storm,layer,reach,edge;
      uniform vec2 core,direction;
      varying vec2 groundPosition;
+     float noise(vec2 p){
+      vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+      vec2 k=vec2(127.1,311.7);
+      float a=fract(sin(dot(i,k))*43758.5453);
+      float b=fract(sin(dot(i+vec2(1,0),k))*43758.5453);
+      float c=fract(sin(dot(i+vec2(0,1),k))*43758.5453);
+      float d=fract(sin(dot(i+vec2(1,1),k))*43758.5453);
+      return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+     }
      void main(){
       vec2 drift=groundPosition*vec2(.38,.72)+time*vec2(.45,-.16)+vec2(layer*8.1,-layer*5.2);
-      float cloud=sin(drift.x+sin(drift.y*.5)*1.65)+.46*cos(drift.y*.72+sin(drift.x*.45));
-      float fog=smoothstep(-.7,1.3,cloud);
+      float cloud=noise(drift*.42)*.57+noise(drift*.91+time*.025)*.28+noise(drift*1.83)*.15;
+      float fog=smoothstep(.25,.8,cloud);
       vec2 ray=groundPosition-core;
       float distance=length(ray);
       float cone=dot(ray,direction)/max(distance,.01);
