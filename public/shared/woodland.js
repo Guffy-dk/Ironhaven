@@ -1,5 +1,6 @@
 // Cache a small distance field per target tile. Every hostile can use the same field.
-const EDGE=27, WIDTH=EDGE*2+1, CELLS=WIDTH*WIDTH;
+export const SWARM_SPAWN_EDGE=34;
+const EDGE=SWARM_SPAWN_EDGE+1, WIDTH=EDGE*2+1, CELLS=WIDTH*WIDTH;
 const directions=[[1,0],[-1,0],[0,1],[0,-1]];
 const cache=new WeakMap();
 const index=(x,z)=>(z+EDGE)*WIDTH+x+EDGE;

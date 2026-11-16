@@ -7,7 +7,8 @@ export const RELEASES = [
  {
   version:'0.9.1',date:'2026-11-16',title:'Visible upgrades',
   changes:[
-   'Buildings change body color at each upgrade tier, including conveyors, barricades and turrets. The inspector shows the matching color alongside the exact upgrade count.'
+   'Buildings change body color at each upgrade tier, including conveyors, barricades and turrets. The inspector shows the matching color alongside the exact upgrade count.',
+   'Swarms spawn eight tiles farther out on the announced side. The minimap marks approaching hostiles at the edge until they enter the map.'
   ]
  },
  {

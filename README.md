@@ -12,6 +12,8 @@ For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Iro
 
 Each upgrade changes the color of the building's body or conveyor surface. Select a building to see its exact upgrade count and matching color in the inspector.
 
+Swarms begin eight tiles beyond the construction boundary. The minimap marks approaching hostiles at its edge until they enter its view.
+
 ## Included from 0.9 — factory controls
 
 Select a factory to see its material icons. Cyan arrows point in and gold arrows point out. Item-producing machines buffer up to five outputs. To pass output to a neighboring machine of the same type and facing, turn on **Send** on the upstream machine and **Receive** on the downstream machine. Hostiles go around trees.

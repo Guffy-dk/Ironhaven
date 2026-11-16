@@ -4,8 +4,8 @@ import {addPlayer,command,createGame,step,waveForecast,inventoryCount,SAVE_SCHEM
 import {factoryStatus} from '../public/shared/diagnostics.js';
 import {parseSave} from '../public/shared/saves.js';
 
-test('each regular swarm and the evacuation swarm use one forecast edge',()=>{
- const onEdge=[e=>e.x===-26,e=>e.z===-26,e=>e.x===26,e=>e.z===26];
+test('each regular swarm and the evacuation swarm begin eight tiles beyond the build edge',()=>{
+ const onEdge=[e=>e.x===-34,e=>e.z===-34,e=>e.x===34,e=>e.z===34];
  for(let wave=1;wave<=9;wave++){
   const state=createGame(),player=addPlayer(state);
   state.wave=wave-1;
@@ -21,6 +21,13 @@ test('each regular swarm and the evacuation swarm use one forecast edge',()=>{
   assert.equal(state.waveSide,forecast.side);
   assert.equal(state.enemies.length,forecast.count);
   assert.ok(state.enemies.every(onEdge[forecast.side]));
+  const before=state.enemies.map(({x,z})=>({x,z}));
+  step(state);
+  assert.equal(state.enemies.length,forecast.count);
+  for(const [i,enemy] of state.enemies.entries()){
+   const delta=Math.hypot(enemy.x-before[i].x,enemy.z-before[i].z);
+   assert.ok(delta>0&&delta<.1,'Hostiles must walk from the outer edge at normal speed');
+  }
  }
 });
 
