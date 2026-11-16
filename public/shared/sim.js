@@ -9,6 +9,8 @@ export const DIFFICULTIES={
  standard:{name:'Standard',count:1,health:1,damage:1,prep:100,interval:95},
  veteran:{name:'Veteran',count:1.22,health:1.12,damage:1.15,prep:100,interval:95}
 };
+export const isPostVictory=s=>s.evacuation?.status==='complete';
+export const canSpawnSwarm=s=>s.wave<FINAL_WAVE||isPostVictory(s);
 export function waveForecast(s,wave=s.wave+1){const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1),count=Math.min(480,Math.round(Math.min(336,12+wave*wave*4)*d.count*(1+guests*.1)));return{wave,count,side:wave%4,health:d.health,damage:d.damage,bonus:roundBonus(wave)};}
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
@@ -18,8 +20,8 @@ export const TYPES = {
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
  sawmill:{name:'Sawmill',hp:180,power:2,cost:{wood:20,plate:8},desc:'Requires trees within five tiles. Delivers three wood directly to the colony every three seconds.'},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'Consumes one wood every twelve seconds to add eighteen power to the colony network.'},
- turret:{name:'Turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Automatically defends the colony. One gear loads twelve shots. Select a turret to upgrade its damage, range, fire rate and health.'},
- wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'Blocks the swarm and buys time for your turrets. Dismantle to move it, or repair damaged sections.'},
+ turret:{name:'Turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Automatically defends the colony. One gear loads 16 shots. Select a turret to upgrade its damage, range, fire rate and health.'},
+ wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'Blocks enemies and connects to adjacent barricades. Drag to build a continuous row.'},
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
  demolish:{name:'Dismantle',cost:{},desc:'Packs a building into your personal inventory. Damage, upgrades and ammo are preserved. Clear a tree to collect eight wood.'}
 };
@@ -61,7 +63,7 @@ function programMatches(b,item,grid){const p=programFor(b);if(p.filter==='any')r
 function programTarget(b,role,grid){const d=logisticsPorts(b)[role],[dx,dz]=DIRS[d];return grid.get(key(b.x+dx,b.z+dz));}
 
 export const RECIPES={
- smelter:{input:{ore:1},output:'plate',seconds:1.6},assembler:{input:{plate:2},output:'gear',seconds:3},
+ smelter:{input:{ore:1},output:'plate',seconds:1.6},assembler:{input:{plate:2},output:'gear',seconds:2.4},
  foundry:{input:{plate:3},output:'steel',seconds:3.5},
  circuitLab:{input:{copper:2,plate:1},output:'circuit',seconds:4},componentFactory:{input:{steel:2,circuit:2,gear:1},output:'module',seconds:5}
 };
@@ -93,7 +95,7 @@ function enqueueOutput(b,item){if(b.item)(b.outputBuffer??=[]).push(item);else b
 const ROUND_BONUSES=[
  {label:'+15% mining speed',speed:1.15,types:EXTRACTORS},
  {label:'+25% smelting speed',speed:1.25,types:['smelter']},
- {label:'15 shots per gear',shotsPerGear:15},
+ {label:'20 shots per gear',shotsPerGear:20},
  {label:'Barricades take 30% less damage',wallDamage:.7},
  {label:'+45% sawmill speed',speed:1.45,types:['sawmill']},
  {label:'Repairs cost 1 iron plate instead of 2',repairPlates:1},
@@ -101,8 +103,12 @@ const ROUND_BONUSES=[
  {label:'+10% production speed',speed:1.1,types:PRODUCERS}
 ];
 const EVACUATION_BONUS={label:'+6 colony power',power:6};
-export function roundBonus(wave){return wave>FINAL_WAVE?EVACUATION_BONUS:ROUND_BONUSES[wave-1]??null;}
-export function shotsPerGear(bonus){return bonus?.shotsPerGear??12;}
+export function roundBonus(wave){
+ if(wave===FINAL_WAVE+1)return EVACUATION_BONUS;
+ if(wave>FINAL_WAVE+1)return ROUND_BONUSES[(wave-FINAL_WAVE-2)%ROUND_BONUSES.length];
+ return ROUND_BONUSES[wave-1]??null;
+}
+export function shotsPerGear(bonus){return bonus?.shotsPerGear??16;}
 export function repairCost(bonus){return {...TYPES.repair.cost,plate:bonus?.repairPlates??TYPES.repair.cost.plate};}
 export function productionSpeed(b,bonus){
  const upgrade=1+((b.level||1)-1)*.18;
@@ -374,6 +380,10 @@ export function planPaste(s,layout,anchor,playerId){
 export function command(s,playerId,cmd){
  const p=s.players.find(p=>p.id===playerId);if(!p||!cmd||typeof cmd!=='object')return 'Invalid player';p.inventory||={};
  if(cmd.type==='move'){p.sprinting=!!cmd.sprint;p.input={x:Number.isFinite(cmd.x)?Math.max(-1,Math.min(1,cmd.x)):0,z:Number.isFinite(cmd.z)?Math.max(-1,Math.min(1,cmd.z)):0};return null;}
+ if(cmd.type==='continueAfterVictory'){
+  if(p!==s.players[0]||s.status!=='victory'||!isPostVictory(s))return 'Only the host can continue a completed evacuation';
+  s.status='playing';s.paused=false;s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;return null;
+ }
  if(s.status!=='playing')return 'The expedition has ended';
  if(cmd.type==='finishTutorial'){
   if(p!==s.players[0]||s.tutorialStep===undefined)return 'Only the host can finish active training';
@@ -386,7 +396,7 @@ export function command(s,playerId,cmd){
   if(p.id!==s.players[0]?.id)return 'Only the host can control time';
   if(cmd.type==='pause')s.paused=!s.paused;if(cmd.type==='speed')s.speed=s.speed===1?2:1;
   if(cmd.type==='wave'&&s.tutorialStep!==undefined)return 'Finish or skip training before calling a swarm';
-  if(cmd.type==='wave'&&s.enemies.length===0&&s.nextWave>s.time+3)s.nextWave=s.time+3;return null;
+  if(cmd.type==='wave'&&canSpawnSwarm(s)&&s.enemies.length===0&&s.nextWave>s.time+3)s.nextWave=s.time+3;return null;
  }
  if(cmd.type==='moveArea')return moveArea(s,p,cmd);
  if(cmd.type==='upgradeSelection'){
@@ -443,6 +453,7 @@ export function command(s,playerId,cmd){
  if(cmd.type==='launch'){
   if(p.id!==s.players[0]?.id)return 'Only the host can begin evacuation';
   if(b?.type!=='launchpad')return 'Select an evacuation pad';
+  if(isPostVictory(s))return 'The evacuation is already complete';
   if(s.wave<FINAL_WAVE||s.enemies.length)return 'Survive the first eight swarms before launching';
   if(s.evacuation?.status==='charging')return 'Evacuation is already charging';
   for(const[r,n]of Object.entries(LAUNCH_COST))if(s.resources[r]<n)return 'Evacuation needs 30 components, 60 steel and 40 circuits';
@@ -522,7 +533,7 @@ function spawnWave(s){
   const x=side===0?-26:side===2?26:t,z=side===1?-26:side===3?26:t;
   const brute=i%11===0,hp=Math.round((35+s.wave*8)*forecast.health*(brute?2:1));
   s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage:forecast.damage,speed:1.0+(i%4)*.12+s.wave*.025,cooldown:0,brute:i%11===0});
- }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;if(forecast.bonus.power)updatePower(s);event(s,`Swarm ${s.wave} · ${count} hostiles approaching · ${forecast.bonus.label}`);
+ }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;updatePower(s);event(s,`Swarm ${s.wave} · ${count} hostiles approaching · ${forecast.bonus.label}`);
 }
 function event(s,text){s.events.push({id:s.nextId++,text,time:s.time});if(s.events.length>6)s.events.shift();}
 export function step(s,dt=STEP){
@@ -593,7 +604,7 @@ export function step(s,dt=STEP){
  if(hq.hp<=0){s.status='defeat';event(s,'The command core has fallen');}
  else if(s.evacuation?.status==='charging'){const pad=s.buildings.find(b=>b.id===s.evacuation.padId);if(!pad){s.evacuation.status='failed';event(s,'Evacuation pad lost. Rebuild and try again.');}else if(pad.active){s.evacuation.remaining=Math.max(0,s.evacuation.remaining-dt*(1+((pad.level||1)-1)*.1));if(s.evacuation.remaining===0&&s.enemies.length===0){s.status='victory';s.evacuation.status='complete';event(s,'Evacuation complete. The colony survives.');}}}
  else if(s.tutorialStep!==undefined)advanceTutorial(s);
- else if(s.time>=s.nextWave&&s.enemies.length===0&&s.wave<FINAL_WAVE)spawnWave(s);
+ else if(s.time>=s.nextWave&&s.enemies.length===0&&canSpawnSwarm(s))spawnWave(s);
 }
 export function planMove(s,ids,dx,dz){
  if(!Array.isArray(ids)||ids.length>700||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};

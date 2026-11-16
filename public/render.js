@@ -11,7 +11,7 @@ function part(parent,kind,color,x,y,z,w,h,d,basic=false){const o=new T.Mesh(geom
 const box=(p,c,x,y,z,w,h,d,b=false)=>part(p,'round',c,x,y,z,w,h,d,b);
 const cyl=(p,c,x,y,z,r,h,n=8,b=false)=>part(p,'cyl',c,x,y,z,r,h,n,b);
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
-export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
+export function makeModel(type,dir=0,inputs=[],level=1){
  const originalType=type;type=({copperDrill:'drill',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
@@ -39,9 +39,24 @@ export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
   port(g,2,'IN',cyan);port(g,0,'FWD',C.gold);port(g,3,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
  }
  if(type==='wall'){
-  box(g,C.dark,0,.1,0,.99,.2,.76);box(g,0x70827b,0,.5,0,.91,.75,.55);box(g,C.light,0,.9,0,.98,.12,.68);
-  for(const x of [-.31,.31])box(g,C.dark,x,.48,-.3,.07,.68,.06);
-  box(g,C.gold,0,.73,-.315,.28,.08,.03);return g;
+  const connected=side=>inputs.includes(side)? .505:.34;
+  const horizontal=inputs.includes(0)||inputs.includes(2)||!inputs.length&&dir%2===0;
+  const vertical=inputs.includes(1)||inputs.includes(3)||!inputs.length&&dir%2===1;
+  const section=(left,right,top,bottom)=>{
+   const x=(left+right)/2,z=(top+bottom)/2,w=right-left,d=bottom-top;
+   box(g,C.dark,x,.11,z,w,.22,d);
+   box(g,0x70827b,x,.51,z,w,.78,d);
+   box(g,C.light,x,.94,z,w,.12,d);
+  };
+  if(horizontal)section(-connected(2),connected(0),-.33,.33);
+  if(vertical){
+   if(!horizontal)section(-.33,.33,-connected(3),connected(1));
+   else{
+    if(inputs.includes(3))section(-.33,.33,-connected(3),-.327);
+    if(inputs.includes(1))section(-.33,.33,.327,connected(1));
+   }
+  }
+  return g;
  }
  plate(g);
  if(type==='storage'){
@@ -92,6 +107,7 @@ export function makeModel(type,dir=0,inputs=[(dir+2)%4],level=1){
  return g;
 }
 const portMaterials=new Map();
+function barricadeNeighbors(cell,grid){return DIRS.flatMap(([x,z],d)=>grid.get(key(cell.x+x,cell.z+z))?.type==='wall'?[d]:[]);}
 const portBadges=new WeakMap();
 function portBadgeMaterial(text,color){
  const key=`${text}:${color}`;
@@ -153,7 +169,7 @@ export class View{
   this.scene.add(new T.HemisphereLight(0xd5e3c4,0x294548,2.2));const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,far:100});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
   const fill=new T.DirectionalLight(0x83b8b2,1.3);fill.position.set(15,12,-20);this.scene.add(fill);
   this.ground=new T.Group();this.scene.add(this.ground);this.terrain=new T.Group();this.scene.add(this.terrain);
-  this.buildings=new Map();this.items=new Map();this.players=new Map();this.enemyCount=0;this.terrainKey='';this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),0);this.mouse=new T.Vector2();this.hit=new T.Vector3();this.selected=null;
+  this.buildings=new Map();this.items=new Map();this.players=new Map();this.cellGrid=new Map();this.terrainKey='';this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),0);this.mouse=new T.Vector2();this.hit=new T.Vector3();this.selected=null;
   const grid=new T.GridHelper(56,56,0x8ba797,0x577d73);grid.position.y=.012;grid.material.transparent=true;grid.material.opacity=.18;this.grid=grid;this.scene.add(grid);grid.visible=false;
   this.cursor=new T.Mesh(new T.PlaneGeometry(.98,.98),new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.22,depthWrite:false,side:T.DoubleSide}));this.cursor.rotation.x=-Math.PI/2;this.cursor.position.y=.03;this.cursor.visible=false;this.scene.add(this.cursor);
   const ring=new T.RingGeometry(.68,.72,48);this.selection=new T.Mesh(ring,new T.MeshBasicMaterial({color:C.gold,side:T.DoubleSide,transparent:true,opacity:.9}));this.selection.rotation.x=-Math.PI/2;this.selection.position.y=.04;this.selection.visible=false;this.scene.add(this.selection);
@@ -194,10 +210,12 @@ export class View{
   if(!bs.length)return;const mesh=new T.InstancedMesh(new T.RingGeometry(.48,.55,4,1,Math.PI/4),new T.MeshBasicMaterial({color:0x89d8df,side:T.DoubleSide,transparent:true,opacity:.85,depthTest:false}),bs.length);
   bs.forEach((b,i)=>{this.dummy.position.set(b.x,.3,b.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.areaMesh=mesh;this.scene.add(mesh);
  }
- setTool(type,dir=0){this.grid.visible=!!type;if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
-  if(type&&!['demolish','repair'].includes(type)){this.ghost=makeModel(type,dir);this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
+ setTool(type,dir=0,neighbors=[]){this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
+  if(type&&!['demolish','repair'].includes(type)){this.ghost=makeModel(type,dir,neighbors);this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
  }
- hover(cell,valid,tool){this.cursor.visible=!!cell&&!!tool;if(!cell)return;this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(valid?C.mint:0xf5816d);if(this.ghost){this.ghost.visible=true;this.ghost.position.set(cell.x,0,cell.z);this.ghostMaterial.color.set(valid?C.mint:0xf5816d);}}
+ hover(cell,valid,tool){this.cursor.visible=!!cell&&!!tool;if(!cell)return;this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(valid?C.mint:0xf5816d);
+  if(tool==='wall'){const neighbors=barricadeNeighbors(cell,this.cellGrid);if(neighbors.join(':')!==this.wallPreview)this.setTool(tool,this.ghostDir,neighbors);}
+  if(this.ghost){this.ghost.visible=true;this.ghost.position.set(cell.x,0,cell.z);this.ghostMaterial.color.set(valid?C.mint:0xf5816d);}}
  select(b){
   if(this.selected!==b?.id){
    const previous=this.buildings.get(this.selected),next=this.buildings.get(b?.id);
@@ -224,9 +242,9 @@ export class View{
   const time=motion?.renderTime??nowTime,tick=motion?.renderTick??s.tick;
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   if(this.terrainKey!==`${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
-  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
+  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
-  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):[],signature=[b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
+  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):[],signature=[b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1);g.userData.signature=signature;
     for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon']){

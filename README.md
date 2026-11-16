@@ -14,6 +14,8 @@ Select a factory to see its material icons. Cyan arrows point in and gold arrows
 
 Drag-select a setup, press **Ctrl+C**, then **Ctrl+V** and click its new location. The copy preserves directions, dispatch programs and output-sharing settings. Placement uses inventory and materials at the normal price. Select multiple buildings of one type and press **U** to upgrade them together.
 
+Barricades connect to their neighbors and can be placed by dragging a row. Assemblers make one gear every 2.4 seconds. The result screen can return to the main menu or continue a victorious world with more swarms.
+
 ## Included from 0.8.1 — Windows playtest
 
 The game runs in its own window and hosts direct LAN from the in-game menu. The patcher and portable ZIP target 64-bit Windows. For a local Windows package and automated startup and patcher tests, run `pwsh -File scripts/build-windows.ps1` after `npm ci`.
@@ -30,7 +32,7 @@ Every swarm activates a shared colony bonus. It lasts through the attack and the
 |---|---|
 | 1 | +15% iron and copper mining speed |
 | 2 | +25% smelting speed for both ores |
-| 3 | Turrets reload 15 shots per gear instead of 12 |
+| 3 | Turrets reload 20 shots per gear instead of 16 |
 | 4 | Barricades take 30% less damage |
 | 5 | +45% sawmill speed |
 | 6 | Repairs use 1 iron plate instead of 2, with the usual wood cost |
@@ -144,7 +146,7 @@ Protect the core through eight swarms. Field training shows how to make two work
 - Drill → conveyor → smelter → assembler → core: two plates become one gear, used for turret ammunition and upgrades.
 - Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
 - Cyan arrows lead into a machine and gold arrows point out. Select a Transfer Relay or Dispatch Hub to see its labels. The purple **RET** port feeds a separate return conveyor when its quota is enabled.
-- Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
+- Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads 16 shots.
 - Dismantling packs a building into your inventory and preserves its damage, upgrades and ammo. Conveyors are emptied when packed or placed from inventory. Placement uses inventory before raw materials. Hotbar numbers show your count.
 
 | Controls | Action |

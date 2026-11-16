@@ -124,6 +124,32 @@ test('selected factory shows materials, buffered output and independent sharing 
   assert.equal(selected.sendOutput,true);assert.equal(selected.receiveOutput,false);
  }finally{await h.close();}
 });
+test('dragging the barricade tool builds an adjacent vertical row',async()=>{
+ const saved=starterWorld();saved.state.buildings=saved.state.buildings.filter(b=>b.type==='hq');saved.state.terrain.trees=[];saved.state.terrain.rocks=[];
+ const h=harness(saved);try{
+  h.$('resume').click();h.tool('wall');h.point('pointerdown',8,3);h.point('pointermove',8,7);
+  assert.equal(h.dom.__view.route.length,5);h.point('pointerup',8,7);
+  assert.deepEqual(h.save().buildings.filter(b=>b.type==='wall').map(b=>[b.x,b.z]),[[8,3],[8,4],[8,5],[8,6],[8,7]]);
+ }finally{await h.close();}
+});
+test('the defeat screen returns to the main menu with the saved world intact',async()=>{
+ const saved=starterWorld();saved.state.status='defeat';
+ const h=harness(saved);try{
+  h.$('resume').click();assert.ok(h.$('end-dialog').hasAttribute('open'));assert.ok(h.$('end-continue').hidden);
+  h.$('end-main-menu').click();assert.equal(h.$('start-screen').hidden,false);assert.equal(h.$('end-dialog').hasAttribute('open'),false);
+  assert.equal(JSON.parse(h.dom.localStorage.getItem('ironhaven.save.v1')).state.status,'defeat');
+  assert.equal(h.$('resume').hidden,false);
+ }finally{await h.close();}
+});
+test('the victory screen resumes the same world with further swarms enabled',async()=>{
+ const saved=starterWorld();saved.state.wave=9;saved.state.status='victory';saved.state.evacuation={status:'complete',remaining:0};
+ const h=harness(saved);try{
+  h.$('resume').click();assert.equal(h.$('end-continue').hidden,false);
+  h.$('end-continue').click();assert.equal(h.$('end-dialog').hasAttribute('open'),false);
+  assert.equal(h.$('early-wave').disabled,false);assert.match(h.$('wave-detail').textContent,/SWARM 10/);
+  const resumed=h.save();assert.equal(resumed.status,'playing');assert.deepEqual(resumed.buildings,saved.state.buildings);
+ }finally{await h.close();}
+});
 test('the playfield warning announces its forecast and attack independently of the minimap',async()=>{
  const h=harness();try{
   const warning=h.$('swarm-warning');

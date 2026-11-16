@@ -113,3 +113,19 @@ test('placing a packed conveyor clears cargo even for inventory from an older sa
  assert.equal(placed.item,null);assert.equal(placed.itemTick,undefined);assert.equal(placed.itemSide,undefined);
  assert.equal(placed.level,2);assert.equal(placed.hp,71);
 });
+
+test('a base assembler makes its first gear after 2.4 seconds',()=>{
+ const {state,build}=world(),assembler=build('assembler',5,5);assembler.input=['plate','plate'];
+ for(let i=0;i<47;i++)step(state);
+ assert.equal(assembler.item,null);step(state);assert.equal(assembler.item,'gear');
+});
+
+test('the host can continue a completed evacuation, build and face another swarm after reloading',()=>{
+ const {state,player,run,build}=world(),guest=addPlayer(state,'Guest');
+ state.status='victory';state.wave=9;state.evacuation={status:'complete',remaining:0};
+ assert.match(command(state,guest.id,{type:'continueAfterVictory'}),/Only the host/);
+ assert.equal(run({type:'continueAfterVictory'}),null);assert.ok(state.nextWave>state.time);
+ build('belt',5,5);
+ const data=parseSave(JSON.stringify(packWorldSave(state,player.id)));data.state.nextWave=0;
+ step(data.state);assert.equal(data.state.wave,10);assert.ok(data.state.enemies.length>0);assert.equal(data.state.status,'playing');
+});

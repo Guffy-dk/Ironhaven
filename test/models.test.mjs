@@ -26,6 +26,14 @@ test('conveyors support every straight lane, bend and merging junction',()=>{
  for(let out=0;out<4;out++)for(let input=0;input<4;input++)if(input!==out){const g=makeModel('belt',out,[input]);assert.equal(g.children.length,5);g.traverse(o=>{if(o.geometry?.attributes?.position)for(const n of o.geometry.attributes.position.array)assert.ok(Number.isFinite(n));});}
  const junction=makeModel('belt',0,[1,2,3]);assert.equal(junction.children.length,13);
 });
+test('barricades reach their shared tile edges on vertical lines, corners and junctions',()=>{
+ for(let mask=0;mask<16;mask++){
+  const links=DIRS.flatMap((_,d)=>mask&(1<<d)?[d]:[]);
+  const bounds=new T.Box3().setFromObject(makeModel('wall',0,links));
+  for(const [d,reach] of [bounds.max.x,bounds.max.z,-bounds.min.x,-bounds.min.z].entries())
+   assert.equal(reach>=.5,links.includes(d),`shape ${mask}, side ${d}`);
+ }
+});
 test('machine port decals use crisp shared textures and show the real Return side',()=>{
  const b={type:'splitter',dir:1},model=makeModel(b.type,b.dir);
  model.updateMatrixWorld(true);

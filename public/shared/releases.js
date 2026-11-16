@@ -11,7 +11,9 @@ export const RELEASES = [
    'Small arrows show port directions. Select a factory to see its input and output materials, or select a relay or dispatch hub for named ports.',
    'Box-select a factory setup, copy with Ctrl+C, and place a new copy with Ctrl+V and a click. Directions and machine settings are copied. U upgrades selected buildings of one type in a single transaction.',
    'Item-producing machines buffer up to five outputs. Enable Send and Receive to share buffered output between adjacent machines of the same type facing the same way.',
-   'Hostiles route around tree tiles, including in existing worlds. Conveyors placed from inventory start empty.'
+   'Hostiles route around trees and adjacent barricades connect automatically. Drag to build a row. Conveyors placed from inventory start empty.',
+   'Assemblers make one gear every 2.4 seconds. Turrets load 16 shots per gear, or 20 during the ammunition bonus.',
+   'Return to the main menu from the result screen, or continue a victorious world with further swarms.'
   ]
  },
  {

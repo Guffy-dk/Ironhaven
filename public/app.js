@@ -8,7 +8,7 @@ import { factoryStatus,STATUS_LABELS,productionReport } from './shared/diagnosti
 import { parseSave,packWorldSave } from './shared/saves.js';
 import { Lan } from './network.js';
 import { icon,RESOURCE_NAMES } from './icons.js';
-import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY } from './shared/sim.js';
+import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY,isPostVictory,canSpawnSwarm } from './shared/sim.js';
 const $=id=>document.getElementById(id),SAVE='ironhaven.save.v1',NAME='ironhaven.name';
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=createGame(),playerId=null,started=false,mode='solo',view,tool=null,dir=0,selected=null,tab='all',lastWave=0,lastEvent=0,ended=false,lowQuality=false,muted=true,audio=null,lastMove='0,0',hover=null,dragging=false,lastBuild='',lastUi=0,lastNet=0,lastSave=0,syncTick=0,pendingDisconnect=false;
@@ -94,6 +94,17 @@ function restart(){
  }else startGame();
  toast('A new colony has been founded.');
 }
+function returnToStart(){
+ if(mode!=='client')saveGame(true);
+ pendingDisconnect=true;lan.close();pendingDisconnect=false;
+ started=false;ended=false;mode='solo';playerId=null;state=createGame();
+ keys.clear();pointer=null;hover=null;copiedSetup=[];
+ motion.reset();clearArea();setTool(null);view.centerBase();
+ $('end-dialog').close();$('start-screen').hidden=false;document.body.classList.add('at-start');
+ $('resume').hidden=!readStorage(SAVE);updateUi();
+}
+$('end-main-menu').onclick=returnToStart;
+$('end-continue').onclick=()=>{if(execute({type:'continueAfterVictory'})===true){updateUi();saveGame(true);}};
 const lan=new Lan({
  onPeerOpen(peer){if(lan.role==='client')lan.send(peer,{type:'hello',name:$('player-name').value||readStorage(NAME)||'Engineer',version:CURRENT_VERSION});updatePeers();},
  onMessage(peer,msg){
@@ -139,7 +150,7 @@ for(const button of document.querySelectorAll('[data-copy]'))button.onclick=asyn
 function updateInspector(){
  const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b&&!tool);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool;$('launch-colony').hidden=b?.type!=='launchpad'||!!tool;$('program-building').hidden=!b||!!tool||!LOGISTICS_TYPES.includes(b.type);
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade ${b.level||1} / ${MAX_UPGRADES} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:'Fully upgraded · 10/10';btn.disabled=!cost||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
- if(b?.type==='launchpad'){$('launch-colony').disabled=mode==='client'||state.wave<FINAL_WAVE||state.enemies.length>0||state.evacuation?.status==='charging'||Object.entries(LAUNCH_COST).some(([r,n])=>state.resources[r]<n);$('launch-colony').textContent=state.evacuation?.status==='charging'?'Evacuation charging…':'Begin evacuation · 30 components + 60 steel + 40 circuits';}
+ if(b?.type==='launchpad'){$('launch-colony').disabled=mode==='client'||state.wave<FINAL_WAVE||state.enemies.length>0||state.evacuation?.status==='charging'||isPostVictory(state)||Object.entries(LAUNCH_COST).some(([r,n])=>state.resources[r]<n);$('launch-colony').textContent=isPostVictory(state)?'Evacuation complete':state.evacuation?.status==='charging'?'Evacuation charging…':'Begin evacuation · 30 components + 60 steel + 40 circuits';}
  $('program-building').textContent='Program flow (E) ↗';
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'Keep the expedition supplied, protect the crew and build the route home.';
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
@@ -170,7 +181,7 @@ const SWARM_DIRECTIONS=['West','North','East','South'];
 function updateSwarmWarning(incoming,time){
  const forecast=waveForecast(state),side=incoming?state.waveSide:forecast.side;
  const direction=SWARM_DIRECTIONS[side],warning=$('swarm-warning');
- const upcoming=state.wave<FINAL_WAVE&&!incoming;
+ const upcoming=canSpawnSwarm(state)&&!incoming;
  warning.hidden=!started||state.status!=='playing'||state.tutorialStep!==undefined||!(incoming||upcoming);
  warning.dataset.side=direction?.toLowerCase()||'';
  warning.classList.toggle('urgent',incoming||time<=20);
@@ -181,7 +192,7 @@ function updateSwarmWarning(incoming,time){
 function updateRoundBonuses(){
  const active=roundBonus(state.wave),next=waveForecast(state).bonus;
  const activeText=active?`Active · ${active.label}`:'Active · No bonus yet';
- const nextLabel=state.wave>=FINAL_WAVE?'Next (evacuation)':'Next';
+ const nextLabel=state.wave>=FINAL_WAVE&&!isPostVictory(state)?'Next (evacuation)':'Next';
  const nextText=state.evacuation?.status==='charging'?'':`${nextLabel} · ${next.label}`;
  $('round-bonuses').hidden=!started||state.status!=='playing'||state.tutorialStep!==undefined;
  const activeLine=$('round-bonus-active'),nextLine=$('round-bonus-next');
@@ -190,19 +201,20 @@ function updateRoundBonuses(){
  nextLine.hidden=!nextText;
 }
 function updateUi(){
+ if(started&&state.status==='playing'&&ended){ended=false;$('end-dialog').close();}
  $('resources').innerHTML=[...RESOURCE_KEYS,'power'].map(r=>`<div title="${r==='power'?'Colony power':`${Math.floor(state.resources[r])} / ${storageCapacity(state)} stored`} " class="resource ${r==='power'?'power':''} ${r==='power'&&state.power.used>state.power.total?'low':''}">${icon(r,23)}<strong>${r==='power'?`${state.power.used}<span class="resource-limit">/${state.power.total}</span>`:`${Math.floor(state.resources[r])}<span class="resource-limit">/${storageCapacity(state)}</span>`}</strong><small>${RESOURCE_NAMES[r]}</small></div>`).join('');
  const incoming=state.enemies.length>0,time=Math.max(0,state.nextWave-state.time);$('wave-label').textContent=state.paused?'GAME PAUSED':incoming?'PERIMETER CONTACT':'PREPARE YOUR COLONY';$('wave-title').textContent=incoming?'Swarm attacking':'Next swarm';$('countdown').textContent=incoming?String(state.enemies.length):`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;
- $('wave-fill').style.width=incoming?'100%':Math.min(100,(1-time/(state.wave===0?100:95))*100)+'%';$('wave-fill').style.background=incoming?'var(--red)':'var(--gold)';$('wave-detail').textContent=`SWARM ${Math.min(8,state.wave+(incoming?0:1))} OF ${FINAL_WAVE}`;$('early-wave').disabled=incoming||state.wave>=8||mode==='client'||!started;$('day').textContent='DAY '+String(1+Math.floor(state.time/180)).padStart(2,'0');$('wave-panel').classList.toggle('imminent',started&&!incoming&&time<=20&&state.wave<FINAL_WAVE);if(state.evacuation?.status==='charging'){$('wave-title').textContent='Final evacuation defense';$('countdown').textContent=Math.ceil(state.evacuation.remaining)+'s';$('wave-detail').textContent='PROTECT CORE + EVACUATION PAD';}else if(state.wave>=FINAL_WAVE&&!incoming){$('wave-title').textContent='Build the evacuation pad';$('countdown').textContent='READY';$('wave-detail').textContent='8 SWARMS SURVIVED';}
+ $('wave-fill').style.width=incoming?'100%':Math.min(100,(1-time/(state.wave===0?100:95))*100)+'%';$('wave-fill').style.background=incoming?'var(--red)':'var(--gold)';$('wave-detail').textContent=isPostVictory(state)?`SWARM ${state.wave+(incoming?0:1)} · ENDLESS`:`SWARM ${Math.min(FINAL_WAVE,state.wave+(incoming?0:1))} OF ${FINAL_WAVE}`;$('early-wave').disabled=incoming||!canSpawnSwarm(state)||mode==='client'||!started;$('day').textContent='DAY '+String(1+Math.floor(state.time/180)).padStart(2,'0');$('wave-panel').classList.toggle('imminent',started&&!incoming&&time<=20&&canSpawnSwarm(state));if(state.evacuation?.status==='charging'){$('wave-title').textContent='Final evacuation defense';$('countdown').textContent=Math.ceil(state.evacuation.remaining)+'s';$('wave-detail').textContent='PROTECT CORE + EVACUATION PAD';}else if(!canSpawnSwarm(state)&&!incoming){$('wave-title').textContent='Build the evacuation pad';$('countdown').textContent='READY';$('wave-detail').textContent='8 SWARMS SURVIVED';}
  const turrets=state.buildings.filter(b=>b.type==='turret'),dry=turrets.filter(b=>b.ammo===0).length,low=turrets.filter(b=>b.ammo<=3).length,warning=dry>0||state.resources.gear<=2&&turrets.length>0||low>0&&state.resources.gear===0;
  $('ammo-alert').hidden=!warning;$('ammo-alert').textContent=dry?`AMMO EMPTY · ${dry} turret${dry===1?'':'s'} need gears`:`LOW AMMO RESERVE · ${Math.floor(state.resources.gear)} gears`;
  $('ammo-alert').classList.toggle('empty',dry>0);updateSwarmWarning(incoming,time);updateRoundBonuses();updateTutorial();
  const checkpoints=readCheckpoints(),cp=checkpoints[0],choice=$('checkpoint-choice'),signature=checkpoints.map(c=>c.label+':'+c.time).join(';');if(choice.dataset.history!==signature){choice.dataset.history=signature;choice.innerHTML=checkpoints.length?checkpoints.map((c,i)=>`<option value="${i}">${escape(c.label)} · ${Math.floor(c.time/60)}m ${Math.floor(c.time%60)}s</option>`).join(''):'<option value="0">No checkpoint yet</option>';}$('retry-checkpoint').disabled=mode==='client'||!cp;$('end-retry').disabled=mode==='client'||!cp;$('retry-checkpoint').textContent=cp?'Retry selected checkpoint':'No checkpoint yet';if($('production-dialog').open)renderProduction();
- const goals=[{text:'An industry that works',sub:`${state.produced.plate} / 10 iron plates delivered`,done:state.produced.plate>=10},{text:'Machines of resistance',sub:`${state.produced.gear} / 5 gears delivered`,done:state.produced.gear>=5},{text:'Keep the swarm outside',sub:`${state.wave} / 8 swarms · ${state.totalKills} hostiles stopped`,done:state.wave>=8&&state.enemies.length===0},{text:'Evacuate the colony',sub:state.evacuation?.status==='charging'?`Hold for ${Math.ceil(state.evacuation.remaining)}s`: `${state.resources.module}/30 components · ${state.resources.steel}/60 steel · ${state.resources.circuit}/40 circuits`,done:state.status==='victory'}];
+ const goals=[{text:'An industry that works',sub:`${state.produced.plate} / 10 iron plates delivered`,done:state.produced.plate>=10},{text:'Machines of resistance',sub:`${state.produced.gear} / 5 gears delivered`,done:state.produced.gear>=5},{text:'Keep the swarm outside',sub:`${state.wave} / 8 swarms · ${state.totalKills} hostiles stopped`,done:state.wave>=8&&state.enemies.length===0},{text:'Evacuate the colony',sub:isPostVictory(state)?'Evacuation complete':state.evacuation?.status==='charging'?`Hold for ${Math.ceil(state.evacuation.remaining)}s`: `${state.resources.module}/30 components · ${state.resources.steel}/60 steel · ${state.resources.circuit}/40 circuits`,done:isPostVictory(state)}];
  $('objectives').innerHTML=goals.map(g=>`<div class="objective ${g.done?'done':''}"><span class="check">${g.done?'✓':''}</span><div>${g.text}<small>${g.sub}</small></div></div>`).join('');
  $('team').innerHTML=state.players.length?`<div class="team-title">ENGINEERS · ${state.players.length}/4</div>`+state.players.map(p=>`<div class="teammate"><span class="avatar">${String(p.color+1).padStart(2,'0')}</span><span>${escape(p.name)}${p.hp<=0?` (${Math.ceil(p.respawn)}s)`:''}</span><span class="role">${p.id===state.players[0]?.id?'HOST':p.id===playerId?'YOU':'GUEST'}</span></div>`).join(''):'';
  $('pause').textContent=state.paused?'▶':'Ⅱ';$('speed').textContent=state.speed+'×';$('save').disabled=mode==='client';$('export-save').disabled=mode==='client';$('menu-save').disabled=mode==='client';$('restart').disabled=mode==='client';$('open-lan').disabled=mode==='client';$('leave-lan').hidden=mode==='solo';$('leave-lan').textContent=mode==='host'?'Close LAN (keep the world)':'Leave LAN world';$('end-restart').disabled=mode==='client';$('end-restart').textContent=mode==='client'?'Waiting for host':'Start a new expedition ↗';$('pause').disabled=mode==='client';$('speed').disabled=mode==='client';updateConnection();updateToolbar();updateInspector();drawMinimap();
  if(state.wave>lastWave){lastWave=state.wave;toast(`Swarm ${state.wave} · ${state.enemies.length} hostiles · Bonus activated: ${roundBonus(state.wave).label}`);tone(160,.6,.035,'sawtooth');}
- if(started&&state.status!=='playing'&&!ended){ended=true;$('end-title').textContent=state.status==='victory'?'Ironhaven endures.':'The colony has fallen.';$('end-label').textContent=state.status==='victory'?'EVACUATION COMPLETE. THE COLONY SURVIVES.':'EXPEDITION ENDED';$('end-summary').textContent=`You held out for ${Math.floor(state.time/60)} minutes and stopped ${state.totalKills} hostiles. Your industry delivered ${state.produced.plate} iron plates and ${state.produced.gear} gears.`;$('end-dialog').showModal();saveGame(true);}
+ if(started&&state.status!=='playing'&&!ended){ended=true;const won=state.status==='victory';$('end-title').textContent=won?'Ironhaven endures.':'The colony has fallen.';$('end-label').textContent=won?'EVACUATION COMPLETE. THE COLONY SURVIVES.':'EXPEDITION ENDED';$('end-summary').textContent=`You held out for ${Math.floor(state.time/60)} minutes and stopped ${state.totalKills} hostiles. Your industry delivered ${state.produced.plate} iron plates and ${state.produced.gear} gears.`;$('end-continue').hidden=!won;$('end-continue').disabled=mode==='client';$('end-dialog').showModal();saveGame(true);}
 }
 const mini=$('minimap'),ctx=mini.getContext('2d');
 function drawMinimap(){const w=mini.width,h=mini.height,sx=w/56,sz=h/56;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+28)*sx,(b.z+28)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect((e.x+28)*sx,(e.z+28)*sz,2,2);ctx.fillStyle='#ffdc98';for(const p of state.players)ctx.fillRect((p.x+28)*sx-1,(p.z+28)*sz-1,3,3);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+28-cw/2)*sx,(view.center.z+28-ch/2)*sz,cw*sx,ch*sz);}
@@ -225,11 +237,10 @@ function refreshRoute(){
  const signature=[tool,start.x,start.z,end.x,end.z,dir,state.buildings.length].join(':');
  if(signature!==lastRouteKey){
   lastRouteKey=signature;
-  const single=drag?.length===1&&start.x===end.x&&start.z===end.z;
+  const single=(!drag||drag.length===1)&&start.x===end.x&&start.z===end.z;
   routePlan=single?null:drag?planBeltDrag(state,[...drag,end],dir):planRoute(state,tool,start,end,dir);
  }
- if(drag&&!routePlan){view.previewRoute([]);return false;}
- if(!routePlan)return;
+ if(!routePlan){view.previewRoute([]);return false;}
  const grid=new Map(state.buildings.map(b=>[key(b.x,b.z),b])),fresh=routePlan.cells.filter(c=>!grid.has(key(c.x,c.z))).length,packed=Math.min(fresh,inventoryCount(state,playerId,tool)),craft=fresh-packed;
  const missing=Object.entries(TYPES[tool].cost).some(([r,n])=>state.resources[r]<n*craft),error=routePlan.error||(missing?'Not enough materials for the entire route':null);
  view.previewRoute(routePlan.cells,!error,tool==='belt');$('tool-hint').classList.toggle('invalid',!!error);$('tool-hint').textContent=error||`${routePlan.cells.length} tiles · ${packed} from inventory · ${Object.entries(TYPES[tool].cost).map(([r,n])=>`${n*craft} ${RESOURCE_NAMES[r].toLowerCase()}`).join(' + ')} · Release to build · ${drag?'R turns · ':''}Q / Esc cancels`;
@@ -243,7 +254,7 @@ function commitRoute(){
  if(!hover){updateHover();return;}
  const points=gesture.points,start=points?.at(-1)??(gesture.moved?gesture.down:gesture.anchor||gesture.down);
  const end=points?dragEndpoint(start,hover):hover;
- if(points?.length===1&&start.x===end.x&&start.z===end.z){
+ if((!points||points.length===1)&&start.x===end.x&&start.z===end.z){
   if(!gesture.moved)buildAt(gesture.down);
  }else if(execute({type:'buildRow',building:tool,start,end,dir,...(points?{points:[...points,end]}:{})})!==false){
   rowAnchor={...end,type:tool};tone(700,.06,.02,'triangle');
@@ -252,7 +263,7 @@ function commitRoute(){
 }
 function buildAt(cell){
  if(!cell||!tool||!started)return;const b=state.buildings.find(b=>b.x===cell.x&&b.z===cell.z);
- if(tool==='belt'&&b?.type==='belt'){rowAnchor={...cell,type:tool};toast('Conveyor anchor set. Drag from here or Shift-click an endpoint.');return;}
+ if(['belt','wall'].includes(tool)&&b?.type===tool){rowAnchor={...cell,type:tool};toast('Anchor set. Drag from here or Shift-click an endpoint.');return;}
  const cmd=tool==='demolish'||tool==='repair'?{type:tool,x:cell.x,z:cell.z}:{type:'build',building:tool,x:cell.x,z:cell.z,dir};
  if(execute(cmd)!==false){rowAnchor={...cell,type:tool};tone(tool==='demolish'?190:700,.035,.015,'triangle');}updateHover();
 }
@@ -268,8 +279,8 @@ $('world').addEventListener('pointerdown',e=>{
  if(pasting){placePaste();return;}
  if(movingArea){placeArea(e.shiftKey);return;}
  if(tool){
-  if(tool==='belt'||e.shiftKey&&tool==='wall'){
-   rowGesture={down:{...hover},anchor:rowAnchor?.type===tool?{x:rowAnchor.x,z:rowAnchor.z}:null,screen:{x:e.clientX,y:e.clientY},moved:false,points:e.shiftKey?null:[{...hover}]};
+  if(tool==='belt'||tool==='wall'){
+   rowGesture={down:{...hover},anchor:e.shiftKey&&rowAnchor?.type===tool?{x:rowAnchor.x,z:rowAnchor.z}:null,screen:{x:e.clientX,y:e.clientY},moved:false,points:e.shiftKey||tool==='wall'?null:[{...hover}]};
    lastRouteKey='';updateHover();
   }
   else buildAt(hover);
@@ -495,7 +506,7 @@ $('toggle-diagnostics').onclick=()=>{showDiagnostics=!showDiagnostics;$('toggle-
 // 20 authoritative ticks/second; clients only render received snapshots.
 setInterval(()=>{
  if(!started||mode==='client')return;
- if(state.tutorialStep===undefined&&!state.paused&&state.status==='playing'&&state.enemies.length===0&&state.wave<FINAL_WAVE&&state.time+STEP*state.speed>=state.nextWave){const id=state.wave+':'+state.nextWave;if(lastAutoCheckpoint!==id){lastAutoCheckpoint=id;checkpoint('Before swarm '+(state.wave+1));}}
+ if(state.tutorialStep===undefined&&!state.paused&&state.status==='playing'&&state.enemies.length===0&&canSpawnSwarm(state)&&state.time+STEP*state.speed>=state.nextWave){const id=state.wave+':'+state.nextWave;if(lastAutoCheckpoint!==id){lastAutoCheckpoint=id;checkpoint('Before swarm '+(state.wave+1));}}
  for(let i=0;i<state.speed;i++)step(state,STEP);
  if(mode==='host'&&++syncTick%2===0){
   const revision=`${state.terrain.trees.length}:${state.terrain.rocks.length}`,withoutTerrain={...state};delete withoutTerrain.terrain;
