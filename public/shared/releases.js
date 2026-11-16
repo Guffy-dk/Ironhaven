@@ -1,9 +1,18 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.12.1';
+export const CURRENT_VERSION = '0.12.2';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.12.2',date:'2026-11-16',title:'Keep the line moving',
+  changes:[
+   'Conveyors hold up to four spaced items per tile. Cargo queues behind blocked outputs and moves again when the line clears.',
+   'Warehouses can output a selected material to a conveyor or machine, or supply one recipe at a time to an adjacent machine from shared stock.',
+   'Blueprints show base building stats. Turret range and sawmill work radius appear under the cursor before placement.',
+   'Keep the trees near the tutorial sawmill when generating paths to distant deposits.'
+  ]
+ },
  {
   version:'0.12.1',date:'2026-11-16',title:'Worth the upgrade',
   changes:[

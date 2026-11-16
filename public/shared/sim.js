@@ -21,7 +21,7 @@ export function waveForecast(s,wave=s.wave+1){
 }
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
- belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries items toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
+ belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries up to four items in a row toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'Place on blue iron deposits. Mines one ore every 1.6 seconds. The gold OUT port is its delivery side.'},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'Feed iron or copper ore into any cyan IN port. Processes iron in 1.6 seconds and copper in 2 seconds, in arrival order.'},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
@@ -40,7 +40,7 @@ Object.assign(TYPES,{
  foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel is used for advanced upgrades and coal power.'},
  circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'Combines two copper and one plate into a circuit. Circuits unlock advanced upgrades and ship components.'},
  componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'Combines two steel, two circuits and a gear into a ship component. Components are used in pulse turrets.'},
- storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Adds 300 storage per material. Upgrades expand capacity further. Conveyors can deliver any processed material here.'},
+ storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Adds 300 shared storage per material. Select a material to send from shared stock to the conveyor or machine in front.'},
  coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:'Mines coal from black deposits. Deliver coal to colony storage to feed coal generators.'},
  coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:'Adds 36 power and consumes one coal every 16 seconds.'},
  mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:'Long-range shells deal splash damage in a wide area. Uses four shells per gear.'},
@@ -85,7 +85,7 @@ export function productionRecipe(b){
  const recipe=b.type==='smelter'&&b.input[0]==='copperOre'?COPPER_RECIPE:RECIPES[b.type];
  return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
 }
-export const DIRECTIONAL = ['inserter','splitter','belt','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
+export const DIRECTIONAL = ['inserter','splitter','belt','storage','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
 export const TURRET_LEVELS = [
  {name:'Mk I',hp:350,damage:28,range:10,interval:.38,cost:null},
  {name:'Mk II',hp:500,damage:48,range:10.5,interval:.32,cost:{plate:15,gear:3}},
@@ -94,6 +94,8 @@ export const TURRET_LEVELS = [
 const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:21+(i-2)*7,gear:4+(i-2)*2}});
 export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
+export const SAWMILL_RADIUS=5;
+export const buildingRadius=b=>b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0;
 export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
 export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16}};
 export function turretStats(b){
@@ -129,6 +131,10 @@ export function roundBonus(wave){
 export function shotsPerGear(bonus){return bonus?.shotsPerGear??16;}
 export const turretReload=(b,bonus)=>Math.floor(shotsPerGear(bonus)/(turretStats(b).ammoDivisor||1));
 export const beltTravelTicks=b=>Math.max(2,9-(b.level||1));
+export const BELT_CAPACITY=4;
+const BELT_SPACING=1/BELT_CAPACITY;
+export const conveyorProgress=(belt,cargo,tick)=>cargo.itemProgress??Math.max(0,Math.min(1,(tick-(cargo.itemTick??0))/beltTravelTicks(belt)));
+export const conveyorCount=b=>(b.item?1:0)+(b.beltQueue?.length??0);
 export function repairCost(bonus){return {...TYPES.repair.cost,plate:bonus?.repairPlates??TYPES.repair.cost.plate};}
 export function productionSpeed(b,bonus,difficulty){
  const upgrade=(1+((b.level||1)-1)*.5)*(DIFFICULTIES[difficulty]?.production??1);
@@ -137,6 +143,7 @@ export function productionSpeed(b,bonus,difficulty){
 export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
 export const storageContribution=b=>b.type==='storage'?300+((b.level||1)-1)*180:b.type==='hq'?((b.level||1)-1)*80:0;
 export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+storageContribution(b),0);
+export const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
 export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
 const plateYieldUnits=b=>(b.level||1)>1?6+(b.level-2):4;
 export const plateYield=b=>plateYieldUnits(b)/4;
@@ -184,6 +191,14 @@ function normalizeOutput(b){
  if(b.outputBuffer!==undefined)b.outputBuffer=Array.isArray(b.outputBuffer)&&b.item?
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
+function normalizeConveyor(b){
+ if(!ITEM_KEYS.includes(b.item)){emptyConveyor(b);return;}
+ if(b.itemProgress!==undefined&&!validBeltProgress(b.itemProgress))delete b.itemProgress;
+ if(!Array.isArray(b.beltQueue)){delete b.beltQueue;return;}
+ b.beltQueue=b.beltQueue.slice(0,BELT_CAPACITY-1).filter(cargo=>cargo&&ITEM_KEYS.includes(cargo.item)&&
+  Number.isInteger(cargo.itemTick)&&validBeltProgress(cargo.itemProgress));
+}
+function validBeltProgress(progress){return Number.isFinite(progress)&&progress>=0&&progress<=1;}
 export function migrateGame(s){
  if(!s||![1,2,3,4,5,6,7,8,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  const previous=s.version,old=previous<SAVE_SCHEMA;
@@ -212,7 +227,7 @@ export function migrateGame(s){
  }
  if(old)openDeposits(s.terrain);
  delete s.evacuation;
- for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);}
+ for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'&&!warehouseExportValid(b.exportItem))delete b.exportItem;if(b.type==='belt')normalizeConveyor(b);}
  for(const p of s.players){
   for(const [type,items] of Object.entries(p.inventory))if(hasOutputBuffer(type)&&Array.isArray(items))for(const b of items)if(b)normalizeOutput(b);
   const packed=p.inventory.copperSmelter;
@@ -233,13 +248,18 @@ function openDeposits(terrain){
  for(const {x,z} of [...terrain.ore,...terrain.copper,...terrain.coal]){
   const [dx,dz]=Math.abs(x)>=Math.abs(z)?[-Math.sign(x),0]:[0,-Math.sign(z)];
   for(let ox=-2;ox<=2;ox++)for(let oz=-2;oz<=2;oz++)clear.add(key(x+ox,z+oz));
-  if(Math.hypot(x,z)>18)for(let i=1;i<=11;i++)clear.add(key(x+i*dx,z+i*dz));
+  if(Math.hypot(x,z)>18)for(let i=1;i<=11;i++){
+   const nx=x+i*dx,nz=z+i*dz;
+   if(Math.hypot(nx,nz)<15)break;
+   clear.add(key(nx,nz));
+  }
  }
  for(const kind of ['trees','rocks'])terrain[kind]=terrain[kind].filter(t=>Math.max(Math.abs(t.x),Math.abs(t.z))<BUILD_EDGE-1&&!clear.has(key(t.x,t.z)));
  return terrain;
 }
 const woodlandTiles=new WeakMap();
-const sawmillRadius=[...Array(9).keys()].flatMap(i=>[...Array(9).keys()].map(j=>[i-4,j-4])).filter(([x,z])=>x*x+z*z<25);
+const sawmillOffsets=Array.from({length:2*SAWMILL_RADIUS-1},(_,i)=>i-SAWMILL_RADIUS+1);
+const sawmillRadius=sawmillOffsets.flatMap(x=>sawmillOffsets.map(z=>[x,z])).filter(([x,z])=>x*x+z*z<SAWMILL_RADIUS**2);
 export function sawmillTrees(terrain,b){
  let index=woodlandTiles.get(terrain);
  if(index?.trees!==terrain.trees||index.count!==terrain.trees.length){
@@ -312,7 +332,7 @@ function packBuilding(player,building){
  if(type==='belt')emptyConveyor(packed);
  (player.inventory[type]||=[]).push(packed);
 }
-function emptyConveyor(b){b.item=null;delete b.itemTick;delete b.itemSide;}
+function emptyConveyor(b){b.item=null;delete b.itemTick;delete b.itemSide;delete b.itemProgress;delete b.beltQueue;}
 export function dismantleValue(b){
  const costs={...TYPES[b.type].cost};
  for(let level=1;level<Math.min(b.level||1,MAX_UPGRADES+1);level++){
@@ -363,6 +383,7 @@ export function canBuild(s,type,x,z,playerId){
 }
 export function outputPointsAt(b,x,z){
  if(LOGISTICS_TYPES.includes(b.type)){const p=programFor(b),ports=logisticsPorts(b);return PROGRAM_ROLES.some(role=>p[role]>0&&(b.type==='splitter'||role!=='forward')&&b.x+DIRS[ports[role]][0]===x&&b.z+DIRS[ports[role]][1]===z);}
+ if(b.type==='storage'&&!b.exportItem)return false;
  const [dx,dz]=DIRS[b.dir||0];return DIRECTIONAL.includes(b.type)&&b.x+dx===x&&b.z+dz===z;
 }
 export function beltInputs(b,grid){
@@ -373,7 +394,7 @@ function beltExit(grid,cell,d){
  const[dx,dz]=DIRS[d],target=grid.get(key(cell.x+dx,cell.z+dz));
  if(!target)return false;
  if(target.type==='splitter')return target.dir===d;
- if(target.type==='belt'||Object.hasOwn(RECIPES,target.type))return target.dir!==(d+2)%4;
+ if(hasOutputSide(target))return target.dir!==(d+2)%4;
  return ['hq','storage','launchpad'].includes(target.type);
 }
 const routeTile=cell=>cell&&Number.isInteger(cell.x)&&Number.isInteger(cell.z)&&Math.abs(cell.x)<=BUILD_EDGE&&Math.abs(cell.z)<=BUILD_EDGE;
@@ -441,9 +462,8 @@ export function planRoute(s,type,start,end,dir=0){
    const[dx,dz]=DIRS[d],x=cur.x+dx,z=cur.z+dz;if(!allowed(x,z))continue;
    if(cur.prev?.x===x&&cur.prev.z===z)continue;
    if(type==='belt'&&x===start.x&&z===start.z)continue;
-   if(type==='belt'&&last?.type==='belt'&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
+   if(last&&hasOutputSide(last)&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
    if(last&&last.type==='splitter'&&x===end.x&&z===end.z&&d!==last.dir)continue;
-   if(last&&Object.hasOwn(RECIPES,last.type)&&x===end.x&&z===end.z&&last.dir===(d+2)%4)continue;
    const g=cur.g+1+(d===cur.d?0:.15),k=`${x},${z},${d}`;if((best.get(k)??Infinity)<=g)continue;best.set(k,g);
    open.push({x,z,d,g,f:g+Math.abs(x-end.x)+Math.abs(z-end.z),prev:cur});
   }
@@ -470,6 +490,7 @@ export function copySetup(s,ids){
  const left=Math.min(...selected.map(b=>b.x)),top=Math.min(...selected.map(b=>b.z));
  return selected.map(b=>({type:b.type,x:b.x-left,z:b.z-top,dir:b.dir,
   ...(LOGISTICS_TYPES.includes(b.type)?{program:{...programFor(b)}}:{}),
+  ...(b.type==='storage'?{exportItem:b.exportItem??null}:{}),
   ...(hasOutputBuffer(b.type)?{sendOutput:b.sendOutput===true,receiveOutput:b.receiveOutput===true}:{})}));
 }
 export function planPaste(s,layout,anchor,playerId){
@@ -478,13 +499,14 @@ export function planPaste(s,layout,anchor,playerId){
  const occupied=new Set(),needed=new Map(),cost={},cells=[];
  for(const tile of layout){
   if(!tile||!Number.isInteger(tile.x)||!Number.isInteger(tile.z)||tile.x<0||tile.z<0||tile.x>BUILD_EDGE*2||tile.z>BUILD_EDGE*2||
-     !Number.isInteger(tile.dir)||tile.dir<0||tile.dir>3||LOGISTICS_TYPES.includes(tile.type)&&programError(tile.program))
+     !Number.isInteger(tile.dir)||tile.dir<0||tile.dir>3||LOGISTICS_TYPES.includes(tile.type)&&programError(tile.program)||
+     tile.type==='storage'&&!warehouseExportValid(tile.exportItem??null))
    return {cells:[],error:'Invalid building in copied setup'};
   const x=anchor.x+tile.x,z=anchor.z+tile.z,k=key(x,z);
   if(occupied.has(k))return {cells:[],error:'Copied setup contains overlapping buildings'};
   occupied.add(k);
   const reason=placementError(s,tile.type,x,z);
-  cells.push({type:tile.type,x,z,dir:tile.dir,program:tile.program,reason,sendOutput:tile.sendOutput===true,receiveOutput:tile.receiveOutput===true});
+  cells.push({type:tile.type,x,z,dir:tile.dir,program:tile.program,reason,sendOutput:tile.sendOutput===true,receiveOutput:tile.receiveOutput===true,exportItem:tile.exportItem});
   if(!reason)needed.set(tile.type,(needed.get(tile.type)||0)+1);
  }
  if(cells.some(tile=>tile.reason))return {cells,error:cells.find(tile=>tile.reason).reason};
@@ -543,6 +565,7 @@ export function command(s,playerId,cmd){
    const b=place(s,p,tile.type,tile.x,tile.z,tile.dir);
    if(LOGISTICS_TYPES.includes(tile.type))setProgram(b,tile.program);
    if(hasOutputBuffer(tile.type)){b.sendOutput=tile.sendOutput;b.receiveOutput=tile.receiveOutput;}
+   if(tile.type==='storage')b.exportItem=tile.exportItem??null;
   }
   updatePower(s);return null;
  }
@@ -562,6 +585,11 @@ export function command(s,playerId,cmd){
   updatePower(s);return null;
  }
  const b=s.buildings.find(b=>b.x===x&&b.z===z);
+ if(cmd.type==='configureWarehouse'){
+  if(b?.type!=='storage'||cmd.id!==b.id)return 'Select a warehouse';
+  if(!warehouseExportValid(cmd.item))return 'Invalid warehouse material';
+  b.exportItem=cmd.item;return null;
+ }
  if(cmd.type==='configureOutput'){
   if(!b||cmd.id!==b.id||!hasOutputBuffer(b.type))return 'Select an item-producing machine';
   if(typeof cmd.send!=='boolean'||typeof cmd.receive!=='boolean')return 'Invalid output sharing settings';
@@ -616,19 +644,46 @@ function recordStockFlow(s,item,amount){
  const flow=s.stats.stockFlow??={};flow[item]=(flow[item]??0)+amount;
 }
 function store(s,item,amount=1){if(!RESOURCE_KEYS.includes(item)||s.resources[item]+amount>storageCapacity(s))return false;s.resources[item]+=amount;recordStockFlow(s,item,amount);if(item==='plate'||item==='gear')s.produced[item]++;return true;}
+function hasOutputSide(b){return b.type==='belt'||b.type==='storage'&&!!b.exportItem||Object.hasOwn(RECIPES,b.type);}
 export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
- if(from&&(b.type==='belt'||Object.hasOwn(RECIPES,b.type))){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
+ if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
  if(['hq','storage'].includes(b.type))return RESOURCE_KEYS.includes(item)&&(s.resources[item]||0)<storageCapacity(s);
  if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
- if(b.type==='belt')return !b.item;
+ if(b.type==='belt'){
+  const last=b.beltQueue?.at(-1)??b;
+  return !b.item||conveyorCount(b)<BELT_CAPACITY&&conveyorProgress(b,last,s.tick)>=BELT_SPACING;
+ }
  const required=recipeInput(b,item);return required>0&&b.input.filter(v=>v===item).length<required*cycles;
 }
 function accept(s,b,item,from,cycles=4){
  if(!canAcceptItem(s,b,item,from,cycles))return false;
  if(['hq','storage'].includes(b.type))return store(s,item);
- if(['belt','splitter'].includes(b.type)){b.item=item;b.itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;b.itemTick=s.tick;return true;}
+ if(b.type==='belt'||b.type==='splitter'){
+  const itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;
+  const cargo={item,itemSide,itemTick:s.tick};
+  if(b.type==='belt'){
+   cargo.itemProgress=0;
+   if(b.item)(b.beltQueue??=[]).push(cargo);
+   else Object.assign(b,cargo);
+  }else Object.assign(b,cargo);
+  return true;
+ }
  b.input.push(item);return true;
+}
+function advanceConveyor(b,tick){
+ const distance=1/beltTravelTicks(b);
+ if(b.itemProgress!==undefined)b.itemProgress=Math.min(1,b.itemProgress+distance);
+ let leading=conveyorProgress(b,b,tick);
+ for(const cargo of b.beltQueue??[]){
+  cargo.itemProgress=Math.max(0,Math.min(leading-BELT_SPACING,cargo.itemProgress+distance));
+  leading=cargo.itemProgress;
+ }
+}
+function shiftConveyor(b){
+ const next=b.beltQueue?.shift();
+ if(next)Object.assign(b,next);
+ else emptyConveyor(b);
 }
 function relayControls(s,grid,dt){
  const controls=new Map();
@@ -639,7 +694,7 @@ function relayControls(s,grid,dt){
   if(!source.item||b.cooldown>0)continue;
   const role=programRole(b),p=programFor(b);if(role==='forward'||!programMatches(b,source.item,grid))continue;
   const target=programTarget(b,role,grid),item=source.item;
-  if(accept(s,target,item,b,role==='machine'?p.buffer:4)){source.item=null;b.cooldown=.6/productionSpeed(b);logTransfer(b,role,item,s);}
+  if(accept(s,target,item,b,role==='machine'?p.buffer:4)){shiftConveyor(source);b.cooldown=.6/productionSpeed(b);logTransfer(b,role,item,s);}
  }
  return controls;
 }
@@ -699,15 +754,20 @@ export function step(s,dt=STEP){
  updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
- const moving=s.buildings.filter(b=>['belt','splitter'].includes(b.type)&&b.item&&s.tick-(b.itemTick??0)>=beltTravelTicks(b)).map(b=>({b,item:b.item}));
- const busy=new Set(s.buildings.filter(b=>['belt','splitter'].includes(b.type)&&b.item).map(b=>b.id)),controls=relayControls(s,grid,dt);
- for(const{b,item}of moving){
-  if(b.item!==item||b.itemTick===s.tick)continue;
+ const moving=[],busy=new Set();
+ for(const b of s.buildings){
+  if(!b.item)continue;
+  if(b.type==='belt'){advanceConveyor(b,s.tick);if(conveyorProgress(b,b,s.tick)>=1-1e-9)moving.push({b,item:b.item,itemTick:b.itemTick});}
+  else if(b.type==='splitter'){busy.add(b.id);if(conveyorProgress(b,b,s.tick)>=1)moving.push({b,item:b.item,itemTick:b.itemTick});}
+ }
+ const controls=relayControls(s,grid,dt);
+ for(const{b,item,itemTick}of moving){
+  if(b.item!==item||b.itemTick!==itemTick)continue;
   if(b.type==='splitter'){dispatch(s,b,item,grid,busy);continue;}
   const relay=controls.get(b.id),matches=relay&&programMatches(relay,item,grid),role=relay&&programRole(relay);
   if(relay&&matches&&role!=='forward'&&(!programFor(relay).bypass||programFor(relay).forward===0))continue;
   const[dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
-  if(target&&!busy.has(target.id)&&accept(s,target,item,b)){b.item=null;if(relay)logTransfer(relay,'forward',item,s,!matches||role!=='forward');}
+  if(target&&!busy.has(target.id)&&accept(s,target,item,b)){shiftConveyor(b);if(relay)logTransfer(relay,'forward',item,s,!matches||role!=='forward');}
  }
  // Advance only output that was already queued before this pass, one machine per tick.
  for(const b of s.buildings.filter(b=>b.active&&b.item&&hasOutputBuffer(b.type))){
@@ -717,6 +777,14 @@ export function step(s,dt=STEP){
   b.item=b.outputBuffer?.shift()??null;
  }
  for(const b of s.buildings){
+  if(b.type==='storage'&&b.exportItem&&s.tick%8===b.id%8){
+   const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
+   const item=b.exportItem==='recipe'?
+    Object.keys(RECIPES[out?.type]?.input??{}).find(item=>s.resources[item]>0&&canAcceptItem(s,out,item,b,1)):b.exportItem;
+   if(s.resources[item]>0&&out&&out.type!=='hq'&&out.type!=='storage'&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
+    s.resources[item]--;recordStockFlow(s,item,-1);
+   }
+  }
   const generator=GENERATORS[b.type];
   if(generator&&s.resources[generator.fuel]>0){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress+1e-9>=generator.seconds){b.progress=Math.max(0,b.progress-generator.seconds);recordStockFlow(s,generator.fuel,-1);if(--s.resources[generator.fuel]===0)updatePower(s);}}
   if(!b.active)continue;

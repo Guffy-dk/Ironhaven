@@ -8,7 +8,13 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.12.1 — upgrade value
+## Version 0.12.2 — keep the line moving
+
+Conveyors carry up to four items per tile and queue toward a blocked output. Select a warehouse to send a material from shared stock through its output, or choose **Adjacent machine recipe** to supply the machine directly in front. Press **R** to rotate the warehouse.
+
+Select a building in the hotbar to see its stats. Hover over the map to see turret range or sawmill work radius before placing it. The sawmill blueprint also estimates wood per minute for the hovered tile.
+
+## Included from 0.12.1 — upgrade value
 
 An upgraded smelter makes more iron plates from the same ore. Its first upgrade costs six wood and six plates and yields three plates from two ore. The inspector previews the gain before upgrading.
 

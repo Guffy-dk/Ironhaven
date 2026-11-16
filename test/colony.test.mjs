@@ -5,6 +5,15 @@ import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
 import {Lan} from '../public/network.js';
+import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
+
+test('outer deposit paths leave trees within reach of the tutorial sawmill',()=>{
+ const site=TUTORIAL_STEPS.find(lesson=>lesson.tiles?.some(b=>b.type==='sawmill')).tiles.find(b=>b.type==='sawmill');
+ for(const seed of [7,33,44,64]){
+  const s=createGame(seed);
+  assert.ok(sawmillRate(s,site)>0,`Seed ${seed} has no trees near the tutorial sawmill`);
+ }
+});
 
 function world(){
  const s=createGame(),p=addPlayer(s);
@@ -225,6 +234,8 @@ test('belt timing is based on when cargo entered the tile and rendering retains 
  assert.equal(left.item,'gear');
  motion.update(s,100);
  step(s);assert.equal(right.item,'gear');assert.equal(left.item,null);
- motion.update(s,150);assert.equal(motion.beltCargo(left)?.item,'gear');assert.equal(motion.beltCargo(right),undefined);
- motion.update(s,200);assert.equal(motion.beltCargo(right).item,'gear');
+ const rendered=b=>{const result=[];motion.drawBeltItems(b,(cargo,t)=>result.push([cargo.item,t]));return result;};
+ motion.update(s,150);assert.deepEqual(rendered(left),[['gear',.875]]);assert.deepEqual(rendered(right),[]);
+ motion.update(s,175);assert.deepEqual(rendered(left),[['gear',.9375]]);
+ motion.update(s,200);assert.deepEqual(rendered(left),[]);assert.deepEqual(rendered(right),[['gear',0]]);
 });
