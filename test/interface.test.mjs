@@ -43,9 +43,11 @@ test('selecting a warehouse sets its recipe export from the inspector',async()=>
  const saved=starterWorld(),{state,playerId}=saved;
  state.terrain.trees=state.terrain.rocks=[];
  assert.equal(command(state,playerId,{type:'build',building:'storage',x:10,z:1}),null);
+ state.buildings.find(b=>b.type==='storage').stock={steel:3};
  const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',10,1);h.point('pointerup',10,1);
   assert.equal(h.$('warehouse-options').hidden,false);
+  assert.match(h.$('warehouse-stock').textContent,/3 steel/);
   const select=h.$('warehouse-export');select.value='recipe';select.dispatchEvent(new h.dom.Event('change'));
   assert.equal(h.save().buildings.find(b=>b.type==='storage').exportItem,'recipe');
   assert.match(h.$('warehouse-export-status').textContent,/adjacent machine to the east/);

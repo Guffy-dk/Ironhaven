@@ -43,7 +43,7 @@ Object.assign(TYPES,{
  foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel is used for advanced upgrades and coal power.'},
  circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'Combines two copper and one plate into a circuit. Circuits unlock advanced upgrades and ship components.'},
  componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'Combines two steel, two circuits and a gear into a ship component. Components are used in pulse turrets.'},
- storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Adds 300 shared storage per material. Select a material to send from shared stock to the conveyor or machine in front.'},
+ storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Stores deliveries locally. Set an output material, then use R to aim it at a conveyor or machine.'},
  coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:'Mines coal from black deposits. Deliver coal to colony storage to feed coal generators.'},
  coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:'Adds 36 power and consumes one coal every 16 seconds.'},
  mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:'Long-range shells deal splash damage in a wide area. Uses four shells per gear.'},
@@ -144,9 +144,10 @@ export function productionSpeed(b,bonus,difficulty){
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
 export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
-export const storageContribution=b=>b.type==='storage'?300+((b.level||1)-1)*180:b.type==='hq'?((b.level||1)-1)*80:0;
-export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+storageContribution(b),0);
-export const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
+export const storageCapacity=s=>300+((s.buildings.find(b=>b.type==='hq')?.level??1)-1)*80;
+export const warehouseCapacity=b=>300+((b.level||1)-1)*180;
+export const warehouseStock=(b,item)=>b.stock?.[item]??0;
+const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
 export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
 const plateYieldUnits=b=>(b.level||1)>1?6+(b.level-2):4;
 export const plateYield=b=>plateYieldUnits(b)/4;
@@ -194,6 +195,13 @@ function normalizeOutput(b){
  if(b.outputBuffer!==undefined)b.outputBuffer=Array.isArray(b.outputBuffer)&&b.item?
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
+function normalizeWarehouse(b){
+ if(!warehouseExportValid(b.exportItem))delete b.exportItem;
+ if(b.stock!==undefined)b.stock=Object.fromEntries(RESOURCE_KEYS.flatMap(item=>{
+  const n=b.stock?.[item];
+  return Number.isSafeInteger(n)&&n>0?[[item,n]]:[];
+ }));
+}
 function normalizeConveyor(b){
  if(!ITEM_KEYS.includes(b.item)){emptyConveyor(b);return;}
  if(b.itemProgress!==undefined&&!validBeltProgress(b.itemProgress))delete b.itemProgress;
@@ -230,9 +238,12 @@ export function migrateGame(s){
  }
  if(old)openDeposits(s.terrain);
  delete s.evacuation;
- for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'&&!warehouseExportValid(b.exportItem))delete b.exportItem;if(b.type==='belt')normalizeConveyor(b);}
+ for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage')normalizeWarehouse(b);if(b.type==='belt')normalizeConveyor(b);}
  for(const p of s.players){
-  for(const [type,items] of Object.entries(p.inventory))if(hasOutputBuffer(type)&&Array.isArray(items))for(const b of items)if(b)normalizeOutput(b);
+  for(const [type,items] of Object.entries(p.inventory))if(Array.isArray(items))for(const b of items)if(b){
+   if(hasOutputBuffer(type))normalizeOutput(b);
+   if(type==='storage')normalizeWarehouse(b);
+  }
   const packed=p.inventory.copperSmelter;
   if(!Array.isArray(packed))continue;
   for(const b of packed)migrateCopperSmelterHealth(b);
@@ -616,7 +627,11 @@ export function command(s,playerId,cmd){
  if(cmd.type==='demolish'){
   if(b&&s.time-(b.lastHit??-100)<5)return 'Recently attacked buildings cannot be moved or dismantled for five seconds';
   if(b?.type==='hq')return 'The command core cannot be dismantled';
-  if(b){refundDismantle(s,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
+  if(b){
+   refundDismantle(s,b);
+   if(b.type==='storage')for(const item of RESOURCE_KEYS)s.resources[item]+=warehouseStock(b,item);
+   s.buildings=s.buildings.filter(v=>v.id!==b.id);
+  }
   else{const i=s.terrain.trees.findIndex(t=>t.x===x&&t.z===z);if(i>=0){s.terrain.trees.splice(i,1);harvestWood(s,1);}else{const ri=s.terrain.rocks.findIndex(t=>t.x===x&&t.z===z);if(ri>=0)s.terrain.rocks.splice(ri,1);else return 'Nothing to dismantle';}}
   updatePower(s);return null;
  }
@@ -646,12 +661,16 @@ export function updatePower(s,dt=0){
 function recordStockFlow(s,item,amount){
  const flow=s.stats.stockFlow??={};flow[item]=(flow[item]??0)+amount;
 }
-function store(s,item,amount=1){if(!RESOURCE_KEYS.includes(item)||s.resources[item]+amount>storageCapacity(s))return false;s.resources[item]+=amount;recordStockFlow(s,item,amount);if(item==='plate'||item==='gear')s.produced[item]++;return true;}
+export function storageFull(s,b,item){
+ if(!RESOURCE_KEYS.includes(item))return false;
+ if(b?.type==='storage')return warehouseStock(b,item)>=warehouseCapacity(b);
+ return b?.type==='hq'&&s.resources[item]>=storageCapacity(s);
+}
 function hasOutputSide(b){return b.type==='belt'||b.type==='storage'&&!!b.exportItem||Object.hasOwn(RECIPES,b.type);}
 export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
  if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
- if(['hq','storage'].includes(b.type))return RESOURCE_KEYS.includes(item)&&(s.resources[item]||0)<storageCapacity(s);
+ if(b.type==='hq'||b.type==='storage')return RESOURCE_KEYS.includes(item)&&!storageFull(s,b,item);
  if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
  if(b.type==='belt'){
   const last=b.beltQueue?.at(-1)??b;
@@ -661,7 +680,16 @@ export function canAcceptItem(s,b,item,from,cycles=4){
 }
 function accept(s,b,item,from,cycles=4){
  if(!canAcceptItem(s,b,item,from,cycles))return false;
- if(['hq','storage'].includes(b.type))return store(s,item);
+ if(b.type==='hq'){
+  s.resources[item]++;recordStockFlow(s,item,1);
+  if(item==='plate'||item==='gear')s.produced[item]++;
+  return true;
+ }
+ if(b.type==='storage'){
+  const stock=b.stock??={};
+  stock[item]=warehouseStock(b,item)+1;
+  return true;
+ }
  if(b.type==='belt'||b.type==='splitter'){
   const itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;
   const cargo={item,itemSide,itemTick:s.tick};
@@ -783,9 +811,9 @@ export function step(s,dt=STEP){
   if(b.type==='storage'&&b.exportItem&&s.tick%8===b.id%8){
    const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
    const item=b.exportItem==='recipe'?
-    Object.keys(RECIPES[out?.type]?.input??{}).find(item=>s.resources[item]>0&&canAcceptItem(s,out,item,b,1)):b.exportItem;
-   if(s.resources[item]>0&&out&&out.type!=='hq'&&out.type!=='storage'&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
-    s.resources[item]--;recordStockFlow(s,item,-1);
+    Object.keys(RECIPES[out?.type]?.input??{}).find(item=>warehouseStock(b,item)>0&&canAcceptItem(s,out,item,b,1)):b.exportItem;
+   if(item&&warehouseStock(b,item)>0&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
+    if(--b.stock[item]===0)delete b.stock[item];
    }
   }
   const generator=GENERATORS[b.type];

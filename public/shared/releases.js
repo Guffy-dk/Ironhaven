@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.12.2';
+export const CURRENT_VERSION = '0.12.3';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.12.3',date:'2026-11-16',title:'Local warehouse stock',
+  changes:[
+   'Each warehouse stores its own deliveries and can export a selected material or feed an adjacent recipe from its local stock.',
+   'Previously shared materials stay at the command core on existing saves. To make new warehouse deliveries available for building, route them back to the core.'
+  ]
+ },
  {
   version:'0.12.2',date:'2026-11-16',title:'Keep the line moving',
   changes:[

@@ -174,9 +174,10 @@ test('sentries fire without consuming gears or power and cannot be upgraded',()=
  assert.match(command(s,p.id,{type:'upgrade',x:4,z:4}),/cannot be upgraded/);assert.equal(sentry.level,1);
 });
 
-test('coal mines feed a coal generator through storage and fuel consumption appears in stock flow',()=>{
+test('coal mines feed a coal generator through the core and fuel consumption appears in stock flow',()=>{
  const {s,build}=world();
- build('coalMine',10,10);build('storage',11,10);build('coalGenerator',13,10);
+ Object.assign(s.buildings.find(b=>b.type==='hq'),{x:11,z:10});
+ build('coalMine',10,10);build('coalGenerator',13,10);
  assert.equal(s.power.total,18);
  for(let i=0;i<100;i++)step(s);
  assert.ok(s.resources.coal>0);assert.ok(stockFlow(s).coal>0);

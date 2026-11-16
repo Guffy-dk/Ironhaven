@@ -8,9 +8,13 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.12.2 — keep the line moving
+## Version 0.12.3 — local warehouse stock
 
-Conveyors carry up to four items per tile and queue toward a blocked output. Select a warehouse to send a material from shared stock through its output, or choose **Adjacent machine recipe** to supply the machine directly in front. Press **R** to rotate the warehouse.
+Each warehouse holds its own deliveries. Select a warehouse to see its stock and set an output material, or choose **Adjacent machine recipe** to feed the machine directly in front from that stock. Press **R** to rotate the warehouse. Route materials to the command core to use them for construction. Previously shared stock stays at the core, and dismantling a warehouse recovers its contents there.
+
+## Included from 0.12.2 — keep the line moving
+
+Conveyors carry up to four items per tile and queue toward a blocked output.
 
 Select a building in the hotbar to see its stats. Hover over the map to see turret range or sawmill work radius before placing it. The sawmill blueprint also estimates wood per minute for the hovered tile.
 
@@ -153,9 +157,9 @@ Hold **Shift + WASD** to sprint. Drag panel headers to move the inspector, minim
 | 2 copper + 1 plate → circuit | Advanced upgrades and evacuation components |
 | 3 plates → steel | Advanced upgrades and evacuation structures |
 | 2 steel + 2 circuits + 1 gear → ship component | Complete the evacuation objective |
-| Warehouse | Adds 300 capacity for **each** material; upgrades increase this |
+| Warehouse | Holds 300 of **each** material locally. Upgrades increase local capacity. |
 
-Storage starts at 300 per material. Full storage stops deliveries; reducing capacity never deletes an existing surplus. Hover material counters to inspect capacity.
+The core starts at 300 per material. Full storage stops deliveries, and existing surplus stays available to spend. Hover the material counters to inspect core capacity.
 
 **Endgame:** survive the first eight swarms, build an evacuation pad, gather **30 components + 60 steel + 40 circuits**, select the pad and begin evacuation. Defend the core and pad through the final swarm and a 90-second charge. The charge requires power; upgrading the pad shortens it. Victory requires the charge to finish and remaining enemies to be defeated. If the pad is lost, rebuild and restart; losing the core ends the expedition.
 
