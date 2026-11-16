@@ -17,7 +17,10 @@ export function waveForecast(s,wave=s.wave+1){
  const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1);
  const random=rng(Math.imul(s.swarmSeed??s.seed,0x85ebca6b)^Math.imul(wave,0x9e3779b9));
  const count=Math.min(420,Math.round((10+wave*2.8+wave**1.55)*d.count*(1+guests*.08)));
- return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health:d.health,damage:d.damage*(1+.018*(wave-1)),bonus:roundBonus(wave)};
+ const lateWave=Math.min(wave,FINAL_WAVE)-8;
+ const health=d.health*(lateWave<0?1:3.5+.09*lateWave);
+ const damage=d.damage*(1+.018*(wave-1))*(lateWave<0?1:1.1+.015*lateWave);
+ return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},

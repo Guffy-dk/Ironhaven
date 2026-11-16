@@ -10,6 +10,7 @@ export const RELEASES = [
    'Conveyors hold up to four spaced items per tile. Cargo queues behind blocked outputs and moves again when the line clears.',
    'Warehouses can output a selected material to a conveyor or machine, or supply one recipe at a time to an adjacent machine from shared stock.',
    'Blueprints show base building stats. Turret range and sawmill work radius appear under the cursor before placement.',
+   'From swarm eight, enemies gain much more health and deal more damage. The increase scales through swarm 25.',
    'Keep the trees near the tutorial sawmill when generating paths to distant deposits.'
   ]
  },

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition,dismantleValue,FINAL_WAVE,makeTerrain,POWER_CAPACITY,powerOutput,sawmillRate,step,upgradeCost,waveForecast} from '../public/shared/sim.js';
+import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition,dismantleValue,FINAL_WAVE,makeTerrain,MAX_UPGRADES,POWER_CAPACITY,powerOutput,sawmillRate,step,turretStats,upgradeCost,waveForecast} from '../public/shared/sim.js';
 import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
@@ -25,6 +25,20 @@ function world(){
   return s.buildings.at(-1);
  }};
 }
+test('standard swarm seven keeps its health while swarm eight survives a max-level mortar hit',()=>{
+ const normalEnemy=wave=>{
+  const {s}=world();s.wave=wave-1;s.nextWave=0;
+  step(s);
+  return s.enemies.find(e=>!e.brute&&!e.coreHunter&&!e.mutation);
+ };
+ const seventh=normalEnemy(7),eighth=normalEnemy(8),last=normalEnemy(FINAL_WAVE);
+ assert.equal(seventh.maxHp,74);
+ assert.equal(seventh.damage,1+.018*6);
+ assert.ok(eighth.maxHp>turretStats({type:'mortar',level:MAX_UPGRADES+1}).damage);
+ assert.ok(eighth.damage>seventh.damage);
+ assert.ok(last.maxHp>3*eighth.maxHp);
+ assert.ok(last.damage>eighth.damage);
+});
 
 test('seeded large maps vary beyond the clear center and keep starter deposits available',()=>{
  const first=makeTerrain(123),second=makeTerrain(456);

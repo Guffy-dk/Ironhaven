@@ -14,6 +14,8 @@ Conveyors carry up to four items per tile and queue toward a blocked output. Sel
 
 Select a building in the hotbar to see its stats. Hover over the map to see turret range or sawmill work radius before placing it. The sawmill blueprint also estimates wood per minute for the hovered tile.
 
+Enemies gain health and damage from swarm eight onward, with difficulty increasing through swarm 25. Early waves keep their previous balance.
+
 ## Included from 0.12.1 — upgrade value
 
 An upgraded smelter makes more iron plates from the same ore. Its first upgrade costs six wood and six plates and yields three plates from two ore. The inspector previews the gain before upgrading.
