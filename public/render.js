@@ -31,6 +31,11 @@ function quarryStoneSurface(){
  shape.computeVertexNormals();
  const map=quarryTexture('gravel');
  const material=new T.MeshStandardMaterial({map,color:0xeee8dc,roughness:.95});
+ // Keep iron, copper and coal identifiable from the normal camera height.
+ material.onBeforeCompile=shader=>{
+  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',
+   'diffuseColor.rgb *= mix(vec3(.88),texture2D(map,vMapUv).rgb,.31);');
+ };
  quarryStone={shape,material};
  return quarryStone;
 }
@@ -361,9 +366,9 @@ export class View{
   trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
   }
   if(quarry){
-   this.quarryDeposit(s.terrain.ore,0x9db6ba,0x6d7269,rand);
-   this.quarryDeposit(s.terrain.copper??[],0xd1a17b,0x796c60,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x585764,0x49484d,rand);
+   this.quarryDeposit(s.terrain.ore,0x93b3b9,0x697c79,rand);
+   this.quarryDeposit(s.terrain.copper??[],0xd8a177,0x947463,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x625f6d,0x4e4d56,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
