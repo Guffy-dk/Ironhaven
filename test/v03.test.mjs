@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
+import {createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,warehouseCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
 import {parseSave} from '../public/shared/saves.js';
 const make=()=>{const s=createGame();s.nextWave=9999;return{s,p:addPlayer(s)};};
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=10000000;};
@@ -36,11 +36,13 @@ test('every new factory consumes its exact ingredients and delivers a useful pro
   for(const r of RESOURCE_KEYS)s.resources[r]=0;run(s,recipe.seconds*2+1);assert.equal(s.resources[recipe.output],2,type+' should deliver two outputs');assert.equal(b.input.length,0);
  }
 });
-test('copper drills require copper and storage expands capacity without deleting overflow',()=>{
+test('copper drills require copper and warehouse upgrades expand only local capacity',()=>{
  const{s,p}=make();rich(s);assert.match(command(s,p.id,{type:'build',building:'copperDrill',x:3,z:4}),/copper deposits/);
  assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4}),null);
- const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(storageCapacity(s),oldCapacity+300);
- assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.ok(storageCapacity(s)>oldCapacity+300);const plate=s.resources.plate;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.ok(s.resources.plate>plate);assert.equal(inventoryCount(s,p.id,'storage'),0);
+ const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(warehouseCapacity(warehouse),300);
+ assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(warehouseCapacity(warehouse),480);assert.equal(storageCapacity(s),oldCapacity);
+ warehouse.stock={gear:7};
+ const gear=s.resources.gear;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.gear,gear+7);assert.equal(inventoryCount(s,p.id,'storage'),0);
 });
 test('world exports round-trip and old wins reopen for the 25-swarm objective',()=>{
  const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,SAVE_SCHEMA);assert.deepEqual(loaded.state.resources,s.resources);
@@ -49,7 +51,7 @@ test('world exports round-trip and old wins reopen for the 25-swarm objective',(
 test('a complete copper line mines, smelts and transports copper to the core',()=>{
  const{s,p}=make();assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'belt',x:9,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'smelter',x:10,z:-4,dir:3}),null);assert.equal(command(s,p.id,{type:'buildRow',building:'belt',start:{x:10,z:-5},end:{x:0,z:0},dir:2}),null);run(s,60);assert.ok(s.resources.copper>=10);assert.ok(s.produced.plate>0);
 });
-test('full storage causes backpressure and a new warehouse resumes delivery',()=>{
+test('full core storage causes backpressure and a core upgrade resumes delivery',()=>{
  const{s,p}=make(),smelter=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(b=>b.type==='hq'||b===smelter);smelter.x=-1;smelter.z=0;smelter.dir=0;smelter.item='plate';s.resources.plate=300;step(s);assert.equal(s.resources.plate,300);assert.equal(smelter.item,'plate');
- assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);s.resources.plate=300;step(s);assert.equal(s.resources.plate,301);assert.equal(smelter.item,null);
+ assert.equal(command(s,p.id,{type:'upgrade',x:0,z:0}),null);s.resources.plate=300;step(s);assert.equal(s.resources.plate,301);assert.equal(smelter.item,null);
 });
