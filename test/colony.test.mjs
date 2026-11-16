@@ -7,6 +7,21 @@ import {RenderMotion} from '../public/motion.js';
 import {Lan} from '../public/network.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 
+test('colonies can build, move and reload more than 700 buildings',()=>{
+ const {s,p,build}=world();
+ s.resources.wood=10000;
+ const layout=Array.from({length:702},(_,i)=>({type:'belt',x:i%27,z:Math.floor(i/27),dir:0}));
+ assert.equal(command(s,p.id,{type:'pasteSetup',layout,anchor:{x:5,z:5}}),null);
+ build('belt',4,5);
+ assert.equal(command(s,p.id,{type:'buildRow',building:'belt',start:{x:3,z:9},end:{x:3,z:14},dir:1}),null);
+ const ids=s.buildings.filter(b=>b.type==='belt').map(b=>b.id);
+ assert.ok(ids.length>700);
+ assert.equal(command(s,p.id,{type:'moveArea',ids,dx:0,dz:32}),null);
+ const loaded=parseSave(JSON.stringify(packWorldSave(s,p.id)));
+ assert.equal(loaded.state.buildings.length,s.buildings.length);
+ assert.ok(loaded.state.buildings.some(b=>b.type==='belt'&&b.z===37));
+});
+
 test('outer deposit paths leave trees within reach of the tutorial sawmill',()=>{
  const site=TUTORIAL_STEPS.find(lesson=>lesson.tiles?.some(b=>b.type==='sawmill')).tiles.find(b=>b.type==='sawmill');
  for(const seed of [7,33,44,64]){
