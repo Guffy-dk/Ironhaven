@@ -11,6 +11,18 @@ const bundled=await build({entryPoints:[fileURLToPath(new URL('../public/render.
 const {makeModel,View}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
 // Export matching math types from the installed package; methods operate structurally.
 const T=await import('three');
+test('the conveyor cargo instance buffer grows past the old 700-building capacity',()=>{
+ const view=Object.create(View.prototype);view.scene=new T.Scene();
+ view.reserveBeltCargo(256);
+ const initial=view.beltItems;
+ view.reserveBeltCargo(3200);
+ assert.ok(view.beltItems.instanceMatrix.count>=3200);
+ assert.equal(initial.parent,null);
+ assert.equal(view.scene.children.length,1);
+ view.beltItems.setMatrixAt(3199,new T.Matrix4().makeTranslation(3,0,4));
+ const matrix=new T.Matrix4();view.beltItems.getMatrixAt(3199,matrix);
+ assert.equal(matrix.elements[12],3);
+});
 test('Quarry models have finite geometry, distinct silhouettes and the same port coordinates',()=>{
  for(const [type,{hp}] of Object.entries(TYPES)){
   if(!hp)continue;

@@ -1,9 +1,13 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.13.2';
+export const CURRENT_VERSION = '0.13.3';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.13.3',date:'2026-11-16',title:'Larger colonies',
+  changes:['Remove the 700-building limit from construction, selection and saves. Conveyor cargo rendering expands to match larger colonies.']
+ },
  {
   version:'0.13.2',date:'2026-11-16',title:'Quarry graphics',
   changes:[

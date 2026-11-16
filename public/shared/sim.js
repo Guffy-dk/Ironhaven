@@ -171,7 +171,7 @@ export function upgradeCost(b){
  return cost;
 }
 export function planGroupUpgrade(s,ids){
- if(!Array.isArray(ids)||!ids.length||ids.length>700)return {error:'Select buildings of one type'};
+ if(!Array.isArray(ids)||!ids.length||ids.length>s.buildings.length)return {error:'Select buildings of one type'};
  const wanted=new Set(ids),buildings=s.buildings.filter(b=>wanted.has(b.id));
  if(buildings.length!==wanted.size||wanted.size!==ids.length)return {error:'Selection changed. Select the buildings again.'};
  if(!buildings.every(b=>b.type===buildings[0].type))return {error:'Select buildings of one type'};
@@ -391,7 +391,6 @@ function placementError(s,type,x,z,ignoreBelts=false){
 }
 export function canBuild(s,type,x,z,playerId){
  const error=placementError(s,type,x,z);if(error)return error;
- if(s.buildings.length>=700)return 'Building limit reached (700)';
  if(inventoryCount(s,playerId,type)>0)return null;
  for(const[r,n]of Object.entries(TYPES[type].cost))if(s.resources[r]<n)return 'Not enough materials';
  return null;
@@ -509,7 +508,7 @@ export function copySetup(s,ids){
   ...(hasOutputBuffer(b.type)?{sendOutput:b.sendOutput===true,receiveOutput:b.receiveOutput===true}:{})}));
 }
 export function planPaste(s,layout,anchor,playerId){
- if(!Array.isArray(layout)||!layout.length||layout.length>700||!Number.isInteger(anchor?.x)||!Number.isInteger(anchor?.z))
+ if(!Array.isArray(layout)||!layout.length||!Number.isInteger(anchor?.x)||!Number.isInteger(anchor?.z))
   return {cells:[],error:'Invalid setup or destination'};
  const occupied=new Set(),needed=new Map(),cost={},cells=[];
  for(const tile of layout){
@@ -525,7 +524,6 @@ export function planPaste(s,layout,anchor,playerId){
   if(!reason)needed.set(tile.type,(needed.get(tile.type)||0)+1);
  }
  if(cells.some(tile=>tile.reason))return {cells,error:cells.find(tile=>tile.reason).reason};
- if(s.buildings.length+cells.length>700)return {cells,error:'Building limit reached (700)'};
  for(const [type,count] of needed){
   const fresh=Math.max(0,count-inventoryCount(s,playerId,type));
   for(const [resource,price] of Object.entries(TYPES[type].cost))cost[resource]=(cost[resource]||0)+fresh*price;
@@ -595,7 +593,6 @@ export function command(s,playerId,cmd){
   const dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:0;
   const plan=cmd.building==='belt'&&cmd.points!==undefined?planBeltDrag(s,cmd.points,dir):planRoute(s,cmd.building,cmd.start,cmd.end,dir);if(plan.error)return plan.error;
   const existing=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),fresh=plan.cells.filter(c=>!existing.has(key(c.x,c.z))),count=Math.max(0,fresh.length-inventoryCount(s,p.id,cmd.building));
-  if(s.buildings.length+fresh.length>700)return 'Building limit reached (700)';
   for(const[r,n]of Object.entries(TYPES[cmd.building].cost))if(s.resources[r]<n*count)return 'Not enough materials for the entire route';
   for(const c of plan.cells){const b=existing.get(key(c.x,c.z));if(b)b.dir=c.dir;else place(s,p,cmd.building,c.x,c.z,c.dir);}updatePower(s);return null;
  }
@@ -907,7 +904,7 @@ export function step(s,dt=STEP){
  else if(s.time>=s.nextWave&&s.enemies.length===0&&canSpawnSwarm(s))spawnWave(s);
 }
 export function planMove(s,ids,dx,dz){
- if(!Array.isArray(ids)||ids.length>700||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
+ if(!Array.isArray(ids)||ids.length>s.buildings.length||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
  const selected=s.buildings.filter(b=>ids.includes(b.id));if(s.enemies.length&&selected.some(b=>b.type==='hq'))return{error:'The command core cannot be relocated during an active swarm',valid:[],invalid:[]};if(selected.some(b=>s.time-(b.lastHit??-100)<5))return{error:'Recently attacked buildings cannot be relocated for five seconds',valid:[],invalid:[]};if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
  const stationary={...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))},valid=[],invalid=[];
  for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>BUILD_EDGE||Math.abs(b.z+dz)>BUILD_EDGE?'Core is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Core destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the core destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);

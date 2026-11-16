@@ -245,8 +245,7 @@ export class View{
   this.dust=createQuarryEffects();this.scene.add(this.dust);
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
-  this.beltItems=new T.InstancedMesh(geometry('box',.15,.13,.15),mat(0xffffff),700*BELT_CAPACITY);
-  this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);this.beltItems.frustumCulled=false;this.beltItems.count=0;this.scene.add(this.beltItems);
+  this.reserveBeltCargo(256);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
   this.style='quarry';
@@ -403,6 +402,15 @@ export class View{
    scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
   }
  }
+ reserveBeltCargo(capacity){
+  const previous=this.beltItems,allocated=previous?.instanceMatrix.count??0;
+  if(allocated>=capacity)return;
+  this.beltItems=new T.InstancedMesh(geometry('box',.15,.13,.15),mat(0xffffff),Math.max(capacity,allocated*2));
+  this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);
+  this.beltItems.frustumCulled=false;this.beltItems.count=0;
+  this.scene.add(this.beltItems);
+  if(previous){this.scene.remove(previous);previous.dispose();}
+ }
  sync(s,motion,nowTime=s.time){
   const time=motion?.renderTime??nowTime;
   const dt=Math.max(0,Math.min(.12,time-(this.lastRenderTime??time)));this.lastRenderTime=time;
@@ -415,6 +423,10 @@ export class View{
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
+  if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
+   const belts=s.buildings.reduce((count,b)=>count+Number(b.type==='belt'),0);
+   this.reserveBeltCargo(belts*BELT_CAPACITY);
+  }
   let cargoCount=0;
   this.dummy.rotation.set(0,0,0);this.dummy.scale.setScalar(1);
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
