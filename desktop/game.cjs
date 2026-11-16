@@ -60,6 +60,19 @@ async function start() {
   if (!result.loaded || !result.secure || !result.multiplayer || !result.version?.startsWith(expectedVersion + ' ')) {
     throw Error('Desktop game did not initialize: ' + JSON.stringify(result));
   }
+  const styles = await gameWindow.webContents.executeJavaScript(`(async () => {
+    const select = document.getElementById('start-visual-style');
+    const applied = [];
+    for (const style of ['classic', 'quarry']) {
+      select.value = style;
+      select.dispatchEvent(new Event('change'));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const gl = document.getElementById('world').getContext('webgl2');
+      applied.push(document.body.dataset.visualStyle === style && gl?.getError() === gl?.NO_ERROR && !!gl);
+    }
+    return applied;
+  })()`);
+  if (!styles.every(Boolean)) throw Error('Desktop visual styles did not render: ' + JSON.stringify(styles));
   app.exit(0);
 }
 

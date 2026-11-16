@@ -57,6 +57,13 @@ select{display:block;width:100%;border:1px solid var(--line);background:#172e31;
 #warehouse-options select{font-size:12px;margin:5px 0 4px}
 #warehouse-options small,.blueprint-site{color:var(--muted);font-size:12px;line-height:1.4}
 #warehouse-stock{margin-top:6px;line-height:1.4}
+.visual-style-label{margin-top:10px}
+[data-visual-style]{font-size:12px}
+body[data-visual-style="quarry"]{--mint:#c0c7b8;--gold:#e3bf8a;--line:#9c9f902f}
+body[data-visual-style="quarry"] .topbar,body[data-visual-style="quarry"] .panel,
+body[data-visual-style="quarry"] .hotbar,body[data-visual-style="quarry"] .wave-panel,
+body[data-visual-style="quarry"] dialog{background-color:#222723f4}
+body[data-visual-style="quarry"] select{background-color:#303830}
 #area-tools{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 36px)}
 #area-price{color:var(--muted);font-size:11px}
 .tutorial-guide{position:fixed;z-index:6;top:92px;left:50%;transform:translateX(-50%);width:min(465px,calc(100vw - 24px));padding:14px 16px;background:#14282b;border:1px solid #9dd2b980;box-shadow:0 4px 16px #0006;pointer-events:none}

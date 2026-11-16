@@ -8,7 +8,11 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.12.3 — local warehouse stock
+## Version 0.13 — Quarry visuals
+
+The default **Quarry** style gives the world new building models, ground-level conveyors, conifer groves and mechanical gun emplacements. Switch **Visual Style** to **Classic** from the title screen or the **Colony menu** to restore the original look in the same world. The choice is stored on the device and is independent of graphics quality.
+
+## Included from 0.12.3 — local warehouse stock
 
 Each warehouse holds its own deliveries. Select a warehouse to see its stock and set an output material, or choose **Adjacent machine recipe** to feed the machine directly in front from that stock. Press **R** to rotate the warehouse. Route materials to the command core to use them for construction. Previously shared stock stays at the core, and dismantling a warehouse recovers its contents there.
 

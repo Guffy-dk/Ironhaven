@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.12.3';
+export const CURRENT_VERSION = '0.13.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.13.0',date:'2026-11-16',title:'The Quarry',
+  changes:[
+   'New Quarry visuals with timber and brick workshops, mechanical defenses, low rubber conveyors and a rocky conifer landscape.',
+   'Switch between Quarry and Classic under Visual Style on the title screen or in the Colony menu. The setting is local and can be switched inside an existing world.'
+  ]
+ },
  {
   version:'0.12.3',date:'2026-11-16',title:'Local warehouse stock',
   changes:[
