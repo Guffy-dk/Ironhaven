@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,FINAL_WAVE,makeTerrain,POWER_CAPACITY,step,waveForecast} from '../public/shared/sim.js';
+import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition,dismantleValue,FINAL_WAVE,makeTerrain,POWER_CAPACITY,sawmillRate,step,waveForecast} from '../public/shared/sim.js';
 import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
@@ -27,14 +27,56 @@ test('seeded large maps vary beyond the clear center and keep starter deposits a
   assert.ok(terrain.ore.some(t=>t.x===4&&t.z===3));
   assert.ok(terrain.copper.some(t=>Math.hypot(t.x,t.z)<12));
   assert.ok(terrain.coal.some(t=>Math.hypot(t.x,t.z)<16));
-  assert.ok(!terrain.trees.some(t=>Math.hypot(t.x,t.z)<11));
+  assert.ok(!terrain.trees.some(t=>Math.hypot(t.x,t.z)<9));
   assert.ok(terrain.trees.some(t=>Math.abs(t.x)>60||Math.abs(t.z)>60));
  }
 });
 
+test('deposits have open ground around them and existing outer buildings survive the cleanup',()=>{
+ for(const seed of [12,456]){
+  const terrain=makeTerrain(seed),blocked=new Set([...terrain.trees,...terrain.rocks].map(t=>t.x+','+t.z));
+  for(const {x,z} of [...terrain.ore,...terrain.copper,...terrain.coal]){
+   for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)assert.ok(!blocked.has((x+dx)+','+(z+dz)));
+  }
+ }
+ const {s,p,build}=world(),belt=build('belt',83,83),[deposit]=s.terrain.coal;
+ s.terrain.trees.push({...deposit,h:1});s.version=8;
+ const loaded=parseSave(JSON.stringify(packWorldSave(s,p.id))).state;
+ assert.ok(loaded.buildings.some(tile=>tile.id===belt.id&&tile.x===83));
+ assert.ok(!loaded.terrain.trees.some(t=>t.x===deposit.x&&t.z===deposit.z));
+});
+
+test('sawmill output scales with trees and area clearing leaves buildings in place',()=>{
+ const {s,p,build}=world(),belt=build('belt',7,6);
+ s.terrain.trees=[{x:8,z:5,h:1}];
+ const sawmill=build('sawmill',7,5),before=sawmillRate(s,sawmill);
+ s.terrain.trees.push({x:9,z:5,h:1},{x:8,z:6,h:1});
+ assert.ok(sawmillRate(s,sawmill)>before);
+ s.resources.wood=0;
+ assert.equal(command(s,p.id,{type:'clearTrees',start:{x:7,z:5},end:{x:10,z:6}}),null);
+ assert.equal(s.resources.wood,24);assert.equal(sawmillRate(s,sawmill),0);
+ assert.ok(s.buildings.includes(sawmill)&&s.buildings.includes(belt));
+});
+
+test('dismantling returns 80% of total costs, including fractional belt refunds',()=>{
+ const {s,p,build}=world();
+ const start=s.resources.wood;
+ for(let i=0;i<5;i++)build('belt',5+i,5);
+ for(let i=0;i<5;i++)assert.equal(command(s,p.id,{type:'demolish',x:5+i,z:5}),null);
+ assert.equal(s.resources.wood,start-1);
+ const tower=build('gunTurret',5,5);
+ assert.equal(command(s,p.id,{type:'upgrade',x:5,z:5}),null);
+ const costs=dismantleValue(tower),stock={...s.resources};
+ assert.equal(command(s,p.id,{type:'demolish',x:5,z:5}),null);
+ for(const [r,n] of Object.entries(costs))assert.equal(s.resources[r]-stock[r],Math.floor(n*.8));
+ assert.deepEqual(p.inventory,{});
+ const starter=createExpedition('Starter',{skipTutorial:true});
+ assert.ok(starter.state.players[0].inventory.belt.length>0);
+});
+
 test('large LAN maps are delivered in small ordered chunks and reconstructed for the guest',()=>{
  const message={type:'welcome',state:createGame()};
- assert.ok(JSON.stringify(message).length>262144);
+ assert.ok(JSON.stringify(message).length>65536);
  const host=new Lan({}),received=[];
  const guest=new Lan({onMessage:(_,value)=>received.push(value)});
  host.role='host';guest.role='client';
@@ -61,7 +103,7 @@ test('stored power covers a shortage until drained, and wood can recover with an
  s.terrain.trees.push({x:8,z:5,h:1});
  const mill=build('sawmill',7,5);
  assert.equal(mill.active,true);
- for(let i=0;i<74;i++)step(s);
+ for(let i=0;i<160;i++)step(s);
  assert.ok(s.resources.wood>0);assert.ok(generator.active);assert.equal(s.power.total,36);
  assert.equal(command(s,p.id,{type:'demolish',x:8,z:5}),null);
 });
@@ -119,7 +161,7 @@ test('random directions are stable per seed, scaling is difficulty-aware, and co
  const directions=(seed)=>Array.from({length:FINAL_WAVE},(_,i)=>waveForecast({...s,swarmSeed:seed},i+1).side);
  assert.deepEqual(directions(111),directions(111));
  assert.notDeepEqual(directions(111),directions(222));
- assert.equal(new Set(directions(111)).size,4);
+ assert.equal(new Set(directions(111)).size,8);
  assert.ok(waveForecast({...s,difficulty:'relaxed'},25).count<waveForecast({...s,difficulty:'veteran'},25).count);
  s.wave=2;s.nextWave=0;step(s);assert.ok(s.enemies.every(e=>!e.coreHunter));
  s.enemies=[];s.nextWave=0;step(s);

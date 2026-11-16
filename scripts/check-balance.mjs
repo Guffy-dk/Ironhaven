@@ -9,8 +9,18 @@ for(const difficulty of ['relaxed','standard','veteran'])for(const players of [1
 }
 for(const players of [1,4]){
  const s=createGame();for(let i=0;i<players;i++)addPlayer(s,'Engineer '+i);const started=performance.now();
- for(let i=0;i<20*1200&&s.status==='playing';i++){if(i%20===0){for(const b of s.buildings)if(b.type==='turret'&&(b.level||1)<3)command(s,s.players[0].id,{type:'upgrade',x:b.x,z:b.z});for(const b of s.buildings)if(['hq','turret'].includes(b.type)&&b.hp<maxHp(b)*.5)command(s,s.players[0].id,{type:'repair',x:b.x,z:b.z});}step(s);}
- outcomes.push({difficulty:'standard',players,policy:'Only upgrade turrets to Mk III; repair core/turrets below half health when affordable',wave:s.wave,survivalSeconds:Math.round(s.time),outcome:s.status,cpuMs:Math.round(performance.now()-started)});
+ const host=s.players[0].id;
+ for(let i=0;i<20*1200&&s.status==='playing';i++){
+  if(i%20===0){
+   for(const [x,z] of [[-5,-4],[5,-4],[-5,5],[5,5]])if(!s.buildings.some(b=>b.x===x&&b.z===z))command(s,host,{type:'build',building:'gunTurret',x,z});
+   for(const b of s.buildings){
+    if(b.type==='gunTurret'&&(b.level||1)<3)command(s,host,{type:'upgrade',x:b.x,z:b.z});
+    if(['hq','turret','gunTurret'].includes(b.type)&&b.hp<maxHp(b)*.5)command(s,host,{type:'repair',x:b.x,z:b.z});
+   }
+  }
+  step(s);
+ }
+ outcomes.push({difficulty:'standard',players,policy:'Build and upgrade four gun turrets; repair core and turrets below half health when affordable',wave:s.wave,survivalSeconds:Math.round(s.time),outcome:s.status,cpuMs:Math.round(performance.now()-started)});
 }
 const stress=createGame();for(let i=0;i<4;i++)addPlayer(stress);stress.buildings=[];stress.nextWave=99999;
 for(let i=0;i<700;i++){const type=i===0?'hq':i%7===0?'generator':i%3===0?'turret':'wall';stress.buildings.push({id:i+100,type,dir:0,x:i%28-14,z:Math.floor(i/28)-12,level:type==='generator'?11:1,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:999999,cooldown:0,active:true});}

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
-import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE} from '../public/shared/sim.js';
+import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE,SWARM_DIRECTIONS} from '../public/shared/sim.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
@@ -82,8 +82,8 @@ test('Shift-click constructs a continuous turning route; Q and Esc cancel buildi
   h.tool('wall');h.point('pointerdown',2,8,true);h.point('pointermove',5,8,true);h.key('Escape');h.point('pointerup',5,8,true);s=h.save();assert.ok(!s.buildings.some(b=>b.type==='wall'&&b.x===2&&b.z===8));
  }finally{await h.close();}
 });
-test('hotbar inventory counts rise on dismantle and fall on free placement; selected turret upgrades',async()=>{
- const saved=starterWorld();saved.state.buildings.find(b=>b.type==='turret').type='gunTurret';const h=harness(saved);try{
+test('hotbar inventory starter inventory counts survive dismantle and fall on free placement; selected turret upgrades',async()=>{
+ const saved=starterWorld();saved.state.buildings.find(b=>b.type==='turret').type='gunTurret';saved.state.players[0].inventory.belt=[{hp:65,level:1}];const h=harness(saved);try{
   h.$('resume').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
   assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
   h.key('q');const turret=placed.buildings.find(b=>b.type==='gunTurret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
@@ -186,7 +186,7 @@ test('the playfield warning announces its forecast and attack independently of t
   h.$('start-solo').click();
   h.dom.document.querySelector('[data-window-close="map-panel"]').click();
   assert.ok(!warning.hidden);
-  const side=['West','North','East','South'][waveForecast(h.save()).side];
+  const side=SWARM_DIRECTIONS[waveForecast(h.save()).side];
   assert.equal(warning.dataset.side,side.toLowerCase());
   assert.equal(h.$('swarm-warning-text').textContent,'Next swarm from '+side);
   assert.equal(h.dom.document.querySelectorAll('#hotbar [data-type="smelter"]').length,1);
@@ -196,7 +196,7 @@ test('the playfield warning announces its forecast and attack independently of t
  const active=harness({state:s,playerId:p.id});try{
   active.$('resume').click();
   assert.ok(active.$('swarm-warning').classList.contains('urgent'));
-  assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from '+['West','North','East','South'][s.waveSide]);
+  assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from '+SWARM_DIRECTIONS[s.waveSide]);
  }finally{await active.close();}
 });
 test('the round HUD forecasts the next bonus and announces activation once',async()=>{

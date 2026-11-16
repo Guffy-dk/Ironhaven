@@ -8,7 +8,13 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.11 — open ground
+## Version 0.12 — clear the ground
+
+Deposits have open space around them and approach paths through nearby forest. Press **F** to harvest one tree or dismantle a building. **F → Shift-drag** clears trees inside a rectangle. Wood harvest uses available storage space. Sawmills produce more with more trees in range.
+
+Dismantling returns 80% of construction and upgrade materials. Fractions accumulate until they make a whole item. The HUD displays power generation, demand and reserve separately. Swarms can also attack from the corners.
+
+## Included from 0.11 — open ground
 
 New colonies have a 181 × 181 build area with seeded forests and deposits around a clear start zone. Existing worlds keep their terrain and buildings and get new terrain around the edges. Swarms start at the outer build edge.
 
@@ -171,7 +177,7 @@ Protect the core through eight swarms. Field training shows how to make two work
 - Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
 - Cyan arrows lead into a machine and gold arrows point out. Select a Transfer Relay or Dispatch Hub to see its labels. The purple **RET** port feeds a separate return conveyor when its quota is enabled.
 - Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads 16 shots.
-- Dismantling packs a building into your inventory and preserves its damage, upgrades and ammo. Conveyors are emptied when packed or placed from inventory. Placement uses inventory before raw materials. Hotbar numbers show your count.
+- Dismantling refunds materials. Starter buildings and buildings packed during relocation are still available through inventory. Placement uses inventory before raw materials. Hotbar numbers show your count.
 
 | Controls | Action |
 |---|---|

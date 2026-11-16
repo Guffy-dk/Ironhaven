@@ -55,8 +55,8 @@ test('three real smelters share one conveyor equally with 1:2 → 1:1 → 1:0',(
   assert.equal(f.s.resources.plate,60,mode+' must produce all plates');assert.deepEqual(routers.map(b=>b.shipments.machine),[20,20,20]);assert.deepEqual(routers.map(b=>b.shipments.forward),[40,20,0]);
  }
 });
-test('program and partial batch persist through relocation, pickup, placement and save migration',()=>{
- const f=splitterFixture({machine:2,forward:3,return:1,bypass:false});f.b.item='plate';for(let t=0;t<8;t++)step(f.s);assert.equal(f.b.remaining,1);assert.equal(command(f.s,f.p.id,{type:'moveArea',ids:[f.b.id],dx:2,dz:3}),null);assert.equal(command(f.s,f.p.id,{type:'demolish',x:8,z:7}),null);assert.equal(inventoryCount(f.s,f.p.id,'splitter'),1);assert.equal(command(f.s,f.p.id,{type:'build',building:'splitter',x:8,z:7,dir:1}),null);const b=f.s.buildings.find(v=>v.x===8&&v.z===7);assert.equal(b.remaining,1);assert.equal(b.program.return,1);assert.equal(b.shipments.machine,1);const loaded=migrateGame(JSON.parse(JSON.stringify(f.s)));assert.equal(loaded.version,SAVE_SCHEMA);assert.equal(loaded.buildings.find(v=>v.id===b.id).remaining,1);
+test('program and partial batch persist through relocation and save migration',()=>{
+ const f=splitterFixture({machine:2,forward:3,return:1,bypass:false});f.b.item='plate';for(let t=0;t<8;t++)step(f.s);assert.equal(f.b.remaining,1);assert.equal(command(f.s,f.p.id,{type:'moveArea',ids:[f.b.id],dx:2,dz:3}),null);const b=f.s.buildings.find(v=>v.x===8&&v.z===7);assert.equal(b.remaining,1);assert.equal(b.program.return,1);assert.equal(b.shipments.machine,1);const loaded=migrateGame(JSON.parse(JSON.stringify(f.s)));assert.equal(loaded.version,SAVE_SCHEMA);assert.equal(loaded.buildings.find(v=>v.id===b.id).remaining,1);
 });
 
 test('filtered cargo reports a blocked forward path rather than claiming it can bypass',()=>{

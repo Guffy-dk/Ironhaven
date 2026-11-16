@@ -66,6 +66,10 @@ select{display:block;width:100%;border:1px solid var(--line);background:#172e31;
 .swarm-warning[data-side="west"] svg{rotate:-90deg}
 .swarm-warning[data-side="east"] svg{rotate:90deg}
 .swarm-warning[data-side="south"] svg{rotate:180deg}
+.swarm-warning[data-side="northeast"] svg{rotate:45deg}
+.swarm-warning[data-side="southeast"] svg{rotate:135deg}
+.swarm-warning[data-side="southwest"] svg{rotate:225deg}
+.swarm-warning[data-side="northwest"] svg{rotate:-45deg}
 .swarm-warning[data-side=""] svg{display:none}
 .swarm-warning.urgent{color:#ffab9b;background:#371e1b}
 

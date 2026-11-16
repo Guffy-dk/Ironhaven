@@ -24,7 +24,7 @@ test('building validates terrain, money, orientation and inventory',()=>{
  assert.equal(command(s,p.id,{type:'build',building:'belt',x:3,z:4,dir:7}),null);
  const b=s.buildings.find(b=>b.x===3&&b.z===4);assert.equal(b.dir,3);assert.equal(s.resources.wood,start-1);
  assert.equal(canBuild(s,'belt',3,4),'Tile is occupied');assert.match(canBuild(s,'drill',3,8),/iron deposits/);
- assert.equal(command(s,p.id,{type:'demolish',x:3,z:4}),null);assert.ok(!s.buildings.some(v=>v.id===b.id));assert.equal(p.inventory.belt.length,1);
+ assert.equal(command(s,p.id,{type:'demolish',x:3,z:4}),null);assert.ok(!s.buildings.some(v=>v.id===b.id));assert.equal(p.inventory.belt,undefined);
  s.resources.plate=0;assert.equal(canBuild(s,'turret',3,4),'Not enough materials');
  assert.equal(command(s,p.id,{type:'build',building:'hq',x:3,z:4}),'Invalid building');
  assert.equal(command(s,p.id,{type:'build',building:'wall',x:Infinity,z:4}),'Invalid tile');
