@@ -86,8 +86,7 @@ internal sealed class Patcher : Form
         try
         {
             release = GameRelease.FromJson(await updates.LatestReleaseJson());
-            status.Text = release == null ? "GitHub has no Windows build for the latest release." :
-                installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest Windows build." :
+            status.Text = installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest Windows build." :
                 "Version " + release.Version + " is ready to install (" + (release.Size / 1048576.0).ToString("0") + " MB).";
         }
         catch (Exception error) { status.Text = "Could not check for updates. " + error.Message; }

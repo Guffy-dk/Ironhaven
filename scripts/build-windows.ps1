@@ -61,6 +61,11 @@ try {
 
   tar.exe -a -cf $zip -C $packageRoot Ironhaven
   if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed.' }
+  @{
+    tag = "v$gameVersion"
+    digest = 'sha256:' + (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+    size = (Get-Item -LiteralPath $zip).Length
+  } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $release 'Ironhaven-Windows-manifest.json') -Encoding ascii
   Write-Output "Built $zip and $release\Ironhaven-Patcher.exe"
 } finally {
   Pop-Location

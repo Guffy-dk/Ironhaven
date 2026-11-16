@@ -17,14 +17,9 @@ internal static class PatcherTests
         using (var zip = ZipFile.Open(archive, ZipArchiveMode.Create))
         using (var writer = new StreamWriter(zip.CreateEntry(entry).Open())) writer.Write("test executable");
         var json = new JavaScriptSerializer().Serialize(new {
-            tag_name = tag,
-            draft = false,
-            assets = new[] { new {
-                name = GameRelease.AssetName,
-                browser_download_url = GameRelease.Repository + "/releases/download/" + tag + "/" + GameRelease.AssetName,
-                digest = GameUpdates.ArchiveDigest(archive),
-                size = new FileInfo(archive).Length
-            } }
+            tag = tag,
+            digest = GameUpdates.ArchiveDigest(archive),
+            size = new FileInfo(archive).Length
         });
         return GameRelease.FromJson(json);
     }
@@ -51,7 +46,8 @@ internal static class PatcherTests
                 }
                 Require(updates.LatestInstalled() == null, "An empty install was not detected.");
                 Require(GameRelease.ParseTag("v../0.1") == null, "Unsafe release tag accepted.");
-                Require(GameRelease.FromJson("{\"tag_name\":\"v0.7.0\",\"assets\":[]}") == null, "Non-Windows release accepted.");
+                try { GameRelease.FromJson("{\"tag\":\"v0.8.1\"}"); throw new Exception("Unverifiable release accepted."); }
+                catch (InvalidDataException) { }
                 var archive = Path.Combine(root, "valid.zip");
                 var first = WriteRelease(archive, "v0.8.1", "Ironhaven/Ironhaven.exe");
                 updates.InstallArchive(first, archive, Path.Combine(root, "stage1"));

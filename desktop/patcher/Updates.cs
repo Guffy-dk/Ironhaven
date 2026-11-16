@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -13,6 +12,7 @@ internal sealed class GameRelease
 {
     internal const string AssetName = "Ironhaven-Windows-x64.zip";
     internal const string Repository = "https://github.com/Guffy-dk/Ironhaven";
+    internal const string LatestManifest = Repository + "/releases/latest/download/Ironhaven-Windows-manifest.json";
     internal Version Version;
     internal Uri Download;
     internal string Digest;
@@ -28,31 +28,16 @@ internal sealed class GameRelease
     internal static GameRelease FromJson(string json)
     {
         var data = new JavaScriptSerializer().Deserialize<ReleaseMetadata>(json);
-        if (data == null) return null;
-        var version = ParseTag(data.tag_name);
-        if (version == null || data.draft || data.assets == null) return null;
-
-        var expected = Repository + "/releases/download/v" + version + "/" + AssetName;
-        var asset = data.assets.FirstOrDefault(item => item.name == AssetName);
-        if (asset == null) return null;
-        if (asset.browser_download_url != expected || asset.size <= 0 ||
-            !Regex.IsMatch(asset.digest ?? "", @"\Asha256:[a-fA-F0-9]{64}\z"))
+        var version = ParseTag(data == null ? null : data.tag);
+        if (version == null || data.size <= 0 || !Regex.IsMatch(data.digest ?? "", @"\Asha256:[a-fA-F0-9]{64}\z"))
             throw new InvalidDataException("The Windows release is missing valid download verification metadata.");
-
-        return new GameRelease { Version = version, Download = new Uri(expected), Digest = asset.digest, Size = asset.size };
+        var download = new Uri(Repository + "/releases/download/v" + version + "/" + AssetName);
+        return new GameRelease { Version = version, Download = download, Digest = data.digest, Size = data.size };
     }
 
     public sealed class ReleaseMetadata
     {
-        public string tag_name { get; set; }
-        public bool draft { get; set; }
-        public ReleaseAsset[] assets { get; set; }
-    }
-
-    public sealed class ReleaseAsset
-    {
-        public string name { get; set; }
-        public string browser_download_url { get; set; }
+        public string tag { get; set; }
         public string digest { get; set; }
         public long size { get; set; }
     }
@@ -70,7 +55,7 @@ internal sealed class GameUpdates
 
     internal Task<string> LatestReleaseJson()
     {
-        return client.GetStringAsync("https://api.github.com/repos/Guffy-dk/Ironhaven/releases/latest");
+        return client.GetStringAsync(GameRelease.LatestManifest);
     }
 
     internal string GamePath(Version version)

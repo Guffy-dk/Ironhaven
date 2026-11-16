@@ -20,4 +20,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
+        run: gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json --latest --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
