@@ -1,7 +1,7 @@
 import { View } from './render.js';
-import { createGame,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,roundBonus,repairCost,shotsPerGear,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
+import { createGame,createExpedition,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,roundBonus,repairCost,shotsPerGear,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
 import { CURRENT_VERSION,RELEASE_STAGE,RELEASES,displayVersion } from './shared/releases.js';
-import { TUTORIAL_STEPS } from './shared/tutorial.js';
+import { TUTORIAL_STEPS,tutorialTargets } from './shared/tutorial.js';
 import { initWindows } from './windows.js';
 import { factoryStatus,STATUS_LABELS,productionReport } from './shared/diagnostics.js';
 import { parseSave,packWorldSave } from './shared/saves.js';
@@ -14,7 +14,7 @@ const keys=new Set();
 let followCamera=true,rowAnchor=null,rowGesture=null,routePlan=null,lastRouteKey='',pointer=null;
 let areaIds=[],selectionGesture=null,movingArea=false,pendingMove=null,showDiagnostics=false,checkpointCache=null,lastAutoCheckpoint='';
 const CHECKPOINTS='ironhaven.checkpoints.v1';
-let programTargetId=null,tutorialIndex=0,tutorialPaused=false,tutorialWasPaused=false;
+let programTargetId=null;
 initWindows();
 $('version-label').textContent=displayVersion(CURRENT_VERSION)+' '+RELEASE_STAGE.toUpperCase();
 $('start-patch-notes').textContent=RELEASE_STAGE.toUpperCase()+' '+displayVersion(CURRENT_VERSION)+' · WHAT’S NEW ↗';
@@ -67,20 +67,26 @@ function saveGame(quiet=false){
  if(!writeStorage(SAVE,JSON.stringify({state:data,playerId}))){if(!quiet)toast('Could not save. Browser storage is disabled or full.',true);return;}
  if(!quiet)toast('World saved in this browser.');$('resume').hidden=false;
 }
+function newExpedition(name,difficulty){
+ const skipTutorial=$('skip-tutorial').checked;
+ ({state,playerId}=createExpedition(name,{difficulty,skipTutorial}));
+ writeStorage('ironhaven.skipTutorial',String(skipTutorial));
+ writeStorage(CHECKPOINTS,'[]');checkpointCache=[];lastAutoCheckpoint='';
+}
 function startGame(resume=false){
  if(resume){try{const data=parseSave(readStorage(SAVE));state=data.state;playerId=data.playerId;state.paused=false;state.players=state.players.filter(p=>p.id===playerId);state.players[0].input={x:0,z:0};}catch{toast('Could not open the saved world.',true);return false;}}
- else{state=createGame(undefined,{difficulty:$('difficulty').value});writeStorage(CHECKPOINTS,'[]');checkpointCache=[];lastAutoCheckpoint='';const p=addPlayer(state,$('player-name').value);playerId=p.id;}
- mode='solo';finishStart();checkpoint(resume?'Resumed world':'Expedition start');if(!resume){writeStorage('ironhaven.skipTutorial',String($('skip-tutorial').checked));if(!$('skip-tutorial').checked)showTutorial();}return true;
+ else newExpedition($('player-name').value,$('difficulty').value);
+ mode='solo';finishStart();checkpoint(resume?'Resumed world':'Expedition start');return true;
 }
 function finishStart(){started=true;ended=false;lastWave=state.wave;lastEvent=0;writeStorage(NAME,$('player-name').value);$('difficulty').value=state.difficulty||'standard';writeStorage('ironhaven.difficulty',$('difficulty').value);$('start-screen').hidden=true;document.body.classList.remove('at-start');$('end-dialog').close();clearArea();setTool(null);focusEngineer(true);updateUi();view.sync(state);tone(520,.15);}
 function restart(){
  if(mode==='client'){toast('Only the host can restart the expedition.',true);return;}
  if(mode==='host'){
-  const old=state;state=createGame(undefined,{difficulty:old.difficulty});writeStorage(CHECKPOINTS,'[]');checkpointCache=[];lastAutoCheckpoint='';playerId=addPlayer(state,old.players.find(p=>p.id===playerId)?.name).id;
+  newExpedition(state.players.find(p=>p.id===playerId)?.name,state.difficulty);
   for(const peer of lan.peers.values())if(peer.ready&&peer.playerId){const p=addPlayer(state,peer.name);peer.playerId=p.id;lan.send(peer,{type:'welcome',id:p.id,state,version:CURRENT_VERSION});}
-  ended=false;lastWave=0;$('end-dialog').close();clearArea();setTool(null);view.terrainKey='';focusEngineer(true);updateUi();
+  view.terrainKey='';finishStart();checkpoint('Expedition start');
  }else startGame();
- checkpoint('Expedition start');if(mode==='host'&&!$('skip-tutorial').checked)showTutorial();toast('A new colony has been founded.');
+ toast('A new colony has been founded.');
 }
 const lan=new Lan({
  onPeerOpen(peer){if(lan.role==='client')lan.send(peer,{type:'hello',name:$('player-name').value||readStorage(NAME)||'Engineer',version:CURRENT_VERSION});updatePeers();},
@@ -130,8 +136,9 @@ function updateInspector(){
  if(b?.type==='launchpad'){$('launch-colony').disabled=mode==='client'||state.wave<FINAL_WAVE||state.enemies.length>0||state.evacuation?.status==='charging'||Object.entries(LAUNCH_COST).some(([r,n])=>state.resources[r]<n);$('launch-colony').textContent=state.evacuation?.status==='charging'?'Evacuation charging…':'Begin evacuation · 30 components + 60 steel + 40 circuits';}
  $('program-building').textContent='Program flow (E) ↗';
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'Keep the expedition supplied, protect the crew and build the route home.';
+ $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
  const row=(a,v,cls='')=>`<div class="stat-row"><span>${a}</span><span class="${cls}">${v}</span></div>`;
- if(tool){$('intel-stats').innerHTML=Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join('')+(def.power?row('Power',def.power):'')+(!['repair','demolish'].includes(type)?row('In your inventory',inventoryCount(state,playerId,type),'ok'):'');}
+ if(tool){const count=inventoryCount(state,playerId,type);$('intel-stats').innerHTML=(count?row('Use from inventory',count,'ok'):Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join(''))+(def.power?row('Power',def.power):'');}
  else{const bb=b||state.buildings.find(b=>b.type==='hq');$('intel-stats').innerHTML=bb?row('Health',`${Math.max(0,Math.ceil(bb.hp))} / ${maxHp(bb)}`)+`<div class="hp-bar"><i style="width:${Math.max(0,bb.hp/maxHp(bb)*100)}%"></i></div>`+row('Status',STATUS_LABELS[factoryStatus(state,bb,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))],bb.active?'ok':'bad')+(bb.type==='turret'?row('Ammo',bb.ammo,bb.ammo<=3?'bad':'ok')+row('Turret level',turretStats(bb).name)+row('Damage / range',`${turretStats(bb).damage} / ${turretStats(bb).range}`):'')+(bb.input?.length?row('Input buffer',bb.input.length+'/'+((bb.type==='smelter'?2:Object.values(RECIPES[bb.type]?.input||{}).reduce((n,v)=>n+v,0))*4||8)):'')+(buildingPower(bb)?row('Power used',buildingPower(bb)):'')+(RECIPES[bb.type]||['drill','copperDrill','sawmill'].includes(bb.type)?row('Production speed',productionSpeed(bb,roundBonus(state.wave)).toFixed(2)+'×'):'')+(bb.type==='generator'?row('Power supplied',Math.round(18*(1+((bb.level||1)-1)*.3))):'')+row('Upgrades',`${(bb.level||1)-1} / ${MAX_UPGRADES}`)+(bb.type==='storage'||bb.type==='hq'?row('Storage / material',storageCapacity(state)):'')+(LOGISTICS_TYPES.includes(bb.type)?row('Plan M / F / R',`${programFor(bb).machine} / ${programFor(bb).forward} / ${programFor(bb).return}`)+row('Batch remaining',bb.remaining||0)+row('Delivered M / F / R',`${bb.shipments?.machine||0} / ${bb.shipments?.forward||0} / ${bb.shipments?.return||0}`)+row('Bypassed',bb.shipments?.bypassed||0):'')+row('Position',`${bb.x}, ${bb.z}`):row('Status','Core destroyed','bad');}
  const recipes={inserter:'BELT → RECIPE-AWARE CARGO CAPSULE',splitter:'PROGRAMMED MACHINE / FORWARD / RETURN',copperDrill:'COPPER ORE → SMELTER',foundry:'3 IRON PLATES → 1 STEEL',circuitLab:'2 COPPER + 1 PLATE → 1 CIRCUIT',componentFactory:'2 STEEL + 2 CIRCUITS + 1 GEAR → 1 COMPONENT',storage:'STORAGE CAPACITY +300 / MATERIAL',launchpad:'8 SWARMS → 90 SEC. FINAL DEFENSE',drill:'IRON ORE → CONVEYOR',smelter:'Iron ore → Iron plate · Copper ore → Copper',assembler:'2 IRON PLATES → 1 GEAR',turret:`1 GEAR → ${shotsPerGear(roundBonus(state.wave))} SHOTS`,sawmill:'FOREST → 3 WOOD / 3 SEC.',generator:'1 WOOD / 12 SEC. → 18 POWER'};
  $('recipe').textContent=recipes[type]||'';$('intel-tip').textContent=tool?'R rotates. Q or Esc exits build mode. Blue rocks mark iron deposits.':b?'R rotates directional buildings. U upgrades the selected building. 9 repairs; 0 packs into inventory.':'Choose a building from the hotbar to expand your colony.';
@@ -141,7 +148,7 @@ function updateSwarmWarning(incoming,time){
  const forecast=waveForecast(state),side=incoming?state.waveSide:forecast.side;
  const direction=SWARM_DIRECTIONS[side],warning=$('swarm-warning');
  const upcoming=state.wave<FINAL_WAVE&&!incoming;
- warning.hidden=!started||state.status!=='playing'||!(incoming||upcoming);
+ warning.hidden=!started||state.status!=='playing'||state.tutorialStep!==undefined||!(incoming||upcoming);
  warning.dataset.side=direction?.toLowerCase()||'';
  warning.classList.toggle('urgent',incoming||time<=20);
  const label=incoming?(direction?'Swarm attacking from '+direction:'Swarm attacking'):'Next swarm from '+direction;
@@ -153,7 +160,7 @@ function updateRoundBonuses(){
  const activeText=active?`Active · ${active.label}`:'Active · No bonus yet';
  const nextLabel=state.wave>=FINAL_WAVE?'Next (evacuation)':'Next';
  const nextText=state.evacuation?.status==='charging'?'':`${nextLabel} · ${next.label}`;
- $('round-bonuses').hidden=!started||state.status!=='playing';
+ $('round-bonuses').hidden=!started||state.status!=='playing'||state.tutorialStep!==undefined;
  const activeLine=$('round-bonus-active'),nextLine=$('round-bonus-next');
  if(activeLine.textContent!==activeText)activeLine.textContent=activeText;
  if(nextLine.textContent!==nextText)nextLine.textContent=nextText;
@@ -165,7 +172,7 @@ function updateUi(){
  $('wave-fill').style.width=incoming?'100%':Math.min(100,(1-time/(state.wave===0?100:95))*100)+'%';$('wave-fill').style.background=incoming?'var(--red)':'var(--gold)';$('wave-detail').textContent=`SWARM ${Math.min(8,state.wave+(incoming?0:1))} OF ${FINAL_WAVE}`;$('early-wave').disabled=incoming||state.wave>=8||mode==='client'||!started;$('day').textContent='DAY '+String(1+Math.floor(state.time/180)).padStart(2,'0');$('wave-panel').classList.toggle('imminent',started&&!incoming&&time<=20&&state.wave<FINAL_WAVE);if(state.evacuation?.status==='charging'){$('wave-title').textContent='Final evacuation defense';$('countdown').textContent=Math.ceil(state.evacuation.remaining)+'s';$('wave-detail').textContent='PROTECT CORE + EVACUATION PAD';}else if(state.wave>=FINAL_WAVE&&!incoming){$('wave-title').textContent='Build the evacuation pad';$('countdown').textContent='READY';$('wave-detail').textContent='8 SWARMS SURVIVED';}
  const turrets=state.buildings.filter(b=>b.type==='turret'),dry=turrets.filter(b=>b.ammo===0).length,low=turrets.filter(b=>b.ammo<=3).length,warning=dry>0||state.resources.gear<=2&&turrets.length>0||low>0&&state.resources.gear===0;
  $('ammo-alert').hidden=!warning;$('ammo-alert').textContent=dry?`AMMO EMPTY · ${dry} turret${dry===1?'':'s'} need gears`:`LOW AMMO RESERVE · ${Math.floor(state.resources.gear)} gears`;
- $('ammo-alert').classList.toggle('empty',dry>0);updateSwarmWarning(incoming,time);updateRoundBonuses();
+ $('ammo-alert').classList.toggle('empty',dry>0);updateSwarmWarning(incoming,time);updateRoundBonuses();updateTutorial();
  const checkpoints=readCheckpoints(),cp=checkpoints[0],choice=$('checkpoint-choice'),signature=checkpoints.map(c=>c.label+':'+c.time).join(';');if(choice.dataset.history!==signature){choice.dataset.history=signature;choice.innerHTML=checkpoints.length?checkpoints.map((c,i)=>`<option value="${i}">${escape(c.label)} · ${Math.floor(c.time/60)}m ${Math.floor(c.time%60)}s</option>`).join(''):'<option value="0">No checkpoint yet</option>';}$('retry-checkpoint').disabled=mode==='client'||!cp;$('end-retry').disabled=mode==='client'||!cp;$('retry-checkpoint').textContent=cp?'Retry selected checkpoint':'No checkpoint yet';if($('production-dialog').open)renderProduction();
  const goals=[{text:'An industry that works',sub:`${state.produced.plate} / 10 iron plates delivered`,done:state.produced.plate>=10},{text:'Machines of resistance',sub:`${state.produced.gear} / 5 gears delivered`,done:state.produced.gear>=5},{text:'Keep the swarm outside',sub:`${state.wave} / 8 swarms · ${state.totalKills} hostiles stopped`,done:state.wave>=8&&state.enemies.length===0},{text:'Evacuate the colony',sub:state.evacuation?.status==='charging'?`Hold for ${Math.ceil(state.evacuation.remaining)}s`: `${state.resources.module}/30 components · ${state.resources.steel}/60 steel · ${state.resources.circuit}/40 circuits`,done:state.status==='victory'}];
  $('objectives').innerHTML=goals.map(g=>`<div class="objective ${g.done?'done':''}"><span class="check">${g.done?'✓':''}</span><div>${g.text}<small>${g.sub}</small></div></div>`).join('');
@@ -314,11 +321,52 @@ $('program-building').onclick=openProgram;
 for(const role of PROGRAM_ROLES)$('quota-'+role).oninput=updateProgramPreview;
 for(const btn of document.querySelectorAll('[data-program-preset]'))btn.onclick=()=>{const v=btn.dataset.programPreset.split(',').map(Number);PROGRAM_ROLES.forEach((role,i)=>$('quota-'+role).value=v[i]);updateProgramPreview();};
 $('apply-program').onclick=()=>{const b=state.buildings.find(b=>b.id===programTargetId);if(!b){$('program-error').textContent='This unit was moved or removed. Select it again.';return;}const program={...Object.fromEntries(PROGRAM_ROLES.map(role=>[role,Number($('quota-'+role).value)])),filter:$('program-filter').value,buffer:Number($('program-buffer').value),bypass:!$('program-wait').checked};if(PROGRAM_ROLES.some(r=>!Number.isInteger(program[r])||program[r]<0||program[r]>100)||PROGRAM_ROLES.every(r=>program[r]===0)){$('program-error').textContent='Use whole numbers from 0 to 100, with at least one output enabled.';return;}if(execute({type:'configureLogistics',id:b.id,x:b.x,z:b.z,program})!==false){$('program-dialog').close();updateUi();toast('Dispatch plan updated.');}};
-function tutorialStep(){const step=TUTORIAL_STEPS[tutorialIndex];$('tutorial-tag').textContent=step.tag;$('tutorial-step').textContent=`${tutorialIndex+1} / ${TUTORIAL_STEPS.length}`;$('tutorial-title').textContent=step.title;$('tutorial-body').textContent=step.body;$('tutorial-back').disabled=tutorialIndex===0;$('tutorial-next').textContent=tutorialIndex===TUTORIAL_STEPS.length-1?'Begin expedition ↗':'Next ↗';document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));$(step.focus)?.classList.add('tutorial-focus');}
-function showTutorial(){if($('tutorial-dialog').open)return;$('menu-dialog').close();tutorialIndex=0;tutorialWasPaused=state.paused;tutorialPaused=started&&mode!=='client';if(tutorialPaused)state.paused=true;$('tutorial-pause').textContent=tutorialPaused?'The expedition is paused while you read. Close the guide when ready.':'This guide is local. The host controls expedition time.';$('tutorial-dont-show').checked=$('skip-tutorial').checked;tutorialStep();$('tutorial-dialog').showModal();}
-function closeTutorial(){const skip=$('tutorial-dont-show').checked;writeStorage('ironhaven.skipTutorial',String(skip));$('skip-tutorial').checked=skip;if(tutorialPaused&&mode!=='client')state.paused=tutorialWasPaused;tutorialPaused=false;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));}
-function dismissTutorial(){$('tutorial-dialog').close();closeTutorial();}
-$('tutorial-dialog').addEventListener('close',closeTutorial);$('tutorial-dialog').addEventListener('cancel',()=>closeTutorial());$('tutorial-close').onclick=dismissTutorial;$('tutorial-skip').onclick=dismissTutorial;$('tutorial-back').onclick=()=>{if(tutorialIndex>0)tutorialIndex--;tutorialStep();};$('tutorial-next').onclick=()=>{if(tutorialIndex<TUTORIAL_STEPS.length-1){tutorialIndex++;tutorialStep();}else dismissTutorial();};$('show-tutorial').onclick=showTutorial;
+function updateTutorial(){
+ const lesson=started&&TUTORIAL_STEPS[state.tutorialStep];
+ const guide=$('tutorial-guide'),root=$('tutorial-markers');
+ guide.hidden=!lesson;
+ if(lesson){
+  const number=`${state.tutorialStep+1} / ${TUTORIAL_STEPS.length}`;
+  if($('tutorial-step').textContent!==number){
+   $('tutorial-step').textContent=number;
+   $('tutorial-title').textContent=lesson.title;
+   $('tutorial-body').textContent=lesson.body;
+  }
+  const complete=state.tutorialStep===TUTORIAL_STEPS.length-1;
+  $('tutorial-finish').hidden=mode==='client'||!complete;
+  $('tutorial-skip').hidden=mode==='client'||complete;
+  $('wave-title').textContent='Field training';
+  $('wave-label').textContent='SWARM COUNTDOWN ON HOLD';
+  $('wave-direction').textContent='';
+  $('countdown').textContent='HOLD';
+  $('wave-fill').style.width='0%';
+  $('wave-panel').classList.remove('imminent');
+  $('early-wave').disabled=true;
+ }
+ const targets=lesson?tutorialTargets(state,lesson):[];
+ const signature=JSON.stringify(targets);
+ if(root.dataset.targets!==signature){
+  root.dataset.targets=signature;
+  root.replaceChildren(...targets.map(target=>{
+   const mark=document.createElement('div');mark.className='tutorial-marker';
+   mark.dataset.x=target.x;mark.dataset.z=target.z;mark.textContent=target.label;
+   return mark;
+  }));
+ }
+}
+function drawTutorialMarkers(){
+ for(const mark of $('tutorial-markers').children){
+  const p=view.project(Number(mark.dataset.x),Number(mark.dataset.z),.08);
+  mark.hidden=!p.visible;
+  mark.style.left=p.x+'px';mark.style.top=p.y+'px';
+ }
+}
+function leaveTutorial(skip){
+ if(execute({type:'finishTutorial',skip})!==true)return;
+ updateUi();checkpoint('Training complete');saveGame(true);
+}
+$('tutorial-skip').onclick=()=>leaveTutorial(true);
+$('tutorial-finish').onclick=()=>leaveTutorial(false);
 function readCheckpoints(){if(checkpointCache)return checkpointCache;try{const v=JSON.parse(readStorage(CHECKPOINTS)||'[]');return checkpointCache=Array.isArray(v)?v:[];}catch{return checkpointCache=[];}}
 function writeCheckpoint(data,label){if(mode==='client')return;const items=[{label,time:data.state.time,save:data},...readCheckpoints()].slice(0,3);checkpointCache=items;if(!writeStorage(CHECKPOINTS,JSON.stringify(items)))writeStorage(CHECKPOINTS,JSON.stringify(items.slice(0,1)));}
 function checkpoint(label){if(started&&mode!=='client')writeCheckpoint(packWorldSave(state,playerId),label);}
@@ -336,7 +384,7 @@ $('toggle-diagnostics').onclick=()=>{showDiagnostics=!showDiagnostics;$('toggle-
 // 20 authoritative ticks/second; clients only render received snapshots.
 setInterval(()=>{
  if(!started||mode==='client')return;
- if(!state.paused&&state.status==='playing'&&state.enemies.length===0&&state.wave<FINAL_WAVE&&state.time+STEP*state.speed>=state.nextWave){const id=state.wave+':'+state.nextWave;if(lastAutoCheckpoint!==id){lastAutoCheckpoint=id;checkpoint('Before swarm '+(state.wave+1));}}
+ if(state.tutorialStep===undefined&&!state.paused&&state.status==='playing'&&state.enemies.length===0&&state.wave<FINAL_WAVE&&state.time+STEP*state.speed>=state.nextWave){const id=state.wave+':'+state.nextWave;if(lastAutoCheckpoint!==id){lastAutoCheckpoint=id;checkpoint('Before swarm '+(state.wave+1));}}
  for(let i=0;i<state.speed;i++)step(state,STEP);
  if(mode==='host'&&++syncTick%2===0){
   const revision=`${state.terrain.trees.length}:${state.terrain.rocks.length}`,withoutTerrain={...state};delete withoutTerrain.terrain;
@@ -352,7 +400,7 @@ let prev=performance.now();function frame(now){const dt=Math.min(.05,(now-prev)/
   if(x||z)followCamera=true;if(followCamera){const p=state.players.find(p=>p.id===playerId);if(p)view.follow(p,dt);}
   if(now-lastSave>30000){lastSave=now;saveGame(true);}view.sync(state);if(areaIds.length)view.markArea(areaIds,state);
  }else{view.sync({...state,time:now/1000});}
- view.draw();nameplates();buildingLabels();enemyHealth();if(pointer&&started){const cell=view.point(pointer.x,pointer.y);if(cell&&(cell.x!==hover?.x||cell.z!==hover?.z)){hover=cell;updateHover();}}if(now-lastUi>200){lastUi=now;updateUi();updateHover();}requestAnimationFrame(frame);
+ view.draw();nameplates();buildingLabels();drawTutorialMarkers();enemyHealth();if(pointer&&started){const cell=view.point(pointer.x,pointer.y);if(cell&&(cell.x!==hover?.x||cell.z!==hover?.z)){hover=cell;updateHover();}}if(now-lastUi>200){lastUi=now;updateUi();updateHover();}requestAnimationFrame(frame);
 }
 initHotbar();updateUi();view.sync(state);view.draw();$('loading').hidden=true;requestAnimationFrame(frame);
 window.addEventListener('beforeunload',()=>{if(started&&mode!=='client')saveGame(true);});

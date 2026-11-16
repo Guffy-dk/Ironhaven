@@ -1,8 +1,20 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,removePlayer,command,step,canBuild,TYPES} from '../public/shared/sim.js';
+import {createGame,createExpedition,addPlayer,removePlayer,command,step,canBuild,TYPES} from '../public/shared/sim.js';
 import {encodeCode,decodeCode} from '../public/network.js';
 const run=(s,seconds)=>{for(let i=0;i<seconds*20;i++)step(s);};
+test('field training defers swarms until the host finishes or skips',()=>{
+ const {state,playerId}=createExpedition('Host',{difficulty:'relaxed'}),guest=addPlayer(state,'Guest');
+ assert.match(command(state,playerId,{type:'finishTutorial'}),/Complete the current/);
+ assert.match(command(state,guest.id,{type:'finishTutorial',skip:true}),/Only the host/);
+ assert.match(command(state,playerId,{type:'wave'}),/Finish or skip/);
+ run(state,150);
+ assert.equal(state.wave,0);
+ assert.equal(state.tutorialStep,0);
+ assert.equal(command(state,playerId,{type:'finishTutorial',skip:true}),null);
+ assert.equal(state.nextWave,state.time+140);
+ assert.equal(state.tutorialStep,undefined);
+});
 test('starter belts deliver both plates and gears; production is deterministic',()=>{
  const a=createGame(),b=createGame();a.nextWave=b.nextWave=9999;run(a,60);run(b,60);
  assert.ok(a.produced.plate>=20);assert.ok(a.produced.gear>=10);assert.ok(a.resources.wood>165);assert.deepEqual(a,b);

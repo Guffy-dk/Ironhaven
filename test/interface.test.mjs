@@ -6,6 +6,7 @@ import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
 import {createGame,addPlayer,maxHp,step} from '../public/shared/sim.js';
+import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
 const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
@@ -20,9 +21,11 @@ function harness(saved,{tutorial=false}={}){
  const $=id=>dom.document.getElementById(id),tool=t=>dom.document.querySelector(`[data-type="${t}"]`).click();
  const point=(type,x,z,shift=false)=>$('world').dispatchEvent(new dom.PointerEvent(type,{button:0,clientX:x,clientY:z,shiftKey:shift,bubbles:true}));
  const key=(k,shiftKey=false)=>dom.dispatchEvent(new dom.KeyboardEvent('keydown',{key:k,shiftKey,bubbles:true}));
+ const release=k=>dom.dispatchEvent(new dom.KeyboardEvent('keyup',{key:k,bubbles:true}));
  const frame=n=>frames.shift()?.(n),save=()=>{$('save').click();return JSON.parse(dom.localStorage.getItem('ironhaven.save.v1')).state;};
- return{dom,$,tool,point,key,frame,ticks,save,close:()=>dom.happyDOM.abort()};
+ return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
+function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
 test('English UI and menu expose current and historical patch notes',async()=>{
  const h=harness();try{assert.equal(h.dom.document.documentElement.lang,'en');assert.equal(h.$('loading').hidden,true);assert.match(h.$('version-label').textContent,new RegExp(displayVersion(CURRENT_VERSION)));h.$('start-patch-notes').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.equal(h.$('patch-history').querySelectorAll('article').length,RELEASES.length);assert.match(h.$('patch-history').textContent,/First light/);h.$('patch-dialog').close();h.$('start-solo').click();h.$('menu').click();h.dom.document.querySelector('#menu-dialog [data-patch-notes]').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.ok(!h.$('menu-dialog').hasAttribute('open'));}finally{await h.close();}
 });
@@ -37,15 +40,15 @@ test('Shift-click constructs a continuous turning route; Q and Esc cancel buildi
  }finally{await h.close();}
 });
 test('hotbar inventory counts rise on dismantle and fall on free placement; selected turret upgrades',async()=>{
- const h=harness();try{
-  h.$('start-solo').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
- assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
+ const h=harness(starterWorld());try{
+  h.$('resume').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
+  assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
   h.key('q');const turret=placed.buildings.find(b=>b.type==='turret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
  }finally{await h.close();}
 });
 test('R rotates the active blueprint without turning a conveyor under the cursor',async()=>{
- const h=harness();try{
-  h.$('start-solo').click();
+ const h=harness(starterWorld());try{
+  h.$('resume').click();
   h.tool('belt');
   h.point('pointermove',-7,-3);
   h.key('r');
@@ -123,8 +126,8 @@ test('the round HUD forecasts the next bonus and announces activation once',asyn
  }finally{await h.close();}
 });
 test('drag-selection moves an area and Shift override asks once before packing invalid drills',async()=>{
- const h=harness();try{
-  h.$('start-solo').click();h.point('pointerdown',-9,-4);h.point('pointermove',-4,-2);h.point('pointerup',-4,-2);assert.equal(h.$('area-tools').hidden,false);assert.ok(h.dom.__view.area.length>1);
+ const h=harness(starterWorld());try{
+  h.$('resume').click();h.point('pointerdown',-9,-4);h.point('pointermove',-4,-2);h.point('pointerup',-4,-2);assert.equal(h.$('area-tools').hidden,false);assert.ok(h.dom.__view.area.length>1);
   h.$('move-selection').click();h.point('pointermove',3,7);h.point('pointerdown',3,7,true);assert.ok(h.$('move-confirm').hasAttribute('open'));assert.match(h.$('move-invalid-list').textContent,/iron deposits/);
   h.$('move-dont-ask').checked=true;h.$('confirm-move').click();assert.equal(h.dom.localStorage.getItem('ironhaven.skipMoveConfirm'),'true');assert.ok(h.save().players[0].inventory.drill.length>0);assert.equal(h.$('area-tools').hidden,true);
   h.$('reset-move-confirm').click();assert.equal(h.dom.localStorage.getItem('ironhaven.skipMoveConfirm'),'');
@@ -138,8 +141,8 @@ test('panels can be moved, minimized, closed and restored without changing the w
  }finally{await h.close();}
 });
 test('production report and bottleneck overlay work, and pre-swarm checkpoints can be retried',async()=>{
- const h=harness();try{
-  h.$('start-solo').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,7);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
+ const h=harness(starterWorld());try{
+  h.$('resume').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,7);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
   for(let attempt=0;attempt<5;attempt++){h.$('early-wave').click();for(let i=0;i<62;i++)h.ticks[0]();h.$('retry-checkpoint').click();const saved=h.save();assert.equal(saved.wave,0);assert.equal(saved.enemies.length,0);assert.ok(saved.nextWave-saved.time>=19.9);}
   const checkpoints=JSON.parse(h.dom.localStorage.getItem('ironhaven.checkpoints.v1'));assert.ok(checkpoints.length<=3);assert.match(checkpoints[0].label,/Before swarm/);
  }finally{await h.close();}
@@ -150,13 +153,62 @@ test('logistics units expose editable quotas, presets, filter and wait behavior'
   h.$('quota-machine').value='2';h.$('quota-forward').value='3';h.$('quota-return').value='1';h.$('program-wait').checked=true;h.$('program-filter').value='ore';assert.equal(h.$('program-buffer').value,'2','buffer select must retain its value');h.$('apply-program').click();const b=h.save().buildings.find(b=>b.x===3&&b.z===4);assert.deepEqual(b.program,{machine:2,forward:3,return:1,bypass:false,filter:'ore',buffer:2});
  }finally{await h.close();}
 });
-test('new-world tutorial pauses, advances and remembers the skip checkbox; it can be replayed',async()=>{
- const h=harness(undefined,{tutorial:true});try{
-  h.$('start-solo').click();assert.ok(h.$('tutorial-dialog').open);assert.equal(h.save().paused,true);assert.match(h.$('tutorial-title').textContent,/expedition/);h.$('tutorial-next').click();assert.equal(h.$('tutorial-step').textContent,'2 / 8');h.$('tutorial-back').click();assert.equal(h.$('tutorial-step').textContent,'1 / 8');h.$('tutorial-dont-show').checked=true;h.$('tutorial-skip').click();assert.equal(h.save().paused,false);assert.equal(h.dom.localStorage.getItem('ironhaven.skipTutorial'),'true');assert.equal(h.$('skip-tutorial').checked,true);
-  h.$('restart').click();assert.ok(!h.$('tutorial-dialog').open);h.$('show-tutorial').click();assert.ok(h.$('tutorial-dialog').open);h.$('tutorial-close').click();assert.equal(h.save().paused,false);
+test('the inspector explains the purple Return port for logistics buildings',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();assert.ok(h.$('port-key').hidden);
+  h.tool('inserter');assert.ok(!h.$('port-key').hidden);
+  assert.match(h.$('port-key').textContent,/RET.*separate return conveyor/);
+  h.tool('smelter');assert.ok(h.$('port-key').hidden);
  }finally{await h.close();}
 });
-test('skip checkbox bypasses onboarding and resuming a saved world does not trigger the new-world tutorial',async()=>{
- const h=harness(undefined,{tutorial:true});try{h.$('skip-tutorial').checked=true;h.$('start-solo').click();assert.ok(!h.$('tutorial-dialog').open);assert.equal(h.save().paused,false);}finally{await h.close();}
- const s=createGame(),p=addPlayer(s),resumed=harness({state:s,playerId:p.id},{tutorial:true});try{resumed.$('resume').click();assert.ok(!resumed.$('tutorial-dialog').open);}finally{await resumed.close();}
+test('field training advances through actual movement, placement and deliveries',async()=>{
+ const h=harness(undefined,{tutorial:true});try{
+  h.$('start-solo').click();assert.ok(!h.$('tutorial-guide').hidden);assert.equal(h.save().paused,false);assert.ok(h.$('early-wave').disabled);
+  let frameTime=1000,dir=0;
+  const ticks=(n=1)=>{for(let i=0;i<n;i++)h.ticks[0]();h.frame(frameTime+=300);};
+  const build=tile=>{
+   h.key('q');h.tool(tile.type);
+   while(tile.dir!==undefined&&dir!==tile.dir){h.key('r');dir=(dir+1)%4;}
+   h.point('pointerdown',tile.x,tile.z);h.point('pointerup',tile.x,tile.z);
+  };
+  const connect=({x,z})=>{
+   h.key('q');h.tool('belt');h.point('pointerdown',x,z,true);h.point('pointermove',0,0,true);h.point('pointerup',0,0,true);
+  };
+  ticks(5);assert.equal(h.save().tutorialStep,0);
+  h.key('d');h.frame(frameTime+=300);ticks(8);h.release('d');h.frame(frameTime+=300);
+  assert.equal(h.save().tutorialStep,1);
+  assert.match(h.$('tutorial-markers').textContent,/Iron drill/);
+  for(const index of [1,2,4,6]){
+   assert.equal(h.save().tutorialStep,index);
+   for(const tile of TUTORIAL_STEPS[index].tiles)build(tile);
+   ticks();
+   if(index===2||index===4){
+    assert.equal(h.save().tutorialStep,index+1);
+    connect(TUTORIAL_STEPS[index+1].markers[0]);ticks(400);
+   }
+  }
+  const trained=h.save();assert.ok(trained.produced.plate>0&&trained.produced.gear>0);
+  assert.equal(trained.tutorialStep,7);assert.ok(!h.$('tutorial-finish').hidden);
+  h.$('tutorial-finish').click();const finished=h.save();
+  assert.equal(finished.tutorialStep,undefined);assert.ok(h.$('tutorial-guide').hidden);
+  assert.equal(finished.nextWave-finished.time,100);
+ }finally{await h.close();}
+});
+test('skipping training gives the full kit and restoring a training save keeps its task',async()=>{
+ const h=harness(undefined,{tutorial:true});try{
+  h.$('skip-tutorial').checked=true;h.$('start-solo').click();assert.ok(h.$('tutorial-guide').hidden);
+  const state=h.save(),inventory=state.players[0].inventory;
+  assert.deepEqual(state.buildings.map(b=>b.type),['hq']);
+  const counts={};for(const b of starterWorld().state.buildings.filter(b=>b.type!=='hq'))counts[b.type]=(counts[b.type]||0)+1;
+  assert.deepEqual(Object.fromEntries(Object.entries(inventory).map(([type,items])=>[type,items.length])),counts);
+ }finally{await h.close();}
+ const old=starterWorld(),resumed=harness(old,{tutorial:true});try{
+  resumed.$('resume').click();assert.ok(resumed.$('tutorial-guide').hidden);assert.equal(resumed.save().buildings.length,old.state.buildings.length);
+ }finally{await resumed.close();}
+ const training=starterWorld();training.state.tutorialStep=2;
+ const resumedTraining=harness(training,{tutorial:true});try{
+  resumedTraining.$('resume').click();assert.equal(resumedTraining.$('tutorial-title').textContent,'Feed the smelter');
+  resumedTraining.$('tutorial-skip').click();assert.equal(resumedTraining.save().tutorialStep,undefined);
+  assert.equal(resumedTraining.save().buildings.length,training.state.buildings.length);
+ }finally{await resumedTraining.close();}
 });

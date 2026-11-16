@@ -1,4 +1,6 @@
 // Pure, deterministic simulation. The exact same module runs in Node and solo browsers.
+import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
+
 export const SIZE = 56, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 8;
 export const DIRS = [[1,0],[0,1],[-1,0],[0,-1]];
 export const DIFFICULTIES={
@@ -116,6 +118,7 @@ export function migrateGame(s){
   delete p.inventory.copperSmelter;
  }
  if(roundBonus(s.wave)?.power)updatePower(s);
+ if(!TUTORIAL_STEPS[s.tutorialStep]||!Number.isInteger(s.tutorialStep))delete s.tutorialStep;
  return s;
 }
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -161,6 +164,18 @@ export function createGame(seed=2026,{difficulty='standard'}={}){
 export function addPlayer(s,name='Engineer'){
  if(s.players.length>=MAX_PLAYERS)return null;
  const id=s.nextId++,p={id,name:(typeof name==='string'?name.trim().slice(0,20):'')||'Engineer',x:2+s.players.length,z:2,color:s.players.length,hp:100,inventory:{},input:{x:0,z:0},cooldown:0,respawn:0};s.players.push(p);return p;
+}
+function packBuilding(player,building){
+ const {id,x,z,dir,type,active,...packed}=building;
+ (player.inventory[type]||=[]).push(packed);
+}
+export function createExpedition(name,{difficulty,skipTutorial=false}={}){
+ const state=createGame(undefined,{difficulty}),player=addPlayer(state,name);
+ for(const b of state.buildings)if(b.type!=='hq')packBuilding(player,b);
+ state.buildings=state.buildings.filter(b=>b.type==='hq');
+ if(!skipTutorial)state.tutorialStep=0;
+ updatePower(state);
+ return {state,playerId:player.id};
 }
 export function removePlayer(s,id){const leaving=s.players.find(p=>p.id===id),recipient=s.players.find(p=>p.id!==id);if(leaving?.inventory&&recipient){recipient.inventory||={};for(const[type,items]of Object.entries(leaving.inventory))(recipient.inventory[type]||=[]).push(...items);}s.players=s.players.filter(p=>p.id!==id);}
 function placementError(s,type,x,z,ignoreBelts=false){
@@ -288,9 +303,17 @@ export function command(s,playerId,cmd){
  const p=s.players.find(p=>p.id===playerId);if(!p||!cmd||typeof cmd!=='object')return 'Invalid player';p.inventory||={};
  if(cmd.type==='move'){p.sprinting=!!cmd.sprint;p.input={x:Number.isFinite(cmd.x)?Math.max(-1,Math.min(1,cmd.x)):0,z:Number.isFinite(cmd.z)?Math.max(-1,Math.min(1,cmd.z)):0};return null;}
  if(s.status!=='playing')return 'The expedition has ended';
+ if(cmd.type==='finishTutorial'){
+  if(p!==s.players[0]||s.tutorialStep===undefined)return 'Only the host can finish active training';
+  if(cmd.skip!==true&&s.tutorialStep!==TUTORIAL_STEPS.length-1)return 'Complete the current training task first';
+  delete s.tutorialStep;
+  s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;
+  return null;
+ }
  if(['pause','speed','wave'].includes(cmd.type)){
   if(p.id!==s.players[0]?.id)return 'Only the host can control time';
   if(cmd.type==='pause')s.paused=!s.paused;if(cmd.type==='speed')s.speed=s.speed===1?2:1;
+  if(cmd.type==='wave'&&s.tutorialStep!==undefined)return 'Finish or skip training before calling a swarm';
   if(cmd.type==='wave'&&s.enemies.length===0&&s.nextWave>s.time+3)s.nextWave=s.time+3;return null;
  }
  if(cmd.type==='moveArea')return moveArea(s,p,cmd);
@@ -338,7 +361,7 @@ export function command(s,playerId,cmd){
  if(cmd.type==='demolish'){
   if(b&&s.time-(b.lastHit??-100)<5)return 'Recently attacked buildings cannot be moved or dismantled for five seconds';
   if(b?.type==='hq')return 'The command core cannot be dismantled';
-  if(b){const{id,x,z,dir,type,active,...packed}=b;(p.inventory[type]||=[]).push(packed);s.buildings=s.buildings.filter(v=>v.id!==id);}
+  if(b){packBuilding(p,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
   else{const i=s.terrain.trees.findIndex(t=>t.x===x&&t.z===z);if(i>=0){s.terrain.trees.splice(i,1);s.resources.wood+=8;}else{const ri=s.terrain.rocks.findIndex(t=>t.x===x&&t.z===z);if(ri>=0)s.terrain.rocks.splice(ri,1);else return 'Nothing to dismantle';}}
   updatePower(s);return null;
  }
@@ -475,6 +498,7 @@ export function step(s,dt=STEP){
  const destroyed=s.buildings.filter(b=>b.hp<=0);if(destroyed.length){s.buildings=s.buildings.filter(b=>b.hp>0);updatePower(s);}
  if(hq.hp<=0){s.status='defeat';event(s,'The command core has fallen');}
  else if(s.evacuation?.status==='charging'){const pad=s.buildings.find(b=>b.id===s.evacuation.padId);if(!pad){s.evacuation.status='failed';event(s,'Evacuation pad lost. Rebuild and try again.');}else if(pad.active){s.evacuation.remaining=Math.max(0,s.evacuation.remaining-dt*(1+((pad.level||1)-1)*.1));if(s.evacuation.remaining===0&&s.enemies.length===0){s.status='victory';s.evacuation.status='complete';event(s,'Evacuation complete. The colony survives.');}}}
+ else if(s.tutorialStep!==undefined)advanceTutorial(s);
  else if(s.time>=s.nextWave&&s.enemies.length===0&&s.wave<FINAL_WAVE)spawnWave(s);
 }
 export function planMove(s,ids,dx,dz){
@@ -491,7 +515,7 @@ function moveArea(s,p,cmd){
  if(plan.invalid.length&&!cmd.override)return plan.invalid.length+' buildings cannot be placed here. Hold Shift to pack invalid buildings into inventory.';
  if(!plan.valid.length&&!cmd.override)return 'No valid buildings to move';
  for(const target of plan.valid){const b=s.buildings.find(b=>b.id===target.id);b.x=target.x;b.z=target.z;}
- if(cmd.override)for(const target of plan.invalid){const b=s.buildings.find(b=>b.id===target.id),{id,x,z,dir,type,active,...packed}=b;(p.inventory[type]||=[]).push(packed);s.buildings=s.buildings.filter(v=>v.id!==id);}
+ if(cmd.override)for(const target of plan.invalid){const b=s.buildings.find(b=>b.id===target.id);packBuilding(p,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
  updatePower(s);return null;
 }
 export function snapshot(s){return JSON.parse(JSON.stringify(s));}

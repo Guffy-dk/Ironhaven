@@ -1,9 +1,18 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.7.0';
+export const CURRENT_VERSION = '0.8.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.8.0',date:'2026-11-16',title:'Field training',
+  changes:[
+   'Replaced the reading-only tutorial with in-world training. Move the engineer, construct working iron and gear lines and set up defenses before the first swarm countdown.',
+   'New expeditions start at the core with starter buildings packed into the host inventory. Skipping training starts the countdown directly. Saves resume an ongoing task or preserve a completed world.',
+   'Rebuilt machine port labels with high-resolution textures, bold lettering and high-contrast colors. Selected machines and blueprints show larger labels. At wide zoom, port markers stay colored and text focuses on the selected machine.',
+   'The logistics inspector identifies the purple RET port as the output for a separate return conveyor.'
+  ]
+ },
  {
   version:'0.7.0',date:'2026-11-15',title:'Swarm round bonuses',
   changes:[
