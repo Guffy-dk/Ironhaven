@@ -4,7 +4,8 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {Window} from 'happy-dom';
-import {createGame,DIRS,TYPES,logisticsPorts} from '../public/shared/sim.js';
+import {createGame,DIRS,TYPES,MAX_UPGRADES,logisticsPorts} from '../public/shared/sim.js';
+import {upgradeColor} from '../public/upgrade-colors.js';
 const dom=new Window();dom.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:(t,k)=>k in t?t[k]:()=>{}});globalThis.document=dom.document;
 const bundled=await build({entryPoints:[fileURLToPath(new URL('../public/render.js',import.meta.url))],bundle:true,format:'esm',write:false,plugins:[{name:'local-three',setup(b){b.onResolve({filter:/vendor\/three\.module\.js$/},()=>({path:fileURLToPath(new URL('../node_modules/three/build/three.module.js',import.meta.url))}));}}]});
 const {makeModel,View}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
@@ -25,6 +26,24 @@ test('all machine rotations and turret levels have finite geometry; ports identi
 test('conveyors support every straight lane, bend and merging junction',()=>{
  for(let out=0;out<4;out++)for(let input=0;input<4;input++)if(input!==out){const g=makeModel('belt',out,[input]);assert.equal(g.children.length,5);g.traverse(o=>{if(o.geometry?.attributes?.position)for(const n of o.geometry.attributes.position.array)assert.ok(Number.isFinite(n));});}
  const junction=makeModel('belt',0,[1,2,3]);assert.equal(junction.children.length,13);
+});
+test('all building types show a distinct body color for each purchased upgrade',()=>{
+ const swatches=Array.from({length:MAX_UPGRADES+1},(_,i)=>upgradeColor(i+1));
+ assert.equal(new Set(swatches).size,MAX_UPGRADES+1);
+ for(const [type,def] of Object.entries(TYPES)){
+  if(!def.hp)continue;
+  for(let level=2;level<=MAX_UPGRADES+1;level++){
+   const expected=swatches[level-1].slice(1);
+   const model=makeModel(type,1,[0,2],level);
+   let found=false;
+   model.traverse(o=>{if(o.isMesh&&o.material.color?.getHexString()===expected)found=true;});
+   assert.ok(found,`${type} at level ${level} should display #${expected}`);
+  }
+ }
+ const base=makeModel('smelter'),upgraded=makeModel('smelter',0,[],4);
+ for(const arrow of base.children.filter(o=>o.name.startsWith('arrow-'))){
+  assert.equal(upgraded.getObjectByName(arrow.name).material,arrow.material);
+ }
 });
 test('barricades reach their shared tile edges on vertical lines, corners and junctions',()=>{
  for(let mask=0;mask<16;mask++){

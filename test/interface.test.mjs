@@ -7,6 +7,7 @@ import {Window} from 'happy-dom';
 import {build} from 'esbuild';
 import {createGame,addPlayer,maxHp,step} from '../public/shared/sim.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
+import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
 const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
@@ -26,6 +27,19 @@ function harness(saved,{tutorial=false}={}){
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
 function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
+test('the inspector shows existing saved upgrade colors and updates the swatch immediately',async()=>{
+ const saved=starterWorld(),belt=saved.state.buildings.find(b=>b.type==='belt');
+ belt.level=2;
+ const h=harness(saved);try{
+  h.$('resume').click();h.point('pointerdown',belt.x,belt.z);h.point('pointerup',belt.x,belt.z);
+  const upgradeRow=()=>h.$('intel-stats').querySelector('.upgrade-swatch').parentElement;
+  assert.equal(upgradeRow().textContent,'1 / 10');
+  assert.ok(upgradeRow().innerHTML.includes(upgradeColor(2)));
+  h.key('u');
+  assert.equal(upgradeRow().textContent,'2 / 10');
+  assert.ok(upgradeRow().innerHTML.includes(upgradeColor(3)));
+ }finally{await h.close();}
+});
 test('English UI and menu expose current and historical patch notes',async()=>{
  const h=harness();try{assert.equal(h.dom.document.documentElement.lang,'en');assert.equal(h.$('loading').hidden,true);assert.match(h.$('version-label').textContent,new RegExp(displayVersion(CURRENT_VERSION)));h.$('start-patch-notes').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.equal(h.$('patch-history').querySelectorAll('article').length,RELEASES.length);assert.match(h.$('patch-history').textContent,/First light/);h.$('patch-dialog').close();h.$('start-solo').click();h.$('menu').click();h.dom.document.querySelector('#menu-dialog [data-patch-notes]').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.ok(!h.$('menu-dialog').hasAttribute('open'));}finally{await h.close();}
 });

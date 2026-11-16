@@ -1,11 +1,12 @@
 import * as T from './vendor/three.module.js';
 import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, turretStats, productionSpeed } from './shared/sim.js';
+import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
 const CAMERA_OFFSET=new T.Vector3(0,32,27);
 const cyan=0x79d8d0;
 const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc};
 const mats=new Map(),geos=new Map();
-function mat(color,basic=false){const key=color+':'+basic;if(!mats.has(key))mats.set(key,basic?new T.MeshBasicMaterial({color}):new T.MeshStandardMaterial({color,roughness:.72,metalness:.18}));return mats.get(key);}
+function mat(color,basic=false,side=T.FrontSide){const key=color+':'+basic+':'+side;if(!mats.has(key))mats.set(key,basic?new T.MeshBasicMaterial({color,side}):new T.MeshStandardMaterial({color,side,roughness:.72,metalness:.18}));return mats.get(key);}
 function geometry(kind,w,h,d){const key=[kind,w,h,d].join(':');if(!geos.has(key)){let g;if(kind==='box')g=new T.BoxGeometry(w,h,d);else if(kind==='round'){const r=Math.min(.06,Math.min(w,h,d)*.18),shape=new T.Shape();shape.moveTo(-w/2+r,-h/2+r);shape.lineTo(w/2-r,-h/2+r);shape.lineTo(w/2-r,h/2-r);shape.lineTo(-w/2+r,h/2-r);shape.closePath();g=new T.ExtrudeGeometry(shape,{depth:d-2*r,bevelEnabled:true,bevelThickness:r,bevelSize:r,bevelSegments:2,steps:1});g.translate(0,0,-d/2+r);}else if(kind==='cyl')g=new T.CylinderGeometry(w,w,h,d||8);else if(kind==='cone')g=new T.ConeGeometry(w,h,d||6);else g=new T.IcosahedronGeometry(w,0);geos.set(key,g);}return geos.get(key);}
 function part(parent,kind,color,x,y,z,w,h,d,basic=false){const o=new T.Mesh(geometry(kind,w,h,d),mat(color,basic));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 const box=(p,c,x,y,z,w,h,d,b=false)=>part(p,'round',c,x,y,z,w,h,d,b);
@@ -13,6 +14,7 @@ const cyl=(p,c,x,y,z,r,h,n=8,b=false)=>part(p,'cyl',c,x,y,z,r,h,n,b);
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
 export function makeModel(type,dir=0,inputs=[],level=1){
  const originalType=type;type=({copperDrill:'drill',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
+ const painted=base=>level>1?upgradeColor(level):base;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
   // Each incoming lane curves into the output; geometry ends exactly at tile edges.
@@ -21,20 +23,20 @@ export function makeModel(type,dir=0,inputs=[],level=1){
    const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],curve=new T.QuadraticBezierCurve3(new T.Vector3(ax*.51,.13,az*.51),new T.Vector3(0,.13,0),new T.Vector3(bx*.51,.13,bz*.51));
    const cacheKey=`road:${input}:${dir}`;let road=geos.get(cacheKey);
    if(!road){const vertices=[],indices=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,.285*sign);vertices.push(v.x,v.y,v.z);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
-   const lane=new T.Mesh(road,mat(0x647565));lane.material.side=T.DoubleSide;lane.receiveShadow=true;g.add(lane);
+   const lane=new T.Mesh(road,mat(painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
    for(const sign of[-1,1]){const railKey=`rail:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*.31);v.y=.15;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(C.gold)));}
    box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
   const arrow=new T.Shape();arrow.moveTo(-.08,-.09);arrow.lineTo(.08,-.09);arrow.lineTo(.08,-.16);arrow.lineTo(.27,0);arrow.lineTo(.08,.16);arrow.lineTo(.08,.09);arrow.lineTo(-.08,.09);arrow.closePath();const a=new T.Mesh(new T.ShapeGeometry(arrow),mat(C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);a.position.set(DIRS[dir][0]*.14,.19,DIRS[dir][1]*.14);g.add(a);return g;
  }
  if(type==='inserter'){
-  cyl(g,C.dark,0,.13,0,.42,.22,8);cyl(g,0x76aeb4,0,.27,0,.31,.08,8);
-  for(const z of[-.25,.25]){box(g,C.steel,0,.46,z,.12,.43,.1);box(g,0x8ce8d6,0,.68,z,.13,.06,.14,true);}
+  cyl(g,painted(C.dark),0,.13,0,.42,.22,8);cyl(g,painted(0x76aeb4),0,.27,0,.31,.08,8);
+  for(const z of[-.25,.25]){box(g,painted(C.steel),0,.46,z,.12,.43,.1);box(g,0x8ce8d6,0,.68,z,.13,.06,.14,true);}
   const capsule=new T.Group();capsule.name='cargoCapsule';capsule.position.y=.58;g.add(capsule);const shell=cyl(capsule,C.light,0,0,0,.13,.28,8);shell.rotation.z=Math.PI/2;box(capsule,0x76e6d2,0,.01,.12,.17,.08,.035,true);
   port(g,2,'IN',cyan);port(g,0,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
  }
  if(type==='splitter'){
-  cyl(g,C.dark,0,.15,0,.53,.22,6);cyl(g,C.steel,0,.32,0,.44,.14,6);
+  cyl(g,painted(C.dark),0,.15,0,.53,.22,6);cyl(g,painted(C.steel),0,.32,0,.44,.14,6);
   const dial=cyl(g,0x91d8d0,0,.43,0,.23,.055,3,true);dial.name='dispatchDial';
   port(g,2,'IN',cyan);port(g,0,'FWD',C.gold);port(g,3,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
  }
@@ -45,8 +47,8 @@ export function makeModel(type,dir=0,inputs=[],level=1){
   const section=(left,right,top,bottom)=>{
    const x=(left+right)/2,z=(top+bottom)/2,w=right-left,d=bottom-top;
    box(g,C.dark,x,.11,z,w,.22,d);
-   box(g,0x70827b,x,.51,z,w,.78,d);
-   box(g,C.light,x,.94,z,w,.12,d);
+   box(g,painted(0x70827b),x,.51,z,w,.78,d);
+   box(g,painted(C.light),x,.94,z,w,.12,d);
   };
   if(horizontal)section(-connected(2),connected(0),-.33,.33);
   if(vertical){
@@ -60,37 +62,37 @@ export function makeModel(type,dir=0,inputs=[],level=1){
  }
  plate(g);
  if(type==='storage'){
-  box(g,C.dark,0,.25,0,.85,.3,.85);for(const x of[-.22,.22])for(const z of[-.22,.22]){cyl(g,C.steel,x,.65,z,.18,.65,12);cyl(g,C.gold,x,.6,z,.19,.06,12);}box(g,C.light,0,1.03,0,.9,.08,.9);for(let d=0;d<4;d++)port(g,d,'IN',0x79d8d0);
+  box(g,C.dark,0,.25,0,.85,.3,.85);for(const x of[-.22,.22])for(const z of[-.22,.22]){cyl(g,C.steel,x,.65,z,.18,.65,12);cyl(g,C.gold,x,.6,z,.19,.06,12);}box(g,painted(C.light),0,1.03,0,.9,.08,.9);for(let d=0;d<4;d++)port(g,d,'IN',0x79d8d0);
  }else if(type==='launchpad'){
-  cyl(g,C.dark,0,.24,0,.75,.18,16);cyl(g,C.gold,0,.36,0,.64,.08,16);cyl(g,C.light,0,1.1,0,.24,1.4,12);part(g,'cone',C.gold,0,1.95,0,.25,.45,12);for(const x of[-.28,.28]){box(g,C.steel,x,.68,0,.12,.65,.35);cyl(g,C.orange,x,.3,0,.12,.16,8,true);}for(let d=0;d<4;d++)port(g,d,'IN',0x79d8d0);
+  cyl(g,C.dark,0,.24,0,.75,.18,16);cyl(g,painted(C.gold),0,.36,0,.64,.08,16);cyl(g,painted(C.light),0,1.1,0,.24,1.4,12);part(g,'cone',C.gold,0,1.95,0,.25,.45,12);for(const x of[-.28,.28]){box(g,C.steel,x,.68,0,.12,.65,.35);cyl(g,C.orange,x,.3,0,.12,.16,8,true);}for(let d=0;d<4;d++)port(g,d,'IN',0x79d8d0);
  }else if(type==='hq'){
-  box(g,C.dark,0,.16,0,1.7,.32,1.7);box(g,C.light,0,.4,0,1.42,.4,1.42);box(g,C.steel,0,.8,0,1.12,.5,1.12);
-  cyl(g,C.dark,0,1.2,0,.58,.7,6);cyl(g,C.gold,0,1.2,0,.6,.18,6);cyl(g,C.light,0,1.6,0,.42,.16,6);
+  box(g,C.dark,0,.16,0,1.7,.32,1.7);box(g,painted(C.light),0,.4,0,1.42,.4,1.42);box(g,C.steel,0,.8,0,1.12,.5,1.12);
+  cyl(g,C.dark,0,1.2,0,.58,.7,6);cyl(g,C.gold,0,1.2,0,.6,.18,6);cyl(g,painted(C.light),0,1.6,0,.42,.16,6);
   box(g,C.dark,.38,1.95,0,.08,.7,.08);box(g,C.gold,.38,2.32,0,.12,.12,.12,true);box(g,C.mint,-.1,.62,-.726,.52,.19,.02,true);
   for(let i=0;i<4;i++){const a=i*Math.PI/2;box(g,C.gold,Math.cos(a)*.58,.68,Math.sin(a)*.58,.13,.6,.13);}
   const ring=new T.Mesh(new T.TorusGeometry(.52,.025,4,32),mat(C.gold,true));ring.rotation.x=Math.PI/2;ring.position.y=1.73;ring.name='beacon';g.add(ring);
  }else if(type==='drill'){
   for(const z of [-.33,.33])box(g,C.gold,0,.5,z,.78,.63,.1);
-  box(g,C.dark,0,.84,0,.78,.15,.78);const rotor=new T.Group();rotor.name='rotor';rotor.position.y=.5;g.add(rotor);cyl(rotor,C.steel,0,0,0,.17,.67,6);for(let i=0;i<3;i++){const a=box(rotor,C.light,0,-.15+i*.16,0,.57,.07,.16);a.rotation.y=i*.8;}
+  box(g,painted(C.dark),0,.84,0,.78,.15,.78);const rotor=new T.Group();rotor.name='rotor';rotor.position.y=.5;g.add(rotor);cyl(rotor,C.steel,0,0,0,.17,.67,6);for(let i=0;i<3;i++){const a=box(rotor,C.light,0,-.15+i*.16,0,.57,.07,.16);a.rotation.y=i*.8;}
   box(g,C.light,-.25,.94,0,.21,.1,.4);box(g,C.gold,.44,.27,0,.17,.13,.36);
  }else if(type==='smelter'){
-  box(g,C.light,0,.5,0,.69,.57,.68);box(g,C.dark,.357,.46,0,.03,.35,.39);box(g,C.orange,.379,.46,0,.02,.23,.26,true);
-  cyl(g,C.dark,-.15,1,0,.21,.5,8);cyl(g,C.steel,-.15,1.3,0,.25,.1,8);box(g,C.gold,0,.75,0,.77,.12,.76);
+  box(g,painted(C.light),0,.5,0,.69,.57,.68);box(g,C.dark,.357,.46,0,.03,.35,.39);box(g,C.orange,.379,.46,0,.02,.23,.26,true);
+  cyl(g,C.dark,-.15,1,0,.21,.5,8);cyl(g,C.steel,-.15,1.3,0,.25,.1,8);box(g,painted(C.gold),0,.75,0,.77,.12,.76);
   for(const z of [-.3,.3])box(g,C.dark,.1,.45,z,.35,.12,.1);
  }else if(type==='assembler'){
-  box(g,C.steel,0,.45,0,.77,.48,.77);box(g,C.light,0,.74,0,.8,.12,.8);
+  box(g,painted(C.steel),0,.45,0,.77,.48,.77);box(g,painted(C.light),0,.74,0,.8,.12,.8);
   for(const x of [-.3,.3])box(g,C.gold,x,1,0,.09,.5,.1);
   box(g,C.gold,0,1.26,0,.76,.12,.13);const rotor=new T.Group();rotor.name='rotor';rotor.position.y=.9;g.add(rotor);cyl(rotor,C.dark,0,0,0,.25,.1,8);for(let i=0;i<6;i++){const a=i*Math.PI/3;box(rotor,C.light,Math.cos(a)*.24,0,Math.sin(a)*.24,.13,.14,.13);}
   box(g,C.mint,.4,.51,0,.02,.14,.23,true);
  }else if(type==='generator'){
-  box(g,C.light,0,.4,0,.8,.4,.65);box(g,C.gold,-.2,.66,0,.3,.2,.67);box(g,C.dark,.2,.68,0,.35,.16,.52);
+  box(g,painted(C.light),0,.4,0,.8,.4,.65);box(g,painted(C.gold),-.2,.66,0,.3,.2,.67);box(g,C.dark,.2,.68,0,.35,.16,.52);
   const rotor=new T.Group();rotor.name='rotor';rotor.position.set(.19,.8,0);g.add(rotor);cyl(rotor,C.steel,0,0,0,.19,.07,8);for(let i=0;i<3;i++){const a=box(rotor,C.dark,0,.05,0,.4,.03,.07);a.rotation.y=i*Math.PI/3;}
   cyl(g,C.dark,-.25,.94,-.27,.065,.5,6);box(g,C.mint,.12,.43,-.338,.24,.12,.025,true);
  }else if(type==='turret'){
   cyl(g,C.steel,0,.45,0,.32,.5,6);cyl(g,C.gold,0,.76,0,.38,.12,8);
-  cyl(g,level>1?C.mint:C.steel,0,.6,0,.35,.12,12);const head=new T.Group();head.name='head';head.position.y=.95;g.add(head);box(head,C.dark,0,0,0,.53,.3,.45);box(head,C.light,0,.18,0,.6,.09,.53);box(head,C.dark,0,-.02,.44,.12,.12,.65);box(head,C.gold,0,-.02,.78,.16,.16,.1);box(head,C.mint,0,.04,-.235,.15,.08,.02,true);if(level>=2)box(head,C.dark,.18,-.02,.44,.1,.1,.65);if(level>=3){box(head,C.dark,-.18,-.02,.44,.1,.1,.65);cyl(g,C.gold,0,.28,0,.39,.12,12);}
+  cyl(g,painted(C.steel),0,.6,0,.35,.12,12);const head=new T.Group();head.name='head';head.position.y=.95;g.add(head);box(head,painted(C.dark),0,0,0,.53,.3,.45);box(head,painted(C.light),0,.18,0,.6,.09,.53);box(head,C.dark,0,-.02,.44,.12,.12,.65);box(head,C.gold,0,-.02,.78,.16,.16,.1);box(head,C.mint,0,.04,-.235,.15,.08,.02,true);if(level>=2)box(head,C.dark,.18,-.02,.44,.1,.1,.65);if(level>=3){box(head,C.dark,-.18,-.02,.44,.1,.1,.65);cyl(g,C.gold,0,.28,0,.39,.12,12);}
  }else if(type==='sawmill'){
-  box(g,C.steel,0,.42,0,.8,.4,.8);for(const x of [-.3,.3])box(g,C.wood,x,.64,0,.15,.14,.8);
+  box(g,painted(C.steel),0,.42,0,.8,.4,.8);for(const x of [-.3,.3])box(g,C.wood,x,.64,0,.15,.14,.8);
   const rotor=new T.Group();rotor.name='rotor';rotor.position.set(0,.72,0);rotor.rotation.z=Math.PI/2;g.add(rotor);const saw=cyl(rotor,C.light,0,0,0,.3,.05,12);for(let i=0;i<8;i++){const a=i*Math.PI/4;box(rotor,C.steel,Math.cos(a)*.28,0,Math.sin(a)*.28,.12,.07,.12);}
   box(g,C.gold,-.35,.6,0,.1,.25,.66);
  }
@@ -102,7 +104,6 @@ export function makeModel(type,dir=0,inputs=[],level=1){
  if(originalType==='foundry')for(const x of[-.23,.23])cyl(g,0x91aeb7,x,.8,0,.15,.5,12);
  if(originalType==='circuitLab')box(g,0x69d5c6,0,.77,-.25,.55,.06,.22,true);
  if(originalType==='componentFactory')for(const x of[-.24,.24])cyl(g,0xb2a1cc,x,.9,.2,.12,.35,8);
- if(level>1)cyl(g,C.mint,0,.24,0,.44,.035,12,true);
  if(type!=='hq'&&type!=='turret'&&type!=='generator'&&type!=='sawmill')g.rotation.y=-dir*Math.PI/2;
  return g;
 }
