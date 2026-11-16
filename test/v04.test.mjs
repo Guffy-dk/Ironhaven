@@ -15,7 +15,7 @@ test('four-player scaling is sublinear, accurately telegraphed and bounded at 48
 });
 test('diagnostics distinguish input shortage, full storage, free delivery and blocked output',()=>{
  const s=createGame(),b=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(v=>v.type==='hq'||v===b);b.x=-1;b.z=0;b.dir=0;const grid=new Map(s.buildings.map(v=>[`${v.x},${v.z}`,v]));assert.equal(factoryStatus(s,b,grid),'input');
- b.item='plate';assert.equal(factoryStatus(s,b,grid),'running');s.resources.plate=300;assert.equal(factoryStatus(s,b,grid),'storage');b.dir=3;assert.equal(factoryStatus(s,b,grid),'output');b.active=false;assert.equal(factoryStatus(s,b,grid),'power');
+ b.item='plate';assert.equal(factoryStatus(s,b,grid),'running');s.resources.plate=300;assert.equal(factoryStatus(s,b,grid),'buffering');b.outputBuffer=Array(4).fill('plate');assert.equal(factoryStatus(s,b,grid),'storage');b.dir=3;assert.equal(factoryStatus(s,b,grid),'output');b.active=false;assert.equal(factoryStatus(s,b,grid),'power');
 });
 test('measured production uses bounded history and reports theoretical demand',()=>{
  const s=createGame();addPlayer(s);s.nextWave=9999;run(s,100);assert.equal(s.stats.history.length,61);const report=productionReport(s);assert.ok(report.seconds>59&&report.seconds<61);const plate=report.materials.find(v=>v.resource==='plate');assert.ok(plate.perMinute>0);assert.ok(plate.demand>0);assert.ok(report.materials.find(v=>v.resource==='gear').demand>0);

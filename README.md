@@ -8,7 +8,15 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.8.1 — Windows playtest
+## Version 0.9 — factory controls
+
+Select a factory to see its material icons. Cyan arrows point in and gold arrows point out. Item-producing machines buffer up to five outputs. To pass output to a neighboring machine of the same type and facing, turn on **Send** on the upstream machine and **Receive** on the downstream machine. Hostiles go around trees.
+
+Drag-select a setup, press **Ctrl+C**, then **Ctrl+V** and click its new location. The copy preserves directions, dispatch programs and output-sharing settings. Placement uses inventory and materials at the normal price. Select multiple buildings of one type and press **U** to upgrade them together.
+
+Barricades connect to their neighbors and can be placed by dragging a row. Assemblers make one gear every 2.4 seconds. The result screen can return to the main menu or continue a victorious world with more swarms.
+
+## Included from 0.8.1 — Windows playtest
 
 The game runs in its own window and hosts direct LAN from the in-game menu. The patcher and portable ZIP target 64-bit Windows. For a local Windows package and automated startup and patcher tests, run `pwsh -File scripts/build-windows.ps1` after `npm ci`.
 
@@ -24,7 +32,7 @@ Every swarm activates a shared colony bonus. It lasts through the attack and the
 |---|---|
 | 1 | +15% iron and copper mining speed |
 | 2 | +25% smelting speed for both ores |
-| 3 | Turrets reload 15 shots per gear instead of 12 |
+| 3 | Turrets reload 20 shots per gear instead of 16 |
 | 4 | Barricades take 30% less damage |
 | 5 | +45% sawmill speed |
 | 6 | Repairs use 1 iron plate instead of 2, with the usual wood cost |
@@ -36,7 +44,7 @@ Speed bonuses multiply machine upgrades. Recipes still use their usual inputs an
 
 ## Included from 0.6.1 — terrain, balance and conveyor fixes
 
-New colonies start with 180 iron plates and an exposed iron deposit near the core. Iron drills and smelters cost fewer plates, and each iron production cycle takes 1.6 seconds. Starter barricades leave the deposits clear. New maps group trees into groves. Hostiles move at 45% speed through trees, including on saved maps.
+New colonies start with 180 iron plates and an exposed iron deposit near the core. Iron drills and smelters cost fewer plates, and each iron production cycle takes 1.6 seconds. Starter barricades leave the deposits clear. New maps group trees into groves.
 
 Turret upgrades give more damage per shot with smaller range increases. Range grows from 10 tiles at Mk I to 13 at Mk XI. Manual conveyor placement keeps the blueprint direction. In build mode, **R** rotates the blueprint. Exit build mode to rotate a conveyor in place. Smart routes join existing belts at endpoints and avoid crossing or redirecting connected lines.
 
@@ -137,15 +145,15 @@ Protect the core through eight swarms. Field training shows how to make two work
 - Drill → conveyor → smelter → core: iron plates for construction.
 - Drill → conveyor → smelter → assembler → core: two plates become one gear, used for turret ammunition and upgrades.
 - Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
-- Cyan **IN** ports accept items. Gold **OUT** ports deliver them. Purple **RET** on Transfer Relays and Dispatch Hubs sends items to a separate return conveyor when the Return quota is enabled. Select a machine to enlarge its port labels.
-- Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
-- Dismantling packs a building into your inventory, preserving damage, upgrades, cargo and ammo. Placement consumes inventory before raw materials. Hotbar numbers show your count.
+- Cyan arrows lead into a machine and gold arrows point out. Select a Transfer Relay or Dispatch Hub to see its labels. The purple **RET** port feeds a separate return conveyor when its quota is enabled.
+- Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads 16 shots.
+- Dismantling packs a building into your inventory and preserves its damage, upgrades and ammo. Conveyors are emptied when packed or placed from inventory. Placement uses inventory before raw materials. Hotbar numbers show your count.
 
 | Controls | Action |
 |---|---|
 | WASD, including W+A | Move in screen directions; diagonals have equal total speed |
 | Arrow keys / minimap | Free camera |
-| Space / ⌖ | Follow your engineer |
+| Space / Follow button | Toggle camera follow |
 | Wheel / + / − | Zoom |
 | 1–8 | Conveyor, drill, smelter, assembler, sawmill, generator, turret, barricade |
 | 9 / 0 | Repair / dismantle; dismantle trees for wood |
@@ -154,9 +162,10 @@ Protect the core through eight swarms. Field training shows how to make two work
 | Shift-click endpoint | Route from your last conveyor/barricade placement |
 | Shift-drag | Preview a new route; release to build |
 | R | Rotate the blueprint in build mode. Otherwise rotate a conveyor under the pointer or a selected directional building |
-| U | Upgrade selected building |
+| U | Upgrade the selected building or same-type selection |
 | E | Program selected relay / hub |
 | Left-drag without a build tool | Box-select buildings |
+| Ctrl+C / Ctrl+V | Copy the selection / preview its placement, then click to build |
 | M | Move the selected area |
 | Shift while moving | Sprint |
 | Q / Esc / right click | Exit build mode / cancel route |

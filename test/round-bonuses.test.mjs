@@ -38,7 +38,7 @@ test('the smelting round speeds up both ore recipes, leaving drills at their nor
  assert.equal(state.stats.totals.ore,2);
 });
 
-test('the ammunition round gives each gear 15 shots and reduces expected gear demand',()=>{
+test('the ammunition round gives each gear 20 shots and reduces expected gear demand',()=>{
  const state=createGame(),turret=state.buildings.find(b=>b.type==='turret');
  state.buildings=state.buildings.filter(b=>b===turret||b.type==='hq');
  const demand=()=>productionReport(state).materials.find(r=>r.resource==='gear').demand;
@@ -46,12 +46,12 @@ test('the ammunition round gives each gear 15 shots and reduces expected gear de
  state.wave=3;turret.ammo=0;
  const gears=state.resources.gear;
  step(state);
- assert.equal(turret.ammo,15);
+ assert.equal(turret.ammo,20);
  assert.equal(state.resources.gear,gears-1);
  assert.ok(Math.abs(demand()-original*.8)<1e-9);
  state.wave=4;turret.ammo=0;
  step(state);
- assert.equal(turret.ammo,12);
+ assert.equal(turret.ammo,16);
 });
 
 test('the defense and repair rounds have distinct effects',()=>{
