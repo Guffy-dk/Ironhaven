@@ -13,6 +13,9 @@ let gameWindow;
 app.setName('Ironhaven');
 if (smokeTest) {
   app.setPath('userData', mkdtempSync(path.join(os.tmpdir(), 'ironhaven-smoke-')));
+  // Hosted Windows runners have no reliable hardware adapter.
+  app.commandLine.appendSwitch('use-angle', 'swiftshader');
+  app.commandLine.appendSwitch('enable-unsafe-swiftshader');
 }
 protocol.registerSchemesAsPrivileged([{ scheme: 'ironhaven', privileges: { standard: true, secure: true } }]);
 
