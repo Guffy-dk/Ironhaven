@@ -8,7 +8,11 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.12 — clear the ground
+## Version 0.12.1 — upgrade value
+
+An upgraded smelter makes more iron plates from the same ore. Its first upgrade costs six wood and six plates and yields three plates from two ore. The inspector previews the gain before upgrading.
+
+## Included from 0.12 — clear the ground
 
 Deposits have open space around them and approach paths through nearby forest. Press **F** to harvest one tree or dismantle a building. **F → Shift-drag** clears trees inside a rectangle. Wood harvest uses available storage space. Sawmills produce more with more trees in range.
 

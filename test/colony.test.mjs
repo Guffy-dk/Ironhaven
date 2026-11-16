@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition,dismantleValue,FINAL_WAVE,makeTerrain,POWER_CAPACITY,sawmillRate,step,waveForecast} from '../public/shared/sim.js';
+import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition,dismantleValue,FINAL_WAVE,makeTerrain,POWER_CAPACITY,powerOutput,sawmillRate,step,upgradeCost,waveForecast} from '../public/shared/sim.js';
 import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
@@ -72,6 +72,41 @@ test('dismantling returns 80% of total costs, including fractional belt refunds'
  assert.deepEqual(p.inventory,{});
  const starter=createExpedition('Starter',{skipTutorial:true});
  assert.ok(starter.state.players[0].inventory.belt.length>0);
+});
+
+test('the first smelter upgrade gives three plates from two ore across a save and leaves copper yield alone',()=>{
+ const {s,p,build}=world(),smelter=build('smelter',-1,0);
+ const before={...s.resources};
+ assert.equal(command(s,p.id,{type:'upgrade',x:-1,z:0}),null);
+ assert.equal(before.wood-s.resources.wood,6);assert.equal(before.plate-s.resources.plate,6);
+ smelter.input=['ore'];
+ for(let i=0;i<26;i++)step(s);
+ assert.equal(s.produced.plate,1);
+ const loaded=parseSave(JSON.stringify(packWorldSave(s,p.id))).state;
+ const machine=loaded.buildings.find(b=>b.id===smelter.id);
+ machine.input=['ore','copperOre','copperOre'];
+ for(let i=0;i<96;i++)step(loaded);
+ assert.equal(loaded.produced.plate,3);
+ assert.equal(loaded.resources.copper,2);
+ assert.equal(machine.input.length,0);
+});
+
+test('a smelter waits for space for a whole upgraded batch before spending ore',()=>{
+ const {s,p,build}=world(),smelter=build('smelter',5,5);
+ assert.equal(command(s,p.id,{type:'upgrade',x:5,z:5}),null);
+ smelter.plateCredit=2;smelter.item='plate';smelter.outputBuffer=['plate','plate','plate'];smelter.input=['ore'];
+ for(let i=0;i<48;i++)step(s);
+ assert.deepEqual(smelter.input,['ore']);assert.equal(smelter.plateCredit,2);
+ smelter.outputBuffer.pop();
+ for(let i=0;i<24;i++)step(s);
+ assert.equal(smelter.input.length,0);assert.equal(smelter.outputBuffer.length,4);
+});
+
+test('generator and command core upgrade prices and output keep their existing progression',()=>{
+ assert.deepEqual(upgradeCost({type:'generator',level:1}),{wood:24,plate:24,gear:1});
+ assert.equal(Math.round(powerOutput({type:'generator',level:2})),23);
+ assert.equal(Math.round(powerOutput({type:'coalGenerator',level:2})),47);
+ assert.equal(powerOutput({type:'hq',level:2}),21);
 });
 
 test('large LAN maps are delivered in small ordered chunks and reconstructed for the guest',()=>{

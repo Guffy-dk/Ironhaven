@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.12.0';
+export const CURRENT_VERSION = '0.12.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.12.1',date:'2026-11-16',title:'Worth the upgrade',
+  changes:[
+   'The first smelter upgrade costs six wood and six iron plates and makes three plates from two iron ore. Higher tiers increase iron yield further.',
+   'Reduce many upgrade costs and increase production speed, warehouse capacity and early belt gains. The inspector previews the next upgrade’s benefit.'
+  ]
+ },
  {
   version:'0.12.0',date:'2026-11-16',title:'Clear the ground',
   changes:[
