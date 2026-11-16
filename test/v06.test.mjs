@@ -5,7 +5,8 @@ import {factoryStatus} from '../public/shared/diagnostics.js';
 import {parseSave} from '../public/shared/saves.js';
 
 test('all 25 swarms begin at the expanded map edge',()=>{
- const onEdge=[e=>e.x===-90,e=>e.z===-90,e=>e.x===90,e=>e.z===90];
+ const corner=(sx,sz)=>e=>(e.x===sx*90||e.z===sz*90)&&e.x*sx>60&&e.z*sz>60;
+ const onEdge=[e=>e.x===-90,e=>e.z===-90,e=>e.x===90,e=>e.z===90,corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)];
  for(let wave=1;wave<=25;wave++){
   const state=createGame(),player=addPlayer(state);
   state.wave=wave-1;

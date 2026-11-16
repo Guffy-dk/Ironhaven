@@ -40,7 +40,7 @@ test('copper drills require copper and storage expands capacity without deleting
  const{s,p}=make();rich(s);assert.match(command(s,p.id,{type:'build',building:'copperDrill',x:3,z:4}),/copper deposits/);
  assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4}),null);
  const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(storageCapacity(s),oldCapacity+300);
- assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.ok(storageCapacity(s)>oldCapacity+300);const plate=s.resources.plate;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.plate,plate);assert.equal(inventoryCount(s,p.id,'storage'),1);
+ assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.ok(storageCapacity(s)>oldCapacity+300);const plate=s.resources.plate;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.ok(s.resources.plate>plate);assert.equal(inventoryCount(s,p.id,'storage'),0);
 });
 test('world exports round-trip and old wins reopen for the 25-swarm objective',()=>{
  const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,SAVE_SCHEMA);assert.deepEqual(loaded.state.resources,s.resources);

@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.11.0';
+export const CURRENT_VERSION = '0.12.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.12.0',date:'2026-11-16',title:'Clear the ground',
+  changes:[
+   'Forests leave open space around deposits and paths out of larger groves. Openings also apply to saved worlds.',
+   'Press F to dismantle a building or harvest a tree. Shift-drag with Dismantle to clear a stand of trees. Sawmills produce faster with more nearby trees.',
+   'Dismantling refunds 80% of construction and upgrade costs. Fractional refunds carry forward, and new colonies still receive their starter inventory.',
+   'Swarms can attack from four corners as well as four edges. Early swarms are slightly smaller.',
+   'The power HUD distinguishes generation, demand and reserve. Build previews warn about a shortfall.'
+  ]
+ },
  {
   version:'0.11.0',date:'2026-11-16',title:'Open ground',
   changes:[

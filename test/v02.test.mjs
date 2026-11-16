@@ -27,10 +27,10 @@ test('corner topology and in-place rotation preserve cargo, health, identity and
  const{s,p}=make(),b=s.buildings.find(b=>b.x===-1&&b.z===-1),grid=new Map(s.buildings.map(v=>[key(v.x,v.z),v]));assert.deepEqual(beltInputs(b,grid),[3]);
  b.item='plate';b.hp=43;const id=b.id,resources={...s.resources};assert.equal(command(s,p.id,{type:'rotate',x:b.x,z:b.z}),null);assert.equal(b.dir,1);assert.equal(b.item,'plate');assert.equal(b.hp,43);assert.equal(b.id,id);assert.deepEqual(s.resources,resources);
 });
-test('dismantled upgraded turrets retain state and are placed without raw materials',()=>{
+test('previously packed upgraded turrets retain state and are placed without raw materials',()=>{
  const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret');b.type='gunTurret';const x=b.x,z=b.z;
  assert.equal(command(s,p.id,{type:'upgrade',x,z}),null);b.hp=417;b.ammo=3;
- const resources={...s.resources};assert.equal(command(s,p.id,{type:'demolish',x,z}),null);assert.equal(inventoryCount(s,p.id,'gunTurret'),1);assert.deepEqual(s.resources,resources);
+ const {id,type,x:oldX,z:oldZ,dir,active,...packed}=b;p.inventory.gunTurret=[packed];s.buildings=s.buildings.filter(other=>other!==b);
  s.resources=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));assert.equal(canBuild(s,'gunTurret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'gunTurret',x,z,dir:0}),null);
  const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'gunTurret'),0);assert.deepEqual(s.resources,Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])));
 });
@@ -46,7 +46,7 @@ test('0.1 saves migrate without losing production, resources or built buildings'
  const before={...s.resources},ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,SAVE_SCHEMA);assert.deepEqual(migrated.players[0].inventory,{});assert.deepEqual(migrated.resources,before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
 });
 test('a departing guest returns packed buildings to the remaining host',()=>{
- const{s,p}=make(),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});removePlayer(s,guest.id);assert.equal(inventoryCount(s,p.id,'belt'),1);
+ const{s,p}=make(),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');guest.inventory.belt=[{hp:belt.hp,level:1}];removePlayer(s,guest.id);assert.equal(inventoryCount(s,p.id,'belt'),1);
 });
 test('release metadata drives the game and release notes and rejects incompatible invitations',async()=>{
  assert.equal((await validateRelease()).version,CURRENT_VERSION);assert.match(CURRENT_VERSION,/^0\./);assert.ok(RELEASES.some(r=>r.version==='0.2.0'));assert.ok(RELEASES.some(r=>r.version==='0.1.0'));assert.match(releaseMarkdown(RELEASES.find(r=>r.version==='0.2.0')),/Smart conveyor routes/);

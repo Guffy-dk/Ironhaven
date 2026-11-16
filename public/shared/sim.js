@@ -5,6 +5,7 @@ import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './w
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
 export const DIRS = [[1,0],[0,1],[-1,0],[0,-1]];
+export const SWARM_DIRECTIONS=['West','North','East','South','Northeast','Southeast','Southwest','Northwest'];
 export const DIFFICULTIES={
  relaxed:{name:'Relaxed',count:.72,health:.85,damage:.75,production:1.15,prep:140,interval:115},
  standard:{name:'Standard',count:1,health:1,damage:1,production:1,prep:100,interval:95},
@@ -15,8 +16,8 @@ export const canSpawnSwarm=s=>s.wave<FINAL_WAVE||isPostVictory(s);
 export function waveForecast(s,wave=s.wave+1){
  const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1);
  const random=rng(Math.imul(s.swarmSeed??s.seed,0x85ebca6b)^Math.imul(wave,0x9e3779b9));
- const count=Math.min(420,Math.round((12+wave*3+wave**1.55)*d.count*(1+guests*.08)));
- return {wave,count,side:Math.floor(random()*4),health:d.health,damage:d.damage*(1+.018*(wave-1)),bonus:roundBonus(wave)};
+ const count=Math.min(420,Math.round((10+wave*2.8+wave**1.55)*d.count*(1+guests*.08)));
+ return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health:d.health,damage:d.damage*(1+.018*(wave-1)),bonus:roundBonus(wave)};
 }
 export const TYPES = {
  hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
@@ -24,13 +25,13 @@ export const TYPES = {
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'Place on blue iron deposits. Mines one ore every 1.6 seconds. The gold OUT port is its delivery side.'},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'Feed iron or copper ore into any cyan IN port. Processes iron in 1.6 seconds and copper in 2 seconds, in arrival order.'},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
- sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'Requires trees within five tiles. Supplies three wood every three seconds and runs without grid power.'},
+ sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'Runs without grid power. More trees within five tiles increase wood output.'},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'Consumes one wood every twelve seconds to add eighteen power to the colony network.'},
  turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'Short-range starter defense. Uses no ammunition or power and has a fixed level.'},
  gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Higher damage and range than a sentry turret. One gear loads 16 shots. Can be upgraded ten times.'},
  wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'Blocks enemies and connects to adjacent barricades. Drag to build a continuous row.'},
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
- demolish:{name:'Dismantle',cost:{},desc:'Packs a building into your personal inventory. Damage, upgrades and ammo are preserved. Clear a tree to collect eight wood.'}
+ demolish:{name:'Dismantle',cost:{},desc:'Refunds 80% of construction and upgrade materials. Click a tree to collect eight wood, or Shift-drag to clear trees in an area.'}
 };
 Object.assign(TYPES,{
  inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A programmable cargo capsule. Place between a conveyor behind it and a machine ahead. Default: one item into the machine, one left on the belt. The right-side port feeds a separate return line.'},
@@ -48,7 +49,7 @@ Object.assign(TYPES,{
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
 export const MAX_UPGRADES=10;
-export const SAVE_SCHEMA=8;
+export const SAVE_SCHEMA=9;
 export const LOGISTICS_TYPES=['inserter','splitter'];
 export const PROGRAM_ROLES=['machine','forward','return'];
 export const ITEM_KEYS=['ore','copperOre',...RESOURCE_KEYS];
@@ -168,14 +169,14 @@ function normalizeOutput(b){
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
 export function migrateGame(s){
- if(!s||![1,2,3,4,5,6,7,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ if(!s||![1,2,3,4,5,6,7,8,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  const previous=s.version,old=previous<SAVE_SCHEMA;
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];
  s.terrain.copper||=makeTerrain(s.seed).copper;s.terrain.coal||=makeTerrain(s.seed).coal;
  for(const r of RESOURCE_KEYS)s.resources[r]??=0;
  s.resources.power??=0;
  for(const p of s.players){p.inventory||={};for(const field of ['x','z','hp','input','sprinting','cooldown','respawn'])delete p[field];}
- if(old){
+ if(previous<8){
   const outer=makeTerrain(s.seed),edge=previous<7?27:39;
   for(const kind of ['trees','rocks','ore','copper','coal']){
    s.terrain[kind]=s.terrain[kind].filter(v=>Math.abs(v.x)<=edge&&Math.abs(v.z)<=edge)
@@ -193,6 +194,7 @@ export function migrateGame(s){
   if(previous<7&&s.status==='victory'){s.survived=s.wave>=FINAL_WAVE;s.status=s.survived?'victory':'playing';s.nextWave=Math.max(s.nextWave,s.time+30);}
   if(previous<7&&s.tutorialStep===0)s.cameraTrained=false;
  }
+ if(old)openDeposits(s.terrain);
  delete s.evacuation;
  for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);}
  for(const p of s.players){
@@ -210,6 +212,27 @@ export function migrateGame(s){
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function rng(seed){let n=seed|0;return()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;};}
 export const key=(x,z)=>`${x},${z}`;
+function openDeposits(terrain){
+ const clear=new Set();
+ for(const {x,z} of [...terrain.ore,...terrain.copper,...terrain.coal]){
+  const [dx,dz]=Math.abs(x)>=Math.abs(z)?[-Math.sign(x),0]:[0,-Math.sign(z)];
+  for(let ox=-2;ox<=2;ox++)for(let oz=-2;oz<=2;oz++)clear.add(key(x+ox,z+oz));
+  if(Math.hypot(x,z)>18)for(let i=1;i<=11;i++)clear.add(key(x+i*dx,z+i*dz));
+ }
+ for(const kind of ['trees','rocks'])terrain[kind]=terrain[kind].filter(t=>Math.max(Math.abs(t.x),Math.abs(t.z))<BUILD_EDGE-1&&!clear.has(key(t.x,t.z)));
+ return terrain;
+}
+const woodlandTiles=new WeakMap();
+const sawmillRadius=[...Array(9).keys()].flatMap(i=>[...Array(9).keys()].map(j=>[i-4,j-4])).filter(([x,z])=>x*x+z*z<25);
+export function sawmillTrees(terrain,b){
+ let index=woodlandTiles.get(terrain);
+ if(index?.trees!==terrain.trees||index.count!==terrain.trees.length){
+  index={trees:terrain.trees,count:terrain.trees.length,tiles:new Set(terrain.trees.map(t=>key(t.x,t.z)))};
+  woodlandTiles.set(terrain,index);
+ }
+ return sawmillRadius.reduce((n,[x,z])=>n+Number(index.tiles.has(key(b.x+x,b.z+z))),0);
+}
+export const sawmillRate=(s,b)=>Math.sqrt(sawmillTrees(s.terrain,b)/6)*productionSpeed(b,roundBonus(s.wave),s.difficulty);
 export function makeTerrain(seed=2026){
  const rand=rng(Math.imul(seed||2026,0x85ebca6b)),trees=new Map(),ore=[],rocks=[],copper=[],coal=[],occupied=new Set();
  function deposit(list,cx,cz,radius){
@@ -238,9 +261,9 @@ export function makeTerrain(seed=2026){
   if(Math.hypot(gx,gz)<24||rand()<.33)continue;
   grove(gx+Math.floor(rand()*13)-6,gz+Math.floor(rand()*13)-6,3.8+rand()*5.4);
  }
- for(const [x,z] of [[9,7],[10,7],[11,7],[9,8],[10,8],[11,8],[9,9],[10,9]])if(!occupied.has(key(x,z)))trees.set(key(x,z),{x,z,h:1+rand()*.45});
+ for(const [x,z] of [[9,2],[9,3],[10,3],[9,4],[10,4],[9,5],[10,5]])if(!occupied.has(key(x,z)))trees.set(key(x,z),{x,z,h:1+rand()*.45});
  for(let x=-BUILD_EDGE;x<=BUILD_EDGE;x++)for(let z=-BUILD_EDGE;z<=BUILD_EDGE;z++)if(Math.hypot(x,z)>16&&!occupied.has(key(x,z))&&!trees.has(key(x,z))&&rand()<.007)rocks.push({x,z,h:.3+rand()*.6});
- return {trees:[...trees.values()],ore,rocks,copper,coal};
+ return openDeposits({trees:[...trees.values()],ore,rocks,copper,coal});
 }
 function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};if(LOGISTICS_TYPES.includes(type)){b.program={...DEFAULT_PROGRAM};programRole(b);}s.buildings.push(b);return b;}
 export function createGame(seed=2026,{difficulty='standard'}={}){
@@ -274,6 +297,25 @@ function packBuilding(player,building){
  (player.inventory[type]||=[]).push(packed);
 }
 function emptyConveyor(b){b.item=null;delete b.itemTick;delete b.itemSide;}
+export function dismantleValue(b){
+ const costs={...TYPES[b.type].cost};
+ for(let level=1;level<Math.min(b.level||1,MAX_UPGRADES+1);level++){
+  for(const [resource,n] of Object.entries(upgradeCost({...b,level})||{}))costs[resource]=(costs[resource]||0)+n;
+ }
+ return costs;
+}
+function refundDismantle(s,b){
+ const remainders=s.refundRemainder??={};
+ for(const [r,n] of Object.entries(dismantleValue(b))){
+  const fifths=n*4+(remainders[r]??0);
+  s.resources[r]+=Math.floor(fifths/5);
+  remainders[r]=fifths%5;
+ }
+}
+function harvestWood(s,trees){
+ const room=Math.max(0,storageCapacity(s)-s.resources.wood);
+ s.resources.wood+=Math.min(room,trees*8);
+}
 export function createExpedition(name,{difficulty,skipTutorial=false,swarmSeed=0}={}){
  const state=createGame(swarmSeed||2026,{difficulty}),player=addPlayer(state,name);
  if(swarmSeed)state.swarmSeed=swarmSeed;
@@ -293,7 +335,7 @@ function placementError(s,type,x,z,ignoreBelts=false){
  if(type==='drill'&&!s.terrain.ore.some(b=>b.x===x&&b.z===z))return 'Drills must be placed on iron deposits';
  if(type==='copperDrill'&&!s.terrain.copper?.some(b=>b.x===x&&b.z===z))return 'Copper drills must be placed on copper deposits';
  if(type==='coalMine'&&!s.terrain.coal?.some(b=>b.x===x&&b.z===z))return 'Coal mines must be placed on coal deposits';
- if(type==='sawmill'&&!s.terrain.trees.some(b=>Math.hypot(b.x-x,b.z-z)<5))return 'A sawmill needs trees within five tiles';
+ if(type==='sawmill'&&!sawmillTrees(s.terrain,{x,z}))return 'A sawmill needs trees within five tiles';
  return null;
 }
 export function canBuild(s,type,x,z,playerId){
@@ -463,6 +505,16 @@ export function command(s,playerId,cmd){
   if(cmd.type==='wave'&&canSpawnSwarm(s)&&s.enemies.length===0&&s.nextWave>s.time+3)s.nextWave=s.time+3;return null;
  }
  if(cmd.type==='moveArea')return moveArea(s,p,cmd);
+ if(cmd.type==='clearTrees'){
+  const {start,end}=cmd;
+  if(!routeTile(start)||!routeTile(end))return 'Select an area inside the construction zone';
+  const left=Math.min(start.x,end.x),right=Math.max(start.x,end.x);
+  const top=Math.min(start.z,end.z),bottom=Math.max(start.z,end.z);
+  const remaining=s.terrain.trees.filter(t=>t.x<left||t.x>right||t.z<top||t.z>bottom);
+  const cleared=s.terrain.trees.length-remaining.length;
+  if(!cleared)return 'No trees in that area';
+  s.terrain.trees=remaining;harvestWood(s,cleared);return null;
+ }
  if(cmd.type==='upgradeSelection'){
   const plan=planGroupUpgrade(s,cmd.ids);if(plan.error)return plan.error;
   for(const [r,n] of Object.entries(plan.cost))s.resources[r]-=n;
@@ -517,8 +569,8 @@ export function command(s,playerId,cmd){
  if(cmd.type==='demolish'){
   if(b&&s.time-(b.lastHit??-100)<5)return 'Recently attacked buildings cannot be moved or dismantled for five seconds';
   if(b?.type==='hq')return 'The command core cannot be dismantled';
-  if(b){packBuilding(p,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
-  else{const i=s.terrain.trees.findIndex(t=>t.x===x&&t.z===z);if(i>=0){s.terrain.trees.splice(i,1);s.resources.wood+=8;}else{const ri=s.terrain.rocks.findIndex(t=>t.x===x&&t.z===z);if(ri>=0)s.terrain.rocks.splice(ri,1);else return 'Nothing to dismantle';}}
+  if(b){refundDismantle(s,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
+  else{const i=s.terrain.trees.findIndex(t=>t.x===x&&t.z===z);if(i>=0){s.terrain.trees.splice(i,1);harvestWood(s,1);}else{const ri=s.terrain.rocks.findIndex(t=>t.x===x&&t.z===z);if(ri>=0)s.terrain.rocks.splice(ri,1);else return 'Nothing to dismantle';}}
   updatePower(s);return null;
  }
  if(cmd.type==='repair'){
@@ -600,8 +652,13 @@ function spawnWave(s){
  const waveMutation=s.wave>=4?mutationNames[Math.floor(random()*mutationNames.length)]:null;
  for(let i=0;i<count;i++){
   const side=forecast.side,spread=Math.min(70,23+s.wave*1.8),t=(random()*2-1)*spread;
-  const x=side===0?-SWARM_SPAWN_EDGE:side===2?SWARM_SPAWN_EDGE:t;
-  const z=side===1?-SWARM_SPAWN_EDGE:side===3?SWARM_SPAWN_EDGE:t;
+  let x=side===0?-SWARM_SPAWN_EDGE:side===2?SWARM_SPAWN_EDGE:t;
+  let z=side===1?-SWARM_SPAWN_EDGE:side===3?SWARM_SPAWN_EDGE:t;
+  if(side>=4){
+   const [sx,sz]=[[1,-1],[1,1],[-1,1],[-1,-1]][side-4],inset=2+random()*25;
+   x=sx*(SWARM_SPAWN_EDGE-(i%2?inset:0));
+   z=sz*(SWARM_SPAWN_EDGE-(i%2?0:inset));
+  }
   const coreHunter=i<coreHunters,brute=!coreHunter&&i%11===0;
   const mutation=!coreHunter&&waveMutation&&random()<.22?waveMutation:null;
   const hp=Math.round((35+s.wave*5+.09*s.wave**2)*forecast.health*(coreHunter?1.6:brute?2:1)*(mutation==='armored'?1.5:1));
@@ -656,7 +713,10 @@ export function step(s,dt=STEP){
    b.progress+=dt*productionSpeed(b,bonus,s.difficulty);
    if(b.progress+1e-9>=seconds){b.progress=Math.max(0,b.progress-seconds);if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);const item=extract||recipe.output;enqueueOutput(b,item);s.stats.totals[item]=(s.stats.totals[item]||0)+1;}
   }
-  if(b.type==='sawmill'&&s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt*productionSpeed(b,bonus,s.difficulty);if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}}
+  if(b.type==='sawmill'){
+   b.progress+=dt*sawmillRate(s,b);
+   if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}
+  }
   if(TURRETS.includes(b.type)){
    const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
    if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}

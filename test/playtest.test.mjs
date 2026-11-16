@@ -33,7 +33,7 @@ test('copying a setup preserves layout and configuration, and paste charges only
  const program={machine:2,forward:3,return:4,filter:'copperOre',buffer:4,bypass:false};
  assert.equal(run({type:'configureLogistics',id:b.id,x:b.x,z:b.z,program}),null);
  assert.equal(run({type:'configureOutput',id:c.id,x:c.x,z:c.z,send:true,receive:false}),null);
- const spare=build('belt',5,5);assert.equal(run({type:'demolish',x:spare.x,z:spare.z}),null);
+ player.inventory.belt=[{hp:65,level:1}];
  const layout=copySetup(state,[a.id,b.id,c.id,state.buildings[0].id]);
  assert.equal(layout.length,3);b.program.machine=1;
  const anchor={x:9,z:9},plan=planPaste(state,layout,anchor,player.id);
@@ -107,7 +107,7 @@ test('placing a packed conveyor clears cargo even for inventory from an older sa
  const {player,run,build}=world(),belt=build('belt',5,5);
  belt.item='gear';belt.itemTick=20;belt.itemSide=1;belt.level=2;belt.hp=71;
  assert.equal(run({type:'demolish',x:5,z:5}),null);
- const packed=player.inventory.belt[0];assert.equal(packed.item,null);
+ const packed={hp:71,level:2};player.inventory.belt=[packed];
  Object.assign(packed,{item:'ore',itemTick:21,itemSide:3});
  const placed=build('belt',6,5);
  assert.equal(placed.item,null);assert.equal(placed.itemTick,undefined);assert.equal(placed.itemSide,undefined);

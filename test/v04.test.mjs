@@ -26,7 +26,7 @@ test('recently attacked buildings cannot teleport or be dismantled to escape dam
  const core=s.buildings.find(b=>b.type==='hq');s.enemies=[{id:999,x:20,z:20,hp:100}];assert.match(planMove(s,[core.id],1,1).error,/active swarm/);
 });
 test('world snapshots preserve guest inventories without changing the live game',()=>{
- const s=createGame(),host=addPlayer(s),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});const before=JSON.stringify(s);
+ const s=createGame(),host=addPlayer(s),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');guest.inventory.belt=[{hp:belt.hp,level:1}];const before=JSON.stringify(s);
  const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].input,undefined);assert.equal(parseSave(JSON.stringify(data)).state.version,SAVE_SCHEMA);
 });
 test('late turret gains cost more power while upgrade prices remain increasing',()=>{
