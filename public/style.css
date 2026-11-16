@@ -57,8 +57,6 @@ select{display:block;width:100%;border:1px solid var(--line);background:#172e31;
 #warehouse-options select{font-size:12px;margin:5px 0 4px}
 #warehouse-options small,.blueprint-site{color:var(--muted);font-size:12px;line-height:1.4}
 #warehouse-stock{margin-top:6px;line-height:1.4}
-.visual-style-label{margin-top:10px}
-[data-visual-style]{font-size:12px}
 body[data-visual-style="quarry"]{--mint:#c5d1c9;--gold:#e5be84;--line:#b8a58b3b}
 body[data-visual-style="quarry"] .topbar,
 body[data-visual-style="quarry"] #right-dock>.panel,

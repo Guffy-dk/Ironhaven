@@ -32,17 +32,6 @@ try{view=new View($('world'));}catch(e){$('loading').innerHTML='<p>3D could not 
 function readStorage(key){try{return localStorage.getItem(key);}catch{return null;}}
 function writeStorage(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
 setGraphics(readStorage('ironhaven.lightGraphics')==='true');
-const VISUAL_STYLE='ironhaven.visualStyle',visualStyleControls=document.querySelectorAll('[data-visual-style]');
-function setVisualStyle(preference){
- const style=preference==='classic'?'classic':'quarry';
- view.setVisualStyle(style);document.body.dataset.visualStyle=style;
- for(const select of visualStyleControls)select.value=style;
- if(tool){view.setTool(tool,dir);updateHover();}
-}
-setVisualStyle(readStorage(VISUAL_STYLE));
-for(const select of visualStyleControls)select.onchange=()=>{
- setVisualStyle(select.value);writeStorage(VISUAL_STYLE,select.value);
-};
 $('skip-tutorial').checked=readStorage('ironhaven.skipTutorial')==='true';
 $('player-name').value=readStorage(NAME)||'Engineer';$('difficulty').value=readStorage('ironhaven.difficulty')||'standard';
 if(readStorage(SAVE))$('resume').hidden=false;
