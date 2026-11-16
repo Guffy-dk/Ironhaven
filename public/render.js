@@ -246,6 +246,8 @@ export class View{
   this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);this.beltItems.frustumCulled=false;this.beltItems.count=0;this.scene.add(this.beltItems);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
+  this.style='quarry';
+  this.configureQuarryLighting();
   document.getElementById('quarry-spruce')?.addEventListener('load',()=>{if(this.style==='quarry')this.terrainKey='';});
  }
  resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.updateProjection();}
@@ -255,25 +257,17 @@ export class View{
   if(this.ghost)sizePortBadges(this.ghost,this.worldPerPixel,true);
  }
  setQuality(low){this.renderer.shadowMap.enabled=!low;this.renderer.shadowMap.needsUpdate=!low;this.renderer.setPixelRatio(low?Math.min(devicePixelRatio,.8):Math.min(devicePixelRatio,1.5));this.resize();}
- setVisualStyle(style){
-  if(this.style===style)return;
-  this.style=style;
-  const quarry=style==='quarry',skyColor=quarry?0x454c48:0x172d31;
-  this.scene.background.setHex(skyColor);this.scene.fog.color.setHex(skyColor);this.scene.fog.density=quarry?.0065:.011;
-  this.sky.color.setHex(quarry?0xdce3eb:0xd5e3c4);this.sky.groundColor.setHex(quarry?0x857768:0x294548);this.sky.intensity=quarry?1.46:2.2;
-  this.sun.color.setHex(quarry?0xffe8ce:0xffd89c);this.sun.intensity=quarry?2.5:3;this.sun.shadow.normalBias=quarry?.018:.07;
-  this.fill.color.setHex(quarry?0xc2ccda:0x83b8b2);this.fill.intensity=quarry?.51:1.3;
-  this.renderer.toneMappingExposure=quarry?1.12:1.18;this.renderer.shadowMap.needsUpdate=true;
+ configureQuarryLighting(){
+  this.scene.background.setHex(0x454c48);this.scene.fog.color.setHex(0x454c48);this.scene.fog.density=.0065;
+  this.sky.color.setHex(0xdce3eb);this.sky.groundColor.setHex(0x857768);this.sky.intensity=1.46;
+  this.sun.color.setHex(0xffe8ce);this.sun.intensity=2.5;this.sun.shadow.normalBias=.018;
+  this.fill.color.setHex(0xc2ccda);this.fill.intensity=.51;
+  this.renderer.toneMappingExposure=1.12;this.renderer.shadowMap.needsUpdate=true;
   this.shadowKey='';
-  if(!quarry)this.setShadowArea(0,0,95);
-  this.enemyBody.geometry=quarry?quarryActorGeometry('body'):geometry('box',.3,.48,.24);
-  this.enemyBody.material=quarry?actorSkin:mat(0xc18a74);
-  this.enemyHead.geometry=quarry?quarryActorGeometry('head'):geometry('box',.24,.24,.24);
-  this.enemyHead.material=quarry?actorHead:mat(0xc7b696);
-  this.enemyLegs.geometry=quarry?geometry('cyl',.044,.22,6):geometry('box',.11,.25,.13);
-  this.enemyLegs.material=mat(quarry?0x64564b:0x3e4b47);
-  this.actorHeading.clear();this.dust.visible=false;
-  this.shotLines.material.color.setHex(quarry?0xffb763:0xffd890);this.shotLines.material.opacity=quarry?.61:.85;
+  this.enemyBody.geometry=quarryActorGeometry('body');this.enemyBody.material=actorSkin;
+  this.enemyHead.geometry=quarryActorGeometry('head');this.enemyHead.material=actorHead;
+  this.enemyLegs.geometry=geometry('cyl',.044,.22,6);this.enemyLegs.material=mat(0x64564b);
+  this.shotLines.material.color.setHex(0xffb763);this.shotLines.material.opacity=.61;
  }
  setShadowArea(x,z,radius){
   this.sun.position.set(x-14,27,z+13);this.sun.target.position.set(x,0,z);

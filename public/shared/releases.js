@@ -1,9 +1,15 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.13.1';
+export const CURRENT_VERSION = '0.13.2';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.13.2',date:'2026-11-16',title:'Quarry graphics',
+  changes:[
+   'Use the upgraded Quarry graphics and remove the in-game style selector. Graphics quality remains adjustable.'
+  ]
+ },
  {
   version:'0.13.1',date:'2026-11-16',title:'Quarry materials and motion',
   changes:[

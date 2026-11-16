@@ -13,6 +13,9 @@ let gameWindow;
 app.setName('Ironhaven');
 if (smokeTest) {
   app.setPath('userData', mkdtempSync(path.join(os.tmpdir(), 'ironhaven-smoke-')));
+  // Hosted Windows runners have no reliable hardware adapter.
+  app.commandLine.appendSwitch('use-angle', 'swiftshader');
+  app.commandLine.appendSwitch('enable-unsafe-swiftshader');
 }
 protocol.registerSchemesAsPrivileged([{ scheme: 'ironhaven', privileges: { standard: true, secure: true } }]);
 
@@ -60,26 +63,17 @@ async function start() {
   if (!result.loaded || !result.secure || !result.multiplayer || !result.version?.startsWith(expectedVersion + ' ')) {
     throw Error('Desktop game did not initialize: ' + JSON.stringify(result));
   }
-  const styles = await gameWindow.webContents.executeJavaScript(`(async () => {
+  const graphics = await gameWindow.webContents.executeJavaScript(`(async () => {
     await Promise.all(['quarry-materials', 'quarry-spruce'].map(id => document.getElementById(id).decode()));
-    const select = document.getElementById('start-visual-style');
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const gl = document.getElementById('world').getContext('webgl2');
-    const applied = [];
-    for (const style of ['classic', 'quarry']) {
-      select.value = style;
-      select.dispatchEvent(new Event('change'));
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      applied.push({
-        style,
-        active: document.body.dataset.visualStyle,
-        saved: localStorage.getItem('ironhaven.visualStyle'),
-        drawable: !!gl && !gl.isContextLost() && gl.drawingBufferWidth > 0
-      });
-    }
-    return applied;
+    return {
+      quarry: document.body.dataset.visualStyle === 'quarry',
+      drawable: !!gl && !gl.isContextLost() && gl.drawingBufferWidth > 0
+    };
   })()`);
-  if (!styles.every(({ style, active, saved, drawable }) => style === active && style === saved && drawable)) {
-    throw Error('Desktop visual styles did not initialize: ' + JSON.stringify(styles));
+  if (!graphics.quarry || !graphics.drawable) {
+    throw Error('Desktop graphics did not initialize: ' + JSON.stringify(graphics));
   }
   app.exit(0);
 }

@@ -10,7 +10,7 @@ For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Iro
 
 ## Version 0.13 — Quarry visuals
 
-The default **Quarry** style gives the world new building models, ground-level conveyors, conifer groves and mechanical gun emplacements. Switch **Visual Style** to **Classic** from the title screen or the **Colony menu** to restore the original look in the same world. The choice is stored on the device and is independent of graphics quality.
+Quarry visuals give the world detailed brick, metal and gravel, ground-level conveyors, conifer groves and mechanical gun emplacements. The **Colony menu** offers standard and light graphics quality. Previous builds are available as versioned releases on GitHub.
 
 ## Included from 0.12.3 — local warehouse stock
 

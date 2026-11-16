@@ -10,7 +10,7 @@ import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
-const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(cell,valid,tool,radius){this.preview={cell,valid,tool,radius};}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}setVisualStyle(style){this.style=style;}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
+const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(cell,valid,tool,radius){this.preview={cell,valid,tool,radius};}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
 function harness(saved,{tutorial=false}={}){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
@@ -27,19 +27,15 @@ function harness(saved,{tutorial=false}={}){
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
 function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
-test('visual style switches live and persists separately from the world',async()=>{
+test('graphics menus offer quality controls with Quarry active in the same world',async()=>{
  const h=harness(starterWorld());try{
-  assert.equal(h.dom.__view.style,'quarry');
   h.$('resume').click();h.key(' ');const before=h.save();
   h.$('menu').click();
-  const style=h.$('visual-style');
-  style.value='classic';style.dispatchEvent(new h.dom.Event('change'));
-  assert.equal(h.dom.__view.style,'classic');
-  assert.equal(h.$('start-visual-style').value,'classic');
-  assert.equal(h.dom.localStorage.getItem('ironhaven.visualStyle'),'classic');
-  assert.deepEqual(h.save(),before);
-  style.value='quarry';style.dispatchEvent(new h.dom.Event('change'));
-  assert.equal(h.dom.__view.style,'quarry');
+  assert.equal(h.dom.document.body.dataset.visualStyle,'quarry');
+  assert.equal(h.$('visual-style'),null);
+  assert.equal(h.$('start-visual-style'),null);
+  h.$('quality').click();
+  assert.equal(h.dom.document.body.classList.contains('light-graphics'),true);
   assert.deepEqual(h.save(),before);
  }finally{await h.close();}
 });
