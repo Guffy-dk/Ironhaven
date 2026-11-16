@@ -28,10 +28,15 @@ test('Quarry models have finite geometry, distinct silhouettes and the same port
     assert.ok(other?.getWorldPosition(new T.Vector3()).distanceTo(arrow.getWorldPosition(new T.Vector3()))<1e-9,type);
    }
    const upgrade=new T.Color(upgradeColor(3));
-   const colors=quarry.children.find(o=>o.geometry?.attributes.color)?.geometry.attributes.color;
-   if(colors){
-    assert.ok(Array.from({length:colors.count},(_,i)=>i).some(i=>Math.abs(colors.getX(i)-upgrade.r)<1e-5&&
-     Math.abs(colors.getY(i)-upgrade.g)<1e-5&&Math.abs(colors.getZ(i)-upgrade.b)<1e-5),type);
+   const surfaces=quarry.children.filter(o=>o.geometry?.attributes.color);
+   if(surfaces.length){
+    assert.ok(surfaces.some(({geometry:{attributes:{color}}})=>
+     Array.from({length:color.count},(_,i)=>i).some(i=>Math.abs(color.getX(i)-upgrade.r)<1e-5&&
+     Math.abs(color.getY(i)-upgrade.g)<1e-5&&Math.abs(color.getZ(i)-upgrade.b)<1e-5)),type);
+   }
+   for(const model of surfaces.filter(o=>o.material.map)){
+    assert.equal(model.geometry.attributes.uv.count,model.geometry.attributes.position.count);
+    assert.ok(model.material.bumpScale>0);
    }
   }
  }
