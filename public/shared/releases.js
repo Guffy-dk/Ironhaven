@@ -1,9 +1,18 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.10.0';
+export const CURRENT_VERSION = '0.11.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.11.0',date:'2026-11-16',title:'Open ground',
+  changes:[
+   'New colonies have a procedurally generated 181 × 181 build area with a clear start zone and nearby deposits. Swarms begin at the map edge. Existing worlds expand around their current terrain and buildings.',
+   'Sawmills cost only iron plates and run without power. The grid stores up to 180 power and spends the reserve when generation falls short.',
+   'Sentry turrets need no gears or power and have a fixed level. Gun turrets have more range and damage, use gears, and can be upgraded. Previously upgraded turrets become gun turrets.',
+   'Space pauses the game. F selects Dismantle. Hotkeys are more visible, with higher-contrast text and fewer blurred panel layers.'
+  ]
+ },
  {
   version:'0.10.0',date:'2026-11-16',title:'Hold the colony',
   changes:[

@@ -13,7 +13,7 @@ const box=(p,c,x,y,z,w,h,d,b=false)=>part(p,'round',c,x,y,z,w,h,d,b);
 const cyl=(p,c,x,y,z,r,h,n=8,b=false)=>part(p,'cyl',c,x,y,z,r,h,n,b);
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
 export function makeModel(type,dir=0,inputs=[],level=1){
- const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
+ const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
  const painted=base=>level>1?upgradeColor(level):base;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
@@ -88,7 +88,7 @@ export function makeModel(type,dir=0,inputs=[],level=1){
   cyl(g,C.dark,-.25,.94,-.27,.065,.5,6);box(g,C.mint,.12,.43,-.338,.24,.12,.025,true);
  }else if(type==='turret'){
   cyl(g,C.steel,0,.45,0,.32,.5,6);cyl(g,C.gold,0,.76,0,.38,.12,8);
-  cyl(g,painted(C.steel),0,.6,0,.35,.12,12);const head=new T.Group();head.name='head';head.position.y=.95;g.add(head);box(head,painted(C.dark),0,0,0,.53,.3,.45);box(head,painted(originalType==='mortar'?0xc67b59:originalType==='pulseTurret'?0x7da3c9:C.light),0,.18,0,.6,.09,.53);box(head,C.dark,0,-.02,.44,.12,.12,.65);box(head,C.gold,0,-.02,.78,.16,.16,.1);box(head,C.mint,0,.04,-.235,.15,.08,.02,true);if(level>=2)box(head,C.dark,.18,-.02,.44,.1,.1,.65);if(level>=3){box(head,C.dark,-.18,-.02,.44,.1,.1,.65);cyl(g,C.gold,0,.28,0,.39,.12,12);}
+  cyl(g,painted(C.steel),0,.6,0,.35,.12,12);const head=new T.Group();head.name='head';head.position.y=.95;g.add(head);box(head,painted(C.dark),0,0,0,.53,.3,.45);box(head,painted(originalType==='gunTurret'?0xc59a64:originalType==='mortar'?0xc67b59:originalType==='pulseTurret'?0x7da3c9:C.light),0,.18,0,.6,.09,.53);box(head,C.dark,0,-.02,.44,.12,.12,.65);box(head,C.gold,0,-.02,.78,.16,.16,.1);box(head,C.mint,0,.04,-.235,.15,.08,.02,true);if(level>=2)box(head,C.dark,.18,-.02,.44,.1,.1,.65);if(level>=3){box(head,C.dark,-.18,-.02,.44,.1,.1,.65);cyl(g,C.gold,0,.28,0,.39,.12,12);}
  }else if(type==='sawmill'){
   box(g,painted(C.steel),0,.42,0,.8,.4,.8);for(const x of [-.3,.3])box(g,C.wood,x,.64,0,.15,.14,.8);
   const rotor=new T.Group();rotor.name='rotor';rotor.position.set(0,.72,0);rotor.rotation.z=Math.PI/2;g.add(rotor);const saw=cyl(rotor,C.light,0,0,0,.3,.05,12);for(let i=0;i<8;i++){const a=i*Math.PI/4;box(rotor,C.steel,Math.cos(a)*.28,0,Math.sin(a)*.28,.12,.07,.12);}
@@ -166,7 +166,7 @@ export class View{
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0x172d31);this.scene.fog=new T.FogExp2(0x172d31,.011);
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.18;
   this.camera=new T.OrthographicCamera(-20,20,20,-20,.1,180);this.center=new T.Vector3(0,0,0);this.zoom=14;this.camera.position.set(0,32,27);this.camera.lookAt(0,0,0);
-  this.scene.add(new T.HemisphereLight(0xd5e3c4,0x294548,2.2));const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-42,right:42,top:42,bottom:-42,far:140});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
+  this.scene.add(new T.HemisphereLight(0xd5e3c4,0x294548,2.2));const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-95,right:95,top:95,bottom:-95,far:245});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
   const fill=new T.DirectionalLight(0x83b8b2,1.3);fill.position.set(15,12,-20);this.scene.add(fill);
   this.ground=new T.Group();this.scene.add(this.ground);this.terrain=new T.Group();this.scene.add(this.terrain);
   this.buildings=new Map();this.items=new Map();this.cellGrid=new Map();this.terrainKey='';this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),0);this.mouse=new T.Vector2();this.hit=new T.Vector3();this.selected=null;
@@ -189,7 +189,7 @@ export class View{
  setQuality(low){this.renderer.shadowMap.enabled=!low;this.renderer.shadowMap.needsUpdate=!low;this.renderer.setPixelRatio(low?Math.min(devicePixelRatio,.8):Math.min(devicePixelRatio,1.5));this.resize();}
  point(clientX,clientY){this.mouse.set(clientX/innerWidth*2-1,-clientY/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);if(!this.ray.ray.intersectPlane(this.plane,this.hit))return null;return{x:Math.round(this.hit.x),z:Math.round(this.hit.z)};}
  pan(x,z){this.center.x=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.x+x));this.center.z=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.z+z));}
- setZoom(d){this.zoom=Math.max(8,Math.min(49,this.zoom+d));this.updateProjection();}
+ setZoom(d){this.zoom=Math.max(8,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
  centerBase(){this.center.set(0,0,0);}
  previewRoute(cells,valid=true,arrows=false){
   const signature=cells.map(c=>`${c.type??''}:${c.x},${c.z},${c.dir}`).join(';')+valid+arrows;if(signature===this.routeKey)return;this.routeKey=signature;
@@ -229,12 +229,16 @@ export class View{
   this.renderer.shadowMap.needsUpdate=true;
   this.terrainKey=`${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
-  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,SIZE+24,SIZE+24);groundGeometry.rotateX(-Math.PI/2);const colors=[],vertices=groundGeometry.attributes.position;
+  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,104,104);groundGeometry.rotateX(-Math.PI/2);const colors=[],vertices=groundGeometry.attributes.position;
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(d<12?0x42504a:0x325148).lerp(new T.Color(0x223c39),n*.7);colors.push(color.r,color.g,color.b);vertices.setY(i,-.026+(d>12?Math.sin(x*.7)*Math.cos(z*.6)*.017:0));}
   groundGeometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();const ground=new T.Mesh(groundGeometry,new T.MeshStandardMaterial({vertexColors:true,roughness:1}));ground.receiveShadow=true;this.ground.add(ground);let i=0;
   const grass=new T.InstancedMesh(geometry('cone',.12,.25,3),mat(0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12)continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
-  const trunks=new T.InstancedMesh(geometry('cyl',.1,.6,5),mat(C.wood),s.terrain.trees.length),leaves=new T.InstancedMesh(geometry('ico',.72),mat(C.tree),s.terrain.trees.length),tops=new T.InstancedMesh(geometry('ico',.56),mat(C.treeTop),s.terrain.trees.length);
-  s.terrain.trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
+  const groves=new Map();
+  for(const tree of s.terrain.trees){const chunk=key(Math.floor(tree.x/24),Math.floor(tree.z/24));if(!groves.has(chunk))groves.set(chunk,[]);groves.get(chunk).push(tree);}
+  for(const trees of groves.values()){
+  const trunks=new T.InstancedMesh(geometry('cyl',.1,.6,5),mat(C.wood),trees.length),leaves=new T.InstancedMesh(geometry('ico',.72),mat(C.tree),trees.length),tops=new T.InstancedMesh(geometry('ico',.56),mat(C.treeTop),trees.length);
+  trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
+  }
   const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
   if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
   if(s.terrain.coal?.length){const coal=new T.InstancedMesh(geometry('ico',.42),mat(0x4b505c),s.terrain.coal.length);s.terrain.coal.forEach((v,i)=>{this.dummy.position.set(v.x,.16,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.92,.68,.92);this.dummy.updateMatrix();coal.setMatrixAt(i,this.dummy.matrix);});coal.castShadow=true;this.terrain.add(coal);}

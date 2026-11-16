@@ -28,14 +28,14 @@ test('corner topology and in-place rotation preserve cargo, health, identity and
  b.item='plate';b.hp=43;const id=b.id,resources={...s.resources};assert.equal(command(s,p.id,{type:'rotate',x:b.x,z:b.z}),null);assert.equal(b.dir,1);assert.equal(b.item,'plate');assert.equal(b.hp,43);assert.equal(b.id,id);assert.deepEqual(s.resources,resources);
 });
 test('dismantled upgraded turrets retain state and are placed without raw materials',()=>{
- const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret');const x=b.x,z=b.z;
+ const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret');b.type='gunTurret';const x=b.x,z=b.z;
  assert.equal(command(s,p.id,{type:'upgrade',x,z}),null);b.hp=417;b.ammo=3;
- const resources={...s.resources};assert.equal(command(s,p.id,{type:'demolish',x,z}),null);assert.equal(inventoryCount(s,p.id,'turret'),1);assert.deepEqual(s.resources,resources);
- s.resources=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));assert.equal(canBuild(s,'turret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'turret',x,z,dir:0}),null);
- const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'turret'),0);assert.deepEqual(s.resources,Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])));
+ const resources={...s.resources};assert.equal(command(s,p.id,{type:'demolish',x,z}),null);assert.equal(inventoryCount(s,p.id,'gunTurret'),1);assert.deepEqual(s.resources,resources);
+ s.resources=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));assert.equal(canBuild(s,'gunTurret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'gunTurret',x,z,dir:0}),null);
+ const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'gunTurret'),0);assert.deepEqual(s.resources,Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])));
 });
 test('turret upgrades affect range, damage and health and extend past Mk III and stop after ten upgrades',()=>{
- const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret'&&b.x===6);s.buildings=s.buildings.filter(v=>v===b||v.type==='hq');b.ammo=3;
+ const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret'&&b.x===6);b.type='gunTurret';s.buildings=s.buildings.filter(v=>v===b||v.type==='hq');b.ammo=3;
  s.enemies=[{id:999,x:b.x+10.25,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
  b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),500);assert.equal(b.hp,450);step(s);assert.equal(s.enemies[0].hp,152);
  s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,11);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);

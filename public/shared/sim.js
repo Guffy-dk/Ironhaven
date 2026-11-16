@@ -24,9 +24,10 @@ export const TYPES = {
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'Place on blue iron deposits. Mines one ore every 1.6 seconds. The gold OUT port is its delivery side.'},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'Feed iron or copper ore into any cyan IN port. Processes iron in 1.6 seconds and copper in 2 seconds, in arrival order.'},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
- sawmill:{name:'Sawmill',hp:180,power:2,cost:{wood:20,plate:8},desc:'Requires trees within five tiles. Delivers three wood directly to the colony every three seconds.'},
+ sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'Requires trees within five tiles. Supplies three wood every three seconds and runs without grid power.'},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'Consumes one wood every twelve seconds to add eighteen power to the colony network.'},
- turret:{name:'Turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Automatically defends the colony. One gear loads 16 shots. Select a turret to upgrade its damage, range, fire rate and health.'},
+ turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'Short-range starter defense. Uses no ammunition or power and has a fixed level.'},
+ gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Higher damage and range than a sentry turret. One gear loads 16 shots. Can be upgraded ten times.'},
  wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'Blocks enemies and connects to adjacent barricades. Drag to build a continuous row.'},
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
  demolish:{name:'Dismantle',cost:{},desc:'Packs a building into your personal inventory. Damage, upgrades and ammo are preserved. Clear a tree to collect eight wood.'}
@@ -45,8 +46,9 @@ Object.assign(TYPES,{
  pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:'Short-range bursts damage groups of nearby hostiles. Uses eight bursts per gear.'}
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
+export const POWER_CAPACITY=180;
 export const MAX_UPGRADES=10;
-export const SAVE_SCHEMA=7;
+export const SAVE_SCHEMA=8;
 export const LOGISTICS_TYPES=['inserter','splitter'];
 export const PROGRAM_ROLES=['machine','forward','return'];
 export const ITEM_KEYS=['ore','copperOre',...RESOURCE_KEYS];
@@ -90,10 +92,12 @@ export const TURRET_LEVELS = [
 ];
 const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:Math.ceil(60*1.45**(i-2)),gear:Math.ceil(16*1.4**(i-2))}});
-export const TURRETS=['turret','mortar','pulseTurret'];
+export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
+export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
 export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16}};
 export function turretStats(b){
  const normal=TURRET_LEVELS[Math.max(0,Math.min(MAX_UPGRADES,(b.level||1)-1))];
+ if(b.type==='turret')return {hp:TYPES.turret.hp,damage:14,range:7.5,interval:.64};
  if(b.type==='mortar')return {...normal,hp:TYPES.mortar.hp+normal.hp-350,damage:normal.damage*1.6,range:normal.range+2,interval:normal.interval*3,radius:2.25,ammoDivisor:4};
  if(b.type==='pulseTurret')return {...normal,hp:TYPES.pulseTurret.hp+normal.hp-350,damage:normal.damage*.8,range:normal.range-3,interval:normal.interval*1.5,radius:1.35,ammoDivisor:2};
  return normal;
@@ -129,12 +133,13 @@ export function productionSpeed(b,bonus,difficulty){
  const upgrade=(1+((b.level||1)-1)*.18)*(DIFFICULTIES[difficulty]?.production??1);
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
-export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(b.type==='turret'?.2:.1)));
+export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
 export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+(b.type==='storage'?Math.round(300*(1+((b.level||1)-1)*.35)):b.type==='hq'?((b.level||1)-1)*50:0),0);
 export function upgradeCost(b){
+ if(b.type==='turret')return null;
  const level=b.level||1;if(level>MAX_UPGRADES)return null;
- const cost=b.type==='turret'?{...TURRET_LEVELS[level].cost}:Object.fromEntries(Object.entries(Object.keys(TYPES[b.type].cost).length?TYPES[b.type].cost:{plate:35,gear:5}).map(([r,n])=>[r,Math.ceil(n*.65*1.45**level)]));
- if(b.type!=='turret'){cost.plate=(cost.plate||0)+Math.ceil(5*level**1.35);cost.gear=(cost.gear||0)+Math.ceil(level**1.25);}
+ const cost=b.type==='gunTurret'?{...TURRET_LEVELS[level].cost}:Object.fromEntries(Object.entries(Object.keys(TYPES[b.type].cost).length?TYPES[b.type].cost:{plate:35,gear:5}).map(([r,n])=>[r,Math.ceil(n*.65*1.45**level)]));
+ if(b.type!=='gunTurret'){cost.plate=(cost.plate||0)+Math.ceil(5*level**1.35);cost.gear=(cost.gear||0)+Math.ceil(level**1.25);}
  if(level>=3){cost.steel=(cost.steel||0)+(level-2)*3;cost.circuit=(cost.circuit||0)+(level-2)*2;}return cost;
 }
 export function planGroupUpgrade(s,ids){
@@ -148,7 +153,7 @@ export function planGroupUpgrade(s,ids){
   targets.push(b);
   for(const [r,n] of Object.entries(price))cost[r]=(cost[r]||0)+n;
  }
- const error=!targets.length?'Selected buildings are fully upgraded':
+ const error=!targets.length?buildings[0].type==='turret'?'Sentry turrets cannot be upgraded':'Selected buildings are fully upgraded':
   Object.entries(cost).some(([r,n])=>s.resources[r]<n)?'Not enough materials to upgrade the selection':null;
  return {targets,cost,error};
 }
@@ -163,24 +168,30 @@ function normalizeOutput(b){
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
 export function migrateGame(s){
- if(!s||![1,2,3,4,5,6,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
- const old=s.version<SAVE_SCHEMA;
+ if(!s||![1,2,3,4,5,6,7,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ const previous=s.version,old=previous<SAVE_SCHEMA;
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];
  s.terrain.copper||=makeTerrain(s.seed).copper;s.terrain.coal||=makeTerrain(s.seed).coal;
  for(const r of RESOURCE_KEYS)s.resources[r]??=0;
+ s.resources.power??=0;
  for(const p of s.players){p.inventory||={};for(const field of ['x','z','hp','input','sprinting','cooldown','respawn'])delete p[field];}
  if(old){
-  const outer=makeTerrain(s.seed);
-  for(const kind of ['trees','rocks','ore','copper']){
-   s.terrain[kind]=s.terrain[kind].filter(v=>Math.abs(v.x)<=27&&Math.abs(v.z)<=27)
-    .concat(outer[kind].filter(v=>Math.abs(v.x)>27||Math.abs(v.z)>27));
+  const outer=makeTerrain(s.seed),edge=previous<7?27:39;
+  for(const kind of ['trees','rocks','ore','copper','coal']){
+   s.terrain[kind]=s.terrain[kind].filter(v=>Math.abs(v.x)<=edge&&Math.abs(v.z)<=edge)
+    .concat(outer[kind].filter(v=>Math.abs(v.x)>edge||Math.abs(v.z)>edge));
+  }
+  for(const b of s.buildings)if(b.type==='turret'&&b.level>1)b.type='gunTurret';
+  for(const p of s.players){
+   const upgraded=(p.inventory.turret||[]).filter(b=>b.level>1);
+   if(upgraded.length){(p.inventory.gunTurret??=[]).push(...upgraded);p.inventory.turret=p.inventory.turret.filter(b=>!(b.level>1));}
   }
   let pads=s.buildings.filter(b=>b.type==='launchpad').length;
   s.buildings=s.buildings.filter(b=>b.type!=='launchpad');
   for(const p of s.players){pads+=p.inventory.launchpad?.length||0;delete p.inventory.launchpad;}
   for(const [r,n] of Object.entries({plate:80,steel:20,circuit:15,gear:10}))s.resources[r]+=pads*n;
-  if(s.status==='victory'){s.survived=s.wave>=FINAL_WAVE;s.status=s.survived?'victory':'playing';s.nextWave=Math.max(s.nextWave,s.time+30);}
-  if(s.tutorialStep===0)s.cameraTrained=false;
+  if(previous<7&&s.status==='victory'){s.survived=s.wave>=FINAL_WAVE;s.status=s.survived?'victory':'playing';s.nextWave=Math.max(s.nextWave,s.time+30);}
+  if(previous<7&&s.tutorialStep===0)s.cameraTrained=false;
  }
  delete s.evacuation;
  for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);}
@@ -199,27 +210,42 @@ export function migrateGame(s){
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function rng(seed){let n=seed|0;return()=>{n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967296;};}
 export const key=(x,z)=>`${x},${z}`;
-const GROVES=[[-18,-18],[-3,-19],[14,-18],[-21,-5],[22,-4],[-20,9],[22,9],[-17,21],[-1,18],[14,20]];
 export function makeTerrain(seed=2026){
- const rand=rng(seed),trees=[],ore=[],rocks=[],copper=[],coal=[];
- for(const [cx,cz] of [[-10,-3],[-10,3],[-10,9],[4,5],[9,-9],[15,7],[-19,-13],[-32,-12],[29,22],[8,32]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<7)ore.push({x:cx+x,z:cz+z});
- for(const[cx,cz]of [[8,-4],[17,12],[-18,3],[-24,30],[31,-15]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<6)copper.push({x:cx+x,z:cz+z});
- const deposits=new Set([...ore,...copper].map(v=>key(v.x,v.z)));
- for(const[cx,cz]of [[10,10],[-14,14],[17,-8],[31,9],[-11,-31]])for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)if(x*x+z*z<6)coal.push({x:cx+x,z:cz+z});
- const groves=GROVES.map(([x,z])=>[x+Math.floor(rand()*5)-2,z+Math.floor(rand()*5)-2,3.5+rand()*1.5]);
- for(let x=-BUILD_EDGE-1;x<=BUILD_EDGE+1;x++)for(let z=-BUILD_EDGE-1;z<=BUILD_EDGE+1;z++){
-  if(deposits.has(key(x,z)))continue;
-  const d=Math.hypot(x,z),v=rand();
-  if(d>11&&v<.86&&groves.some(([gx,gz,r])=>(x-gx)**2+(z-gz)**2<r*r*(.75+v*.6)))trees.push({x,z,h:.8+rand()*.8});
-  else if(d>13&&v>.966)rocks.push({x,z,h:.3+rand()*.6});
+ const rand=rng(Math.imul(seed||2026,0x85ebca6b)),trees=new Map(),ore=[],rocks=[],copper=[],coal=[],occupied=new Set();
+ function deposit(list,cx,cz,radius){
+  for(let x=cx-radius;x<=cx+radius;x++)for(let z=cz-radius;z<=cz+radius;z++){
+   const tile=key(x,z);if(occupied.has(tile)||(x-cx)**2+(z-cz)**2>radius**2+1)continue;
+   occupied.add(tile);list.push({x,z});
+  }
  }
- const coalTiles=new Set(coal.map(v=>key(v.x,v.z)));
- return{trees:trees.filter(v=>!coalTiles.has(key(v.x,v.z))),ore,rocks:rocks.filter(v=>!coalTiles.has(key(v.x,v.z))),copper,coal};
+ for(const [x,z] of [[-10,-3],[-10,3],[-10,9],[4,5],[9,-9],[15,7],[-19,-13]])deposit(ore,x,z,2);
+ for(const [x,z] of [[8,-4],[17,12],[-18,3]])deposit(copper,x,z,2);
+ for(const [x,z] of [[10,10],[-14,14],[17,-8]])deposit(coal,x,z,2);
+ for(let gx=-75;gx<=75;gx+=25)for(let gz=-75;gz<=75;gz+=25){
+  if(Math.hypot(gx,gz)<23)continue;
+  const x=gx+Math.floor(rand()*15)-7,z=gz+Math.floor(rand()*15)-7;
+  const deposits=[ore,copper,coal];deposit(deposits[Math.floor(rand()*3)],x,z,2+Math.floor(rand()*3));
+ }
+ function grove(cx,cz,r){
+  const limit=Math.ceil(r);
+  for(let x=cx-limit;x<=cx+limit;x++)for(let z=cz-limit;z<=cz+limit;z++){
+   const tile=key(x,z),d=((x-cx)**2+(z-cz)**2)/(r*r);
+   if(x<-BUILD_EDGE||x>BUILD_EDGE||z<-BUILD_EDGE||z>BUILD_EDGE||Math.hypot(x,z)<15||occupied.has(tile)||d>.8+rand()*.22)continue;
+   trees.set(tile,{x,z,h:.8+rand()*.8});
+  }
+ }
+ for(let gx=-78;gx<=78;gx+=19)for(let gz=-78;gz<=78;gz+=19){
+  if(Math.hypot(gx,gz)<24||rand()<.33)continue;
+  grove(gx+Math.floor(rand()*13)-6,gz+Math.floor(rand()*13)-6,3.8+rand()*5.4);
+ }
+ for(const [x,z] of [[9,7],[10,7],[11,7],[9,8],[10,8],[11,8],[9,9],[10,9]])if(!occupied.has(key(x,z)))trees.set(key(x,z),{x,z,h:1+rand()*.45});
+ for(let x=-BUILD_EDGE;x<=BUILD_EDGE;x++)for(let z=-BUILD_EDGE;z<=BUILD_EDGE;z++)if(Math.hypot(x,z)>16&&!occupied.has(key(x,z))&&!trees.has(key(x,z))&&rand()<.007)rocks.push({x,z,h:.3+rand()*.6});
+ return {trees:[...trees.values()],ore,rocks,copper,coal};
 }
 function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};if(LOGISTICS_TYPES.includes(type)){b.program={...DEFAULT_PROGRAM};programRole(b);}s.buildings.push(b);return b;}
 export function createGame(seed=2026,{difficulty='standard'}={}){
  if(!Object.hasOwn(DIFFICULTIES,difficulty))difficulty='standard';
- const s={version:SAVE_SCHEMA,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:180,gear:20,copper:0,steel:0,circuit:0,module:0,coal:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[]};
+ const s={version:SAVE_SCHEMA,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:180,gear:20,copper:0,steel:0,circuit:0,module:0,coal:0,power:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[]};
  building(s,'hq',0,0);
  if(difficulty==='relaxed')Object.assign(s.resources,{wood:195,plate:210,gear:28});
  // Two working starter chains: ore → plate → shared storage / gears.
@@ -230,8 +256,7 @@ export function createGame(seed=2026,{difficulty='standard'}={}){
   else{building(s,'assembler',-1,z,3);building(s,'belt',-1,2,3);building(s,'belt',-1,1,0);building(s,'belt',0,1,3);}
  }
  building(s,'generator',3,-2);building(s,'sawmill',7,6); 
- // A small grove makes the starter sawmill productive.
- for(const [x,z] of [[9,7],[8,9],[10,8],[9,5],[11,6]])if(!s.terrain.trees.some(t=>t.x===x&&t.z===z))s.terrain.trees.push({x,z,h:1.3});
+
  for(const [x,z] of [[-5,-8],[5,-8],[6,7],[-5,7]]){const b=building(s,'turret',x,z);b.ammo=24;}
  for(let x=-6;x<=6;x++){if(Math.abs(x)<2)continue;building(s,'wall',x,-10);building(s,'wall',x,10);}
  for(let z=-9;z<=9;z++){if(Math.abs(z)<3)continue;building(s,'wall',-13,z);building(s,'wall',12,z);}
@@ -250,7 +275,7 @@ function packBuilding(player,building){
 }
 function emptyConveyor(b){b.item=null;delete b.itemTick;delete b.itemSide;}
 export function createExpedition(name,{difficulty,skipTutorial=false,swarmSeed=0}={}){
- const state=createGame(undefined,{difficulty}),player=addPlayer(state,name);
+ const state=createGame(swarmSeed||2026,{difficulty}),player=addPlayer(state,name);
  if(swarmSeed)state.swarmSeed=swarmSeed;
  for(const b of state.buildings)if(b.type!=='hq')packBuilding(player,b);
  state.buildings=state.buildings.filter(b=>b.type==='hq');
@@ -484,7 +509,7 @@ export function command(s,playerId,cmd){
   b.dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:(b.dir+1)%4;return null;
  }
  if(cmd.type==='upgrade'){
-  if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return 'Building is fully upgraded (10/10)';
+  if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return b.type==='turret'?'Sentry turrets cannot be upgraded':'Building is fully upgraded (10/10)';
   for(const[r,n]of Object.entries(cost))if(s.resources[r]<n)return 'Not enough materials to upgrade';
   for(const[r,n]of Object.entries(cost))s.resources[r]-=n;
   applyUpgrade(b);updatePower(s);return null;
@@ -504,13 +529,20 @@ export function command(s,playerId,cmd){
   b.hp=Math.min(maxHp(b),b.hp+300);return null;
  }return 'Unknown command';
 }
-export function updatePower(s){
+export function updatePower(s,dt=0){
  const core=s.buildings.find(b=>b.type==='hq'),base=18+(core?((core.level||1)-1)*3:0);
  const generatorPower=s.buildings.reduce((power,b)=>{
   const generator=GENERATORS[b.type];return power+(generator&&s.resources[generator.fuel]>0?generator.power*(1+((b.level||1)-1)*.3):0);
  },0);
- s.power={used:s.buildings.reduce((n,b)=>n+buildingPower(b),0),total:Math.round(base+generatorPower)+(roundBonus(s.wave)?.power??0)};
- let available=s.power.total;for(const b of s.buildings){const n=buildingPower(b);b.active=available>=n;if(b.active)available-=n;}
+ const used=s.buildings.reduce((n,b)=>n+buildingPower(b),0),total=Math.round(base+generatorPower)+(roundBonus(s.wave)?.power??0);
+ const reserved=s.resources.power??0;
+ let available=total+(dt?reserved/dt:reserved>0?used:0),delivered=0;
+ for(const b of s.buildings){
+  const n=buildingPower(b);b.active=available+1e-8>=n;
+  if(b.active){available-=n;delivered+=n;}
+ }
+ s.power={used,total};
+ if(dt)s.resources.power=Math.max(0,Math.min(POWER_CAPACITY,reserved+(total-delivered)*dt));
 }
 function recordStockFlow(s,item,amount){
  const flow=s.stats.stockFlow??={};flow[item]=(flow[item]??0)+amount;
@@ -567,7 +599,7 @@ function spawnWave(s){
  const mutationNames=['armored','frenzied','swift'];
  const waveMutation=s.wave>=4?mutationNames[Math.floor(random()*mutationNames.length)]:null;
  for(let i=0;i<count;i++){
-  const side=forecast.side,t=(i*7.31+s.wave*3)%46-23;
+  const side=forecast.side,spread=Math.min(70,23+s.wave*1.8),t=(random()*2-1)*spread;
   const x=side===0?-SWARM_SPAWN_EDGE:side===2?SWARM_SPAWN_EDGE:t;
   const z=side===1?-SWARM_SPAWN_EDGE:side===3?SWARM_SPAWN_EDGE:t;
   const coreHunter=i<coreHunters,brute=!coreHunter&&i%11===0;
@@ -591,7 +623,7 @@ function hunterForest(s){
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
- if(s.tick%20===0)updatePower(s);
+ updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
  const moving=s.buildings.filter(b=>['belt','splitter'].includes(b.type)&&b.item&&s.tick-(b.itemTick??0)>=beltTravelTicks(b)).map(b=>({b,item:b.item}));
@@ -626,12 +658,12 @@ export function step(s,dt=STEP){
   }
   if(b.type==='sawmill'&&s.terrain.trees.some(t=>dist(t,b)<5)){b.progress+=dt*productionSpeed(b,bonus,s.difficulty);if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}}
   if(TURRETS.includes(b.type)){
-   const stats=turretStats(b);b.cooldown-=dt;if(b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
-   if(b.cooldown<=0&&b.ammo>0){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}
+   const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
+   if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}
     if(target){
-     target.hp-=stats.damage;
+     target.hp-=stats.damage;target.lastHit=s.time;
      if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=stats.damage*.65;
-     b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);
+     if(consumesAmmo)b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);
      s.shots.push({x:b.x,z:b.z,tx:target.x,tz:target.z,radius:stats.radius,time:s.time});
     }}
   }
@@ -648,7 +680,7 @@ export function step(s,dt=STEP){
    const distance=(e.x-b.x)**2+(e.z-b.z)**2;
    if(distance<closest){target=b;closest=distance;}
   }
-  const d=dist(e,target),move=e.speed*(e.brute?.7:1)*dt;
+  const d=dist(e,target),move=e.speed*(e.brute?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
   const {x:nx,z:nz}=walkAroundTrees(e.coreHunter?coreRoutes:forest,e,target,move,enemyDestination);
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
   if(obstacle||d<.85){

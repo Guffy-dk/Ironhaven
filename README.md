@@ -8,7 +8,15 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.10 — hold the colony
+## Version 0.11 — open ground
+
+New colonies have a 181 × 181 build area with seeded forests and deposits around a clear start zone. Existing worlds keep their terrain and buildings and get new terrain around the edges. Swarms start at the outer build edge.
+
+The grid stores up to 180 power. Sawmills cost only iron plates and run without power. Sentry turrets run without ammunition or power and have a fixed level. Gun turrets use gears, hit harder and can be upgraded. Upgraded turrets in older saves become gun turrets.
+
+Use **Space** to pause. Press **F**, then click a building or tree to dismantle it.
+
+## Included from 0.10 — hold the colony
 
 Survive 25 swarms to win. Swarms approach from varying directions. Ordinary hostiles target industry when nearby. Gold Core Hunters join from swarm four and pursue the core. Armored hostiles have extra health, frenzied ones hit harder, and swift ones move faster.
 

@@ -40,7 +40,7 @@ test('the smelting round speeds up both ore recipes, leaving drills at their nor
 
 test('the ammunition round gives each gear 20 shots and reduces expected gear demand',()=>{
  const state=createGame(),turret=state.buildings.find(b=>b.type==='turret');
- state.buildings=state.buildings.filter(b=>b===turret||b.type==='hq');
+ turret.type='gunTurret';state.buildings=state.buildings.filter(b=>b===turret||b.type==='hq');
  const demand=()=>productionReport(state).materials.find(r=>r.resource==='gear').demand;
  const original=demand();
  state.wave=3;turret.ammo=0;

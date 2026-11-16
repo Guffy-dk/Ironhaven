@@ -5,8 +5,8 @@ import {parseSave} from '../public/shared/saves.js';
 const make=()=>{const s=createGame();s.nextWave=9999;return{s,p:addPlayer(s)};};
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=10000000;};
 const run=(s,n)=>{for(let i=0;i<n*20;i++)step(s);};
-test('all building types accept exactly ten upgrades with increasing costs and health',()=>{
- for(const type of Object.keys(TYPES).filter(t=>TYPES[t].hp)){
+test('all upgradable building types accept exactly ten upgrades with increasing costs and health',()=>{
+ for(const type of Object.keys(TYPES).filter(t=>TYPES[t].hp&&t!=='turret')){
   const{s,p}=make();s.buildings=[{id:900,type,x:5,z:4,dir:0,hp:TYPES[type].hp,level:1,input:[],progress:0,item:null,ammo:0,cooldown:0,active:true}];rich(s);const b=s.buildings[0];let lastCost=0,lastHp=b.hp;
   for(let i=0;i<MAX_UPGRADES;i++){const cost=upgradeCost(b),sum=Object.values(cost).reduce((n,v)=>n+v,0);assert.ok(sum>lastCost,type+' costs must rise');lastCost=sum;assert.equal(command(s,p.id,{type:'upgrade',x:5,z:4}),null);assert.ok(maxHp(b)>lastHp,type+' health must improve');lastHp=maxHp(b);}
   assert.equal(b.level,11);assert.equal(upgradeCost(b),null);assert.match(command(s,p.id,{type:'upgrade',x:5,z:4}),/fully upgraded/);
@@ -26,7 +26,7 @@ test('invalid iron relocation is atomic unless overridden, then invalid drill is
 });
 test('occupied destinations and an invalid core cannot silently destroy the colony',()=>{
  const{s,p}=make(),core=s.buildings[0];const before=JSON.stringify(s);
- assert.match(command(s,p.id,{type:'moveArea',ids:[core.id],dx:60,dz:0,override:true}),/core cannot be removed/);assert.equal(JSON.stringify(s),before);
+ assert.match(command(s,p.id,{type:'moveArea',ids:[core.id],dx:120,dz:0,override:true}),/core cannot be removed/);assert.equal(JSON.stringify(s),before);
  const t=s.buildings.find(b=>b.type==='turret');assert.ok(planMove(s,[t.id],-t.x,-t.z).invalid.length);assert.match(command(s,p.id,{type:'moveArea',ids:[t.id],dx:-t.x,dz:-t.z}),/cannot be placed/);
 });
 test('every new factory consumes its exact ingredients and delivers a useful processed material',()=>{

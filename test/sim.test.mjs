@@ -36,11 +36,11 @@ test('only four players; host controls time and changes after departure',()=>{
  removePlayer(s,ps[0].id);assert.equal(command(s,ps[1].id,{type:'pause'}),null);run(s,1);assert.ok(s.time>.9);
 });
 test('power shortages stop later machines; generator fuel is consumed',()=>{
- const s=createGame();s.buildings=s.buildings.filter(b=>b.type!=='generator');run(s,1);assert.equal(s.power.total,18);assert.ok(s.buildings.some(b=>TYPES[b.type].power>0&&!b.active));
+ const s=createGame();s.buildings=s.buildings.filter(b=>b.type!=='generator');s.buildings.find(b=>b.type==='turret').type='gunTurret';s.buildings.find(b=>b.type==='turret').type='gunTurret';run(s,1);assert.equal(s.power.total,18);assert.ok(s.buildings.some(b=>TYPES[b.type].power>0&&!b.active));
  const fueled=createGame();const before=fueled.resources.wood;fueled.buildings=fueled.buildings.filter(b=>b.type!=='sawmill');run(fueled,13);assert.equal(fueled.resources.wood,before-1);
 });
 test('turrets fight waves; unprotected core is destroyed; victory after final wave',()=>{
- const s=createGame();addPlayer(s);s.nextWave=.1;run(s,35);assert.equal(s.wave,1);assert.ok(s.totalKills>0);assert.ok(s.shots.length>=0);
+ const s=createGame();addPlayer(s);s.nextWave=.1;run(s,120);assert.equal(s.wave,1);assert.ok(s.totalKills>0);assert.ok(s.shots.length>=0);
  const doomed=createGame();doomed.buildings=doomed.buildings.filter(b=>b.type==='hq');doomed.nextWave=.1;run(doomed,300);assert.equal(doomed.status,'defeat');
  const won=createGame();won.wave=25;step(won);assert.equal(won.status,'victory');
 });
