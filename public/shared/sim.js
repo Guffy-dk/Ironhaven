@@ -88,11 +88,11 @@ export function productionRecipe(b){
 export const DIRECTIONAL = ['inserter','splitter','belt','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
 export const TURRET_LEVELS = [
  {name:'Mk I',hp:350,damage:28,range:10,interval:.38,cost:null},
- {name:'Mk II',hp:500,damage:48,range:10.5,interval:.32,cost:{plate:35,gear:8}},
- {name:'Mk III',hp:700,damage:72,range:11,interval:.28,cost:{plate:60,gear:16}}
+ {name:'Mk II',hp:500,damage:48,range:10.5,interval:.32,cost:{plate:15,gear:3}},
+ {name:'Mk III',hp:700,damage:72,range:11,interval:.28,cost:{plate:21,gear:4}}
 ];
 const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
-for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:Math.ceil(60*1.45**(i-2)),gear:Math.ceil(16*1.4**(i-2))}});
+for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:21+(i-2)*7,gear:4+(i-2)*2}});
 export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
 export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
 export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16}};
@@ -128,20 +128,35 @@ export function roundBonus(wave){
 }
 export function shotsPerGear(bonus){return bonus?.shotsPerGear??16;}
 export const turretReload=(b,bonus)=>Math.floor(shotsPerGear(bonus)/(turretStats(b).ammoDivisor||1));
-export const beltTravelTicks=b=>Math.max(2,8-Math.floor(((b.level||1)-1)*.5));
+export const beltTravelTicks=b=>Math.max(2,9-(b.level||1));
 export function repairCost(bonus){return {...TYPES.repair.cost,plate:bonus?.repairPlates??TYPES.repair.cost.plate};}
 export function productionSpeed(b,bonus,difficulty){
- const upgrade=(1+((b.level||1)-1)*.18)*(DIFFICULTIES[difficulty]?.production??1);
+ const upgrade=(1+((b.level||1)-1)*.5)*(DIFFICULTIES[difficulty]?.production??1);
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
 export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
-export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+(b.type==='storage'?Math.round(300*(1+((b.level||1)-1)*.35)):b.type==='hq'?((b.level||1)-1)*50:0),0);
+export const storageContribution=b=>b.type==='storage'?300+((b.level||1)-1)*180:b.type==='hq'?((b.level||1)-1)*80:0;
+export const storageCapacity = s => 300+s.buildings.reduce((n,b)=>n+storageContribution(b),0);
+export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
+const plateYieldUnits=b=>(b.level||1)>1?6+(b.level-2):4;
+export const plateYield=b=>plateYieldUnits(b)/4;
 export function upgradeCost(b){
  if(b.type==='turret')return null;
  const level=b.level||1;if(level>MAX_UPGRADES)return null;
- const cost=b.type==='gunTurret'?{...TURRET_LEVELS[level].cost}:Object.fromEntries(Object.entries(Object.keys(TYPES[b.type].cost).length?TYPES[b.type].cost:{plate:35,gear:5}).map(([r,n])=>[r,Math.ceil(n*.65*1.45**level)]));
- if(b.type!=='gunTurret'){cost.plate=(cost.plate||0)+Math.ceil(5*level**1.35);cost.gear=(cost.gear||0)+Math.ceil(level**1.25);}
- if(level>=3){cost.steel=(cost.steel||0)+(level-2)*3;cost.circuit=(cost.circuit||0)+(level-2)*2;}return cost;
+ if(b.type==='belt')return level===1?{wood:1}:{wood:level,plate:Math.floor(level/2)};
+ const base=TYPES[b.type].cost;
+ if(GENERATORS[b.type]||b.type==='hq'){
+  const cost=Object.fromEntries(Object.entries(Object.keys(base).length?base:{plate:35,gear:5}).map(([r,n])=>[r,Math.ceil(n*.65*1.45**level)]));
+  cost.plate=(cost.plate||0)+Math.ceil(5*level**1.35);cost.gear=(cost.gear||0)+Math.ceil(level**1.25);
+  if(level>=3){cost.steel=(cost.steel||0)+(level-2)*3;cost.circuit=(cost.circuit||0)+(level-2)*2;}
+  return cost;
+ }
+ const cost=b.type==='gunTurret'?{...TURRET_LEVELS[level].cost}:
+  Object.fromEntries(Object.entries(Object.keys(base).length?base:{plate:35,gear:5}).map(([r,n])=>[r,Math.max(1,Math.round(n*(.42+.08*level)))]));
+ if(b.type!=='gunTurret'&&level>1)cost.plate=(cost.plate||0)+level-1;
+ if(level>=4){cost.steel=(cost.steel||0)+level-3;cost.circuit=(cost.circuit||0)+Math.floor((level-3)/2);}
+ for(const resource of Object.keys(cost))if(!cost[resource])delete cost[resource];
+ return cost;
 }
 export function planGroupUpgrade(s,ids){
  if(!Array.isArray(ids)||!ids.length||ids.length>700)return {error:'Select buildings of one type'};
@@ -165,6 +180,7 @@ function migrateCopperSmelterHealth(b){
  b.hp=Math.max(1,b.hp-(Math.round(260*scale)-Math.round(TYPES.smelter.hp*scale)));
 }
 function normalizeOutput(b){
+ if(b.plateCredit!==undefined&&(!Number.isInteger(b.plateCredit)||b.plateCredit<0||b.plateCredit>3))delete b.plateCredit;
  if(b.outputBuffer!==undefined)b.outputBuffer=Array.isArray(b.outputBuffer)&&b.item?
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
@@ -582,9 +598,9 @@ export function command(s,playerId,cmd){
  }return 'Unknown command';
 }
 export function updatePower(s,dt=0){
- const core=s.buildings.find(b=>b.type==='hq'),base=18+(core?((core.level||1)-1)*3:0);
+ const core=s.buildings.find(b=>b.type==='hq'),base=core?powerOutput(core):18;
  const generatorPower=s.buildings.reduce((power,b)=>{
-  const generator=GENERATORS[b.type];return power+(generator&&s.resources[generator.fuel]>0?generator.power*(1+((b.level||1)-1)*.3):0);
+  const generator=GENERATORS[b.type];return power+(generator&&s.resources[generator.fuel]>0?powerOutput(b):0);
  },0);
  const used=s.buildings.reduce((n,b)=>n+buildingPower(b),0),total=Math.round(base+generatorPower)+(roundBonus(s.wave)?.power??0);
  const reserved=s.resources.power??0;
@@ -710,8 +726,18 @@ export function step(s,dt=STEP){
    const recipe=productionRecipe(b);
    if(!extract&&!recipe)continue;
    const seconds=recipe?.seconds??(b.type==='drill'?1.6:b.type==='coalMine'?2.8:2);
+   const item=extract||recipe.output;
+   const yieldUnits=item==='plate'?plateYieldUnits(b)+(b.plateCredit??0):4;
+   const batch=Math.floor(yieldUnits/4);
+   if(outputCount(b)+batch>OUTPUT_CAPACITY)continue;
    b.progress+=dt*productionSpeed(b,bonus,s.difficulty);
-   if(b.progress+1e-9>=seconds){b.progress=Math.max(0,b.progress-seconds);if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);const item=extract||recipe.output;enqueueOutput(b,item);s.stats.totals[item]=(s.stats.totals[item]||0)+1;}
+   if(b.progress+1e-9>=seconds){
+    b.progress=Math.max(0,b.progress-seconds);
+    if(recipe)for(const[r,n]of Object.entries(recipe.input))for(let i=0;i<n;i++)b.input.splice(b.input.indexOf(r),1);
+    for(let i=0;i<batch;i++)enqueueOutput(b,item);
+    if(item==='plate')b.plateCredit=yieldUnits%4;
+    s.stats.totals[item]=(s.stats.totals[item]||0)+batch;
+   }
   }
   if(b.type==='sawmill'){
    b.progress+=dt*sawmillRate(s,b);
