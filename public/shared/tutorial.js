@@ -4,7 +4,7 @@ const smelter={type:'smelter',x:4,z:1,dir:2,label:'Smelter ←'};
 const hasBuilding=(state,tile)=>state.buildings.some(b=>b.x===tile.x&&b.z===tile.z&&b.type===tile.type&&(tile.dir===undefined||b.dir===tile.dir));
 
 export const TUTORIAL_STEPS=[
- {title:'Move your engineer',body:'Hold W, A, S or D to move a few steps. The camera follows you.',done:state=>{const host=state.players[0];return !!host&&Math.hypot(host.x-2,host.z-2)>=1.25;}},
+ {title:'Move your engineer',body:'Hold W, A, S or D to move a few steps. Space toggles camera follow.',done:state=>{const host=state.players[0];return !!host&&Math.hypot(host.x-2,host.z-2)>=1.25;}},
  {title:'Mine iron ore',body:'Press 2 to select the Iron drill. Press R to point its gold OUT port up and place it on the marked deposit. Placement uses your starter kit.',tiles:[drill]},
  {title:'Feed the smelter',body:'Place an up-facing Conveyor (1) and a left-facing Smelter (3) on the marked tiles. The belt carries ore from gold OUT to cyan IN.',tiles:[input,smelter]},
  {title:'Deliver your first iron plate',body:'Select Conveyor (1). Hold Shift and drag from the Smelter to the core, then release. Watch the first plate reach storage.',done:state=>state.produced.plate>0,markers:[{x:4,z:1,label:'Start at Smelter'},{x:0,z:0,label:'End at core'}]},

@@ -1,4 +1,6 @@
 const paths={
+ ore:'m2 16 4-7 5-2 4 4 4-1 3 6-5 4H6Z M6 9l3 6 6-4m-6 4 3 5m4-6 3-4',
+ copperOre:'m2 15 4-6 5 1 3-5 5 3 3 7-4 5H7Z M6 9l3 7 6-3 4-5m-4 5 3 7',
  inserter:'M3 18h18M7 18V8m10 10V8M6 8h3m6 0h3M9 4h6v7H9V4Zm-4 9h14M2 21h4m12 0h4',
  splitter:'m12 3 8 5v9l-8 4-8-4V8l8-5Zm0 8h8m-8 0V3m0 8v10M4 12h8',
  copper:'M4 7c0-5 16-5 16 0v10c0 5-16 5-16 0V7Zm0 0c0 5 16 5 16 0M4 12c0 5 16 5 16 0',

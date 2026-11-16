@@ -14,7 +14,12 @@ test('all machine rotations and turret levels have finite geometry; ports identi
  for(const type of Object.keys(TYPES).filter(t=>TYPES[t].hp))for(let d=0;d<4;d++){
   const g=makeModel(type,d,[],type==='turret'?3:1);g.updateMatrixWorld(true);
   g.traverse(o=>{if(o.geometry?.attributes?.position){for(const n of o.geometry.attributes.position.array)assert.ok(Number.isFinite(n),type+' has invalid coordinates');}});
-  if(['drill','smelter','assembler'].includes(type)){const labels=g.children.filter(o=>o.isSprite);assert.equal(labels.length,type==='drill'?1:4);const out=labels[0].getWorldPosition(new T.Vector3());assert.ok(Math.abs(out.x-DIRS[d][0]*.72)<.001);assert.ok(Math.abs(out.z-DIRS[d][1]*.72)<.001);}
+  if(['drill','smelter','assembler'].includes(type)){
+   assert.ok(!g.children.some(o=>o.isSprite));
+   const arrows=g.children.filter(o=>o.name.startsWith('arrow-'));assert.equal(arrows.length,type==='drill'?1:4);
+   for(const arrow of arrows){const at=arrow.getWorldPosition(new T.Vector3()),aim=new T.Vector3(1,0,0).transformDirection(arrow.matrixWorld);assert.ok((at.dot(aim)>0)===(arrow.name==='arrow-OUT'));}
+   const out=arrows[0].getWorldPosition(new T.Vector3());assert.ok(Math.abs(out.x-DIRS[d][0]*.66)<.001);assert.ok(Math.abs(out.z-DIRS[d][1]*.66)<.001);
+  }
  }
 });
 test('conveyors support every straight lane, bend and merging junction',()=>{
@@ -34,22 +39,21 @@ test('machine port decals use crisp shared textures and show the real Return sid
  assert.equal(decal.material.depthWrite,false);
  assert.equal(makeModel('inserter').getObjectByName('port-RET').material,decal.material);
 });
-test('overview leaves unreadable badges to the selected building and normal zoom restores them',()=>{
+test('text badges stay hidden on unselected logistics units at every zoom',()=>{
  globalThis.innerWidth=1280;globalThis.innerHeight=720;
- const model=makeModel('smelter'),label=model.getObjectByName('port-OUT'),view=Object.create(View.prototype);
- Object.assign(view,{buildings:new Map([[1,model]]),selection:{position:new T.Vector3()},range:{position:new T.Vector3()},renderer:{setSize(){}},camera:new T.OrthographicCamera(),zoom:35});
+ const model=makeModel('splitter'),label=model.getObjectByName('port-FWD'),view=Object.create(View.prototype);
+ let resizes=0;
+ Object.assign(view,{buildings:new Map([[1,model]]),selection:{position:new T.Vector3()},range:{position:new T.Vector3()},renderer:{setSize(){resizes++;}},camera:new T.OrthographicCamera(),zoom:35});
  view.resize();
  assert.equal(label.visible,false);
- view.select({id:1,type:'smelter',x:0,z:0});
- assert.ok(Math.abs(label.scale.x/view.worldPerPixel-42)<1e-9);
+ view.select({id:1,type:'splitter',x:0,z:0});
+ assert.ok(Math.abs(label.scale.x/view.worldPerPixel-30)<1e-9);
  assert.equal(label.visible,true);
- assert.equal(label.renderOrder,3);
  view.select(null);
- assert.equal(label.renderOrder,2);
  assert.equal(label.visible,false);
  view.setZoom(-21);
- assert.equal(label.visible,true);
- assert.ok(Math.abs(label.scale.x/view.worldPerPixel-30)<1e-9);
+ assert.equal(label.visible,false);
+ assert.equal(resizes,1,'Zooming must not resize the framebuffer');
 });
 test('north-up projection maps W up, A left, and smooth following converges on the engineer',()=>{
  globalThis.innerWidth=1440;globalThis.innerHeight=900;

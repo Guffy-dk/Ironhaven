@@ -23,17 +23,24 @@ test('new colonies keep starter buildings off deposits and have room to expand i
  }
 });
 
-test('tree tiles slow approaching enemies and clearing the tree restores speed',()=>{
+test('hostiles route around tree tiles and take the direct route when a tree is cleared',()=>{
  const state=createGame(),player=addPlayer(state);
  state.buildings=state.buildings.filter(b=>b.type==='hq');
- state.terrain.trees=[{x:10,z:0,h:1}];
+ state.terrain.trees=[-2,-1,0,1,2].map(z=>({x:10,z,h:1}));
  const enemy={x:10.52,z:0,hp:100,speed:2,cooldown:0};
  state.enemies=[enemy];
  step(state);
- assert.ok(Math.abs(enemy.x-10.475)<1e-8);
+ assert.equal(Math.round(enemy.x),11);
  assert.equal(command(state,player.id,{type:'demolish',x:10,z:0}),null);
- step(state);
- assert.ok(Math.abs(enemy.x-10.375)<1e-8);
+ for(let i=0;i<6;i++)step(state);
+ assert.ok(enemy.x<10);
+ state.terrain.trees.push({x:10,z:0,h:1});
+ enemy.x=11;enemy.z=0;
+ for(let i=0;i<90;i++){
+  step(state);
+  assert.ok(!state.terrain.trees.some(t=>t.x===Math.round(enemy.x)&&t.z===Math.round(enemy.z)));
+ }
+ assert.ok(enemy.x<8,'The hostile must make forward progress around the grove');
 });
 
 test('turret upgrades improve damage efficiency while keeping high-level range bounded',()=>{

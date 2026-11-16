@@ -20,7 +20,7 @@ function harness(saved,{tutorial=false}={}){
  dom.eval(bundle.outputFiles[0].text);
  const $=id=>dom.document.getElementById(id),tool=t=>dom.document.querySelector(`[data-type="${t}"]`).click();
  const point=(type,x,z,shift=false)=>$('world').dispatchEvent(new dom.PointerEvent(type,{button:0,clientX:x,clientY:z,shiftKey:shift,bubbles:true}));
- const key=(k,shiftKey=false)=>dom.dispatchEvent(new dom.KeyboardEvent('keydown',{key:k,shiftKey,bubbles:true}));
+ const key=(k,shiftKey=false,ctrlKey=false)=>dom.dispatchEvent(new dom.KeyboardEvent('keydown',{key:k,shiftKey,ctrlKey,bubbles:true}));
  const release=k=>dom.dispatchEvent(new dom.KeyboardEvent('keyup',{key:k,bubbles:true}));
  const frame=n=>frames.shift()?.(n),save=()=>{$('save').click();return JSON.parse(dom.localStorage.getItem('ironhaven.save.v1')).state;};
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
@@ -87,7 +87,41 @@ test('damage bars hide at full health; empty ammo and the final 20-second warnin
 });
 test('W+A sends both movement axes and the camera follows the engineer',async()=>{
  const h=harness();try{h.$('start-solo').click();h.key('w');h.key('a');h.frame(1000);let s=h.save();assert.deepEqual(s.players[0].input,{x:0,z:0}); // saves intentionally stop movement
- for(let i=0;i<10;i++)h.ticks[0]();h.frame(1400);assert.ok(h.dom.__view.followed);s=h.save();assert.ok(s.players[0].x<2&&s.players[0].z<2);assert.equal(h.dom.__view.followed.id,s.players[0].id);
+ for(let i=0;i<10;i++)h.ticks[0]();h.frame(1400);h.frame(1460);assert.ok(h.dom.__view.followed);s=h.save();assert.ok(s.players[0].x<2&&s.players[0].z<2);assert.ok(h.dom.__view.followed.x<2&&h.dom.__view.followed.z<2);
+ }finally{await h.close();}
+});
+test('free camera stays unlocked while the engineer walks and Space restores follow',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();assert.equal(h.$('focus').getAttribute('aria-pressed'),'true');
+  h.$('focus').click();h.key('d');h.frame(1000);h.ticks[0]();h.frame(1050);
+  assert.equal(h.$('focus').textContent,'Free');assert.equal(h.dom.__view.followed,undefined);assert.ok(h.save().players[0].x>2);
+  h.key(' ');h.frame(1100);assert.equal(h.$('focus').textContent,'Follow');assert.ok(h.dom.__view.followed);
+  h.key('ArrowLeft');h.frame(1150);assert.equal(h.$('focus').getAttribute('aria-pressed'),'false');
+ }finally{await h.close();}
+});
+test('copy and paste previews a replacement layout and U upgrades a same-type selection',async()=>{
+ const saved=starterWorld();saved.state.terrain.trees=[];saved.state.terrain.rocks=[];
+ const h=harness(saved);try{
+  h.$('resume').click();const belts=h.save().buildings.filter(b=>b.type==='belt');
+  const a=belts[1],b=belts[2];
+  h.point('pointerdown',a.x,a.z);h.point('pointermove',b.x+6,b.z+6);h.point('pointerup',b.x,b.z);
+  assert.match(h.$('area-count').textContent,/2 selected/);
+  assert.equal(h.$('upgrade-selection').hidden,false);h.key('u');
+  assert.equal(h.save().buildings.find(v=>v.id===a.id).level,2);
+  h.key('c',false,true);h.point('pointermove',14,14);h.key('v',false,true);
+  assert.equal(h.dom.__view.route.length,2);h.point('pointerdown',14,14);h.point('pointerup',14,14);
+  assert.ok(h.save().buildings.some(v=>v.type==='belt'&&v.x===14&&v.z===14));
+ }finally{await h.close();}
+});
+test('selected factory shows materials, buffered output and independent sharing switches',async()=>{
+ const saved=starterWorld(),smelter=saved.state.buildings.find(b=>b.type==='smelter');smelter.item='plate';smelter.outputBuffer=['copper'];
+ const h=harness(saved);try{
+  h.$('resume').click();h.point('pointerdown',smelter.x,smelter.z);h.point('pointerup',smelter.x,smelter.z);h.frame(1000);
+  assert.match(h.$('machine-io').textContent,/Iron ore.*iron plates/i);assert.match(h.$('machine-io').textContent,/Copper ore.*copper/i);
+  assert.equal(h.$('output-stock').textContent,'Output buffer 2 / 10');
+  assert.equal(h.$('output-options').hidden,false);h.$('send-output').click();
+  const selected=h.save().buildings.find(b=>b.id===smelter.id);
+  assert.equal(selected.sendOutput,true);assert.equal(selected.receiveOutput,false);
  }finally{await h.close();}
 });
 test('the playfield warning announces its forecast and attack independently of the minimap',async()=>{

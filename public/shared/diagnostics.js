@@ -1,12 +1,12 @@
-import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,shotsPerGear,storageCapacity,turretStats,LOGISTICS_TYPES,logisticsStatus,canAcceptItem} from './sim.js';
-export const STATUS_LABELS={running:'Running',input:'Waiting for inputs',output:'Output blocked',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
+import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,shotsPerGear,storageCapacity,turretStats,LOGISTICS_TYPES,logisticsStatus,canAcceptItem,canShareOutput,hasOutputBuffer,outputCount,OUTPUT_CAPACITY} from './sim.js';
+export const STATUS_LABELS={running:'Running',input:'Waiting for inputs',output:'Output blocked',buffering:'Buffering output',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
 export function factoryStatus(s,b,grid){
  if(LOGISTICS_TYPES.includes(b.type))return logisticsStatus(s,b,grid);
  if(b.type==='generator')return s.resources.wood>0?'running':'fuel';
  if(!b.active)return 'power';
  if(b.type==='turret')return b.ammo||s.resources.gear?'running':'ammo';
  if(b.type==='sawmill')return s.resources.wood>=storageCapacity(s)?'storage':'running';
- if(b.item){const[dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));if(['hq','storage','launchpad'].includes(out?.type)&&RESOURCE_KEYS.includes(b.item)&&s.resources[b.item]>=storageCapacity(s))return 'storage';return canAcceptItem(s,out,b.item,b)?'running':'output';}
+ if(b.item){const[dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));if(canAcceptItem(s,out,b.item,b)||hasOutputBuffer(b.type)&&canShareOutput(b,out))return 'running';if(hasOutputBuffer(b.type)&&outputCount(b)<OUTPUT_CAPACITY)return 'buffering';if(['hq','storage','launchpad'].includes(out?.type)&&RESOURCE_KEYS.includes(b.item)&&s.resources[b.item]>=storageCapacity(s))return 'storage';return 'output';}
  if(RECIPES[b.type])return productionRecipe(b)?'running':'input';
  return ['drill','copperDrill'].includes(b.type)?'running':'idle';
 }

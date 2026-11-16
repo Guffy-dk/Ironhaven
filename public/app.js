@@ -1,4 +1,5 @@
 import { View } from './render.js';
+import { RenderMotion } from './motion.js';
 import { createGame,createExpedition,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,TURRET_LEVELS,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,storageCapacity,planMove,LAUNCH_COST,buildingPower,productionSpeed,roundBonus,repairCost,shotsPerGear,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
 import { CURRENT_VERSION,RELEASE_STAGE,RELEASES,displayVersion } from './shared/releases.js';
 import { TUTORIAL_STEPS,tutorialTargets } from './shared/tutorial.js';
@@ -7,12 +8,14 @@ import { factoryStatus,STATUS_LABELS,productionReport } from './shared/diagnosti
 import { parseSave,packWorldSave } from './shared/saves.js';
 import { Lan } from './network.js';
 import { icon,RESOURCE_NAMES } from './icons.js';
+import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY } from './shared/sim.js';
 const $=id=>document.getElementById(id),SAVE='ironhaven.save.v1',NAME='ironhaven.name';
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=createGame(),playerId=null,started=false,mode='solo',view,tool=null,dir=0,selected=null,tab='all',lastWave=0,lastEvent=0,ended=false,lowQuality=false,muted=true,audio=null,lastMove='0,0',hover=null,dragging=false,lastBuild='',lastUi=0,lastNet=0,lastSave=0,syncTick=0,pendingDisconnect=false;
-const keys=new Set();
+const keys=new Set(),motion=new RenderMotion(),renderPoint={x:0,z:0};
 let followCamera=true,rowAnchor=null,rowGesture=null,routePlan=null,lastRouteKey='',pointer=null;
 let areaIds=[],selectionGesture=null,movingArea=false,pendingMove=null,showDiagnostics=false,checkpointCache=null,lastAutoCheckpoint='';
+let copiedSetup=[],pasting=false;
 const CHECKPOINTS='ironhaven.checkpoints.v1';
 let programTargetId=null;
 initWindows();
@@ -27,6 +30,8 @@ function tone(freq=440,duration=.08,volume=.025,type='sine'){
 try{view=new View($('world'));}catch(e){$('loading').innerHTML='<p>3D could not start. Enable WebGL / hardware acceleration in your browser and reload.</p>';throw e;}
 function readStorage(key){try{return localStorage.getItem(key);}catch{return null;}}
 function writeStorage(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
+setFollowCamera(readStorage('ironhaven.followCamera')!=='false');
+setGraphics(readStorage('ironhaven.lightGraphics')==='true');
 $('skip-tutorial').checked=readStorage('ironhaven.skipTutorial')==='true';
 $('player-name').value=readStorage(NAME)||'Engineer';$('difficulty').value=readStorage('ironhaven.difficulty')||'standard';
 if(readStorage(SAVE))$('resume').hidden=false;
@@ -45,8 +50,9 @@ function updateToolbar(){
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
  document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type,production=['drill','copperDrill',...Object.keys(RECIPES)].includes(t),defense=['turret','wall','repair','demolish'].includes(t),logistics=['inserter','splitter','belt','generator','sawmill','storage','launchpad','repair','demolish'].includes(t);el.hidden=tab==='production'&&!production||tab==='defense'&&!defense||tab==='logistics'&&!logistics;el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(t==='repair'?repair:TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
 }
-function setTool(t){if(t)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
+function setTool(t){pasting=false;if(t)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
 function updateHover(){
+ if(pasting){previewPaste();return;}
  if(movingArea){previewMove();return;}
  if(rowGesture&&refreshRoute())return;
  if(!hover||!tool){view.cursor.visible=false;if(view.ghost)view.ghost.visible=false;return;}
@@ -78,7 +84,7 @@ function startGame(resume=false){
  else newExpedition($('player-name').value,$('difficulty').value);
  mode='solo';finishStart();checkpoint(resume?'Resumed world':'Expedition start');return true;
 }
-function finishStart(){started=true;ended=false;lastWave=state.wave;lastEvent=0;writeStorage(NAME,$('player-name').value);$('difficulty').value=state.difficulty||'standard';writeStorage('ironhaven.difficulty',$('difficulty').value);$('start-screen').hidden=true;document.body.classList.remove('at-start');$('end-dialog').close();clearArea();setTool(null);focusEngineer(true);updateUi();view.sync(state);tone(520,.15);}
+function finishStart(){started=true;ended=false;lastWave=state.wave;lastEvent=0;writeStorage(NAME,$('player-name').value);$('difficulty').value=state.difficulty||'standard';writeStorage('ironhaven.difficulty',$('difficulty').value);$('start-screen').hidden=true;document.body.classList.remove('at-start');$('end-dialog').close();clearArea();setTool(null);motion.reset();const p=state.players.find(p=>p.id===playerId);if(p)view.center.set(p.x,0,p.z);updateUi();view.sync(state);tone(520,.15);}
 function restart(){
  if(mode==='client'){toast('Only the host can restart the expedition.',true);return;}
  if(mode==='host'){
@@ -137,6 +143,23 @@ function updateInspector(){
  $('program-building').textContent='Program flow (E) ↗';
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'Keep the expedition supplied, protect the crew and build the route home.';
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
+ const outputOptions=$('output-options');outputOptions.hidden=!b||!!tool||!hasOutputBuffer(type);
+ if(!outputOptions.hidden){
+  const stock=[b.item,...(b.outputBuffer||[])].filter(Boolean).reduce((counts,item)=>(counts[item]=(counts[item]||0)+1,counts),{});
+  $('output-stock').textContent=`Output buffer ${outputCount(b)} / ${OUTPUT_CAPACITY}`;
+  $('output-stock-items').textContent=Object.entries(stock).map(([item,count])=>`${count} ${ITEM_NAMES[item]}`).join(' · ');
+  $('send-output').checked=b.sendOutput===true;$('receive-output').checked=b.receiveOutput===true;
+ }
+ const inputStatus=$('input-stock');inputStatus.hidden=!b||!!tool||!RECIPES[type];
+ if(!inputStatus.hidden){
+  const requirements=RECIPES[type].input;
+  const materials=type==='smelter'?[['ore',1],['copperOre',1]]:Object.entries(requirements);
+  const rows=materials.map(([item,count])=>{
+   const held=b.input.filter(value=>value===item).length;
+   return `<div class="stat-row"><span>${escape(ITEM_NAMES[item])}</span><span class="${held<count?'bad':'ok'}">${held} / ${count} needed</span></div>`;
+  }).join('');
+  if(inputStatus.innerHTML!==rows)inputStatus.innerHTML=rows;
+ }
  const row=(a,v,cls='')=>`<div class="stat-row"><span>${a}</span><span class="${cls}">${v}</span></div>`;
  if(tool){const count=inventoryCount(state,playerId,type);$('intel-stats').innerHTML=(count?row('Use from inventory',count,'ok'):Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join(''))+(def.power?row('Power',def.power):'');}
  else{const bb=b||state.buildings.find(b=>b.type==='hq');$('intel-stats').innerHTML=bb?row('Health',`${Math.max(0,Math.ceil(bb.hp))} / ${maxHp(bb)}`)+`<div class="hp-bar"><i style="width:${Math.max(0,bb.hp/maxHp(bb)*100)}%"></i></div>`+row('Status',STATUS_LABELS[factoryStatus(state,bb,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))],bb.active?'ok':'bad')+(bb.type==='turret'?row('Ammo',bb.ammo,bb.ammo<=3?'bad':'ok')+row('Turret level',turretStats(bb).name)+row('Damage / range',`${turretStats(bb).damage} / ${turretStats(bb).range}`):'')+(bb.input?.length?row('Input buffer',bb.input.length+'/'+((bb.type==='smelter'?2:Object.values(RECIPES[bb.type]?.input||{}).reduce((n,v)=>n+v,0))*4||8)):'')+(buildingPower(bb)?row('Power used',buildingPower(bb)):'')+(RECIPES[bb.type]||['drill','copperDrill','sawmill'].includes(bb.type)?row('Production speed',productionSpeed(bb,roundBonus(state.wave)).toFixed(2)+'×'):'')+(bb.type==='generator'?row('Power supplied',Math.round(18*(1+((bb.level||1)-1)*.3))):'')+row('Upgrades',`${(bb.level||1)-1} / ${MAX_UPGRADES}`)+(bb.type==='storage'||bb.type==='hq'?row('Storage / material',storageCapacity(state)):'')+(LOGISTICS_TYPES.includes(bb.type)?row('Plan M / F / R',`${programFor(bb).machine} / ${programFor(bb).forward} / ${programFor(bb).return}`)+row('Batch remaining',bb.remaining||0)+row('Delivered M / F / R',`${bb.shipments?.machine||0} / ${bb.shipments?.forward||0} / ${bb.shipments?.return||0}`)+row('Bypassed',bb.shipments?.bypassed||0):'')+row('Position',`${bb.x}, ${bb.z}`):row('Status','Core destroyed','bad');}
@@ -183,8 +206,14 @@ function updateUi(){
 }
 const mini=$('minimap'),ctx=mini.getContext('2d');
 function drawMinimap(){const w=mini.width,h=mini.height,sx=w/56,sz=h/56;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+28)*sx,(t.z+28)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+28)*sx,(b.z+28)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect((e.x+28)*sx,(e.z+28)*sz,2,2);ctx.fillStyle='#ffdc98';for(const p of state.players)ctx.fillRect((p.x+28)*sx-1,(p.z+28)*sz-1,3,3);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+28-cw/2)*sx,(view.center.z+28-ch/2)*sz,cw*sx,ch*sz);}
-mini.onclick=e=>{followCamera=false;const rect=mini.getBoundingClientRect();view.center.set((e.clientX-rect.left)/rect.width*56-28,0,(e.clientY-rect.top)/rect.height*56-28);};
-function focusEngineer(snap=false){followCamera=true;const p=state.players.find(p=>p.id===playerId);if(p&&snap)view.center.set(p.x,0,p.z);}
+mini.onclick=e=>{setFollowCamera(false);const rect=mini.getBoundingClientRect();view.center.set((e.clientX-rect.left)/rect.width*56-28,0,(e.clientY-rect.top)/rect.height*56-28);};
+function setFollowCamera(follow){
+ followCamera=follow;
+ const button=$('focus');button.textContent=follow?'Follow':'Free';
+ button.title=follow?'Release camera (Space)':'Follow engineer (Space)';
+ button.setAttribute('aria-pressed',String(follow));
+}
+function toggleCamera(){setFollowCamera(!followCamera);writeStorage('ironhaven.followCamera',String(followCamera));}
 function dragEndpoint(origin,cell){
  const [dx,dz]=DIRS[dir],distance=Math.max(0,(cell.x-origin.x)*dx+(cell.z-origin.z)*dz);
  return {x:origin.x+dx*distance,z:origin.z+dz*distance};
@@ -236,6 +265,7 @@ $('world').addEventListener('pointermove',e=>{
 $('world').addEventListener('pointerdown',e=>{
  if(e.button===2){setTool(null);return;}if(e.button!==0||!started)return;
  pointer={x:e.clientX,y:e.clientY};hover=view.point(e.clientX,e.clientY);if(!hover)return;
+ if(pasting){placePaste();return;}
  if(movingArea){placeArea(e.shiftKey);return;}
  if(tool){
   if(tool==='belt'||e.shiftKey&&tool==='wall'){
@@ -259,10 +289,18 @@ $('launch-colony').onclick=()=>{const b=state.buildings.find(b=>b.id===selected)
 $('upgrade-turret').onclick=()=>{const b=state.buildings.find(b=>b.id===selected);if(b&&execute({type:'upgrade',x:b.x,z:b.z})!==false){tone(880,.16);updateUi();}};
 $('world').addEventListener('wheel',e=>{e.preventDefault();view.setZoom(e.deltaY*.015);},{passive:false});
 window.addEventListener('keydown',e=>{
- if(e.ctrlKey||e.metaKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+ if(e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable)return;
+ if(e.ctrlKey||e.metaKey){
+  if(!started||e.repeat||document.querySelector('dialog[open]'))return;
+  const shortcut=e.key.toLowerCase();
+  if(shortcut==='c'&&areaIds.length){e.preventDefault();copyArea();}
+  if(shortcut==='v'&&copiedSetup.length){e.preventDefault();beginPaste();}
+  return;
+ }
  if(e.key==='Escape'||e.key.toLowerCase()==='q'){setTool(null);clearArea();keys.clear();return;}
  if(document.querySelector('dialog[open]'))return;
  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(!started||e.repeat)return;
+ if(pasting&&e.key.toLowerCase()==='r')return;
  const i=SHORTCUT.indexOf(e.key);if(i>=0)setTool(tool===TOOL_LIST[i]?null:TOOL_LIST[i]);
  if(e.key.toLowerCase()==='r'){
   if(tool){
@@ -274,15 +312,23 @@ window.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'&&selected)openProgram();
  if(e.key.toLowerCase()==='b')$('toggle-diagnostics').click();if(e.key.toLowerCase()==='i')$('production-overview').click();
  if(e.key.toLowerCase()==='m'&&areaIds.length)beginMove();
- if(e.key.toLowerCase()==='u'&&selected)$('upgrade-turret').click();
- if(e.key.toLowerCase()==='p')execute({type:'pause'});if(e.key===' ')focusEngineer(true);if(e.key==='?')$('help-dialog').showModal();
+ if(e.key.toLowerCase()==='u'){if(areaIds.length>1)upgradeSelection();else if(selected)$('upgrade-turret').click();}
+ if(e.key.toLowerCase()==='p')execute({type:'pause'});if(e.key===' ')toggleCamera();if(e.key==='?')$('help-dialog').showModal();
 });window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();if(rowGesture){clearRoute();updateHover();}if(started)execute({type:'move',x:0,z:0});});
-$('start-solo').onclick=()=>startGame();$('resume').onclick=()=>startGame(true);$('start-lan').onclick=()=>showLan();$('open-lan').onclick=()=>showLan();$('help').onclick=()=>$('help-dialog').showModal();$('menu').onclick=()=>$('menu-dialog').showModal();$('brand').onclick=e=>{e.preventDefault();if(started)$('menu-dialog').showModal();};$('continue').onclick=()=>$('menu-dialog').close();$('pause').onclick=()=>execute({type:'pause'});$('speed').onclick=()=>execute({type:'speed'});$('save').onclick=()=>saveGame();$('menu-save').onclick=()=>saveGame();$('early-wave').onclick=()=>execute({type:'wave'});$('zoom-in').onclick=()=>view.setZoom(-2);$('zoom-out').onclick=()=>view.setZoom(2);$('focus').onclick=()=>focusEngineer(true);$('restart').onclick=()=>{$('menu-dialog').close();restart();};$('end-restart').onclick=restart;
-$('quality').onclick=()=>{lowQuality=!lowQuality;view.setQuality(lowQuality);$('quality').textContent='Graphics: '+(lowQuality?'light (no shadows)':'standard');};
+$('start-solo').onclick=()=>startGame();$('resume').onclick=()=>startGame(true);$('start-lan').onclick=()=>showLan();$('open-lan').onclick=()=>showLan();$('help').onclick=()=>$('help-dialog').showModal();$('menu').onclick=()=>$('menu-dialog').showModal();$('brand').onclick=e=>{e.preventDefault();if(started)$('menu-dialog').showModal();};$('continue').onclick=()=>$('menu-dialog').close();$('pause').onclick=()=>execute({type:'pause'});$('speed').onclick=()=>execute({type:'speed'});$('save').onclick=()=>saveGame();$('menu-save').onclick=()=>saveGame();$('early-wave').onclick=()=>execute({type:'wave'});$('zoom-in').onclick=()=>view.setZoom(-2);$('zoom-out').onclick=()=>view.setZoom(2);$('focus').onclick=toggleCamera;$('restart').onclick=()=>{$('menu-dialog').close();restart();};$('end-restart').onclick=restart;
+function setGraphics(light){
+ lowQuality=light;view.setQuality(light);document.body.classList.toggle('light-graphics',light);
+ $('quality').textContent='Graphics: '+(light?'light':'standard');
+}
+$('quality').onclick=()=>{setGraphics(!lowQuality);writeStorage('ironhaven.lightGraphics',String(lowQuality));};
+for(const id of ['send-output','receive-output'])$(id).onchange=()=>{
+ const b=state.buildings.find(b=>b.id===selected);
+ if(b)execute({type:'configureOutput',id:b.id,x:b.x,z:b.z,send:$('send-output').checked,receive:$('receive-output').checked});
+};
 function updateSound(){$('sound').innerHTML=icon(muted?'mute':'sound',19);$('sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');}
 $('sound').onclick=()=>{muted=!muted;updateSound();tone(660,.09);};updateSound();
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
-function nameplates(){const root=$('nameplates');const ids=new Set(state.players.map(p=>'p'+p.id));for(const el of [...root.children])if(!ids.has(el.id))el.remove();for(const p of state.players){let el=$('p'+p.id);if(!el){el=document.createElement('div');el.id='p'+p.id;el.className='nameplate';root.append(el);}const pos=view.project(p.x,p.z);el.style.left=pos.x+'px';el.style.top=pos.y+'px';el.hidden=!pos.visible;el.textContent=p.name+(p.id===playerId?' · YOU':'')+(p.hp<=0?` · ${Math.ceil(p.respawn)}s`:'');el.classList.toggle('dead',p.hp<=0);}}
+function nameplates(){const root=$('nameplates');const ids=new Set(state.players.map(p=>'p'+p.id));for(const el of [...root.children])if(!ids.has(el.id))el.remove();for(const p of state.players){let el=$('p'+p.id);if(!el){el=document.createElement('div');el.id='p'+p.id;el.className='nameplate';root.append(el);}const {x,z}=motion.position(p,renderPoint),pos=view.project(x,z);el.style.left=pos.x+'px';el.style.top=pos.y+'px';el.hidden=!pos.visible;const title=p.name+(p.id===playerId?' · YOU':'')+(p.hp<=0?` · ${Math.ceil(p.respawn)}s`:'');if(el.textContent!==title)el.textContent=title;el.classList.toggle('dead',p.hp<=0);}}
 function buildingLabels(){
  const root=$('building-labels'),wanted=new Set(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
  for(const b of state.buildings){
@@ -298,22 +344,87 @@ function buildingLabels(){
  for(const el of [...root.children])if(!wanted.has(el.id))el.remove();
 }
 function updateAreaTools(){
- $('area-tools').hidden=!areaIds.length;$('area-count').textContent=areaIds.length+' selected';view.markArea(areaIds,state);
+ $('area-tools').hidden=!areaIds.length&&!copiedSetup.length;
+ $('area-count').textContent=areaIds.length?areaIds.length+' selected':copiedSetup.length+' copied';
+ $('move-selection').hidden=$('clear-selection').hidden=$('copy-selection').hidden=!areaIds.length;
+ $('paste-selection').hidden=!copiedSetup.length;
+ updateGroupUpgrade();
+ view.markArea(areaIds,state);
 }
-function clearArea(){areaIds=[];movingArea=false;selectionGesture=null;pendingMove=null;$('selection-box').hidden=true;$('area-tools').hidden=true;view.markArea([],state);view.previewRoute([]);$('tool-hint').hidden=!tool;}
-function beginMove(){if(!areaIds.length)return;tool=null;view.setTool(null);movingArea=true;followCamera=false;$('tool-hint').hidden=false;previewMove();}
+function updateGroupUpgrade(){
+ const button=$('upgrade-selection');button.hidden=areaIds.length<2;
+ if(button.hidden){$('area-price').hidden=true;return;}
+ const plan=planGroupUpgrade(state,areaIds);
+ button.hidden=!plan.targets;
+ button.disabled=!!plan.error;
+ button.textContent=plan.targets?.length?`Upgrade ${plan.targets.length} (U)`:'Fully upgraded';
+ button.title=[plan.error,...materialCosts(plan.cost)].filter(Boolean).join(' · ');
+ $('area-price').textContent=button.hidden?'':materialCosts(plan.cost).join(' · ');
+ $('area-price').hidden=button.hidden;
+}
+function upgradeSelection(){
+ if(areaIds.length<2)return;
+ if(execute({type:'upgradeSelection',ids:areaIds})!==false){updateUi();updateGroupUpgrade();}
+}
+function clearArea(){areaIds=[];movingArea=false;pasting=false;selectionGesture=null;pendingMove=null;$('selection-box').hidden=true;updateAreaTools();view.previewRoute([]);$('tool-hint').hidden=!tool;}
+function beginMove(){if(!areaIds.length)return;tool=null;view.setTool(null);movingArea=true;pasting=false;setFollowCamera(false);$('tool-hint').hidden=false;previewMove();}
+function copyArea(){
+ const layout=copySetup(state,areaIds);
+ if(!layout.length){toast('Select a building to copy. The core is unique.',true);return;}
+ copiedSetup=layout;updateAreaTools();toast(layout.length+' buildings copied · Ctrl+V to place');
+}
+function beginPaste(){
+ if(!copiedSetup.length)return;
+ setTool(null);clearArea();pasting=true;$('tool-hint').hidden=false;previewPaste();
+}
+function previewPaste(){
+ const plan=hover?planPaste(state,copiedSetup,hover,playerId):{cells:[],error:null};
+ view.previewRoute(plan.cells,!plan.error,true);
+ const prices=materialCosts(plan.cost);
+ const hint=$('tool-hint');hint.classList.toggle('invalid',!!plan.error);
+ hint.textContent=plan.error||`${copiedSetup.length} buildings · ${prices.length?prices.join(' · ')+' · ':''}Click to paste · Esc cancels`;
+}
+function materialCosts(cost){return Object.entries(cost||{}).filter(([,count])=>count>0).map(([resource,count])=>`${count} ${RESOURCE_NAMES[resource]}`);}
+function placePaste(){
+ const plan=planPaste(state,copiedSetup,hover,playerId);
+ if(plan.error){toast(plan.error,true);return;}
+ if(execute({type:'pasteSetup',layout:copiedSetup,anchor:hover})!==false){clearArea();updateUi();if(mode!=='client')toast('Setup placed.');}
+}
 function movePlan(){if(!hover)return null;const bs=state.buildings.filter(b=>areaIds.includes(b.id));if(!bs.length){clearArea();return null;}const ax=Math.round((Math.min(...bs.map(b=>b.x))+Math.max(...bs.map(b=>b.x)))/2),az=Math.round((Math.min(...bs.map(b=>b.z))+Math.max(...bs.map(b=>b.z)))/2);return{...planMove(state,areaIds,hover.x-ax,hover.z-az),dx:hover.x-ax,dz:hover.z-az};}
 function previewMove(){const plan=movePlan();if(!plan)return;view.previewRoute([...plan.valid,...plan.invalid],!plan.error&&!plan.invalid.length);$('tool-hint').classList.toggle('invalid',!!plan.error||plan.invalid.length>0);$('tool-hint').textContent=plan.error||`${plan.valid.length} valid · ${plan.invalid.length} blocked · Click to move · Shift-click packs invalid buildings · Q / Esc cancels`;}
 function placeArea(override){const plan=movePlan();if(!plan)return;if(plan.error){toast(plan.error,true);return;}const cmd={type:'moveArea',ids:[...areaIds],dx:plan.dx,dz:plan.dz,override};if(plan.invalid.length&&override&&!readStorage('ironhaven.skipMoveConfirm')){pendingMove=cmd;$('move-confirm-summary').textContent=`Move ${plan.valid.length} buildings and pack ${plan.invalid.length} invalid buildings into inventory?`;$('move-invalid-list').innerHTML=plan.invalid.slice(0,20).map(b=>`<li>${escape(TYPES[b.type].name)}: ${escape(b.reason)}</li>`).join('');$('move-dont-ask').checked=false;$('move-confirm').showModal();return;}if(execute(cmd)!==false){clearArea();toast('Area relocated.');}}
 $('move-selection').onclick=beginMove;$('clear-selection').onclick=clearArea;
+$('copy-selection').onclick=copyArea;$('paste-selection').onclick=beginPaste;
+$('upgrade-selection').onclick=upgradeSelection;
 $('confirm-move').onclick=()=>{if(!pendingMove)return;if($('move-dont-ask').checked)writeStorage('ironhaven.skipMoveConfirm','true');const cmd=pendingMove;$('move-confirm').close();if(execute(cmd)!==false){clearArea();toast('Area relocated. Invalid buildings are in your inventory.');}};
 $('reset-move-confirm').onclick=()=>{writeStorage('ironhaven.skipMoveConfirm','');toast('Move confirmations restored.');};
 $('export-save').onclick=()=>{if(mode==='client')return;saveGame(true);const text=readStorage(SAVE);if(!text)return;const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='Ironhaven-'+CURRENT_VERSION+'-world.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('World backup exported.');};
 $('import-save').onclick=()=>$('save-file').click();
 $('save-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(lan.peers.size)throw Error('Close LAN before importing a world.');const data=parseSave(await file.text());writeStorage(SAVE,JSON.stringify(data));$('menu-dialog').close();startGame(true);toast('World backup imported.');}catch(error){toast(error.message,true);}finally{e.target.value='';}};
 const enemyCanvas=$('enemy-health'),enemyCtx=enemyCanvas.getContext('2d');
-function enemyHealth(){if(enemyCanvas.width!==innerWidth||enemyCanvas.height!==innerHeight){enemyCanvas.width=innerWidth;enemyCanvas.height=innerHeight;}enemyCtx.clearRect(0,0,innerWidth,innerHeight);for(const e of state.enemies){const p=view.project(e.x,e.z,1.35*(e.brute?1.4:1));if(!p.visible)continue;enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}}
+function enemyHealth(){
+ enemyCanvas.hidden=!state.enemies.length;if(enemyCanvas.hidden)return;
+ if(enemyCanvas.width!==innerWidth||enemyCanvas.height!==innerHeight){enemyCanvas.width=innerWidth;enemyCanvas.height=innerHeight;}
+ enemyCtx.clearRect(0,0,innerWidth,innerHeight);
+ for(const e of state.enemies){const {x,z}=motion.position(e,renderPoint),p=view.project(x,z,1.35*(e.brute?1.4:1));if(!p.visible)continue;enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}
+}
 const ITEM_NAMES={ore:'Iron ore',copperOre:'Copper ore',...Object.fromEntries(Object.entries(RESOURCE_NAMES).map(([k,v])=>[k,v.toLowerCase()]))};
+function drawMachineIO(){
+ const panel=$('machine-io');
+ const target=tool&&hover?{type:tool,...hover}:state.buildings.find(b=>b.id===selected);
+ const recipe=target&&RECIPES[target.type],position=target&&hasOutputBuffer(target.type)?view.project(target.x,target.z,1.85):null;
+ panel.hidden=!position?.visible;
+ if(panel.hidden)return;
+ if(panel.dataset.type!==target.type){
+  const item=(name,quantity=1)=>`<span class="io-item" data-item="${name}">${icon(name,16)}${quantity>1?quantity+' × ':''}${escape(ITEM_NAMES[name])}</span>`;
+  const row=(input,output)=>`<div class="io-line"><span class="io-input">${input}</span><span class="io-arrow" aria-hidden="true">→</span><span class="io-output">${output}</span></div>`;
+  panel.innerHTML=target.type==='smelter'?row(item('ore'),item('plate'))+row(item('copperOre'),item('copper')):
+   recipe?row(Object.entries(recipe.input).map(([name,count])=>item(name,count)).join(''),item(recipe.output)):
+   row('Deposit',item(target.type==='copperDrill'?'copperOre':'ore'));
+  panel.dataset.type=target.type;
+ }
+ panel.style.transform=`translate(${Math.round(position.x)}px,${Math.round(position.y)}px) translate(-50%,-100%)`;
+}
 $('program-filter').innerHTML='<option value="auto">Auto · machine recipe ingredients</option><option value="any">Any item</option>'+ITEM_KEYS.map(k=>`<option value="${k}">${escape(ITEM_NAMES[k])}</option>`).join('');
 function updateProgramPreview(){const values=PROGRAM_ROLES.map(role=>[role,Number($('quota-'+role).value)]);$('program-preview').textContent=values.filter(([k,v])=>v>0).map(([k,v])=>`${k.toUpperCase()} × ${v}`).join(' → ')+' → repeat';}
 function openProgram(){const b=state.buildings.find(b=>b.id===selected);if(!b||!LOGISTICS_TYPES.includes(b.type))return;programTargetId=b.id;const p=programFor(b),ports=logisticsPorts(b),dirs=['EAST','SOUTH','WEST','NORTH'];$('program-title').textContent=TYPES[b.type].name+' · dispatch plan';$('program-ports').textContent=b.type==='inserter'?`Input conveyor: ${dirs[ports.input]}. Machine: ${dirs[ports.machine]}. Forward follows the source conveyor. Return: ${dirs[ports.return]}. Leave one tile for the relay between belt and machine.`:`Input: ${dirs[ports.input]}. Machine branch: ${dirs[ports.machine]}. Forward: ${dirs[ports.forward]}. Return line: ${dirs[ports.return]}. Place directly in the conveyor line.`;for(const role of PROGRAM_ROLES)$('quota-'+role).value=String(p[role]);$('program-filter').value=p.filter;$('program-buffer').value=String(p.buffer);$('program-wait').checked=!p.bypass;$('program-error').textContent='';updateProgramPreview();$('program-dialog').showModal();}
@@ -392,15 +503,16 @@ setInterval(()=>{
   for(const peer of lan.peers.values())if(peer.ready&&peer.playerId){if(peer.terrainRevision!==revision){lan.send(peer,{type:'state',state});peer.terrainRevision=revision;}else lan.send(peer,raw);}
  }
 },50);
-let prev=performance.now();function frame(now){const dt=Math.min(.05,(now-prev)/1000);prev=now;
+let prev=performance.now();function frame(now){const dt=Math.max(0,Math.min(.1,(now-prev)/1000));prev=now;
+ motion.update(state,now);
  if(started){
   const modal=!!document.querySelector('dialog[open]'),x=modal?0:(keys.has('d')?1:0)-(keys.has('a')?1:0),z=modal?0:(keys.has('s')?1:0)-(keys.has('w')?1:0),sprint=!modal&&keys.has('shift'),input=`${x},${z},${sprint}`;
   if(input!==lastMove||mode==='client'&&now-lastNet>500){execute({type:'move',x,z,sprint});lastMove=input;lastNet=now;}
-  if(!modal){const cx=(keys.has('arrowright')?1:0)-(keys.has('arrowleft')?1:0),cz=(keys.has('arrowdown')?1:0)-(keys.has('arrowup')?1:0);if(cx||cz){followCamera=false;view.pan(cx*dt*9,cz*dt*9);}}
-  if(x||z)followCamera=true;if(followCamera){const p=state.players.find(p=>p.id===playerId);if(p)view.follow(p,dt);}
-  if(now-lastSave>30000){lastSave=now;saveGame(true);}view.sync(state);if(areaIds.length)view.markArea(areaIds,state);
- }else{view.sync({...state,time:now/1000});}
- view.draw();nameplates();buildingLabels();drawTutorialMarkers();enemyHealth();if(pointer&&started){const cell=view.point(pointer.x,pointer.y);if(cell&&(cell.x!==hover?.x||cell.z!==hover?.z)){hover=cell;updateHover();}}if(now-lastUi>200){lastUi=now;updateUi();updateHover();}requestAnimationFrame(frame);
+  if(!modal){const cx=(keys.has('arrowright')?1:0)-(keys.has('arrowleft')?1:0),cz=(keys.has('arrowdown')?1:0)-(keys.has('arrowup')?1:0);if(cx||cz){if(followCamera)setFollowCamera(false);const distance=dt*9/Math.hypot(cx,cz);view.pan(cx*distance,cz*distance);}}
+  if(followCamera){const p=state.players.find(p=>p.id===playerId);if(p)view.follow(motion.position(p,renderPoint),dt);}
+  if(now-lastSave>30000){lastSave=now;saveGame(true);}view.sync(state,motion);if(areaIds.length&&now-lastUi>200)view.markArea(areaIds,state);
+ }else{view.sync(state,null,now/1000);}
+ view.draw();nameplates();buildingLabels();drawTutorialMarkers();enemyHealth();if(pointer&&started){const cell=view.point(pointer.x,pointer.y);if(cell&&(cell.x!==hover?.x||cell.z!==hover?.z)){hover=cell;updateHover();}}drawMachineIO();if(now-lastUi>200){lastUi=now;updateUi();updateGroupUpgrade();updateHover();}requestAnimationFrame(frame);
 }
 initHotbar();updateUi();view.sync(state);view.draw();$('loading').hidden=true;requestAnimationFrame(frame);
 window.addEventListener('beforeunload',()=>{if(started&&mode!=='client')saveGame(true);});
