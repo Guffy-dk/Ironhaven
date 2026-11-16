@@ -5,12 +5,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
-import {createGame,addPlayer,maxHp,step} from '../public/shared/sim.js';
+import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE} from '../public/shared/sim.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
-const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(){}follow(p){this.followed={...p};}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
+const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
 function harness(saved,{tutorial=false}={}){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
@@ -27,6 +27,26 @@ function harness(saved,{tutorial=false}={}){
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
 function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
+test('category keys swap the hotbar and number keys select a building in that category',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();
+  const visible=()=>[...h.$('hotbar').children].filter(b=>!b.hidden).map(b=>b.dataset.type);
+  assert.ok(visible().includes('smelter'));assert.ok(!visible().includes('turret'));
+  h.key('x');h.key('1');assert.equal(h.dom.__view.tool,'turret');assert.ok(!visible().includes('smelter'));
+  h.key('v');h.key('1');assert.equal(h.dom.__view.tool,'belt');
+  h.key('c');h.key('2');assert.equal(h.dom.__view.tool,'coalGenerator');
+ }finally{await h.close();}
+});
+test('WASD pans only the local camera and normalizes diagonal movement',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.frame(1000);
+  h.key('w');h.frame(1050);const {x,z}=h.dom.__view.center;
+  h.key('a');h.frame(1100);
+  assert.ok(h.dom.__view.center.x<x&&h.dom.__view.center.z<z);
+  assert.ok(Math.abs(Math.hypot(h.dom.__view.center.x-x,h.dom.__view.center.z-z)-.5)<1e-8);
+  assert.equal(h.save().players[0].x,undefined);
+ }finally{await h.close();}
+});
 test('the inspector shows existing saved upgrade colors and updates the swatch immediately',async()=>{
  const saved=starterWorld(),belt=saved.state.buildings.find(b=>b.type==='belt');
  belt.level=2;
@@ -99,20 +119,6 @@ test('damage bars hide at full health; empty ammo and the final 20-second warnin
   h.tool('repair');h.point('pointerdown',0,0);h.point('pointerdown',0,0);h.frame(1400);assert.equal(h.save().buildings[0].hp,maxHp(core));assert.equal(h.$('building-'+core.id),null);
  }finally{await h.close();}
 });
-test('W+A sends both movement axes and the camera follows the engineer',async()=>{
- const h=harness();try{h.$('start-solo').click();h.key('w');h.key('a');h.frame(1000);let s=h.save();assert.deepEqual(s.players[0].input,{x:0,z:0}); // saves intentionally stop movement
- for(let i=0;i<10;i++)h.ticks[0]();h.frame(1400);h.frame(1460);assert.ok(h.dom.__view.followed);s=h.save();assert.ok(s.players[0].x<2&&s.players[0].z<2);assert.ok(h.dom.__view.followed.x<2&&h.dom.__view.followed.z<2);
- }finally{await h.close();}
-});
-test('free camera stays unlocked while the engineer walks and Space restores follow',async()=>{
- const h=harness();try{
-  h.$('start-solo').click();assert.equal(h.$('focus').getAttribute('aria-pressed'),'true');
-  h.$('focus').click();h.key('d');h.frame(1000);h.ticks[0]();h.frame(1050);
-  assert.equal(h.$('focus').textContent,'Free');assert.equal(h.dom.__view.followed,undefined);assert.ok(h.save().players[0].x>2);
-  h.key(' ');h.frame(1100);assert.equal(h.$('focus').textContent,'Follow');assert.ok(h.dom.__view.followed);
-  h.key('ArrowLeft');h.frame(1150);assert.equal(h.$('focus').getAttribute('aria-pressed'),'false');
- }finally{await h.close();}
-});
 test('copy and paste previews a replacement layout and U upgrades a same-type selection',async()=>{
  const saved=starterWorld();saved.state.terrain.trees=[];saved.state.terrain.rocks=[];
  const h=harness(saved);try{
@@ -156,11 +162,11 @@ test('the defeat screen returns to the main menu with the saved world intact',as
  }finally{await h.close();}
 });
 test('the victory screen resumes the same world with further swarms enabled',async()=>{
- const saved=starterWorld();saved.state.wave=9;saved.state.status='victory';saved.state.evacuation={status:'complete',remaining:0};
+ const saved=starterWorld();saved.state.wave=FINAL_WAVE;saved.state.status='victory';saved.state.survived=true;
  const h=harness(saved);try{
   h.$('resume').click();assert.equal(h.$('end-continue').hidden,false);
   h.$('end-continue').click();assert.equal(h.$('end-dialog').hasAttribute('open'),false);
-  assert.equal(h.$('early-wave').disabled,false);assert.match(h.$('wave-detail').textContent,/SWARM 10/);
+  assert.equal(h.$('early-wave').disabled,false);assert.match(h.$('wave-detail').textContent,/SWARM 26/);
   const resumed=h.save();assert.equal(resumed.status,'playing');assert.deepEqual(resumed.buildings,saved.state.buildings);
  }finally{await h.close();}
 });
@@ -171,8 +177,9 @@ test('the playfield warning announces its forecast and attack independently of t
   h.$('start-solo').click();
   h.dom.document.querySelector('[data-window-close="map-panel"]').click();
   assert.ok(!warning.hidden);
-  assert.equal(warning.dataset.side,'north');
-  assert.equal(h.$('swarm-warning-text').textContent,'Next swarm from North');
+  const side=['West','North','East','South'][waveForecast(h.save()).side];
+  assert.equal(warning.dataset.side,side.toLowerCase());
+  assert.equal(h.$('swarm-warning-text').textContent,'Next swarm from '+side);
   assert.equal(h.dom.document.querySelectorAll('#hotbar [data-type="smelter"]').length,1);
   assert.equal(h.dom.document.querySelector('#hotbar [data-type="copperSmelter"]'),null);
  }finally{await h.close();}
@@ -180,7 +187,7 @@ test('the playfield warning announces its forecast and attack independently of t
  const active=harness({state:s,playerId:p.id});try{
   active.$('resume').click();
   assert.ok(active.$('swarm-warning').classList.contains('urgent'));
-  assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from North');
+  assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from '+['West','North','East','South'][s.waveSide]);
  }finally{await active.close();}
 });
 test('the round HUD forecasts the next bonus and announces activation once',async()=>{
@@ -216,7 +223,7 @@ test('panels can be moved, minimized, closed and restored without changing the w
 });
 test('production report and bottleneck overlay work, and pre-swarm checkpoints can be retried',async()=>{
  const h=harness(starterWorld());try{
-  h.$('resume').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,7);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
+  h.$('resume').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,8);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
   for(let attempt=0;attempt<5;attempt++){h.$('early-wave').click();for(let i=0;i<62;i++)h.ticks[0]();h.$('retry-checkpoint').click();const saved=h.save();assert.equal(saved.wave,0);assert.equal(saved.enemies.length,0);assert.ok(saved.nextWave-saved.time>=19.9);}
   const checkpoints=JSON.parse(h.dom.localStorage.getItem('ironhaven.checkpoints.v1'));assert.ok(checkpoints.length<=3);assert.match(checkpoints[0].label,/Before swarm/);
  }finally{await h.close();}
@@ -249,7 +256,7 @@ test('field training advances through actual movement, placement and deliveries'
    h.key('q');h.tool('belt');h.point('pointerdown',x,z,true);h.point('pointermove',0,0,true);h.point('pointerup',0,0,true);
   };
   ticks(5);assert.equal(h.save().tutorialStep,0);
-  h.key('d');h.frame(frameTime+=300);ticks(8);h.release('d');h.frame(frameTime+=300);
+  h.key('d');h.frame(frameTime+=300);ticks(8);ticks(8);h.release('d');h.frame(frameTime+=300);
   assert.equal(h.save().tutorialStep,1);
   assert.match(h.$('tutorial-markers').textContent,/Iron drill/);
   for(const index of [1,2,4,6]){

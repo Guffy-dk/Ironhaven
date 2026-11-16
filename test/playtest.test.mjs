@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {addPlayer,command,copySetup,createGame,outputCount,planGroupUpgrade,planPaste,step} from '../public/shared/sim.js';
+import {addPlayer,command,copySetup,createGame,FINAL_WAVE,outputCount,planGroupUpgrade,planPaste,step} from '../public/shared/sim.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
 import {factoryStatus} from '../public/shared/diagnostics.js';
@@ -18,7 +18,7 @@ function world(){
 }
 
 test('render motion interpolates positions between ticks and begins fresh after a respawn or reset',()=>{
- const p={id:1,x:0,z:0,hp:100},s={tick:1,time:.05,players:[p],enemies:[]},motion=new RenderMotion();
+ const p={id:1,x:0,z:0,hp:100},s={tick:1,time:.05,players:[],enemies:[p]},motion=new RenderMotion();
  motion.update(s,100);p.x=1;s.tick++;s.time+=.05;motion.update(s,150);
  assert.equal(motion.position(p,{}).x,0);
  motion.update(s,175);assert.equal(motion.position(p,{}).x,.5);assert.equal(motion.renderTick,1.5);
@@ -120,12 +120,12 @@ test('a base assembler makes its first gear after 2.4 seconds',()=>{
  assert.equal(assembler.item,null);step(state);assert.equal(assembler.item,'gear');
 });
 
-test('the host can continue a completed evacuation, build and face another swarm after reloading',()=>{
+test('the host can continue a victorious colony, build and face another swarm after reloading',()=>{
  const {state,player,run,build}=world(),guest=addPlayer(state,'Guest');
- state.status='victory';state.wave=9;state.evacuation={status:'complete',remaining:0};
+ state.status='victory';state.wave=FINAL_WAVE;state.survived=true;
  assert.match(command(state,guest.id,{type:'continueAfterVictory'}),/Only the host/);
  assert.equal(run({type:'continueAfterVictory'}),null);assert.ok(state.nextWave>state.time);
  build('belt',5,5);
  const data=parseSave(JSON.stringify(packWorldSave(state,player.id)));data.state.nextWave=0;
- step(data.state);assert.equal(data.state.wave,10);assert.ok(data.state.enemies.length>0);assert.equal(data.state.status,'playing');
+ step(data.state);assert.equal(data.state.wave,FINAL_WAVE+1);assert.ok(data.state.enemies.length>0);assert.equal(data.state.status,'playing');
 });

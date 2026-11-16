@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.9.1';
+export const CURRENT_VERSION = '0.10.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.10.0',date:'2026-11-16',title:'Hold the colony',
+  changes:[
+   'Win by surviving 25 swarms. Attack directions vary with the world and round. Hostiles target industry, while gold Core Hunters join from swarm four. Mutations change health, damage or movement speed.',
+   'Move the camera with WASD. Open Production, Defense, Power or Logistics with Z, X, C or V and pick a building within that category with a number key.',
+   'The map has more space and deposits. Coal mines feed coal generators through colony storage. Mortar and pulse turrets add splash damage.',
+   'Conveyor cargo uses per-tile travel timing. Resource counters show net deliveries minus operating consumption per minute.',
+   'Existing worlds expand outside their original boundary. The evacuation pad is retired and its base construction materials are refunded when loading a world.'
+  ]
+ },
  {
   version:'0.9.1',date:'2026-11-16',title:'Visible upgrades',
   changes:[

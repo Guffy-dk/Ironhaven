@@ -42,11 +42,7 @@ test('power shortages stop later machines; generator fuel is consumed',()=>{
 test('turrets fight waves; unprotected core is destroyed; victory after final wave',()=>{
  const s=createGame();addPlayer(s);s.nextWave=.1;run(s,35);assert.equal(s.wave,1);assert.ok(s.totalKills>0);assert.ok(s.shots.length>=0);
  const doomed=createGame();doomed.buildings=doomed.buildings.filter(b=>b.type==='hq');doomed.nextWave=.1;run(doomed,300);assert.equal(doomed.status,'defeat');
- const won=createGame();won.wave=8;step(won);assert.equal(won.status,'playing'); // 0.3 requires evacuation after the initial swarms
-});
-test('engineer movement is clamped and death has a respawn',()=>{
- const s=createGame(),p=addPlayer(s);command(s,p.id,{type:'move',x:999,z:NaN});assert.deepEqual(p.input,{x:1,z:0});
- p.x=25.9;p.z=0;run(s,10);assert.ok(p.x<=26);p.hp=0;p.respawn=1;run(s,2);assert.equal(p.hp,100);
+ const won=createGame();won.wave=25;step(won);assert.equal(won.status,'victory');
 });
 test('repair costs material and caps building HP',()=>{
  const s=createGame(),p=addPlayer(s),core=s.buildings[0];core.hp-=100;const plate=s.resources.plate;

@@ -41,14 +41,9 @@ test('turret upgrades affect range, damage and health and extend past Mk III and
  s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,11);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
  assert.equal(command(s,p.id,{type:'repair',x:b.x,z:b.z}),null);assert.equal(b.hp,maxHp(b));
 });
-test('W+A movement is diagonal and normalized, with no diagonal speed boost',()=>{
- const a=make(),b=make();for(const q of[a,b]){q.p.x=15;q.p.z=15;}
- command(a.s,a.p.id,{type:'move',x:0,z:-1});command(b.s,b.p.id,{type:'move',x:-1,z:-1});run(a.s,1);run(b.s,1);
- const straight=Math.hypot(a.p.x-15,a.p.z-15),diagonal=Math.hypot(b.p.x-15,b.p.z-15);assert.ok(Math.abs(straight-4.5)<.001);assert.ok(Math.abs(diagonal-straight)<.001);assert.ok(b.p.x<15&&b.p.z<15);
-});
 test('0.1 saves migrate without losing production, resources or built buildings',()=>{
  const{s,p}=make();s.version=1;delete p.inventory;for(const b of s.buildings)delete b.level;
- const before=JSON.stringify(s.resources),ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,SAVE_SCHEMA);assert.deepEqual(migrated.players[0].inventory,{});assert.equal(JSON.stringify(migrated.resources),before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
+ const before={...s.resources},ids=s.buildings.map(b=>b.id);const migrated=migrateGame(JSON.parse(JSON.stringify(s)));assert.equal(migrated.version,SAVE_SCHEMA);assert.deepEqual(migrated.players[0].inventory,{});assert.deepEqual(migrated.resources,before);assert.deepEqual(migrated.buildings.map(b=>b.id),ids);run(migrated,60);assert.ok(migrated.produced.gear>0);
 });
 test('a departing guest returns packed buildings to the remaining host',()=>{
  const{s,p}=make(),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});removePlayer(s,guest.id);assert.equal(inventoryCount(s,p.id,'belt'),1);

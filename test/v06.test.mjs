@@ -4,20 +4,13 @@ import {addPlayer,command,createGame,step,waveForecast,inventoryCount,SAVE_SCHEM
 import {factoryStatus} from '../public/shared/diagnostics.js';
 import {parseSave} from '../public/shared/saves.js';
 
-test('each regular swarm and the evacuation swarm begin eight tiles beyond the build edge',()=>{
- const onEdge=[e=>e.x===-34,e=>e.z===-34,e=>e.x===34,e=>e.z===34];
- for(let wave=1;wave<=9;wave++){
+test('all 25 swarms begin eight tiles beyond the expanded build edge',()=>{
+ const onEdge=[e=>e.x===-46,e=>e.z===-46,e=>e.x===46,e=>e.z===46];
+ for(let wave=1;wave<=25;wave++){
   const state=createGame(),player=addPlayer(state);
   state.wave=wave-1;
   const forecast=waveForecast(state);
-  if(wave===9){
-   Object.assign(state.resources,{plate:200,steel:100,circuit:100,module:60});
-   assert.equal(command(state,player.id,{type:'build',building:'launchpad',x:4,z:5}),null);
-   assert.equal(command(state,player.id,{type:'launch',x:4,z:5}),null);
-  }else{
-   state.nextWave=0;
-   step(state);
-  }
+  state.nextWave=0;step(state);
   assert.equal(state.waveSide,forecast.side);
   assert.equal(state.enemies.length,forecast.count);
   assert.ok(state.enemies.every(onEdge[forecast.side]));
@@ -26,7 +19,7 @@ test('each regular swarm and the evacuation swarm begin eight tiles beyond the b
   assert.equal(state.enemies.length,forecast.count);
   for(const [i,enemy] of state.enemies.entries()){
    const delta=Math.hypot(enemy.x-before[i].x,enemy.z-before[i].z);
-   assert.ok(delta>0&&delta<.1,'Hostiles must walk from the outer edge at normal speed');
+   assert.ok(delta>0&&delta<=enemy.speed*.05+1e-8,'Hostiles must walk from the outer edge at normal speed');
   }
  }
 });

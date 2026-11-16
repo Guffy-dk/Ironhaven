@@ -42,18 +42,7 @@ test('copper drills require copper and storage expands capacity without deleting
  const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(storageCapacity(s),oldCapacity+300);
  assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.ok(storageCapacity(s)>oldCapacity+300);const plate=s.resources.plate;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.plate,plate);assert.equal(inventoryCount(s,p.id,'storage'),1);
 });
-test('Shift sprint is faster and remains normalized on diagonals',()=>{
- const a=make(),b=make();for(const q of[a,b]){q.p.x=15;q.p.z=15;}
- command(a.s,a.p.id,{type:'move',x:0,z:-1});command(b.s,b.p.id,{type:'move',x:-1,z:-1,sprint:true});run(a.s,1);run(b.s,1);
- const walk=Math.hypot(a.p.x-15,a.p.z-15),sprint=Math.hypot(b.p.x-15,b.p.z-15);assert.ok(Math.abs(sprint/walk-1.65)<.001);
-});
-test('evacuation requires advanced goods and a final defense before victory',()=>{
- const{s,p}=make();rich(s);assert.equal(command(s,p.id,{type:'build',building:'launchpad',x:5,z:4}),null);assert.match(command(s,p.id,{type:'launch',x:5,z:4}),/eight swarms/);s.wave=8;
- s.resources.module=0;assert.match(command(s,p.id,{type:'launch',x:5,z:4}),/components/);s.resources.module=30;s.resources.steel=60;s.resources.circuit=40;
- assert.equal(command(s,p.id,{type:'launch',x:5,z:4}),null);assert.equal(s.wave,9);assert.ok(s.enemies.length>0);assert.equal(s.resources.module,0);assert.equal(s.evacuation.status,'charging');assert.equal(s.status,'playing');
- s.enemies=[];run(s,91);assert.equal(s.status,'victory');assert.equal(s.evacuation.status,'complete');
-});
-test('world exports round-trip and old wins migrate to the new evacuation objective',()=>{
+test('world exports round-trip and old wins reopen for the 25-swarm objective',()=>{
  const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,SAVE_SCHEMA);assert.deepEqual(loaded.state.resources,s.resources);
  s.version=2;s.status='victory';s.wave=8;const old=parseSave(JSON.stringify({state:s,playerId:p.id}));assert.equal(old.state.status,'playing');assert.throws(()=>parseSave('not json'),/JSON/);assert.throws(()=>parseSave(JSON.stringify({state:{}})),/world save/);
 });

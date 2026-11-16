@@ -1,5 +1,8 @@
 const paths={
  ore:'m2 16 4-7 5-2 4 4 4-1 3 6-5 4H6Z M6 9l3 6 6-4m-6 4 3 5m4-6 3-4',
+ coal:'m2 16 4-7 5-2 4 4 4-1 3 6-5 4H6Z M6 9l3 6 6-4m-6 4 3 5m4-6 3-4',
+ mortar:'M3 21h18M7 20v-5h10v5M9 15l6-12 4 2-5 10M12 8l4 2',
+ pulseTurret:'M3 21h18M7 20v-6h10v6M7 14a5 5 0 0 1 10 0M12 2v3M4 5l3 3m13-3-3 3',
  copperOre:'m2 15 4-6 5 1 3-5 5 3 3 7-4 5H7Z M6 9l3 7 6-3 4-5m-4 5 3 7',
  inserter:'M3 18h18M7 18V8m10 10V8M6 8h3m6 0h3M9 4h6v7H9V4Zm-4 9h14M2 21h4m12 0h4',
  splitter:'m12 3 8 5v9l-8 4-8-4V8l8-5Zm0 8h8m-8 0V3m0 8v10M4 12h8',
@@ -28,4 +31,4 @@ const paths={
  mute:'M3 10h4l5-5v16l-5-5H3v-6Zm13 0 6 6m0-6-6 6'
 };
 export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({copperDrill:'drill',foundry:'smelter',circuitLab:'circuit',componentFactory:'assembler'})[name]]||paths.hq}"/></svg>`;}
-export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',power:'POWER'};
+export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',coal:'COAL',power:'POWER'};
