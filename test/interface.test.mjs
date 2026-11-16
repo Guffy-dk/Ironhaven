@@ -5,12 +5,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
-import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE,SWARM_DIRECTIONS} from '../public/shared/sim.js';
+import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE,SWARM_DIRECTIONS,buildingRadius,command} from '../public/shared/sim.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
-const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(){}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
+const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(cell,valid,tool,radius){this.preview={cell,valid,tool,radius};}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
 function harness(saved,{tutorial=false}={}){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
@@ -27,6 +27,30 @@ function harness(saved,{tutorial=false}={}){
  return{dom,$,tool,point,key,release,frame,ticks,save,close:()=>dom.happyDOM.abort()};
 }
 function starterWorld(){const state=createGame(),player=addPlayer(state);return {state,playerId:player.id};}
+test('building blueprints show turret stats and preview the active radius before placement',async()=>{
+ const h=harness(starterWorld());try{
+  h.$('resume').click();h.key('x');h.tool('mortar');h.point('pointermove',12,9);
+  assert.match(h.$('intel-stats').textContent,/Health.*Damage \/ shot.*Fire interval.*Splash radius/);
+  assert.equal(h.dom.__view.preview.radius,buildingRadius({type:'mortar'}));
+  assert.deepEqual({...h.dom.__view.preview.cell},{x:12,z:9});
+  h.key('q');assert.equal(h.dom.__view.preview.cell,null);
+  h.key('z');h.tool('sawmill');h.point('pointermove',10,9);
+  assert.match(h.$('blueprint-site').textContent,/trees.*wood\/min/);
+  assert.equal(h.dom.__view.preview.radius,buildingRadius({type:'sawmill'}));
+ }finally{await h.close();}
+});
+test('selecting a warehouse sets its recipe export from the inspector',async()=>{
+ const saved=starterWorld(),{state,playerId}=saved;
+ state.terrain.trees=state.terrain.rocks=[];
+ assert.equal(command(state,playerId,{type:'build',building:'storage',x:10,z:1}),null);
+ const h=harness(saved);try{
+  h.$('resume').click();h.point('pointerdown',10,1);h.point('pointerup',10,1);
+  assert.equal(h.$('warehouse-options').hidden,false);
+  const select=h.$('warehouse-export');select.value='recipe';select.dispatchEvent(new h.dom.Event('change'));
+  assert.equal(h.save().buildings.find(b=>b.type==='storage').exportItem,'recipe');
+  assert.match(h.$('warehouse-export-status').textContent,/adjacent machine to the east/);
+ }finally{await h.close();}
+});
 test('Space toggles pause and F selects the dismantle tool from any category',async()=>{
  const h=harness(starterWorld());try{
   h.$('resume').click();h.key(' ');assert.ok(h.save().paused);

@@ -9,7 +9,7 @@ import { factoryStatus,STATUS_LABELS,productionReport,stockFlow } from './shared
 import { parseSave,packWorldSave } from './shared/saves.js';
 import { Lan } from './network.js';
 import { icon,RESOURCE_NAMES } from './icons.js';
-import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY,isPostVictory,canSpawnSwarm } from './shared/sim.js';
+import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY,isPostVictory,canSpawnSwarm,BELT_CAPACITY,conveyorCount,buildingRadius,turretReload } from './shared/sim.js';
 const $=id=>document.getElementById(id),SAVE='ironhaven.save.v1',NAME='ironhaven.name';
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=createGame(),playerId=null,started=false,mode='solo',view,tool=null,dir=0,selected=null,tab='production',lastWave=0,lastEvent=0,ended=false,lowQuality=false,muted=true,audio=null,hover=null,dragging=false,lastBuild='',lastUi=0,lastSave=0,syncTick=0,pendingDisconnect=false;
@@ -69,9 +69,13 @@ function updateHover(){
  if(pasting){previewPaste();return;}
  if(movingArea){previewMove();return;}
  if(rowGesture&&refreshRoute())return;
- if(!hover||!tool){view.cursor.visible=false;if(view.ghost)view.ghost.visible=false;return;}
+ if(!hover||!tool){view.hover(null,false,tool);return;}
  let error;if(['repair','demolish'].includes(tool))error=null;else error=canBuild(state,tool,hover.x,hover.z,playerId);
- view.hover(hover,!error,tool);$('coords').textContent=`${hover.x}, ${hover.z}`;
+ view.hover(hover,!error,tool,buildingRadius({type:tool}));$('coords').textContent=`${hover.x}, ${hover.z}`;
+ if(tool==='sawmill'){
+  const candidate={type:tool,...hover};
+  $('blueprint-site').textContent=`${sawmillTrees(state.terrain,candidate)} trees · ${Math.round(60*sawmillRate(state,candidate))} wood/min`;
+ }
  if(tool==='demolish'){$('tool-hint').textContent='Click to dismantle · Shift-drag clears trees · Q / Esc exits';$('tool-hint').classList.remove('invalid');return;}
  $('tool-hint').textContent=error||`${TYPES[tool].name} · ${['→ EAST','↓ SOUTH','← WEST','↑ NORTH'][dir]} · Click to ${tool==='demolish'?'clear':tool==='repair'?'repair':'build'} · ${tool==='belt' ? 'Drag to lay a line · ' : ''}R rotates · Q / Esc exits`;
  if(!error&&TYPES[tool].power>0&&state.power.used+buildingPower({type:tool})>state.power.total){
@@ -165,13 +169,23 @@ $('create-answer').onclick=async()=>{
 };
 for(const button of document.querySelectorAll('[data-copy]'))button.onclick=async()=>{const input=$(button.dataset.copy);try{await navigator.clipboard.writeText(input.value);toast('Code copied.');}catch{input.focus();input.select();if(document.execCommand('copy'))toast('Code copied.');else toast('Select the code and copy it with Ctrl+C.');}};
 function updateInspector(){
- const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b&&!tool);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool||b.type==='turret';$('program-building').hidden=!b||!!tool||!LOGISTICS_TYPES.includes(b.type);
+ const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b||!!tool&&!!def.hp);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool||b.type==='turret';$('program-building').hidden=!b||!!tool||!LOGISTICS_TYPES.includes(b.type);
  const impact=$('upgrade-impact');impact.hidden=!b||!!tool||!upgradeCost(b);if(!impact.hidden)impact.textContent=upgradeImpact(b);
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade ${b.level||1} / ${MAX_UPGRADES} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:'Fully upgraded · 10/10';btn.disabled=!cost||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
  $('program-building').textContent='Program flow (E) ↗';
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=tool||b?def.desc:'Keep the expedition supplied, protect the crew and build the route home.';
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
  const outputOptions=$('output-options');outputOptions.hidden=!b||!!tool||!hasOutputBuffer(type);
+ const warehouseOptions=$('warehouse-options');
+ warehouseOptions.hidden=!b||!!tool||type!=='storage';
+ if(!warehouseOptions.hidden){
+  const item=b.exportItem,select=$('warehouse-export');
+  if(document.activeElement!==select||select.dataset.id!==String(b.id))select.value=item??'';
+  select.dataset.id=b.id;
+  const direction=['east','south','west','north'][b.dir];
+  $('warehouse-export-status').textContent=item==='recipe'?`Feeds the adjacent machine to the ${direction}.`:
+   item?`${state.resources[item]} in shared stock · output ${direction}`:`Output faces ${direction}. Rotate with R.`;
+ }
  if(!outputOptions.hidden){
   const stock=[b.item,...(b.outputBuffer||[])].filter(Boolean).reduce((counts,item)=>(counts[item]=(counts[item]||0)+1,counts),{});
   $('output-stock').textContent=`Output buffer ${outputCount(b)} / ${OUTPUT_CAPACITY}`;
@@ -189,10 +203,29 @@ function updateInspector(){
   if(inputStatus.innerHTML!==rows)inputStatus.innerHTML=rows;
  }
  const row=(a,v,cls='')=>`<div class="stat-row"><span>${a}</span><span class="${cls}">${v}</span></div>`;
- if(tool){const count=inventoryCount(state,playerId,type);$('intel-stats').innerHTML=(count?row('Use from inventory',count,'ok'):Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join(''))+(def.power?row('Power',def.power):'');}
+ const site=$('blueprint-site');site.hidden=tool!=='sawmill';if(site.hidden||!hover)site.textContent='';
+ if(tool){const count=inventoryCount(state,playerId,type);$('intel-stats').innerHTML=(count?row('Use from inventory',count,'ok'):Object.entries(def.cost).map(([r,n])=>row(RESOURCE_NAMES[r],n,state.resources[r]>=n?'ok':'bad')).join(''))+blueprintStats(type,row);}
  else{const bb=b||state.buildings.find(b=>b.type==='hq');$('intel-stats').innerHTML=bb?row('Health',`${Math.max(0,Math.ceil(bb.hp))} / ${maxHp(bb)}`)+`<div class="hp-bar"><i style="width:${Math.max(0,bb.hp/maxHp(bb)*100)}%"></i></div>`+row('Status',STATUS_LABELS[factoryStatus(state,bb,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))],bb.active?'ok':'bad')+(usesAmmo(bb.type)?row('Ammo',bb.ammo,bb.ammo<=3?'bad':'ok')+row('Turret level',turretStats(bb).name)+row('Damage / range',`${turretStats(bb).damage} / ${turretStats(bb).range}`):'')+(bb.type==='turret'?row('Ammo','No ammo needed'):'')+(bb.input?.length?row('Input buffer',bb.input.length+'/'+((bb.type==='smelter'?2:Object.values(RECIPES[bb.type]?.input||{}).reduce((n,v)=>n+v,0))*4||8)):'')+(buildingPower(bb)?row('Power used',buildingPower(bb)):'')+(RECIPES[bb.type]||['drill','copperDrill','sawmill'].includes(bb.type)?row('Production speed',productionSpeed(bb,roundBonus(state.wave),state.difficulty).toFixed(2)+'×'):'')+(bb.type==='sawmill'?row('Nearby trees',sawmillTrees(state.terrain,bb))+row('Wood / min',Math.round(60*sawmillRate(state,bb))):'')+(GENERATORS[bb.type]?row('Power supplied',Math.round(GENERATORS[bb.type].power*(1+((bb.level||1)-1)*.3))):'')+(bb.type==='turret'?row('Upgrades','Fixed level'):row('Upgrades',`<i class="upgrade-swatch" aria-hidden="true" style="background:${upgradeColor(bb.level)}"></i>${(bb.level||1)-1} / ${MAX_UPGRADES}`))+(bb.type==='storage'||bb.type==='hq'?row('Storage / material',storageCapacity(state)):'')+(LOGISTICS_TYPES.includes(bb.type)?row('Plan M / F / R',`${programFor(bb).machine} / ${programFor(bb).forward} / ${programFor(bb).return}`)+row('Batch remaining',bb.remaining||0)+row('Delivered M / F / R',`${bb.shipments?.machine||0} / ${bb.shipments?.forward||0} / ${bb.shipments?.return||0}`)+row('Bypassed',bb.shipments?.bypassed||0):'')+row('Position',`${bb.x}, ${bb.z}`):row('Status','Core destroyed','bad');}
  const recipes={inserter:'BELT → RECIPE-AWARE CARGO CAPSULE',splitter:'PROGRAMMED MACHINE / FORWARD / RETURN',coalMine:'COAL DEPOSIT → COAL',coalGenerator:'1 COAL / 16 SEC. → 36 POWER',copperDrill:'COPPER ORE → SMELTER',foundry:'3 IRON PLATES → 1 STEEL',circuitLab:'2 COPPER + 1 PLATE → 1 CIRCUIT',componentFactory:'2 STEEL + 2 CIRCUITS + 1 GEAR → 1 COMPONENT',storage:'STORAGE CAPACITY +300 / MATERIAL',drill:'IRON ORE → CONVEYOR',smelter:'Iron ore → Iron plate · Copper ore → Copper',assembler:'2 IRON PLATES → 1 GEAR',turret:'UNLIMITED AMMO · FIXED LEVEL',gunTurret:'16 SHOTS PER GEAR',mortar:'4 SHELLS PER GEAR · WIDE SPLASH',pulseTurret:'8 BURSTS PER GEAR · SHORT RANGE',sawmill:'WOOD OUTPUT SCALES WITH NEARBY TREES',generator:'1 WOOD / 12 SEC. → 18 POWER'};
  $('recipe').textContent=recipes[type]||'';$('intel-tip').textContent=tool?'R rotates. Q or Esc exits build mode. Blue rocks mark iron deposits.':b?'R rotates directional buildings. U upgrades the selected building. F dismantles. Use the Defense category for repairs.':'Choose a building from the hotbar to expand your colony.';
+ if(!tool&&type==='belt')$('intel-stats').insertAdjacentHTML('beforeend',row('Cargo',`${conveyorCount(b)} / ${BELT_CAPACITY}`));
+}
+function blueprintStats(type,row){
+ if(!TYPES[type].hp)return '';
+ const b={type},radius=buildingRadius(b),generator=GENERATORS[type],recipe=RECIPES[type];
+ let stats=row('Health',maxHp(b))+row('Power used',buildingPower(b));
+ if(radius)stats+=row(type==='sawmill'?'Work radius':'Range',`${radius} tiles`);
+ if(TURRETS.includes(type)){
+  const turret=turretStats(b);
+  stats+=row('Damage / shot',Number(turret.damage.toFixed(1)))+row('Fire interval',`${turret.interval.toFixed(2)} s`)+
+   (usesAmmo(type)?row('Shots / gear',turretReload(b,roundBonus(state.wave))):row('Ammo','Unlimited'));
+  if(turret.radius)stats+=row('Splash radius',`${turret.radius} tiles`);
+ }
+ if(generator)stats+=row('Power supplied',`${powerOutput(b)} / s`)+row('Fuel',`1 ${ITEM_NAMES[generator.fuel]} / ${generator.seconds} s`);
+ if(recipe)stats+=row('Base craft time',`${recipe.seconds} s`);
+ if(type==='storage')stats+=row('Capacity added',`${storageContribution(b)} / material`);
+ if(type==='belt')stats+=row('Cargo capacity',BELT_CAPACITY)+row('Travel time / tile',`${(beltTravelTicks(b)*STEP).toFixed(2)} s`);
+ return stats;
 }
 function upgradeImpact(b){
  const next={...b,level:(b.level||1)+1};
@@ -382,6 +415,15 @@ for(const id of ['send-output','receive-output'])$(id).onchange=()=>{
  const b=state.buildings.find(b=>b.id===selected);
  if(b)execute({type:'configureOutput',id:b.id,x:b.x,z:b.z,send:$('send-output').checked,receive:$('receive-output').checked});
 };
+$('warehouse-export').onchange=()=>{
+ const b=state.buildings.find(b=>b.id===selected);
+ if(b?.type==='storage')execute({type:'configureWarehouse',id:b.id,x:b.x,z:b.z,item:$('warehouse-export').value||null});
+ updateInspector();
+};
+for(const item of RESOURCE_KEYS){
+ const option=document.createElement('option');option.value=item;option.textContent=RESOURCE_NAMES[item];
+ $('warehouse-export').append(option);
+}
 function updateSound(){$('sound').innerHTML=icon(muted?'mute':'sound',19);$('sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');}
 $('sound').onclick=()=>{muted=!muted;updateSound();tone(660,.09);};updateSound();
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();

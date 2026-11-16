@@ -1,3 +1,5 @@
+import {conveyorProgress} from './shared/sim.js';
+
 // Render between completed simulation updates. Simulation and LAN state stay authoritative.
 export class RenderMotion {
  constructor(){this.reset();}
@@ -16,17 +18,22 @@ export class RenderMotion {
    for(const {id,x,z,hp} of state.enemies)this.current.set(id,{x,z,hp});
    this.previousCargo=advancing?this.cargo:new Map();
    this.cargo=new Map();
-   for(const b of state.buildings??[])if(b.type==='belt'&&b.item)this.cargo.set(b.id,{item:b.item,itemTick:b.itemTick,itemSide:b.itemSide});
+   for(const b of state.buildings??[])if(b.type==='belt'&&b.item)this.cargo.set(b.id,[b,...(b.beltQueue??[])].map(cargo=>({
+    item:cargo.item,itemTick:cargo.itemTick,itemSide:cargo.itemSide,progress:conveyorProgress(b,cargo,state.tick)
+   })));
    this.sampledAt=now;this.tick=state.tick;this.time=state.time;
   }
   this.alpha=Math.max(0,Math.min(1,(now-this.sampledAt)/this.duration));
   this.renderTick=this.previousTick+(this.tick-this.previousTick)*this.alpha;
   this.renderTime=this.previousTime+(this.time-this.previousTime)*this.alpha;
  }
- beltCargo(b){
-  if(this.renderTick>=this.tick)return b;
-  if(!b.item||b.itemTick>this.renderTick)return this.previousCargo.get(b.id);
-  return b;
+ drawBeltItems(b,draw){
+  const current=this.cargo.get(b.id)??[];
+  if(this.alpha>=1){for(const cargo of current)draw(cargo,cargo.progress);return;}
+  for(const cargo of this.previousCargo.get(b.id)??[]){
+   const next=current.find(other=>other.itemTick===cargo.itemTick);
+   draw(cargo,cargo.progress+((next?.progress??1)-cargo.progress)*this.alpha);
+  }
  }
  position(actor,out){
   const previous=this.previous.get(actor.id);

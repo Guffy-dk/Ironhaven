@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, turretStats, productionSpeed, TURRETS, GENERATORS, SIZE, BUILD_EDGE, beltTravelTicks } from './shared/sim.js';
+import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
 const CAMERA_OFFSET=new T.Vector3(0,32,27);
@@ -62,7 +62,8 @@ export function makeModel(type,dir=0,inputs=[],level=1){
  }
  plate(g);
  if(type==='storage'){
-  box(g,C.dark,0,.25,0,.85,.3,.85);for(const x of[-.22,.22])for(const z of[-.22,.22]){cyl(g,C.steel,x,.65,z,.18,.65,12);cyl(g,C.gold,x,.6,z,.19,.06,12);}box(g,painted(C.light),0,1.03,0,.9,.08,.9);for(let d=0;d<4;d++)port(g,d,'IN',0x79d8d0);
+  box(g,C.dark,0,.25,0,.85,.3,.85);for(const x of[-.22,.22])for(const z of[-.22,.22]){cyl(g,C.steel,x,.65,z,.18,.65,12);cyl(g,C.gold,x,.6,z,.19,.06,12);}box(g,painted(C.light),0,1.03,0,.9,.08,.9);
+  for(let d=0;d<4;d++)port(g,d,d===0&&inputs.includes(0)?'OUT':'IN',d===0&&inputs.includes(0)?C.gold:cyan);
  }else if(type==='hq'){
   box(g,C.dark,0,.16,0,1.7,.32,1.7);box(g,painted(C.light),0,.4,0,1.42,.4,1.42);box(g,C.steel,0,.8,0,1.12,.5,1.12);
   cyl(g,C.dark,0,1.2,0,.58,.7,6);cyl(g,C.gold,0,1.2,0,.6,.18,6);cyl(g,painted(C.light),0,1.6,0,.42,.16,6);
@@ -174,9 +175,13 @@ export class View{
   this.cursor=new T.Mesh(new T.PlaneGeometry(.98,.98),new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.22,depthWrite:false,side:T.DoubleSide}));this.cursor.rotation.x=-Math.PI/2;this.cursor.position.y=.03;this.cursor.visible=false;this.scene.add(this.cursor);
   const ring=new T.RingGeometry(.68,.72,48);this.selection=new T.Mesh(ring,new T.MeshBasicMaterial({color:C.gold,side:T.DoubleSide,transparent:true,opacity:.9}));this.selection.rotation.x=-Math.PI/2;this.selection.position.y=.04;this.selection.visible=false;this.scene.add(this.selection);
   this.range=new T.Mesh(new T.RingGeometry(9.95,10,96),new T.MeshBasicMaterial({color:C.gold,side:T.DoubleSide,transparent:true,opacity:.35}));this.range.rotation.x=-Math.PI/2;this.range.position.y=.035;this.range.visible=false;this.scene.add(this.range);
+  this.previewRange=this.range.clone();this.previewRange.material=this.range.material.clone();
+  this.previewRange.material.opacity=.7;this.scene.add(this.previewRange);
   const points=new Float32Array(1200*6);this.shotsGeometry=new T.BufferGeometry();this.shotsGeometry.setAttribute('position',new T.BufferAttribute(points,3));this.shotLines=new T.LineSegments(this.shotsGeometry,new T.LineBasicMaterial({color:0xffd890,transparent:true,opacity:.85}));this.shotLines.frustumCulled=false;this.scene.add(this.shotLines);
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
+  this.beltItems=new T.InstancedMesh(geometry('box',.15,.13,.15),mat(0xffffff),700*BELT_CAPACITY);
+  this.beltItems.instanceMatrix.setUsage(T.DynamicDrawUsage);this.beltItems.frustumCulled=false;this.beltItems.count=0;this.scene.add(this.beltItems);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),1000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
  }
@@ -211,10 +216,14 @@ export class View{
   if(!bs.length)return;const mesh=new T.InstancedMesh(new T.RingGeometry(.48,.55,4,1,Math.PI/4),new T.MeshBasicMaterial({color:0x89d8df,side:T.DoubleSide,transparent:true,opacity:.85,depthTest:false}),bs.length);
   bs.forEach((b,i)=>{this.dummy.position.set(b.x,.3,b.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.areaMesh=mesh;this.scene.add(mesh);
  }
- setTool(type,dir=0,neighbors=[]){this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
+ setTool(type,dir=0,neighbors=[]){this.previewRange.visible=false;this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
   if(type&&!['demolish','repair'].includes(type)){this.ghost=makeModel(type,dir,neighbors);this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
  }
- hover(cell,valid,tool){this.cursor.visible=!!cell&&!!tool;if(!cell)return;this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(valid?C.mint:0xf5816d);
+ hover(cell,valid,tool,radius=0){this.cursor.visible=!!cell&&!!tool;this.previewRange.visible=!!cell&&radius>0;
+  if(!cell){if(this.ghost)this.ghost.visible=false;return;}
+  const color=valid?C.mint:0xf5816d;
+  this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(color);
+  if(radius){this.previewRange.scale.setScalar(radius/10);this.previewRange.position.set(cell.x,.04,cell.z);this.previewRange.material.color.set(color);}
   if(tool==='wall'){const neighbors=barricadeNeighbors(cell,this.cellGrid);if(neighbors.join(':')!==this.wallPreview)this.setTool(tool,this.ghostDir,neighbors);}
   if(this.ghost){this.ghost.visible=true;this.ghost.position.set(cell.x,0,cell.z);this.ghostMaterial.color.set(valid?C.mint:0xf5816d);}}
  select(b){
@@ -223,7 +232,8 @@ export class View{
    if(previous)sizePortBadges(previous,this.worldPerPixel,false);
    if(next)sizePortBadges(next,this.worldPerPixel,true);
   }
-  this.selected=b?.id;this.selection.visible=!!b;this.range.visible=TURRETS.includes(b?.type);if(TURRETS.includes(b?.type))this.range.scale.setScalar(turretStats(b).range/10);if(b){this.selection.position.set(b.x,.04,b.z);this.range.position.set(b.x,.035,b.z);}
+  const radius=buildingRadius(b);
+  this.selected=b?.id;this.selection.visible=!!b;this.range.visible=radius>0;if(radius)this.range.scale.setScalar(radius/10);if(b){this.selection.position.set(b.x,.04,b.z);this.range.position.set(b.x,.035,b.z);}
  }
  staticTerrain(s){
   this.renderer.shadowMap.needsUpdate=true;
@@ -245,12 +255,14 @@ export class View{
   const rocks=new T.InstancedMesh(geometry('ico',.5),mat(0x657873),s.terrain.rocks.length);s.terrain.rocks.forEach((v,i)=>{this.dummy.position.set(v.x,v.h*.25,v.z);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.rotation.set(0,rand()*6,0);this.dummy.updateMatrix();rocks.setMatrixAt(i,this.dummy.matrix);});rocks.castShadow=true;this.terrain.add(rocks);
  }
  sync(s,motion,nowTime=s.time){
-  const time=motion?.renderTime??nowTime,tick=motion?.renderTick??s.tick;
+  const time=motion?.renderTime??nowTime;
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   if(this.terrainKey!==`${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
-  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):[],signature=[b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
+  let cargoCount=0;
+  this.dummy.rotation.set(0,0,0);this.dummy.scale.setScalar(1);
+  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1);g.userData.signature=signature;
     for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon']){
@@ -266,10 +278,22 @@ export class View{
    if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
    if(head)head.rotation.y=b.aim||0;
    if(beacon){beacon.position.y=1.73+Math.sin(time*2)*.06;beacon.rotation.z=time*.2;}
-   const cargo=b.type==='belt'&&motion?motion.beltCargo(b):b;
-   if(cargo?.item){let item=this.items.get(b.id);if(!item){item=new T.Mesh(geometry('box',.21,.16,.21),mat(C.light));this.items.set(b.id,item);this.scene.add(item);}if(item.userData.type!==cargo.item){item.userData.type=cargo.item;item.material=mat(itemColors[cargo.item]||C.light);}let ox=0,oz=0;if(b.type==='belt'){const t=Math.min(1,Math.max(0,(tick-(cargo.itemTick??tick))/beltTravelTicks(b))),side=Number.isInteger(cargo.itemSide)&&cargo.itemSide!==b.dir?cargo.itemSide:(b.dir+2)%4;ox=(1-t)**2*DIRS[side][0]*.5+t*t*DIRS[b.dir][0]*.5;oz=(1-t)**2*DIRS[side][1]*.5+t*t*DIRS[b.dir][1]*.5;}item.position.set(b.x+ox,.3,b.z+oz);item.visible=true;}
+   if(b.type==='belt'){
+    const draw=(cargo,t)=>{
+     const rear=(b.dir+2)%4,side=DIRS[cargo.itemSide]&&cargo.itemSide!==b.dir?cargo.itemSide:rear;
+     const [ix,iz]=DIRS[side],[ox,oz]=DIRS[b.dir],bend=side!==rear;
+     const enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5;
+     this.dummy.position.set(b.x+enter*ix+leave*ox,.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
+     this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
+     this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
+    };
+    if(motion)motion.drawBeltItems(b,draw);
+    else if(b.item)for(const cargo of [b,...(b.beltQueue??[])])draw(cargo,conveyorProgress(b,cargo,s.tick));
+   }else if(b.item){let item=this.items.get(b.id);if(!item){item=new T.Mesh(geometry('box',.21,.16,.21),mat(C.light));this.items.set(b.id,item);this.scene.add(item);}if(item.userData.type!==b.item){item.userData.type=b.item;item.material=mat(itemColors[b.item]||C.light);}item.position.set(b.x,.3,b.z);item.visible=true;}
    else if(this.items.has(b.id))this.items.get(b.id).visible=false;
   }
+  this.beltItems.count=cargoCount;
+  if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500);for(let i=0;i<n;i++){const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;this.dummy.rotation.set(0,angle,0);this.dummy.scale.setScalar(scale);this.dummy.position.set(x,.5*scale+sway,z);this.dummy.updateMatrix();this.enemyBody.setMatrixAt(i,this.dummy.matrix);this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));this.dummy.position.y=.88*scale+sway;this.dummy.updateMatrix();this.enemyHead.setMatrixAt(i,this.dummy.matrix);for(let leg=0;leg<2;leg++){const offset=leg?-.1:.1;this.dummy.position.set(x+Math.cos(angle)*offset,.18*scale,z-Math.sin(angle)*offset);this.dummy.rotation.x=Math.sin(time*9+i+leg*Math.PI)*.4;this.dummy.updateMatrix();this.enemyLegs.setMatrixAt(i*2+leg,this.dummy.matrix);}}
   for(const[o,count]of[[this.enemyBody,n],[this.enemyHead,n],[this.enemyLegs,n*2]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
