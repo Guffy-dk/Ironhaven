@@ -8,7 +8,17 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Ironhaven.exe** from its folder. The Windows build includes its Electron runtime. Its saves and checkpoints live under `%APPDATA%\Ironhaven` and carry over when you update. To move a world from a previous browser build, use **Export world backup**, then **Import world backup** in the Windows app.
 
-## Version 0.9.1 — visible upgrades
+## Version 0.10 — hold the colony
+
+Survive 25 swarms to win. Swarms approach from varying directions. Ordinary hostiles target industry when nearby. Gold Core Hunters join from swarm four and pursue the core. Armored hostiles have extra health, frenzied ones hit harder, and swift ones move faster.
+
+Relaxed gives larger starting stocks and 15% faster production. Veteran increases swarm size, health, and damage.
+
+Pan with **WASD**, hold **Shift** to pan faster, and zoom with the wheel. Open Production (**Z**), Defense (**X**), Power (**C**) or Logistics (**V**), then press the number shown on a building. The resource bar shows net deliveries minus operating consumption per minute.
+
+Coal mines extract coal from dark deposits. Deliver it to colony storage to run coal generators. Mortar turrets cover a wide area from range, while pulse turrets deal splash damage at short range. Existing worlds gain terrain outside their old boundary and receive the base construction materials for removed evacuation pads.
+
+## Included from 0.9.1 — visible upgrades
 
 Each upgrade changes the color of the building's body or conveyor surface. Select a building to see its exact upgrade count and matching color in the inspector.
 
@@ -157,12 +167,11 @@ Protect the core through eight swarms. Field training shows how to make two work
 
 | Controls | Action |
 |---|---|
-| WASD, including W+A | Move in screen directions; diagonals have equal total speed |
-| Arrow keys / minimap | Free camera |
-| Space / Follow button | Toggle camera follow |
+| WASD / arrow keys | Pan the camera |
+| Minimap | Jump the camera to a location |
 | Wheel / + / − | Zoom |
-| 1–8 | Conveyor, drill, smelter, assembler, sawmill, generator, turret, barricade |
-| 9 / 0 | Repair / dismantle; dismantle trees for wood |
+| Z / X / C / V | Production / Defense / Power / Logistics |
+| 1–9 | Choose a building in the active category |
 | Left click | Build or inspect |
 | Hold left-click and drag a conveyor | Preview a straight line along the blueprint arrow. Press R or Shift+R to set a corner, then continue. Release to build |
 | Shift-click endpoint | Route from your last conveyor/barricade placement |
@@ -173,7 +182,7 @@ Protect the core through eight swarms. Field training shows how to make two work
 | Left-drag without a build tool | Box-select buildings |
 | Ctrl+C / Ctrl+V | Copy the selection / preview its placement, then click to build |
 | M | Move the selected area |
-| Shift while moving | Sprint |
+| Shift while panning | Move the camera faster |
 | Q / Esc / right click | Exit build mode / cancel route |
 | P | Pause, host only |
 | ? | Field guide |

@@ -76,16 +76,3 @@ test('the defense and repair rounds have distinct effects',()=>{
  assert.equal(state.resources.wood,wood-4);
  assert.equal(wall.hp,700);
 });
-
-test('the final evacuation gets its forecast power immediately and keeps it when reloaded',()=>{
- const state=createGame(),player=addPlayer(state);
- state.wave=8;
- Object.assign(state.resources,{plate:200,steel:100,circuit:100,module:60});
- assert.equal(command(state,player.id,{type:'build',building:'launchpad',x:4,z:5}),null);
- const before=state.power.total,next=waveForecast(state).bonus;
- assert.equal(command(state,player.id,{type:'launch',x:4,z:5}),null);
- assert.equal(roundBonus(state.wave),next);
- assert.equal(state.power.total,before+6);
- const saved=parseSave(JSON.stringify(packWorldSave(state,player.id))).state;
- assert.equal(saved.power.total,before+6);
-});

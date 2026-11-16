@@ -25,9 +25,9 @@ test('recently attacked buildings cannot teleport or be dismantled to escape dam
  assert.match(command(s,p.id,{type:'demolish',x:b.x,z:b.z}),/five seconds/);assert.match(planMove(s,[b.id],1,0).error,/five seconds/);assert.equal(JSON.stringify(s),before);s.time=105;assert.equal(command(s,p.id,{type:'demolish',x:b.x,z:b.z}),null);
  const core=s.buildings.find(b=>b.type==='hq');s.enemies=[{id:999,x:20,z:20,hp:100}];assert.match(planMove(s,[core.id],1,1).error,/active swarm/);
 });
-test('world snapshots stop input and preserve guest inventories without changing the live game',()=>{
- const s=createGame(),host=addPlayer(s),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});command(s,host.id,{type:'move',x:1,z:-1,sprint:true});const before=JSON.stringify(s);
- const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].sprinting,false);assert.deepEqual(data.state.players[0].input,{x:0,z:0});assert.equal(parseSave(JSON.stringify(data)).state.version,SAVE_SCHEMA);
+test('world snapshots preserve guest inventories without changing the live game',()=>{
+ const s=createGame(),host=addPlayer(s),guest=addPlayer(s,'Guest'),belt=s.buildings.find(b=>b.type==='belt');command(s,guest.id,{type:'demolish',x:belt.x,z:belt.z});const before=JSON.stringify(s);
+ const data=packWorldSave(s,host.id);assert.equal(JSON.stringify(s),before);assert.equal(data.state.players.length,1);assert.equal(data.state.players[0].inventory.belt.length,1);assert.equal(data.state.players[0].input,undefined);assert.equal(parseSave(JSON.stringify(data)).state.version,SAVE_SCHEMA);
 });
 test('late turret gains cost more power while upgrade prices remain increasing',()=>{
  const s=createGame(),b=s.buildings.find(b=>b.type==='turret');const basePower=buildingPower(b),first=Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0);b.level=10;assert.ok(buildingPower(b)>basePower*2);assert.ok(Object.values(upgradeCost(b)).reduce((a,v)=>a+v,0)>first*5);

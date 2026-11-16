@@ -32,6 +32,11 @@ select{display:block;width:100%;border:1px solid var(--line);background:#172e31;
 .port-key{margin:0 0 10px;color:var(--text);font-size:12px;line-height:1.5}
 .port-key b{display:inline-block;padding:0 4px;margin-right:4px;color:#071417;background:#b9a2e5}
 .upgrade-swatch{display:inline-block;width:.8em;height:.8em;margin-right:.4em;vertical-align:-.04em;border:1px solid #fff4;border-radius:2px}
+.resource .stock-rate{grid-column:2;font:10px ui-monospace,monospace;color:var(--muted)}
+.resource .stock-rate.positive{color:var(--mint)}
+.resource .stock-rate.negative{color:var(--red)}
+.resources .resource{min-width:0;padding-inline:clamp(5px,1vw,14px)}
+.tabs kbd{margin-right:3px}
 .camera-tools button#focus{width:54px;font-size:12px}
 .camera-tools #focus[aria-pressed=true]{color:var(--gold);background:#eeb96e14}
 .light-graphics .panel,.light-graphics .wave-panel,.light-graphics .hotbar,.light-graphics dialog::backdrop{backdrop-filter:none}

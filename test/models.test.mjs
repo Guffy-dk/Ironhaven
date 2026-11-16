@@ -82,9 +82,8 @@ test('text badges stay hidden on unselected logistics units at every zoom',()=>{
  assert.equal(label.visible,false);
  assert.equal(resizes,1,'Zooming must not resize the framebuffer');
 });
-test('north-up projection maps W up, A left, and smooth following converges on the engineer',()=>{
+test('north-up projection maps W up and A left',()=>{
  globalThis.innerWidth=1440;globalThis.innerHeight=900;
  const v=Object.create(View.prototype);v.center=new T.Vector3();v.camera=new T.OrthographicCamera(-22.4,22.4,14,-14,.1,180);v.scene=new T.Scene();v.renderer={render(){}};v.draw();
  const n=v.project(0,-1,0),south=v.project(0,1,0),west=v.project(-1,0,0),east=v.project(1,0,0);assert.ok(n.y<south.y);assert.ok(west.x<east.x);assert.ok(Math.abs(west.y-east.y)<.001);assert.ok(Math.abs(v.camera.position.x)<.001);
- v.follow({x:10,z:5},.1);assert.ok(v.center.x>0&&v.center.x<10);for(let i=0;i<100;i++)v.follow({x:10,z:5},.05);assert.ok(v.center.distanceTo(new T.Vector3(10,0,5))<.001);
 });
