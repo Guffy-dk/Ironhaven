@@ -107,7 +107,7 @@ internal sealed class Patcher : Form
                 progress.Value = value;
                 if (value == 100) status.Text = "Verifying and unpacking " + release.Version + "…";
             }));
-            status.Text = "Version " + release.Version + " is installed and ready to play.";
+            status.Text = "Version " + release.Version + " is installed. Close any open game window before starting the update.";
         }
         catch (Exception error) { status.Text = "Could not install. " + error.Message; }
         finally { busy = false; RefreshButtons(); }
