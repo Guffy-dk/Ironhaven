@@ -11,6 +11,31 @@ const bundled=await build({entryPoints:[fileURLToPath(new URL('../public/render.
 const {makeModel,View}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
 // Export matching math types from the installed package; methods operate structurally.
 const T=await import('three');
+test('Quarry models have finite geometry, distinct silhouettes and the same port coordinates',()=>{
+ for(const [type,{hp}] of Object.entries(TYPES)){
+  if(!hp)continue;
+  for(let dir=0;dir<4;dir++){
+   const classic=makeModel(type,dir,[0,2],3,'classic'),quarry=makeModel(type,dir,[0,2],3,'quarry');
+   classic.updateMatrixWorld(true);quarry.updateMatrixWorld(true);
+   quarry.traverse(part=>{
+    if(part.geometry)assert.ok(part.geometry.attributes.position.array.every(Number.isFinite),type);
+   });
+   const legacyBounds=new T.Box3().setFromObject(classic),updatedBounds=new T.Box3().setFromObject(quarry);
+   assert.ok(!updatedBounds.isEmpty(),type);
+   assert.ok(!legacyBounds.equals(updatedBounds),type);
+   for(const arrow of classic.children.filter(part=>part.name.startsWith('arrow-'))){
+    const other=quarry.children.find(part=>part.name===arrow.name&&part.position.equals(arrow.position));
+    assert.ok(other?.getWorldPosition(new T.Vector3()).distanceTo(arrow.getWorldPosition(new T.Vector3()))<1e-9,type);
+   }
+   const upgrade=new T.Color(upgradeColor(3));
+   const colors=quarry.children.find(o=>o.geometry?.attributes.color)?.geometry.attributes.color;
+   if(colors){
+    assert.ok(Array.from({length:colors.count},(_,i)=>i).some(i=>Math.abs(colors.getX(i)-upgrade.r)<1e-5&&
+     Math.abs(colors.getY(i)-upgrade.g)<1e-5&&Math.abs(colors.getZ(i)-upgrade.b)<1e-5),type);
+   }
+  }
+ }
+});
 test('all machine rotations and turret levels have finite geometry; ports identify real output direction',()=>{
  for(const type of Object.keys(TYPES).filter(t=>TYPES[t].hp))for(let d=0;d<4;d++){
   const g=makeModel(type,d,[],type==='turret'?3:1);g.updateMatrixWorld(true);

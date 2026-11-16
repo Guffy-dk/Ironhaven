@@ -60,6 +60,26 @@ async function start() {
   if (!result.loaded || !result.secure || !result.multiplayer || !result.version?.startsWith(expectedVersion + ' ')) {
     throw Error('Desktop game did not initialize: ' + JSON.stringify(result));
   }
+  const styles = await gameWindow.webContents.executeJavaScript(`(async () => {
+    const select = document.getElementById('start-visual-style');
+    const gl = document.getElementById('world').getContext('webgl2');
+    const applied = [];
+    for (const style of ['classic', 'quarry']) {
+      select.value = style;
+      select.dispatchEvent(new Event('change'));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      applied.push({
+        style,
+        active: document.body.dataset.visualStyle,
+        saved: localStorage.getItem('ironhaven.visualStyle'),
+        drawable: !!gl && !gl.isContextLost() && gl.drawingBufferWidth > 0
+      });
+    }
+    return applied;
+  })()`);
+  if (!styles.every(({ style, active, saved, drawable }) => style === active && style === saved && drawable)) {
+    throw Error('Desktop visual styles did not initialize: ' + JSON.stringify(styles));
+  }
   app.exit(0);
 }
 
