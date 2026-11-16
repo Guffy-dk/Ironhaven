@@ -1,6 +1,6 @@
 // Pure, deterministic simulation. The exact same module runs in Node and solo browsers.
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
-import {woodland,onTree,walkAroundTrees} from './woodland.js';
+import {SWARM_SPAWN_EDGE,woodland,onTree,walkAroundTrees} from './woodland.js';
 
 export const SIZE = 56, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 8;
 export const DIRS = [[1,0],[0,1],[-1,0],[0,-1]];
@@ -530,7 +530,8 @@ function spawnWave(s){
  const forecast=waveForecast(s);s.wave++;s.waveSide=forecast.side;const count=forecast.count;
  for(let i=0;i<count;i++){
   const side=forecast.side,t=(i*7.31+s.wave*3)%46-23;
-  const x=side===0?-26:side===2?26:t,z=side===1?-26:side===3?26:t;
+  const x=side===0?-SWARM_SPAWN_EDGE:side===2?SWARM_SPAWN_EDGE:t;
+  const z=side===1?-SWARM_SPAWN_EDGE:side===3?SWARM_SPAWN_EDGE:t;
   const brute=i%11===0,hp=Math.round((35+s.wave*8)*forecast.health*(brute?2:1));
   s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage:forecast.damage,speed:1.0+(i%4)*.12+s.wave*.025,cooldown:0,brute:i%11===0});
  }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;updatePower(s);event(s,`Swarm ${s.wave} · ${count} hostiles approaching · ${forecast.bonus.label}`);

@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.9.0';
+export const CURRENT_VERSION = '0.9.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.9.1',date:'2026-11-16',title:'Visible upgrades',
+  changes:[
+   'Buildings change body color at each upgrade tier, including conveyors, barricades and turrets. The inspector shows the matching color alongside the exact upgrade count.',
+   'Swarms spawn eight tiles farther out on the announced side. The minimap marks approaching hostiles at the edge until they enter the map.'
+  ]
+ },
  {
   version:'0.9.0',date:'2026-11-16',title:'Factory controls',
   changes:[
