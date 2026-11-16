@@ -53,6 +53,10 @@ export function updateQuarryEffects(cloud,world,time,center,reach,pixels){
    add(x+t*.83,y,z+t*.17+Math.sin(t*5+i)*.06,.19+t*.6,0,Math.sin(Math.PI*t)*.24);
   }
  }
+ for(const e of world.enemies){
+  if(e.kind!=='spitter'||e.illuminated)continue;
+  for(let i=0;i<3;i++){const phase=time*.45+e.id+i*2.1;add(e.x+Math.sin(phase)*1.2,.17+i*.09,e.z+Math.cos(phase*.8)*1.2,1.8,0,.09);}
+ }
  for(const shot of world.shots){
   const age=time-shot.time;
   if(!shot.radius||age<0||age>.25)continue;

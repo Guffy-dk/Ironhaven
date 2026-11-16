@@ -9,7 +9,7 @@ export class LighthouseFog{
    const material=new T.ShaderMaterial({
     transparent:true,depthWrite:false,
     uniforms:{
-     time:{value:0},core:{value:new T.Vector2()},direction:{value:new T.Vector2()},active:{value:0},
+     time:{value:0},core:{value:new T.Vector2()},direction:{value:new T.Vector2()},beamEnabled:{value:0},
      storm:{value:0},layer:{value:index},reach:{value:LIGHTHOUSE_REACH},edge:{value:Math.cos(LIGHTHOUSE_CONE)}
     },
     vertexShader:`
@@ -21,7 +21,7 @@ export class LighthouseFog{
      }
     `,
     fragmentShader:`
-     uniform float time,active,storm,layer,reach,edge;
+     uniform float time,beamEnabled,storm,layer,reach,edge;
      uniform vec2 core,direction;
      varying vec2 groundPosition;
      float noise(vec2 p){
@@ -40,7 +40,7 @@ export class LighthouseFog{
       vec2 ray=groundPosition-core;
       float distance=length(ray);
       float cone=dot(ray,direction)/max(distance,.01);
-      float beam=smoothstep(edge-.026,edge+.028,cone)*(1.0-smoothstep(reach-5.0,reach,distance))*smoothstep(.85,4.0,distance)*active;
+      float beam=smoothstep(edge-.026,edge+.028,cone)*(1.0-smoothstep(reach-5.0,reach,distance))*smoothstep(.85,4.0,distance)*beamEnabled;
       vec3 color=mix(vec3(.23,.33,.38),vec3(1.0,.75,.42),beam);
       float opacity=(.035+storm*.035+fog*.09)*(1.0-beam*.5) + beam*(.18+fog*.13);
       gl_FragColor=vec4(color,opacity*(layer==0.0?1.0:.53));
@@ -59,7 +59,7 @@ export class LighthouseFog{
    layer.visible=!lowQuality||i===0;
    const uniforms=layer.material.uniforms;
    uniforms.time.value=time;
-   uniforms.active.value=beam?1:0;
+   uniforms.beamEnabled.value=beam?1:0;
    uniforms.storm.value=storm;
    if(beam){uniforms.core.value.set(beam.x,beam.z);uniforms.direction.value.set(beam.dx,beam.dz);}
   }

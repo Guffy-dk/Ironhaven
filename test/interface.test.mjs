@@ -340,3 +340,16 @@ test('skipping training gives the full kit and restoring a training save keeps i
   assert.equal(resumedTraining.save().buildings.length,training.state.buildings.length);
  }finally{await resumedTraining.close();}
 });
+
+test('L and Aim light send bearings; Escape and right click cancel without constructing buildings',async()=>{
+ const h=harness(starterWorld());try{
+  h.$('resume').click();const before=h.save(),count=before.buildings.length;
+  h.key('l');assert.match(h.$('tool-hint').textContent,/AIM LIGHT/);
+  h.point('pointerdown',20,6);let saved=h.save();
+  assert.equal(saved.buildings.length,count);assert.equal(saved.buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+  h.$('aim-light').click();h.key('Escape');h.point('pointerdown',-20,0);
+  assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+  h.$('aim-light').click();h.$('world').dispatchEvent(new h.dom.PointerEvent('pointerdown',{button:2,bubbles:true}));
+  h.point('pointerdown',-10,0);assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+ }finally{await h.close();}
+});

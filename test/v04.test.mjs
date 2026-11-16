@@ -11,7 +11,7 @@ test('difficulty scales strength independently of Standard preparation time',()=
 });
 test('four-player scaling is sublinear, accurately telegraphed and bounded at 480 enemies',()=>{
  const s=createGame();addPlayer(s);const solo=waveForecast(s,8);for(let i=0;i<3;i++)addPlayer(s);const group=waveForecast(s,8);assert.ok(group.count>solo.count);assert.ok(group.count<solo.count*1.5);assert.equal(group.health,solo.health);assert.ok(waveForecast(s,999).count<=480);
- const next=waveForecast(s);s.nextWave=0;step(s);assert.equal(s.enemies.length,next.count);assert.equal(s.waveSide,next.side);const brute=s.enemies.find(e=>e.brute),regular=s.enemies.find(e=>!e.brute);assert.ok(brute.maxHp>regular.maxHp*1.8);
+ const next=waveForecast(s);s.nextWave=0;step(s);assert.equal(s.enemies.length,next.count);assert.equal(s.waveSide,next.side);const brute=s.enemies.find(e=>e.brute),regular=s.enemies.find(e=>e.kind==='runner');assert.ok(brute.maxHp>regular.maxHp*1.8);
 });
 test('diagnostics distinguish input shortage, full storage, free delivery and blocked output',()=>{
  const s=createGame(),b=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(v=>v.type==='hq'||v===b);b.x=-1;b.z=0;b.dir=0;const grid=new Map(s.buildings.map(v=>[`${v.x},${v.z}`,v]));assert.equal(factoryStatus(s,b,grid),'input');

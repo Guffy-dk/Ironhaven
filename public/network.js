@@ -11,7 +11,7 @@ export function decodeCode(code,expected){
 }
 function iceReady(pc){return new Promise((resolve,reject)=>{
  if(pc.iceGatheringState==='complete'){resolve();return;}
- const timeout=setTimeout(()=>{cleanup();if(pc.localDescription?.sdp.includes('a=candidate:'))resolve();else reject(Error('No local network address found. Enable WebRTC in your browser and try again.'));},10000);
+ const timeout=setTimeout(()=>{cleanup();if(pc.localDescription?.sdp.includes('a=candidate:'))resolve();else reject(Error('No local network address found. Check Windows Firewall and restart Ironhaven.'));},10000);
  const changed=()=>{if(pc.iceGatheringState==='complete'){cleanup();resolve();}};
  function cleanup(){clearTimeout(timeout);pc.removeEventListener('icegatheringstatechange',changed);}
  pc.addEventListener('icegatheringstatechange',changed);
@@ -19,7 +19,7 @@ function iceReady(pc){return new Promise((resolve,reject)=>{
 export class Lan{
  constructor({onMessage,onPeerOpen,onPeerClose,onStatus}){this.peers=new Map();this.next=1;this.role=null;this.onMessage=onMessage;this.onPeerOpen=onPeerOpen;this.onPeerClose=onPeerClose;this.onStatus=onStatus;this.pending=null;}
  makePeer(id){
-  if(typeof RTCPeerConnection==='undefined')throw Error('This browser does not support WebRTC. Use a recent Chrome, Edge or Firefox.');
+  if(typeof RTCPeerConnection==='undefined')throw Error('LAN networking is unavailable. Reinstall the latest Windows release.');
   // No STUN/TURN: traffic stays on the local network and needs no public server.
   const pc=new RTCPeerConnection({iceServers:[],bundlePolicy:'max-bundle'}),peer={id,pc,channel:null,playerId:null,name:'Waiting for friend',ready:false,created:Date.now(),budget:0,budgetAt:Date.now()};this.peers.set(id,peer);
   pc.onconnectionstatechange=()=>{this.onStatus?.();if(['failed','closed','disconnected'].includes(pc.connectionState)){if(pc.connectionState==='disconnected'){clearTimeout(peer.disconnectTimer);peer.disconnectTimer=setTimeout(()=>{if(pc.connectionState==='disconnected')this.drop(id);},10000);}else this.drop(id);}};

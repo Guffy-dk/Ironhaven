@@ -1,12 +1,20 @@
 # Lighthouse in the fog
 
-- The latest verified Windows release is v0.13.2. Continue the lighthouse draft on the `lighthouse-preview` branch.
-- The player chose the fogbound lighthouse theme. The first version treats 4D as a real-time 3D scene with drifting fog and a steerable light. Keep the current camera, world, building footprints and controls. Visual rollback belongs in Git history.
-- The draft replaces the Quarry command-core model and description with a lighthouse. It adds three animated fog layers, a rotating lantern, and a shared beam calculation. The simulation gradually turns toward the requested tile. Defenses can target a hostile up to 20% farther away when that hostile is inside the beam, with existing weapon distances outside the beam.
-- Next, wire the existing `aimLighthouse` command into `public/app.js` and `public/index.html`. Press L, or use an Aim light button, then click a map tile to set the bearing. Escape should cancel the targeting interaction. Explain the range bonus in the UI and use the beam state to distinguish lit hostiles. The draft does not yet implement luring.
-- The affected files are `public/shared/lighthouse.js`, `public/shared/sim.js`, `public/motion.js`, `public/lighthouse-fog.js`, `public/quarry-art.js`, and `public/render.js`. Smoke-test the fog shader in the isolated Windows scene. Add automated checks for validated aiming, turning and pausing, beam coverage, range bonus, existing saves and the UI.
-- To conserve usage, keep the first playtest small. Use one representative scene and one GitHub branch with automated tests. This draft has not been built, tested or shipped.
+The `lighthouse-preview` draft has been integrated with the latest main branch for the Windows 0.14.0 release.
 
-## Continue in Codex Cloud
+## Implemented
 
-Connect `Guffy-dk/Ironhaven` to a cloud environment. Use Node.js 22 or later and `npm ci` in the setup. Start from `lighthouse-preview`. Run `npm test` for the automated suite and `npm run build` for the standalone browser bundle. The repository's Windows GitHub Actions job builds and tests the Windows package.
+- Aim light button / L, click a map tile, Escape or right-click to cancel. A gradually turning authoritative bearing is interpolated by the renderer; pausing stops turning. Existing saves work without lighthouse fields.
+- Shared beam coverage: 40 tiles, 40-degree cone, 20% extra defense acquisition range only for illuminated enemies. The minimap shows the same cone.
+- Three animated fog layers using noise, with the reserved GLSL uniform name fixed and shader errors covered by Windows startup checks.
+- Five coastal species with deterministic wave composition, species-specific runtime meshes and animated appendages: runner, drowned, guard, spitter and walker. Core hunters remain, spitters start in wave four and a walker appears every fifth wave.
+- Bounded fear/lure responses, sustained-light armor exposure, spitter ranged strikes and mist interference. Combat and aiming run on the host; guests receive the same state.
+- Windows-only distribution: embedded Electron resource, ZIP, patcher and checksum manifest. No Pages workflow or downloadable browser build.
+
+## Art direction still in progress
+
+Read [design/ART_DIRECTION.md](design/ART_DIRECTION.md). The approved workshop reference and new creature sheet are generated concepts, not runtime screenshots. The first creature meshes are functional prototypes. The detailed architecture, terrain, conveyor and structural-upgrade redesign has not been completed. Do not describe the full graphical overhaul as finished or revert to pixel art.
+
+## Verification
+
+Use Node.js 22 or later, `npm ci`, `npm test` and `npm run build`. On Windows run `./scripts/build-windows.ps1`; CI covers patcher validation and the actual Windows app startup and lighthouse controls. Actual multi-PC LAN and player hardware performance are separate checks.

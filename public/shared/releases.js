@@ -1,9 +1,21 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.13.3';
+export const CURRENT_VERSION = '0.14.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.14.0',date:'2026-11-17',title:'Lighthouse in the fog',
+  changes:[
+   'Five coastal hostile species with distinct 3D silhouettes and animated appendages: Shore runners, Drowned, Shell guards, Fog spitters and the Abyss walker. Spitters arrive from swarm four and an Abyss walker joins every fifth swarm.',
+   'Press L or Aim light, then click a map tile. The lighthouse turns gradually; Escape or right-click cancels aiming. A live minimap cone shows its bearing. Lighting extends defense acquisition range by 20%.',
+   'Shore runners briefly scatter out of the beam; Drowned are drawn toward the lighthouse. Sustained illumination exposes Shell guard armor and the Abyss walker. Light responses are time-limited so one beam cannot trap a wave forever.',
+   'Fog spitters attack at range and reduce defense acquisition range around unlit hostiles. Illuminate the spitter or its protected targets to restore clear targeting.',
+   'Fix a shader compilation error in the lighthouse fog draft. Preserve existing worlds, checkpoints and LAN play with authoritative light and creature simulation.',
+   'Windows x64 is the sole distribution target. Browser publishing and the downloadable browser artifact have been removed. Install through the Windows patcher.',
+   'The detailed industrial architectural overhaul remains in development. Creature models are an initial runtime implementation, not the final fidelity of the concept art.'
+  ]
+ },
  {
   version:'0.13.3',date:'2026-11-16',title:'Larger colonies',
   changes:['Remove the 700-building limit from construction, selection and saves. Conveyor cargo rendering expands to match larger colonies.']

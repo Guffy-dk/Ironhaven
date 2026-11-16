@@ -1,7 +1,9 @@
-// Pure, deterministic simulation. The exact same module runs in Node and solo browsers.
+// Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
 import {turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
+
+import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination} from './hostiles.js';
 
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
@@ -766,11 +768,12 @@ function spawnWave(s){
    x=sx*(SWARM_SPAWN_EDGE-(i%2?inset:0));
    z=sz*(SWARM_SPAWN_EDGE-(i%2?0:inset));
   }
-  const coreHunter=i<coreHunters,brute=!coreHunter&&i%11===0;
+  const coreHunter=i<coreHunters;
   const mutation=!coreHunter&&waveMutation&&random()<.22?waveMutation:null;
-  const hp=Math.round((35+s.wave*5+.09*s.wave**2)*forecast.health*(coreHunter?1.6:brute?2:1)*(mutation==='armored'?1.5:1));
+  const kind=coreHunter?'drowned':waveKind(s.wave,i,count),species=HOSTILES[kind];
+  const hp=Math.round(species.health*(35+s.wave*5+.09*s.wave**2)*forecast.health*(mutation==='armored'?1.5:1));
   const damage=forecast.damage*(mutation==='frenzied'?1.35:1),speed=(1.0+(i%4)*.12+s.wave*.015)*(mutation==='swift'?1.4:1);
-  s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage,speed,cooldown:0,brute,coreHunter,mutation});
+  s.enemies.push({id:s.nextId++,kind,x,z,hp,maxHp:hp,damage:damage*species.damage,speed:speed*species.speed,cooldown:0,brute:kind==='guard',coreHunter:coreHunter||kind==='walker',mutation});
  }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;updatePower(s);
  event(s,`Swarm ${s.wave} · ${count} hostiles${coreHunters?' · '+coreHunters+' core hunters':''}${waveMutation?' · '+waveMutation+' mutation':''} · ${forecast.bonus.label}`);
 }
@@ -789,6 +792,9 @@ export function step(s,dt=STEP){
  const hq=s.buildings.find(b=>b.type==='hq');
  turnLighthouse(hq,dt);
  const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
+ for(const e of s.enemies)exposeHostile(e,lit.has(e),dt);
+ const mistSources=s.enemies.filter(e=>e.hp>0&&hostileKind(e)==='spitter'&&!lit.has(e));
+ const obscured=new Set(s.enemies.filter(e=>!lit.has(e)&&mistSources.some(other=>(other.x-e.x)**2+(other.z-e.z)**2<9)));
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
  updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
@@ -856,11 +862,13 @@ export function step(s,dt=STEP){
     let target=null,closest=(stats.range*LIT_RANGE_MULTIPLIER)**2;
     for(const e of s.enemies){
      const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;
-     if(e.hp>0&&d<closest&&(d<stats.range**2||lit.has(e))){closest=d;target=e;}
+     const mist=obscured.has(e);
+     const reach=stats.range*(lit.has(e)?LIT_RANGE_MULTIPLIER:mist?.82:1);
+     if(e.hp>0&&d<closest&&d<reach**2){closest=d;target=e;}
     }
     if(target){
-     target.hp-=stats.damage;target.lastHit=s.time;
-     if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=stats.damage*.65;
+     target.hp-=hostileDamage(target,stats.damage);target.lastHit=s.time;
+     if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=hostileDamage(e,stats.damage*.65);
      if(consumesAmmo)b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);
      s.shots.push({x:b.x,z:b.z,tx:target.x,tz:target.z,radius:stats.radius,time:s.time});
     }}
@@ -878,10 +886,17 @@ export function step(s,dt=STEP){
    const distance=(e.x-b.x)**2+(e.z-b.z)**2;
    if(distance<closest){target=b;closest=distance;}
   }
-  const d=dist(e,target),move=e.speed*(e.brute?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  target=hostileDestination(e,hq,beam,target,enemyDestination);
+  const kind=hostileKind(e),attackRange=HOSTILES[kind].range;
+  const d=dist(e,target),move=e.speed*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  if(kind==='spitter'&&d<=attackRange&&e.cooldown<=0&&target.hp>0){
+   target.hp-=10*(e.damage||1);target.lastHit=s.time;e.cooldown=2.4;
+   s.shots.push({x:e.x,z:e.z,tx:target.x,tz:target.z,time:s.time,hostile:true});
+  }
+  if(kind==='spitter'&&d<=attackRange)continue;
   const {x:nx,z:nz}=walkAroundTrees(e.coreHunter?coreRoutes:forest,e,target,move,enemyDestination);
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
-  if(obstacle||d<.85){
+  if(obstacle||d<attackRange){
    const victim=obstacle||target;
    if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||victim.type==='wall')){
     const armor=victim.type==='wall'?(bonus?.wallDamage??1):1;

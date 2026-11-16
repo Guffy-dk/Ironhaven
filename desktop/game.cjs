@@ -9,6 +9,7 @@ const gameUrl = 'ironhaven://game/index.html';
 const repositoryUrl = 'https://github.com/Guffy-dk/Ironhaven';
 const smokeTest = process.argv.includes('--smoke-test');
 let gameWindow;
+const graphicsErrors=[];
 
 app.setName('Ironhaven');
 if (smokeTest) {
@@ -41,6 +42,9 @@ async function start() {
     width: 1280, height: 800, minWidth: 900, minHeight: 600, show: false,
     title: 'Ironhaven', backgroundColor: '#101e21',
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+  });
+  if(smokeTest)gameWindow.webContents.on('console-message',(_event,details)=>{
+    if(/Shader Error|not compiled|VALIDATE_STATUS false|Uncaught/i.test(details.message||''))graphicsErrors.push(details.message);
   });
   gameWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url === repositoryUrl) void shell.openExternal(repositoryUrl);
@@ -75,6 +79,21 @@ async function start() {
   if (!graphics.quarry || !graphics.drawable) {
     throw Error('Desktop graphics did not initialize: ' + JSON.stringify(graphics));
   }
+  const interaction=await gameWindow.webContents.executeJavaScript(`(async () => {
+    document.getElementById('skip-tutorial').checked=true;
+    document.getElementById('start-solo').click();
+    document.getElementById('pause').click();
+    document.getElementById('aim-light').click();
+    const aiming=!document.getElementById('tool-hint').hidden;
+    document.getElementById('world').dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+    document.getElementById('save').click();
+    const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+    const core=saved?.state?.buildings?.find(b=>b.type==='hq');
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {aiming,saved:!!saved,aimed:Number.isFinite(core?.lighthouseAim),cancelled:document.getElementById('tool-hint').hidden};
+  })()`);
+  if(!interaction.aiming||!interaction.saved||!interaction.aimed||!interaction.cancelled)throw Error('Windows lighthouse controls failed: '+JSON.stringify(interaction));
+  if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }
 

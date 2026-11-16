@@ -1,3 +1,5 @@
+import {lighthouseBeam,lighthouseHeading,LIGHTHOUSE_REACH,LIGHTHOUSE_CONE} from './shared/lighthouse.js';
+import {HOSTILES,hostileKind} from './shared/hostiles.js';
 import { View } from './render.js';
 import { RenderMotion } from './motion.js';
 import { upgradeColor } from './upgrade-colors.js';
@@ -16,7 +18,7 @@ let state=createGame(),playerId=null,started=false,mode='solo',view,tool=null,di
 const keys=new Set(),motion=new RenderMotion(),renderPoint={x:0,z:0};
 let cameraTravel=0,rowAnchor=null,rowGesture=null,routePlan=null,lastRouteKey='',pointer=null;
 let areaIds=[],selectionGesture=null,movingArea=false,pendingMove=null,showDiagnostics=false,checkpointCache=null,lastAutoCheckpoint='';
-let copiedSetup=[],pasting=false;
+let copiedSetup=[],pasting=false,aimingLight=false;
 const CHECKPOINTS='ironhaven.checkpoints.v1';
 let programTargetId=null;
 initWindows();
@@ -28,7 +30,7 @@ function toast(text,error=false){const e=document.createElement('div');e.classNa
 function tone(freq=440,duration=.08,volume=.025,type='sine'){
  if(muted)return;try{audio||=new AudioContext();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}catch{}
 }
-try{view=new View($('world'));}catch(e){$('loading').innerHTML='<p>3D could not start. Enable WebGL / hardware acceleration in your browser and reload.</p>';throw e;}
+try{view=new View($('world'));}catch(e){$('loading').innerHTML='<p>3D could not start. 3D graphics could not initialize. Update your graphics driver and restart Ironhaven.</p>';throw e;}
 function readStorage(key){try{return localStorage.getItem(key);}catch{return null;}}
 function writeStorage(key,value){try{localStorage.setItem(key,value);return true;}catch{return false;}}
 setGraphics(readStorage('ironhaven.lightGraphics')==='true');
@@ -64,8 +66,15 @@ function updateToolbar(){
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
  document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type;el.hidden=!CATEGORIES[tab].tools.includes(t);el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(t==='repair'?repair:TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
 }
-function setTool(t){pasting=false;if(t||selectionGesture?.trees)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
+function setTool(t){aimingLight=false;$('aim-light').classList.remove('active');pasting=false;if(t||selectionGesture?.trees)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
+function beginLightAim(){if(!started)return;setTool(null);clearArea();aimingLight=true;$('aim-light').classList.add('active');updateHover();}
+$('aim-light').onclick=()=>aimingLight?setTool(null):beginLightAim();
 function updateHover(){
+ if(aimingLight){
+  $('tool-hint').hidden=false;$('tool-hint').classList.remove('invalid');
+  $('tool-hint').textContent='AIM LIGHT · Click a map tile · Esc / right-click cancels · Lit targets: +20% defense range';
+  view.hover(hover,true,null);return;
+ }
  if(pasting){previewPaste();return;}
  if(movingArea){previewMove();return;}
  if(rowGesture&&refreshRoute())return;
@@ -91,7 +100,7 @@ function execute(cmd){
 function saveGame(quiet=false){
  if(!started||mode==='client'){if(!quiet)toast('Only the host can save the world.',true);return;}
  const {state:data}=packWorldSave(state,playerId);
- if(!writeStorage(SAVE,JSON.stringify({state:data,playerId}))){if(!quiet)toast('Could not save. Browser storage is disabled or full.',true);return;}
+ if(!writeStorage(SAVE,JSON.stringify({state:data,playerId}))){if(!quiet)toast('Could not save. Local save storage is unavailable or full.',true);return;}
  if(!quiet)toast('World saved on this device.');$('resume').hidden=false;
 }
 function newExpedition(name,difficulty){
@@ -287,7 +296,7 @@ function updateUi(){
  if(started&&state.status!=='playing'&&!ended){ended=true;const won=state.status==='victory';$('end-title').textContent=won?'Ironhaven endures.':'The colony has fallen.';$('end-label').textContent=won?'25 SWARMS SURVIVED':'EXPEDITION ENDED';$('end-summary').textContent=`You held out for ${Math.floor(state.time/60)} minutes and stopped ${state.totalKills} hostiles. Your industry delivered ${state.produced.plate} iron plates and ${state.produced.gear} gears.`;$('end-continue').hidden=!won;$('end-continue').disabled=mode==='client';$('end-dialog').showModal();saveGame(true);}
 }
 const mini=$('minimap'),ctx=mini.getContext('2d');
-function drawMinimap(){const w=mini.width,h=mini.height,sx=w/SIZE,sz=h/SIZE;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+SIZE/2)*sx,(b.z+SIZE/2)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect(Math.max(0,Math.min(w-2,(e.x+SIZE/2)*sx)),Math.max(0,Math.min(h-2,(e.z+SIZE/2)*sz)),2,2);ctx.fillStyle='#6e8993';for(const t of state.terrain.coal||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+SIZE/2-cw/2)*sx,(view.center.z+SIZE/2-ch/2)*sz,cw*sx,ch*sz);}
+function drawMinimap(){const w=mini.width,h=mini.height,sx=w/SIZE,sz=h/SIZE;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);const core=state.buildings.find(b=>b.type==='hq');if(core){const a=Math.PI/2-lighthouseHeading(core);ctx.fillStyle='#eeb96e30';ctx.beginPath();ctx.moveTo((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz);ctx.ellipse((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz,LIGHTHOUSE_REACH*sx,LIGHTHOUSE_REACH*sz,0,a-LIGHTHOUSE_CONE,a+LIGHTHOUSE_CONE);ctx.closePath();ctx.fill();}ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+SIZE/2)*sx,(b.z+SIZE/2)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect(Math.max(0,Math.min(w-2,(e.x+SIZE/2)*sx)),Math.max(0,Math.min(h-2,(e.z+SIZE/2)*sz)),2,2);ctx.fillStyle='#6e8993';for(const t of state.terrain.coal||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+SIZE/2-cw/2)*sx,(view.center.z+SIZE/2-ch/2)*sz,cw*sx,ch*sz);}
 mini.onclick=e=>{const rect=mini.getBoundingClientRect();view.center.set((e.clientX-rect.left)/rect.width*SIZE-SIZE/2,0,(e.clientY-rect.top)/rect.height*SIZE-SIZE/2);};
 function dragEndpoint(origin,cell){
  const [dx,dz]=DIRS[dir],distance=Math.max(0,(cell.x-origin.x)*dx+(cell.z-origin.z)*dz);
@@ -339,6 +348,7 @@ $('world').addEventListener('pointermove',e=>{
 $('world').addEventListener('pointerdown',e=>{
  if(e.button===2){if(selectionGesture?.trees){selectionGesture=null;$('selection-box').hidden=true;}setTool(null);return;}if(e.button!==0||!started)return;
  pointer={x:e.clientX,y:e.clientY};hover=view.point(e.clientX,e.clientY);if(!hover)return;
+ if(aimingLight){if(execute({type:'aimLighthouse',...hover})!==false){setTool(null);toast('Lighthouse turning to the new bearing.');}return;}
  if(pasting){placePaste();return;}
  if(movingArea){placeArea(e.shiftKey);return;}
  if(tool==='demolish'&&e.shiftKey){
@@ -388,6 +398,7 @@ window.addEventListener('keydown',e=>{
  if(e.key==='Escape'||e.key.toLowerCase()==='q'){setTool(null);clearArea();keys.clear();return;}
  if(document.querySelector('dialog[open]'))return;
  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(!started||e.repeat)return;
+ if(e.key.toLowerCase()==='l'){beginLightAim();return;}
  if(pasting&&e.key.toLowerCase()==='r')return;
  const category=Object.keys(CATEGORIES).find(name=>CATEGORIES[name].key===e.key.toLowerCase());if(category)setCategory(category);
  const item=CATEGORIES[tab].tools[SHORTCUT.indexOf(e.key)];if(item)setTool(tool===item?null:item);
@@ -506,7 +517,7 @@ function enemyHealth(){
  enemyCanvas.hidden=!state.enemies.length;if(enemyCanvas.hidden)return;
  if(enemyCanvas.width!==innerWidth||enemyCanvas.height!==innerHeight){enemyCanvas.width=innerWidth;enemyCanvas.height=innerHeight;}
  enemyCtx.clearRect(0,0,innerWidth,innerHeight);
- for(const e of state.enemies){const {x,z}=motion.position(e,renderPoint),p=view.project(x,z,1.35*(e.brute?1.4:1));if(!p.visible)continue;enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}
+ for(const e of state.enemies){const {x,z}=motion.position(e,renderPoint),p=view.project(x,z,hostileKind(e)==='walker'?2.25:hostileKind(e)==='drowned'?1.03:.8);if(!p.visible)continue;enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.illuminated?'#edcd91':e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}
 }
 const ITEM_NAMES={ore:'Iron ore',copperOre:'Copper ore',...Object.fromEntries(Object.entries(RESOURCE_NAMES).map(([k,v])=>[k,v.toLowerCase()]))};
 function drawMachineIO(){

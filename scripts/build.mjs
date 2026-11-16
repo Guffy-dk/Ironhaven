@@ -7,9 +7,8 @@ await mkdir('public/vendor',{recursive:true});
 await cp('node_modules/three/build/three.module.js','public/vendor/three.module.js');
 await cp('node_modules/three/build/three.core.js','public/vendor/three.core.js');
 await cp('node_modules/three/LICENSE','public/vendor/THREE-LICENSE.txt');
+// The bundle is an internal Windows Electron resource, not a browser distribution.
 await rm('dist',{recursive:true,force:true});
-await mkdir('dist',{recursive:true});
-await cp('node_modules/three/LICENSE','dist/THREE-LICENSE.txt');
 const result=await build({entryPoints:['public/app.js'],bundle:true,minify:true,format:'iife',target:['es2022'],write:false,legalComments:'inline'});
 const css=await readFile('public/style.css','utf8');
 const threeLicense=await readFile('node_modules/three/LICENSE','utf8');
@@ -25,6 +24,5 @@ const html=packageHtml(source,{
 await mkdir('release',{recursive:true});
 await writeFile('release/Ironhaven.html',html);
 await writeFile('release/RELEASE_NOTES.md',releaseMarkdown(currentRelease));
-// The hosted game is the same self-contained artifact as the offline edition.
-await writeFile('dist/index.html',html);
-console.log(`Built dist/index.html and release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);
+await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
+console.log(`Built embedded Windows resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);

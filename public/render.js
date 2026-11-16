@@ -17,6 +17,7 @@ import {mat,geometry,box,cyl} from './render-primitives.js';
 import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
 import {quarryTerrainMaterial,quarrySpruce,quarryTexture} from './quarry-textures.js';
 import {createQuarryEffects,quarryActorGeometry,updateQuarryEffects} from './quarry-effects.js';
+import {CoastalHostiles} from './coastal-hostiles.js';
 import {LighthouseFog} from './lighthouse-fog.js';
 import {isInLighthouseBeam,lighthouseBeam,lighthouseHeading} from './shared/lighthouse.js';
 const actorSkin=new T.MeshStandardMaterial({vertexColors:true,color:0xb5a38d,roughness:.91});
@@ -240,11 +241,14 @@ export class View{
   this.previewRange=this.range.clone();this.previewRange.material=this.range.material.clone();
   this.previewRange.material.opacity=.7;this.scene.add(this.previewRange);
   const points=new Float32Array(1200*6);this.shotsGeometry=new T.BufferGeometry();this.shotsGeometry.setAttribute('position',new T.BufferAttribute(points,3));this.shotLines=new T.LineSegments(this.shotsGeometry,new T.LineBasicMaterial({color:0xffd890,transparent:true,opacity:.85}));this.shotLines.frustumCulled=false;this.scene.add(this.shotLines);
+  this.hostileShotsGeometry=new T.BufferGeometry();this.hostileShotsGeometry.setAttribute('position',new T.BufferAttribute(new Float32Array(500*6),3));
+  this.hostileShotLines=new T.LineSegments(this.hostileShotsGeometry,new T.LineBasicMaterial({color:0x9cae7d,transparent:true,opacity:.8}));this.hostileShotLines.frustumCulled=false;this.scene.add(this.hostileShotLines);
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
   this.dust=createQuarryEffects();this.scene.add(this.dust);
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
+  this.coastalHostiles=new CoastalHostiles(this.scene);
   this.reserveBeltCargo(256);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
@@ -473,7 +477,8 @@ export class View{
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
-  for(let i=0;i<n;i++){
+  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion);
+  for(let i=0;i<(quarry?0:n);i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
    if(quarry)this.enemyBody.setColorAt(i,this.enemyColor.multiplyScalar(isInLighthouseBeam(beam,{x,z})?1.21:.77));
@@ -494,14 +499,17 @@ export class View{
     this.dummy.rotation.x=Math.sin(time*9+i+leg*Math.PI)*.4;this.dummy.updateMatrix();this.enemyLegs.setMatrixAt(i*2+leg,this.dummy.matrix);
    }
   }
-  for(const[o,count]of[[this.enemyBody,n],[this.enemyHead,n],[this.enemyLegs,n*(quarry?4:2)]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
+  for(const[o,count]of[[this.enemyBody,quarry?0:n],[this.enemyHead,quarry?0:n],[this.enemyLegs,quarry?0:n*2]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
   if(this.enemyBody.instanceColor)this.enemyBody.instanceColor.needsUpdate=true;
   if(quarry){
    this.actorHeading=headings;
    updateQuarryEffects(this.dust,s,time,this.center,this.camera.right+6,
     this.renderer.domElement.height/Math.max(1,this.zoom*2));
   }
-  const shots=s.shots.slice(-1200),pos=this.shotsGeometry.attributes.position;
+  const hostileShots=s.shots.filter(shot=>shot.hostile).slice(-500),hostilePos=this.hostileShotsGeometry.attributes.position;
+  hostileShots.forEach((shot,i)=>{hostilePos.setXYZ(i*2,shot.x,.55,shot.z);hostilePos.setXYZ(i*2+1,shot.tx,.4,shot.tz);});
+  this.hostileShotsGeometry.setDrawRange(0,hostileShots.length*2);this.hostileShotLines.visible=hostileShots.length>0;if(hostileShots.length)hostilePos.needsUpdate=true;
+  const shots=s.shots.filter(shot=>!shot.hostile).slice(-1200),pos=this.shotsGeometry.attributes.position;
   let blasts=0;
   shots.forEach((v,i)=>{
    pos.setXYZ(i*2,v.x,.85,v.z);pos.setXYZ(i*2+1,v.tx,.5,v.tz);
