@@ -118,7 +118,7 @@ test('selected factory shows materials, buffered output and independent sharing 
  const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',smelter.x,smelter.z);h.point('pointerup',smelter.x,smelter.z);h.frame(1000);
   assert.match(h.$('machine-io').textContent,/Iron ore.*iron plates/i);assert.match(h.$('machine-io').textContent,/Copper ore.*copper/i);
-  assert.equal(h.$('output-stock').textContent,'Output buffer 2 / 10');
+  assert.equal(h.$('output-stock').textContent,'Output buffer 2 / 5');
   assert.equal(h.$('output-options').hidden,false);h.$('send-output').click();
   const selected=h.save().buildings.find(b=>b.id===smelter.id);
   assert.equal(selected.sendOutput,true);assert.equal(selected.receiveOutput,false);

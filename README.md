@@ -10,7 +10,7 @@ For a manual install, extract all of **Ironhaven-Windows-x64.zip** and run **Iro
 
 ## Version 0.9 — factory controls
 
-Select a factory to see its material icons. Cyan arrows point in and gold arrows point out. Item-producing machines buffer up to ten outputs. To pass output to a neighboring machine of the same type and facing, turn on **Send** on the upstream machine and **Receive** on the downstream machine. Hostiles go around trees.
+Select a factory to see its material icons. Cyan arrows point in and gold arrows point out. Item-producing machines buffer up to five outputs. To pass output to a neighboring machine of the same type and facing, turn on **Send** on the upstream machine and **Receive** on the downstream machine. Hostiles go around trees.
 
 Drag-select a setup, press **Ctrl+C**, then **Ctrl+V** and click its new location. The copy preserves directions, dispatch programs and output-sharing settings. Placement uses inventory and materials at the normal price. Select multiple buildings of one type and press **U** to upgrade them together.
 

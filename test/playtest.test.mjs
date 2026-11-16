@@ -61,15 +61,15 @@ test('group upgrades are atomic, charge every eligible upgrade, and preserve dam
  assert.equal(a.level,2);assert.equal(a.hp,Math.round(65*1.25)-10);assert.equal(b.level,2);assert.equal(state.resources.wood,wood-cost.wood);
 });
 
-test('unconnected factories buffer up to ten items, including across a save and reload',()=>{
+test('unconnected factories buffer up to five items, including across a save and reload',()=>{
  const {state,player,build}=world(),machine=build('assembler',5,5);
  machine.input=Array(24).fill('plate');
  for(let i=0;i<700;i++)step(state);
- assert.equal(outputCount(machine),10);assert.equal(machine.input.length,4);
+ assert.equal(outputCount(machine),5);assert.equal(machine.input.length,14);
  const saved=parseSave(JSON.stringify(packWorldSave(state,player.id))).state;
- assert.equal(outputCount(saved.buildings.find(b=>b.id===machine.id)),10);
+ assert.equal(outputCount(saved.buildings.find(b=>b.id===machine.id)),5);
  build('belt',6,5);step(state);
- assert.equal(outputCount(machine),9);assert.equal(state.buildings.find(b=>b.x===6&&b.z===5).item,'gear');
+ assert.equal(outputCount(machine),4);assert.equal(state.buildings.find(b=>b.x===6&&b.z===5).item,'gear');
 });
 
 test('matched neighbors move buffered output in order using both switches, one hop per tick',()=>{
@@ -81,6 +81,11 @@ test('matched neighbors move buffered output in order using both switches, one h
  step(state);assert.equal(middle.item,'copper');assert.equal(end.item,null);
  step(state);assert.equal(middle.item,'plate');assert.equal(end.item,'copper');
  step(state);assert.deepEqual(end.outputBuffer,['plate']);
+ end.outputBuffer.push('plate','plate','plate');middle.item='copper';
+ step(state);assert.equal(outputCount(end),5);assert.equal(middle.item,'copper');
+ end.outputBuffer.pop();end.dir=1;
+ step(state);assert.equal(outputCount(end),4);assert.equal(middle.item,'copper');
+ end.dir=0;step(state);assert.equal(outputCount(end),5);assert.equal(middle.item,null);
  assert.equal(state.stats.totals.copper??0,0,'Forwarding must not count as production');
 });
 

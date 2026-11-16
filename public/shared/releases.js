@@ -10,7 +10,7 @@ export const RELEASES = [
    'Space and the Follow button toggle camera lock. Engineer movement keeps the selected camera mode. Movement interpolates between simulation ticks, and static shadows are only redrawn when scenery or buildings change.',
    'Small arrows show port directions. Select a factory to see its input and output materials, or select a relay or dispatch hub for named ports.',
    'Box-select a factory setup, copy with Ctrl+C, and place a new copy with Ctrl+V and a click. Directions and machine settings are copied. U upgrades selected buildings of one type in a single transaction.',
-   'Item-producing machines buffer up to ten outputs. Enable Send and Receive to share buffered output between adjacent machines of the same type facing the same way.',
+   'Item-producing machines buffer up to five outputs. Enable Send and Receive to share buffered output between adjacent machines of the same type facing the same way.',
    'Hostiles route around tree tiles, including in existing worlds. Conveyors placed from inventory start empty.'
   ]
  },

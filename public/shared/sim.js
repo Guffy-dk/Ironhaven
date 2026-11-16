@@ -83,7 +83,7 @@ export const turretStats = b => TURRET_LEVELS[Math.max(0,Math.min(MAX_UPGRADES,(
 export const maxHp = b => b.type==='turret' ? turretStats(b).hp : Math.round(TYPES[b.type].hp*(1+((b.level||1)-1)*.25));
 const EXTRACTORS=['drill','copperDrill'];
 const PRODUCERS=[...EXTRACTORS,'sawmill',...Object.keys(RECIPES)];
-export const OUTPUT_CAPACITY=10;
+export const OUTPUT_CAPACITY=5;
 export const hasOutputBuffer=type=>EXTRACTORS.includes(type)||Object.hasOwn(RECIPES,type);
 export const outputCount=b=>(b.item?1:0)+(b.outputBuffer?.length??0);
 export function canShareOutput(source,target){
