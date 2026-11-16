@@ -6,7 +6,11 @@
 
 Download **Ironhaven.html** and open it directly in a recent Chrome, Edge or Firefox with WebGL enabled. No installation, Node.js, CDN or server app is needed to play. All code and original graphics are in the file.
 
-## Version 0.7 — swarm round bonuses
+## Version 0.8 — field training
+
+New expeditions start with a core and a starter kit in the host's inventory. Follow the in-world markers to move, build iron and gear lines, deliver items to storage and build defenses. The swarm countdown starts when you finish or skip training. Skipping gives you the same kit, ready to place. Existing worlds keep their buildings, and training saves resume at the current task.
+
+## Included from 0.7 — swarm round bonuses
 
 Every swarm activates a shared colony bonus. It lasts through the attack and the preparation time until the next swarm begins. The HUD shows the active and upcoming bonuses. Starting preparation has no active bonus.
 
@@ -38,7 +42,7 @@ One **Smelter** accepts both iron and copper ore through its cyan IN ports. It p
 
 ## Included from 0.5 — programmable expedition logistics
 
-**New here?** The first-world tutorial can be skipped with the remembered **Skip tutorial** checkbox or replayed from the menu. For a new Codex/ChatGPT conversation or local checkout, read [the complete project handoff](docs/PROJECT_HANDOFF.md).
+**New here?** Use the remembered **Skip tutorial** checkbox to start the countdown right away. The field guide remains available with **?**. For a new Codex/ChatGPT conversation or local checkout, read [the complete project handoff](docs/PROJECT_HANDOFF.md).
 
 Ironhaven’s focus is supplying, defending and evacuating an expedition. The new logistics units are **Transfer relays** with hovering cargo capsules and **Dispatch hubs** with explicit dispatch plans, using original procedural models.
 
@@ -122,12 +126,12 @@ Networking is direct WebRTC with **no STUN/TURN or signalling service**. Codes e
 
 ## Factory and defense
 
-Protect the core through eight swarms. The starter colony has two working lines:
+Protect the core through eight swarms. Field training shows how to make two working lines:
 
 - Drill → conveyor → smelter → core: iron plates for construction.
 - Drill → conveyor → smelter → assembler → core: two plates become one gear, used for turret ammunition and upgrades.
 - Sawmills near trees supply three wood every three seconds. Generators consume one wood every twelve seconds to provide eighteen power; the core supplies eighteen power itself.
-- Cyan **IN** ports accept items. Gold **OUT** ports deliver them. Machine outputs and conveyor arrows reflect their actual directions.
+- Cyan **IN** ports accept items. Gold **OUT** ports deliver them. Purple **RET** on Transfer Relays and Dispatch Hubs sends items to a separate return conveyor when the Return quota is enabled. Select a machine to enlarge its port labels.
 - Turrets support ten upgrades through Mk XI. Upgrades improve damage, range, fire rate and health. One gear reloads twelve shots.
 - Dismantling packs a building into your inventory, preserving damage, upgrades, cargo and ammo. Placement consumes inventory before raw materials. Hotbar numbers show your count.
 

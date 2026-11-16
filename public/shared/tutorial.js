@@ -1,10 +1,21 @@
+const drill={type:'drill',x:4,z:3,dir:3,label:'Iron drill ↑'};
+const input={type:'belt',x:4,z:2,dir:3,label:'Conveyor ↑'};
+const smelter={type:'smelter',x:4,z:1,dir:2,label:'Smelter ←'};
+const hasBuilding=(state,tile)=>state.buildings.some(b=>b.x===tile.x&&b.z===tile.z&&b.type===tile.type&&(tile.dir===undefined||b.dir===tile.dir));
+
 export const TUTORIAL_STEPS=[
- {title:'Bring the expedition home',tag:'YOUR MISSION',body:'Ironhaven is a rescue expedition. Keep the core alive, supply the perimeter and build an evacuation route for your crew. Expanding industry is a means to get everyone out.',focus:'objectives'},
- {title:'Move with your engineer',tag:'WASD · SHIFT · SPACE',body:'WASD follows the screen directions. Combine keys to move diagonally; hold Shift to sprint. The camera follows you. Space returns to your engineer after looking around.',focus:'focus'},
- {title:'Build, recover, relocate',tag:'HOTBAR · R · Q / ESC · M',body:'Hold left click and drag with the Conveyor selected to preview a line. Press R to turn, then keep dragging and release to build. Q or Esc cancels. Outside build mode, drag to select buildings and press M to move them.',focus:'hotbar'},
- {title:'Give cargo a dispatch plan',tag:'TRANSFER RELAYS + DISPATCH HUBS',body:'A Transfer relay sits between a shared conveyor and a machine. Its capsule loads cargo across the gap. A Dispatch hub sits directly on the conveyor and serves a machine from its side. Select either and open Program flow.',focus:'hotbar'},
- {title:'Set a supply cycle',tag:'MACHINE / FORWARD / RETURN',body:'The default program is 1 / 1 / 0: one item to the machine, one onward. A 2 / 3 / 1 plan repeats two into the machine, three onward, one into the separate return line. Filtered-out items pass forward without spending a quota.',focus:'intel'},
- {title:'Share a line between three stations',tag:'FIRST 1:2 · MIDDLE 1:1 · LAST 1:0',body:'For an equal share, set the first station to Machine 1 / Forward 2, the next to 1 / 1 and the last to 1 / 0. Keep Return at 0 unless you connect a return route. Match your mining rate to the total machine demand; relays cannot create missing supplies.',focus:'hotbar'},
- {title:'Protect the supply reserve',tag:'I · B · P',body:'I opens the production report and B marks bottlenecks. Power and gears keep defenses working. The arrow shows where the swarm will attack. Below it, check the active bonus and the next one. Repair damaged structures. The host can pause with P; checkpoints let you retry a defense.',focus:'wave-panel'},
- {title:'Build the way out',tag:'STEEL + CIRCUITS → SHIP COMPONENTS',body:'Survive eight swarms, build an evacuation pad and collect 30 ship components, 60 steel and 40 circuits. Then defend the powered launch. Open your current world to LAN from the menu to share the expedition with three friends.',focus:'objectives'}
+ {title:'Move your engineer',body:'Hold W, A, S or D to move a few steps. The camera follows you.',done:state=>{const host=state.players[0];return !!host&&Math.hypot(host.x-2,host.z-2)>=1.25;}},
+ {title:'Mine iron ore',body:'Press 2 to select the Iron drill. Press R to point its gold OUT port up and place it on the marked deposit. Placement uses your starter kit.',tiles:[drill]},
+ {title:'Feed the smelter',body:'Place an up-facing Conveyor (1) and a left-facing Smelter (3) on the marked tiles. The belt carries ore from gold OUT to cyan IN.',tiles:[input,smelter]},
+ {title:'Deliver your first iron plate',body:'Select Conveyor (1). Hold Shift and drag from the Smelter to the core, then release. Watch the first plate reach storage.',done:state=>state.produced.plate>0,markers:[{x:4,z:1,label:'Start at Smelter'},{x:0,z:0,label:'End at core'}]},
+ {title:'Build a gear line',body:'Place the drill, smelter and assembler on the marked tiles. Their ports line up directly so the assembler can turn plates into gears.',tiles:[{type:'drill',x:2,z:4,dir:2,label:'Iron drill ←'},{type:'smelter',x:1,z:4,dir:3,label:'Smelter ↑'},{type:'assembler',x:1,z:3,dir:3,label:'Assembler ↑'}]},
+ {title:'Deliver your first gear',body:'Shift-drag a Conveyor from the Assembler to the core. The shared storage accepts iron plates and gears from different lines.',done:state=>state.produced.gear>0,markers:[{x:1,z:3,label:'Start at Assembler'},{x:0,z:0,label:'End at core'}]},
+ {title:'Power and defend the colony',body:'Place a Sawmill near the grove, a Generator to burn wood, and a Turret behind two Barricades. The turret draws gears from colony stock.',tiles:[{type:'sawmill',x:7,z:6,label:'Sawmill (5)'},{type:'generator',x:3,z:-2,label:'Generator (6)'},{type:'turret',x:4,z:-3,label:'Turret (7)'},{type:'wall',x:3,z:-4,label:'Barricade (8)'},{type:'wall',x:4,z:-4,label:'Barricade (8)'}]},
+ {title:'Take command',body:'Your factory and defenses stay in this world. The first swarm countdown starts when you begin. Expand production with the buildings left in your inventory.'}
 ];
+
+export function tutorialTargets(state,lesson){return lesson.tiles?.filter(tile=>!hasBuilding(state,tile))??lesson.markers??[];}
+export function advanceTutorial(state){
+ const lesson=TUTORIAL_STEPS[state.tutorialStep];
+ if(lesson&&(lesson.done?.(state)||lesson.tiles&&!tutorialTargets(state,lesson).length))state.tutorialStep++;
+}

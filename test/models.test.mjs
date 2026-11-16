@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {Window} from 'happy-dom';
-import {createGame,DIRS,TYPES} from '../public/shared/sim.js';
+import {createGame,DIRS,TYPES,logisticsPorts} from '../public/shared/sim.js';
 const dom=new Window();dom.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:(t,k)=>k in t?t[k]:()=>{}});globalThis.document=dom.document;
 const bundled=await build({entryPoints:[fileURLToPath(new URL('../public/render.js',import.meta.url))],bundle:true,format:'esm',write:false,plugins:[{name:'local-three',setup(b){b.onResolve({filter:/vendor\/three\.module\.js$/},()=>({path:fileURLToPath(new URL('../node_modules/three/build/three.module.js',import.meta.url))}));}}]});
 const {makeModel,View}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
@@ -20,6 +20,36 @@ test('all machine rotations and turret levels have finite geometry; ports identi
 test('conveyors support every straight lane, bend and merging junction',()=>{
  for(let out=0;out<4;out++)for(let input=0;input<4;input++)if(input!==out){const g=makeModel('belt',out,[input]);assert.equal(g.children.length,5);g.traverse(o=>{if(o.geometry?.attributes?.position)for(const n of o.geometry.attributes.position.array)assert.ok(Number.isFinite(n));});}
  const junction=makeModel('belt',0,[1,2,3]);assert.equal(junction.children.length,13);
+});
+test('machine port decals use crisp shared textures and show the real Return side',()=>{
+ const b={type:'splitter',dir:1},model=makeModel(b.type,b.dir);
+ model.updateMatrixWorld(true);
+ const decal=model.getObjectByName('port-RET');
+ const [dx,dz]=DIRS[logisticsPorts(b).return];
+ const at=decal.getWorldPosition(new T.Vector3());
+ assert.ok(Math.abs(at.x-dx*.72)<.001&&Math.abs(at.z-dz*.72)<.001);
+ assert.equal(decal.material.map.image.width,512);
+ assert.equal(decal.material.map.image.height,256);
+ assert.equal(decal.material.toneMapped,false);
+ assert.equal(decal.material.depthWrite,false);
+ assert.equal(makeModel('inserter').getObjectByName('port-RET').material,decal.material);
+});
+test('overview leaves unreadable badges to the selected building and normal zoom restores them',()=>{
+ globalThis.innerWidth=1280;globalThis.innerHeight=720;
+ const model=makeModel('smelter'),label=model.getObjectByName('port-OUT'),view=Object.create(View.prototype);
+ Object.assign(view,{buildings:new Map([[1,model]]),selection:{position:new T.Vector3()},range:{position:new T.Vector3()},renderer:{setSize(){}},camera:new T.OrthographicCamera(),zoom:35});
+ view.resize();
+ assert.equal(label.visible,false);
+ view.select({id:1,type:'smelter',x:0,z:0});
+ assert.ok(Math.abs(label.scale.x/view.worldPerPixel-42)<1e-9);
+ assert.equal(label.visible,true);
+ assert.equal(label.renderOrder,3);
+ view.select(null);
+ assert.equal(label.renderOrder,2);
+ assert.equal(label.visible,false);
+ view.setZoom(-21);
+ assert.equal(label.visible,true);
+ assert.ok(Math.abs(label.scale.x/view.worldPerPixel-30)<1e-9);
 });
 test('north-up projection maps W up, A left, and smooth following converges on the engineer',()=>{
  globalThis.innerWidth=1440;globalThis.innerHeight=900;
