@@ -46,7 +46,7 @@ export function coastalMaterial(){
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',
    `if(vCoastalSurface>4.5){vec3 mapN=(vCoastalSurface<5.5?texture2D(crabnormal,vNormalMapUv):texture2D(horrornormal,vNormalMapUv)).xyz*2.-1.;normal=normalize(tbn*mapN);}`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
-   'float roughnessFactor=vCoastalSurface>4.5?.68:vCoastalSurface>3.5?.15:vCoastalSurface>1.5&&vCoastalSurface<2.5?.87:vCoastalSurface<.5?.53:.43;');
+   'float roughnessFactor=vCoastalSurface>5.5?.63:vCoastalSurface>4.5?.46:vCoastalSurface>3.5?.15:vCoastalSurface>1.5&&vCoastalSurface<2.5?.87:vCoastalSurface<.5?.53:.43;');
   shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',
    '#include <emissivemap_fragment>\n if(vCoastalSurface>3.5&&vCoastalSurface<4.5)totalEmissiveRadiance+=vec3(.2,.16,.09);');
  };

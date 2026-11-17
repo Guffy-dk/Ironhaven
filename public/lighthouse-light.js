@@ -6,7 +6,7 @@ import {LIGHTHOUSE_REACH,LIGHTHOUSE_CONE} from './shared/lighthouse.js';
 export class LighthouseLight{
  constructor(scene){
   this.object=new T.Group();scene.add(this.object);
-  this.light=new T.SpotLight(0xffe8b4,180,LIGHTHOUSE_REACH+4,LIGHTHOUSE_CONE,.35,1.5);
+  this.light=new T.SpotLight(0xffe8b4,500,LIGHTHOUSE_REACH+4,LIGHTHOUSE_CONE,.35,1.5);
   this.light.position.y=2.22;this.light.castShadow=true;
   this.light.shadow.mapSize.set(1024,1024);this.light.shadow.normalBias=.025;this.light.shadow.bias=-.00015;
   this.object.add(this.light);scene.add(this.light.target);
@@ -28,11 +28,11 @@ export class LighthouseLight{
      float falloff=pow(1.-vUv.y,.65)*smoothstep(0.,.018,vUv.y);
      float haze=.65+.18*sin(vWorld.x*.8+vWorld.z*.37+time*.28)+.12*sin(vWorld.y*8.-vWorld.z*.6-time*.4);
      float edge=pow(abs(sin(vUv.x*6.2831853)),.4);
-     gl_FragColor=vec4(vec3(1.7,1.46,1.02),falloff*haze*(.0025+.0045*edge)*strength);
+     gl_FragColor=vec4(vec3(1.7,1.46,1.02),falloff*haze*(.009+.016*edge)*strength);
     }`
   });
   this.volume=new T.Mesh(geometry,material);this.volume.position.y=2.22;this.volume.frustumCulled=false;this.volume.renderOrder=5;this.object.add(this.volume);
-  this.aperture=new T.Mesh(new T.SphereGeometry(.095,16,12),new T.MeshBasicMaterial({color:new T.Color(5,3.8,2),toneMapped:false}));
+  this.aperture=new T.Mesh(new T.SphereGeometry(.12,16,12),new T.MeshBasicMaterial({color:new T.Color(5,3.8,2),toneMapped:false}));
   this.aperture.position.set(0,2.22,.34);this.object.add(this.aperture);
  }
  sync(core,beam,time,low){
