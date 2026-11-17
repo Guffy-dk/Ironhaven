@@ -7,8 +7,8 @@ export class CoastalWater{
    fragmentShader:`${COAST_ISLAND_GLSL}
     uniform vec4 island;uniform float islandSeed,islandMode,reach,edge;uniform float time;uniform vec2 coast,beacon,beam;varying vec3 vWorld;
     void main(){
-     vec2 p=vWorld.xz;float t=time*.38;
-     vec3 n=normalize(vec3(-.12*cos(p.x*.8+t)-.06*cos((p.x+p.y)*1.7-t),1.,-.1*cos(p.y*1.1-t)-.06*cos((p.x+p.y)*1.7-t)));
+     vec2 p=vWorld.xz;float t=time*.38;float detail=1.-smoothstep(.15,1.,length(fwidth(p)));
+     vec3 n=normalize(vec3(detail*(-.12*cos(p.x*.8+t)-.06*cos((p.x+p.y)*1.7-t)),1.,detail*(-.1*cos(p.y*1.1-t)-.06*cos((p.x+p.y)*1.7-t))));
      vec3 view=normalize(cameraPosition-vWorld);float fresnel=pow(1.-max(0.,dot(n,view)),3.);
      vec3 color=mix(vec3(.012,.027,.031),vec3(.12,.15,.16),fresnel);
      float glint=pow(max(0.,dot(reflect(-normalize(vec3(-.45,.8,.3)),n),view)),95.);
@@ -24,7 +24,7 @@ export class CoastalWater{
      color+=vec3(.23,.17,.08)*lit*(.2+glint*2.);
      gl_FragColor=vec4(color,1.);
     }`});
-  this.mesh=new T.Mesh(new T.PlaneGeometry(size+40,size+40).rotateX(-Math.PI/2),this.material);this.mesh.position.y=-.3;this.mesh.visible=false;scene.add(this.mesh);
+  this.mesh=new T.Mesh(new T.PlaneGeometry(size*5,size*5).rotateX(-Math.PI/2),this.material);this.mesh.position.y=-.3;this.mesh.visible=false;scene.add(this.mesh);
  }
  sync(terrain,time,beam){
   this.mesh.visible=!!terrain.coast;if(!this.mesh.visible)return;

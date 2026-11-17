@@ -251,7 +251,7 @@ export class View{
  constructor(canvas){
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0x172d31);this.scene.fog=new T.FogExp2(0x172d31,.011);
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.18;
-  this.camera=new T.OrthographicCamera(-20,20,20,-20,.1,180);this.center=new T.Vector3(0,0,0);this.zoom=14;this.camera.position.set(0,32,27);this.camera.lookAt(0,0,0);
+  this.camera=new T.OrthographicCamera(-20,20,20,-20,.1,1040);this.center=new T.Vector3(0,0,0);this.zoom=14;this.camera.position.set(0,32,27);this.camera.lookAt(0,0,0);
   this.sky=new T.HemisphereLight(0xd5e3c4,0x294548,2.2);this.scene.add(this.sky);const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-95,right:95,top:95,bottom:-95,far:245});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
   const fill=new T.DirectionalLight(0x83b8b2,1.3);fill.position.set(15,12,-20);this.scene.add(fill);this.fill=fill;
   this.ground=new T.Group();this.scene.add(this.ground);this.terrain=new T.Group();this.scene.add(this.terrain);
@@ -600,7 +600,8 @@ export class View{
  }
  draw(){
   const quarry=this.style==='quarry';
-  if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).add(quarry?QUARRY_CAMERA:CAMERA_OFFSET);
+  if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).addScaledVector(quarry?QUARRY_CAMERA:CAMERA_OFFSET,Math.max(1,(this.zoom??14)/20));
+  if(this.scene.fog)this.scene.fog.density=(quarry?.0065:.011)/Math.max(1,(this.zoom??14)/20);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   if(quarry&&this.renderer.shadowMap.enabled){
    const x=Math.round(this.center.x/6)*6,z=Math.round(this.center.z/6)*6;

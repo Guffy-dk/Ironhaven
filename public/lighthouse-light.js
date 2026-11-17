@@ -39,7 +39,7 @@ export class LighthouseLight{
   this.object.visible=!!beam;if(!beam)return;
   this.object.position.set(core.x,0,core.z);this.object.rotation.y=Math.atan2(beam.dx,beam.dz);
   this.light.target.position.set(core.x+beam.dx*beam.reach,.12,core.z+beam.dz*beam.reach);this.light.target.updateMatrixWorld();
-  this.light.distance=beam.reach+4;this.light.angle=beam.cone;this.light.intensity=500*Math.pow(beam.reach/40,1.5);this.volume.scale.set(beam.reach/160*Math.tan(beam.cone*.35)/Math.tan(Math.PI/5*.35),1,beam.reach/160);
+  this.light.distance=beam.reach+4;this.light.angle=beam.cone;this.light.intensity=500;this.volume.scale.set(beam.reach/160*Math.tan(beam.cone*.35)/Math.tan(Math.PI/5*.35),1,beam.reach/160);
   this.light.castShadow=!low;this.volume.visible=!low;this.volume.material.uniforms.time.value=time;
  }
 }
