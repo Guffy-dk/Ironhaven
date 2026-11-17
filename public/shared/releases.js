@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.16.0';
+export const CURRENT_VERSION = '0.17.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.17.0',date:'2026-11-18',title:'Settings and storage',
+  changes:[
+   'Reorganize the Escape menu into Save & load, Settings, Multiplayer, Colony tools and Help. Escape returns one page at a time; during play it cancels the current tool before opening the menu.',
+   'Add persistent camera pan and zoom speed controls, master volume, mute and a test sound. Existing graphics and interface options have their own pages. Player preferences use a separate versioned format; Steam integration remains a future feature.',
+   'Warehouse deliveries are immediately available globally for construction, fuel and ammunition, while stored goods remain visible in each warehouse for local output. Existing warehouse contents migrate once into the shared total. Warehouses accept finished goods from every side even when their export is configured. Smelters can deliver iron plates and copper directly without an intermediate belt. Rotation selects the export direction, and a full warehouse still backs up the source safely.',
+   'Make conveyor direction clear with repeated high-contrast chevrons, including bends and junctions. Give mineral fields stronger coloring and optional name labels. Add visible upgrade counts and larger workshop equipment changes; show machine speed separately from temporary bonuses.',
+   'Rewrite building descriptions, training instructions and menu copy with shorter, practical explanations.'
+  ]
+ },
  {
   version:'0.16.0',date:'2026-11-17',title:'Harbor lights',
   changes:[

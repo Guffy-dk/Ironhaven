@@ -43,7 +43,7 @@ Conveyors hold up to four spaced items and back up when an output is blocked. Sm
 
 Transfer relays load a conveyor behind them into a machine ahead, with Return on the right. Dispatch hubs accept input behind, with Machine left, Forward ahead and Return right. Use Program flow for quantities, filters, buffers and bypass behavior.
 
-Warehouses keep their own stock. Select a material or Adjacent machine recipe for their output. Deliver materials to the lighthouse to make them available for construction. Generators consume wood or coal; sawmills work near standing trees and do not need grid power. Power shortage suspends the newest machines first.
+Warehouse deliveries count immediately toward the shared materials used for construction, ammunition and fuel. Goods remain stored in the receiving warehouse until spent or sent out. Select a material or Adjacent machine recipe for local output. Generators consume wood or coal; sawmills work near standing trees and do not need grid power. Power shortage suspends the newest machines first.
 
 Sentry turrets consume no ammunition. Other weapons use gears; low/empty magazines are marked in the world. Upgrade production, storage, health and advanced defenses from the inspector; ten upgrades are supported. The visual goal for the upcoming architecture work is structural modernization at each level rather than roof recoloring.
 
@@ -78,3 +78,11 @@ Automated tests do not establish reachability between two physical PCs. Player h
 ## Harbor lamps
 
 Use C then 3 to place a Harbor lamp. It costs 12 wood, 35 iron plates and 3 gears; needs 3 power; has 75 HP and a fixed level. Its six-tile light radius works independently of the lighthouse, with the same armor exposure, mist clearing and targeting benefits. Nearby creatures can deliberately attack it, including lighthouse hunters. Losing power or being destroyed removes its illumination. The placement preview shows coverage.
+
+## Settings
+
+Press Escape to open the menu. If a tool is active, the first press cancels it. Settings → Controls adjusts pan and zoom speed; Audio controls master volume and mute. Graphics and Interface contain rendering quality, panel visibility and layout options. Changes are saved per player. Steam Cloud and Steam friend co-op are planned separately; see [the settings and Steam roadmap](docs/SETTINGS_AND_STEAM.md).
+
+Warehouses accept direct machine outputs from any side, including their configured export side. Their stored goods count toward the shared total immediately. Output rotation does not prevent incoming deliveries.
+
+Mineral names and building upgrade counts can be toggled under Settings → Interface. Repeated painted chevrons show conveyor direction through straight lines, corners and junctions. Workshop upgrades add larger roof equipment at distinct stages. Production speed still increases by 0.5× per purchased upgrade; the inspector separates this from current difficulty and swarm bonuses.

@@ -23,17 +23,22 @@ export function modernizeModel(group,type,level){
   if(type==='wall'){
    box(group,0x777469,x,.18+i*.018,z,.09,.36+i*.035,.09);continue;
   }
-  box(group,i<3?0x77786e:i<6?0x535f5e:0x84928b,x,y,z,.076,.075+i*.006,.09);
+  box(group,i<3?0x77786e:i<6?0x535f5e:0x84928b,x,y,z,.12,.11+i*.008,.14);
   for(let j=0;j<3;j++)box(group,0x303b3b,x,y+.035+j*.005,z-.025+j*.02,.061,.006,.008);
   if(i>=3)cyl(group,0x526767,x,y+.09,z,.013,.09,12);
  }
- if(work&&n>=4){
-  box(group,0x657779,.18,y+.07,-.15,.22,.14,.19);
+ if(work&&n>=3){
+  box(group,0x657779,.12,y+.13,-.1,.37,.26,.32);
+  for(const side of [-1,1])cyl(group,0x8b9692,side*.34,y+.16,.23,.045,.31,16);
   box(group,0x283d42,.18,y+.09,-.047,.17,.05,.008);
  }
- if(work&&n>=7){
-  const panel=box(group,0x354d55,-.15,y+.18,-.08,.23,.018,.27);panel.rotation.x=.19;
-  for(let i=0;i<3;i++)box(group,0xa9b5ae,-.23+i*.08,y+.195,-.08,.007,.009,.25);
+ if(work&&n>=9){
+  box(group,0x9daba9,-.1,y+.27,.22,.48,.1,.18);
+  for(let i=0;i<4;i++)box(group,0x394f55,-.26+i*.1,y+.335,.22,.067,.025,.14);
+ }
+ if(work&&n>=6){
+  const panel=box(group,0x354d55,-.15,y+.18,-.08,.38,.025,.42);panel.rotation.x=.19;
+  for(let i=0;i<3;i++)box(group,0xa9b5ae,-.23+i*.08,y+.195,-.08,.009,.012,.39);
  }
 }
 export function makeCoastalBuilding(type,level,batch){
