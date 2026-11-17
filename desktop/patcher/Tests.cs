@@ -33,12 +33,17 @@ internal static class PatcherTests
             using (var http = new HttpClient())
             {
                 var updates = new GameUpdates(Path.Combine(root, "versions"), http);
-                if (args.Length == 1)
+                if (args.Length >= 1)
                 {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     http.DefaultRequestHeaders.UserAgent.ParseAdd("IronhavenPatcher/1.0");
-                    var published = GameRelease.FromJson(updates.LatestReleaseJson().GetAwaiter().GetResult());
-                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0])), "Unexpected latest Windows release.");
+                    Require(GameRelease.ParseTag(args[0]) != null, "Invalid live release tag.");
+                    Require(args.Length == 1 || args.Length == 2 && args[1] == "--exact", "Unexpected live test arguments.");
+                    var metadata = args.Length == 2
+                        ? http.GetStringAsync(GameRelease.Repository + "/releases/download/" + args[0] + "/Ironhaven-Windows-manifest.json").GetAwaiter().GetResult()
+                        : updates.LatestReleaseJson().GetAwaiter().GetResult();
+                    var published = GameRelease.FromJson(metadata);
+                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0])), "Unexpected Windows release.");
                     updates.Install(published, new Progress<int>()).GetAwaiter().GetResult();
                     Require(published.Version.Equals(updates.LatestInstalled()), "The published Windows game was not installed.");
                     Console.WriteLine("Installed and verified GitHub release " + published.Version + ".");

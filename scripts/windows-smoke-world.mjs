@@ -21,8 +21,8 @@ export function smokeWorld(){
  for(const r of RESOURCE_KEYS)state.resources[r]=200;
  state.wave=4;state.nextWave=0;step(state);
  const kinds=['runner','drowned','guard','spitter','walker'];
- state.enemies=kinds.map((kind,i)=>{const e=state.enemies.find(e=>e.kind===kind);if(!e)throw Error('Missing smoke species '+kind);return {...e,x:-4+i*2,z:5.2,speed:0};});
+ state.enemies=kinds.map((kind,i)=>{const e=state.enemies.find(e=>e.kind===kind);if(!e)throw Error('Missing smoke species '+kind);return {...e,x:-4+i*2,z:4.4,speed:0};});
  const core=state.buildings.find(b=>b.type==='hq');core.lighthouseHeading=core.lighthouseAim=.15;
- state.paused=true;return {state,playerId:p.id};
+ step(state);state.paused=true;return {state,playerId:p.id};
 }
 if(process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));

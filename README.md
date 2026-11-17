@@ -70,6 +70,6 @@ npm run build
 ./scripts/build-windows.ps1
 ```
 
-This builds and tests the patcher, performs an isolated Windows startup smoke test, packages the game and writes the checksum manifest. Release versions come from `public/shared/releases.js`, `package.json` and `package-lock.json`; keep them in sync. Push a matching `v0.x.y` tag to run `.github/workflows/release.yml`. The release publishes **Ironhaven-Windows-x64.zip**, **Ironhaven-Patcher.exe** and **Ironhaven-Windows-manifest.json**. The patcher verifies the manifest's size and SHA-256 digest before installation.
+This builds and tests the patcher, performs an isolated Windows startup smoke test, packages the game and writes the checksum manifest. Release versions come from `public/shared/releases.js`, `package.json` and `package-lock.json`; keep them in sync. Push a matching `v0.x.y` tag to run `.github/workflows/release.yml`. The release publishes **Ironhaven-Windows-x64.zip**, **Ironhaven-Patcher.exe** and **Ironhaven-Windows-manifest.json**. The patcher verifies the manifest's size and SHA-256 digest before installation. The release workflow installs the real published archive with the patcher test executable before promoting it to the latest patcher update.
 
 Automated tests do not establish reachability between two physical PCs. Player hardware performance needs separate validation.

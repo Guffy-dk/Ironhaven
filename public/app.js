@@ -517,7 +517,10 @@ function enemyHealth(){
  enemyCanvas.hidden=!state.enemies.length;if(enemyCanvas.hidden)return;
  if(enemyCanvas.width!==innerWidth||enemyCanvas.height!==innerHeight){enemyCanvas.width=innerWidth;enemyCanvas.height=innerHeight;}
  enemyCtx.clearRect(0,0,innerWidth,innerHeight);
- for(const e of state.enemies){const {x,z}=motion.position(e,renderPoint),p=view.project(x,z,hostileKind(e)==='walker'?2.25:hostileKind(e)==='drowned'?1.03:.8);if(!p.visible)continue;if(e.training){enemyCtx.font='11px Arial';enemyCtx.textAlign='center';enemyCtx.fillStyle='#f0d9a8';enemyCtx.fillText('PRACTICE · '+HOSTILES[hostileKind(e)].name,p.x,p.y-10);}
+ for(const e of state.enemies){const {x,z}=motion.position(e,renderPoint),p=view.project(x,z,hostileKind(e)==='walker'?2.25:hostileKind(e)==='drowned'?1.03:.8);if(!p.visible)continue;const exposed=(hostileKind(e)==='guard'&&e.lightExposure>=.65)||(hostileKind(e)==='walker'&&e.lightExposure>=1);
+ if(exposed){enemyCtx.font='11px Arial';enemyCtx.textAlign='center';enemyCtx.fillStyle='#f0d9a8';enemyCtx.fillText('ARMOR EXPOSED',p.x,p.y-23);}
+ if(hostileKind(e)==='walker'){enemyCtx.font='bold 11px Arial';enemyCtx.textAlign='center';enemyCtx.fillStyle='#d8c4a3';enemyCtx.fillText('ABYSS WALKER',p.x,p.y-10);}
+ if(e.training){enemyCtx.font='11px Arial';enemyCtx.textAlign='center';enemyCtx.fillStyle='#f0d9a8';enemyCtx.fillText('PRACTICE · '+HOSTILES[hostileKind(e)].name,p.x,p.y-10);}
  enemyCtx.fillStyle='#102125ee';enemyCtx.fillRect(p.x-13,p.y-3,26,5);enemyCtx.fillStyle=e.illuminated?'#edcd91':e.hp/e.maxHp<.3?'#ff6b59':'#d88976';enemyCtx.fillRect(p.x-12,p.y-2,24*Math.max(0,e.hp/e.maxHp),3);}
 }
 const ITEM_NAMES={ore:'Iron ore',copperOre:'Copper ore',...Object.fromEntries(Object.entries(RESOURCE_NAMES).map(([k,v])=>[k,v.toLowerCase()]))};
