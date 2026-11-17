@@ -3,7 +3,7 @@ import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERA
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
 const CAMERA_OFFSET=new T.Vector3(0,32,27);
-const QUARRY_CAMERA=new T.Vector3(0,38,23);
+const QUARRY_CAMERA=new T.Vector3(0,27,27);
 const geos=new Map();
 const beltArrow=(()=>{
  const arrow=new T.Shape();
@@ -14,16 +14,20 @@ const beltArrow=(()=>{
 const cyan=0x79d8d0;
 const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
 import {mat,geometry,box,cyl} from './render-primitives.js';
+import {modernizeModel} from './coastal-buildings.js';
 import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
 import {quarryTerrainMaterial,quarrySpruce,quarryTexture} from './quarry-textures.js';
 import {createQuarryEffects,quarryActorGeometry,updateQuarryEffects} from './quarry-effects.js';
+import {CoastalHostiles} from './coastal-hostiles.js';
+import {LighthouseFog} from './lighthouse-fog.js';
+import {isInLighthouseBeam,lighthouseBeam,lighthouseHeading} from './shared/lighthouse.js';
 const actorSkin=new T.MeshStandardMaterial({vertexColors:true,color:0xb5a38d,roughness:.91});
 const actorHead=new T.MeshStandardMaterial({vertexColors:true,color:0xa29382,roughness:.88});
 const easeAngle=(current,target,weight)=>current+Math.atan2(Math.sin(target-current),Math.cos(target-current))*weight;
 let quarryStone;
 function quarryStoneSurface(){
  if(quarryStone)return quarryStone;
- const shape=new T.IcosahedronGeometry(1,1),positions=shape.attributes.position;
+ const shape=new T.IcosahedronGeometry(1,2),positions=shape.attributes.position;
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),worn=1+.09*Math.sin(x*13+z*7)*Math.cos(y*8-z*5);
   positions.setXYZ(i,x*worn,Math.min(.72,y*worn),z*worn);
@@ -43,28 +47,42 @@ function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,
 export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
  const quarry=style==='quarry';
  const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
- const painted=base=>level>1?upgradeColor(level):base;
+ const painted=base=>!quarry&&level>1?upgradeColor(level):base;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
   // Each incoming lane curves into the output; geometry ends exactly at tile edges.
   const unique=[...new Set(inputs.filter(v=>v!==dir))];if(!unique.length)unique.push((dir+2)%4);
   for(const input of unique){
-   const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],height=quarry?.09:.13,width=quarry?.22:.285;
+   const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],height=quarry?.18:.13,width=quarry?.22:.285;
    const curve=new T.QuadraticBezierCurve3(new T.Vector3(ax*.51,height,az*.51),new T.Vector3(0,height,0),new T.Vector3(bx*.51,height,bz*.51));
    const cacheKey=`road:${style}:${input}:${dir}`;let road=geos.get(cacheKey);
    if(!road){const vertices=[],indices=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,width*sign);vertices.push(v.x,v.y,v.z);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
    const lane=new T.Mesh(road,mat(quarry?0x282a28:painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
    for(const sign of[-1,1]){const railKey=`rail:${style}:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*(width+.025));v.y=height+.02;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,quarry?.016:.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(quarry?painted(0x666764):C.gold)));}
-   if(quarry)box(g,0x494b46,ax*.42,.046,az*.42,Math.abs(az)*.46+.065,.09,Math.abs(ax)*.46+.065);
+   if(quarry){
+    for(const t of [.12,.37,.62,.87]){
+     const p=curve.getPoint(t),tangent=curve.getTangent(t),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();
+     const roller=cyl(g,0x707c79,p.x,p.y-.035,p.z,.032,width*2+.05,12);
+     roller.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),normal);
+     for(const side of [-1,1]){
+      const px=p.x+normal.x*(width+.025)*side,pz=p.z+normal.z*(width+.025)*side;
+      box(g,0x465251,px,.08,pz,.035,.16,.035);
+      box(g,0x79796a,px,.012,pz,.08,.025,.08);
+     }
+    }
+    const t=curve.getTangent(.95),p=curve.getPoint(.85),normal=new T.Vector3(-t.z,0,t.x).normalize();
+    const motor=box(g,0x697771,p.x+normal.x*.31,.15,p.z+normal.z*.31,.13,.15,.19);motor.rotation.y=Math.atan2(t.x,t.z);
+   }
    else box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
   const a=new T.Mesh(beltArrow,mat(quarry?0xc9c1aa:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
   if(quarry)a.scale.setScalar(.56);
   const offset=quarry?.17:.14;
-  a.position.set(DIRS[dir][0]*offset,quarry?.118:.19,DIRS[dir][1]*offset);g.add(a);return g;
+  a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry)modernizeModel(g,'belt',level);return g;
  }
  if(quarry&&type!=='wall'){
-  const model=makeQuarryModel(originalType,painted);
+  const model=makeQuarryModel(originalType,painted,level);
+  if(!model.userData.authored)modernizeModel(model,originalType,level);
   if(type==='storage')for(let d=0;d<4;d++)port(model,d,d===0&&inputs.includes(0)?'OUT':'IN',d===0&&inputs.includes(0)?C.gold:cyan);
   if(type==='inserter'){port(model,2,'IN',cyan);port(model,0,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
   if(type==='splitter'){port(model,2,'IN',cyan);port(model,0,'FWD',C.gold);port(model,3,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
@@ -117,7 +135,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
     if(inputs.includes(1))section(-.33,.33,.327,connected(1));
    }
   }
-  if(quarry)batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);
+  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);}
   return g;
  }
  plate(g);
@@ -238,10 +256,14 @@ export class View{
   this.previewRange=this.range.clone();this.previewRange.material=this.range.material.clone();
   this.previewRange.material.opacity=.7;this.scene.add(this.previewRange);
   const points=new Float32Array(1200*6);this.shotsGeometry=new T.BufferGeometry();this.shotsGeometry.setAttribute('position',new T.BufferAttribute(points,3));this.shotLines=new T.LineSegments(this.shotsGeometry,new T.LineBasicMaterial({color:0xffd890,transparent:true,opacity:.85}));this.shotLines.frustumCulled=false;this.scene.add(this.shotLines);
+  this.hostileShotsGeometry=new T.BufferGeometry();this.hostileShotsGeometry.setAttribute('position',new T.BufferAttribute(new Float32Array(500*6),3));
+  this.hostileShotLines=new T.LineSegments(this.hostileShotsGeometry,new T.LineBasicMaterial({color:0x9cae7d,transparent:true,opacity:.8}));this.hostileShotLines.frustumCulled=false;this.scene.add(this.hostileShotLines);
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
   this.dust=createQuarryEffects();this.scene.add(this.dust);
+  this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
+  this.coastalHostiles=new CoastalHostiles(this.scene);
   this.reserveBeltCargo(256);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
@@ -278,7 +300,7 @@ export class View{
  }
  point(clientX,clientY){this.mouse.set(clientX/innerWidth*2-1,-clientY/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);if(!this.ray.ray.intersectPlane(this.plane,this.hit))return null;return{x:Math.round(this.hit.x),z:Math.round(this.hit.z)};}
  pan(x,z){this.center.x=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.x+x));this.center.z=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.z+z));}
- setZoom(d){this.zoom=Math.max(8,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
+ setZoom(d){this.zoom=Math.max(4,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
  centerBase(){this.center.set(0,0,0);}
  previewRoute(cells,valid=true,arrows=false){
   const signature=cells.map(c=>`${c.type??''}:${c.x},${c.z},${c.dir}`).join(';')+valid+arrows;if(signature===this.routeKey)return;this.routeKey=signature;
@@ -414,6 +436,9 @@ export class View{
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   const quarry=this.style==='quarry';
   const shotsByOrigin=quarry?new Map(s.shots.map(shot=>[key(shot.x,shot.z),shot])):null;
+  const core=s.buildings.find(b=>b.type==='hq'),heading=motion?.lighthouseAngle??lighthouseHeading(core);
+  const beam=lighthouseBeam(core,heading);
+  this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
@@ -426,14 +451,15 @@ export class View{
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;
-    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon']){
+    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern']){
      const part=g.getObjectByName(name);
      if(part){g.userData[name]=part;part.traverse(o=>{o.castShadow=false;});}
     }
     g.position.set(b.x,0,b.z);sizePortBadges(g,this.worldPerPixel,b.id===this.selected);
     this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
    }else if(g.position.x!==b.x||g.position.z!==b.z){g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
-   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon}=g.userData;
+   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon,lantern}=g.userData;
+   if(lantern)lantern.rotation.y=heading;
    if(rotor&&b.active)rotor.rotation.y=time*(GENERATORS[b.type]?5:2)*productionSpeed(b);
    if(capsule){const age=time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(time*3)*.03:0),0);}
    if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
@@ -453,7 +479,7 @@ export class View{
      const rear=(b.dir+2)%4,side=DIRS[cargo.itemSide]&&cargo.itemSide!==b.dir?cargo.itemSide:rear;
      const [ix,iz]=DIRS[side],[ox,oz]=DIRS[b.dir],bend=side!==rear;
      const enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5;
-     this.dummy.position.set(b.x+enter*ix+leave*ox,quarry?.162:.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
+     this.dummy.position.set(b.x+enter*ix+leave*ox,quarry?.255:.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
      this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
      this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
     };
@@ -466,9 +492,11 @@ export class View{
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
-  for(let i=0;i<n;i++){
+  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion,{x:this.center.x,z:this.center.z,rx:this.camera.right+3,rz:this.camera.top*1.6+3,zoom:this.zoom,low:!this.renderer.shadowMap.enabled});
+  for(let i=0;i<(quarry?0:n);i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
+   if(quarry)this.enemyBody.setColorAt(i,this.enemyColor.multiplyScalar(isInLighthouseBeam(beam,{x,z})?1.21:.77));
    if(quarry){
     const previous=motion?.previous.get(e.id),old=this.actorHeading.get(e.id);
     const moving=previous&&Math.abs(e.x-previous.x)+Math.abs(e.z-previous.z)>.001;
@@ -486,14 +514,17 @@ export class View{
     this.dummy.rotation.x=Math.sin(time*9+i+leg*Math.PI)*.4;this.dummy.updateMatrix();this.enemyLegs.setMatrixAt(i*2+leg,this.dummy.matrix);
    }
   }
-  for(const[o,count]of[[this.enemyBody,n],[this.enemyHead,n],[this.enemyLegs,n*(quarry?4:2)]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
+  for(const[o,count]of[[this.enemyBody,quarry?0:n],[this.enemyHead,quarry?0:n],[this.enemyLegs,quarry?0:n*2]]){o.count=count;o.visible=count>0;if(count)o.instanceMatrix.needsUpdate=true;}
   if(this.enemyBody.instanceColor)this.enemyBody.instanceColor.needsUpdate=true;
   if(quarry){
    this.actorHeading=headings;
    updateQuarryEffects(this.dust,s,time,this.center,this.camera.right+6,
     this.renderer.domElement.height/Math.max(1,this.zoom*2));
   }
-  const shots=s.shots.slice(-1200),pos=this.shotsGeometry.attributes.position;
+  const hostileShots=s.shots.filter(shot=>shot.hostile).slice(-500),hostilePos=this.hostileShotsGeometry.attributes.position;
+  hostileShots.forEach((shot,i)=>{hostilePos.setXYZ(i*2,shot.x,.55,shot.z);hostilePos.setXYZ(i*2+1,shot.tx,.4,shot.tz);});
+  this.hostileShotsGeometry.setDrawRange(0,hostileShots.length*2);this.hostileShotLines.visible=hostileShots.length>0;if(hostileShots.length)hostilePos.needsUpdate=true;
+  const shots=s.shots.filter(shot=>!shot.hostile).slice(-1200),pos=this.shotsGeometry.attributes.position;
   let blasts=0;
   shots.forEach((v,i)=>{
    pos.setXYZ(i*2,v.x,.85,v.z);pos.setXYZ(i*2+1,v.tx,.5,v.tz);

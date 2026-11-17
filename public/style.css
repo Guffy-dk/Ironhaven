@@ -138,3 +138,5 @@ dialog .close-dialog{font-size:22px}
 .build-btn .key{top:4px;left:4px}
 .build-btn .build-name,.intel p,.tip,.objective{font-weight:500}
 .fuel-alert{margin-top:7px;padding:6px 8px;background:#2b2619;color:#f6d59a;border:1px solid #ab7a44;font-size:12px}
+
+.camera-tools #aim-light{width:auto;padding:0 13px;font-size:12px;white-space:nowrap}.camera-tools #aim-light.active{color:#ffd794;border-color:#ffd794;background:#4a4030}

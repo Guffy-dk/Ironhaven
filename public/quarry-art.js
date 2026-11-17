@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {box,cyl} from './render-primitives.js';
+import {makeCoastalBuilding} from './coastal-buildings.js';
 import {quarryTexture} from './quarry-textures.js';
 
 const iron=0x454848, steel=0x6c7476, stone=0x868179, mortar=0xa09b8b;
@@ -17,9 +18,9 @@ function surface(g,name,color,x,y,z,w,h,d){
 function materialFor(name){
  if(name==='plain')return structureMaterial;
  if(!surfaceMaterials.has(name)){
-  const map=quarryTexture(name),metal=name==='roof';
+  const map=quarryTexture(name),metal=name==='roof'||name==='metal';
   surfaceMaterials.set(name,new T.MeshStandardMaterial({
-   vertexColors:true,map,bumpMap:map,bumpScale:metal?.018:.041,roughness:metal?.62:.94,metalness:metal?.34:.02
+   vertexColors:true,map,bumpMap:map,bumpScale:metal?.012:.028,roughness:metal?.58:.94,metalness:metal?.48:.02
   }));
  }
  return surfaceMaterials.get(name);
@@ -27,6 +28,7 @@ function materialFor(name){
 
 // Consolidate the fixed parts of each building while keeping its moving parts and ports separate.
 export function batchQuarryModel(g,key){
+ if(g.userData.authored)return;
  const parts=g.children.filter(o=>o.isMesh&&!o.name&&o.material.isMeshStandardMaterial);
  if(parts.length<2)return;
  let groups=structures.get(key);
@@ -34,7 +36,7 @@ export function batchQuarryModel(g,key){
   groups=new Map();
   const vertices=new Map(),point=new T.Vector3(),normal=new T.Vector3(),normalMatrix=new T.Matrix3();
   for(const part of parts){
-   const name=part.userData.surface??'plain';
+   const name=part.userData.surface??([timber,wood].includes(part.material.color.getHex())?'timber':'metal');
    if(!vertices.has(name))vertices.set(name,{positions:[],normals:[],colors:[],uv:[]});
    const {positions,normals,colors,uv}=vertices.get(name);
    part.updateMatrix();normalMatrix.getNormalMatrix(part.matrix);
@@ -100,17 +102,36 @@ function chimney(g,x,z,height,diameter=.13){
  box(g,iron,x,height,z,diameter+.04,.075,diameter+.04);
 }
 
-export function makeQuarryModel(type,paint){
+export function makeQuarryModel(type,paint,level=1){
+ const authored=makeCoastalBuilding(type,level,batchQuarryModel);if(authored)return authored;
  const g=new T.Group();
  g.userData.type=type;
  if(type==='hq'){
-  shed(g,paint(0xd3c8b5),0xd9dddd,1.36,1.06,.8,true);
-  box(g,mortar,0,.13,.67,.57,.18,.27);
-  door(g,0,.41,.535,.23,.43,iron);
-  for(const x of [-.46,-.25,.25,.46])window(g,x,.63,.544,.14);
-  chimney(g,-.42,-.22,1.28,.17);
-  cyl(g,iron,.46,1.4,.18,.025,.89,6);
-  box(g,0x456175,.565,1.78,.18,.21,.15,.02);
+  cyl(g,0x4a5555,0,.15,0,.69,.3,12);
+  const tower=new T.Mesh(new T.CylinderGeometry(.405,.51,1.65,48),new T.MeshStandardMaterial({color:paint(0x9ba4a0)}));
+  tower.position.y=1.01;tower.userData.surface='brick';g.add(tower);
+  for(const y of [.46,1.13,1.78])cyl(g,0x576464,0,y,0,.468,.049,18);
+  box(g,0x888e89,.49,.12,0,.5,.22,.54);
+  box(g,0x515b5b,.53,.33,0,.36,.25,.46);
+  cyl(g,0x384244,0,1.91,0,.59,.15,48);
+  // A continuous gallery rail and brackets give the lantern a human scale.
+  for(const y of [1.98,2.12]){
+   const rail=new T.Mesh(new T.TorusGeometry(.56,.012,6,48),new T.MeshStandardMaterial({color:iron}));
+   rail.rotation.x=Math.PI/2;rail.position.y=y;g.add(rail);
+  }
+  for(let i=0;i<16;i++){const a=i*Math.PI/8;cyl(g,iron,Math.sin(a)*.56,2.045,Math.cos(a)*.56,.009,.15,6);}
+  door(g,0,.42,.495,.18,.45);
+  for(const y of [.94,1.46])window(g,0,y,.455-(y-.94)*.04,.12);
+  const lantern=new T.Group();lantern.name='lantern';lantern.position.y=2.19;g.add(lantern);
+  cyl(lantern,0x835d38,0,-.045,0,.25,.27,12);
+  const lens=cyl(lantern,0xffd38d,0,.025,.29,.17,.085,14,true);lens.rotation.x=Math.PI/2;
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4;
+   cyl(g,0x3b4d50,Math.sin(a)*.42,2.15,Math.cos(a)*.42,.035,.46,7);
+  }
+  cyl(g,0x466365,0,2.42,0,.52,.16,16);
+  cyl(g,0x30424c,0,2.54,0,.26,.13,12);
+  cyl(g,0x764c36,0,2.68,0,.042,.25,8);
  }else if(type==='storage'){
   shed(g,paint(0xd2c8b6),0xd7dbd6,.82,.78,.53);
   for(const x of [-.34,-.29,-.24,.24,.29,.34])box(g,0x8e8170,x,.4,.385,.014,.44,.02);

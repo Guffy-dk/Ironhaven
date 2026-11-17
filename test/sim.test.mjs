@@ -47,7 +47,7 @@ test('turrets fight waves; unprotected core is destroyed; victory after final wa
 test('repair costs material and caps building HP',()=>{
  const s=createGame(),p=addPlayer(s),core=s.buildings[0];core.hp-=100;const plate=s.resources.plate;
  assert.equal(command(s,p.id,{type:'repair',x:0,z:0}),null);assert.equal(core.hp,TYPES.hq.hp);assert.equal(s.resources.plate,plate-2);
- assert.equal(command(s,p.id,{type:'demolish',x:0,z:0}),'The command core cannot be dismantled');
+ assert.equal(command(s,p.id,{type:'demolish',x:0,z:0}),'The lighthouse cannot be dismantled');
 });
 test('invitation and answer codes validate type, size and corruption',()=>{
  const offer={type:'offer',sdp:'v=0\r\na=local-data-channel'};assert.deepEqual(decodeCode(encodeCode(offer),'offer'),offer);

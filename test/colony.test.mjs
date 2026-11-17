@@ -44,11 +44,11 @@ test('standard swarm seven keeps its health while swarm eight survives a max-lev
  const normalEnemy=wave=>{
   const {s}=world();s.wave=wave-1;s.nextWave=0;
   step(s);
-  return s.enemies.find(e=>!e.brute&&!e.coreHunter&&!e.mutation);
+  return s.enemies.find(e=>e.kind==='runner'&&!e.coreHunter&&!e.mutation);
  };
  const seventh=normalEnemy(7),eighth=normalEnemy(8),last=normalEnemy(FINAL_WAVE);
  assert.equal(seventh.maxHp,74);
- assert.equal(seventh.damage,1+.018*6);
+ assert.equal(seventh.damage,(1+.018*6)*.8);
  assert.ok(eighth.maxHp>turretStats({type:'mortar',level:MAX_UPGRADES+1}).damage);
  assert.ok(eighth.damage>seventh.damage);
  assert.ok(last.maxHp>3*eighth.maxHp);

@@ -316,7 +316,9 @@ test('field training advances through actual movement, placement and deliveries'
    }
   }
   const trained=h.save();assert.ok(trained.produced.plate>0&&trained.produced.gear>0);
-  assert.equal(trained.tutorialStep,7);assert.ok(!h.$('tutorial-finish').hidden);
+  assert.equal(trained.tutorialStep,7);assert.ok(h.$('tutorial-finish').hidden);
+  for(const target of [{x:14,z:0},{x:14,z:-6},{x:4,z:-11}]){h.key('l');h.point('pointerdown',target.x,target.z);ticks(160);}
+  assert.equal(h.save().tutorialStep,TUTORIAL_STEPS.length-1);assert.ok(!h.$('tutorial-finish').hidden);
   h.$('tutorial-finish').click();const finished=h.save();
   assert.equal(finished.tutorialStep,undefined);assert.ok(h.$('tutorial-guide').hidden);
   assert.equal(finished.nextWave-finished.time,100);
@@ -339,4 +341,17 @@ test('skipping training gives the full kit and restoring a training save keeps i
   resumedTraining.$('tutorial-skip').click();assert.equal(resumedTraining.save().tutorialStep,undefined);
   assert.equal(resumedTraining.save().buildings.length,training.state.buildings.length);
  }finally{await resumedTraining.close();}
+});
+
+test('L and Aim light send bearings; Escape and right click cancel without constructing buildings',async()=>{
+ const h=harness(starterWorld());try{
+  h.$('resume').click();const before=h.save(),count=before.buildings.length;
+  h.key('l');assert.match(h.$('tool-hint').textContent,/AIM LIGHT/);
+  h.point('pointerdown',20,6);let saved=h.save();
+  assert.equal(saved.buildings.length,count);assert.equal(saved.buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+  h.$('aim-light').click();h.key('Escape');h.point('pointerdown',-20,0);
+  assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+  h.$('aim-light').click();h.$('world').dispatchEvent(new h.dom.PointerEvent('pointerdown',{button:2,bubbles:true}));
+  h.point('pointerdown',-10,0);assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
+ }finally{await h.close();}
 });

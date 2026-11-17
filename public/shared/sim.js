@@ -1,6 +1,9 @@
-// Pure, deterministic simulation. The exact same module runs in Node and solo browsers.
+// Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
+import {turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
+
+import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination} from './hostiles.js';
 
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
@@ -23,31 +26,31 @@ export function waveForecast(s,wave=s.wave+1){
  return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
- hq:{name:'Command core',hp:2400,power:0,cost:{},desc:'Keep the reactor alive through eight swarms. Conveyors deliver plates and gears into the colony stockpile.'},
- belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'Carries up to four items in a row toward the gold arrow. Accepts side inputs and connects around bends. R rotates an existing belt under your pointer.'},
- drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'Place on blue iron deposits. Mines one ore every 1.6 seconds. The gold OUT port is its delivery side.'},
- smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'Feed iron or copper ore into any cyan IN port. Processes iron in 1.6 seconds and copper in 2 seconds, in arrival order.'},
- assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'Feed plates into cyan IN ports. Converts two plates into one gear. The gold OUT port delivers the result.'},
- sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'Runs without grid power. More trees within five tiles increase wood output.'},
- generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'Consumes one wood every twelve seconds to add eighteen power to the colony network.'},
- turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'Short-range starter defense. Uses no ammunition or power and has a fixed level.'},
- gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'Higher damage and range than a sentry turret. One gear loads 16 shots. Can be upgraded ten times.'},
- wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'Blocks enemies and connects to adjacent barricades. Drag to build a continuous row.'},
+ hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:'The coastal lighthouse is your survival objective, power source and shared store. Deliver supplies here. Press L and aim its lantern: illuminated hostiles grant defenses 20% extra range and expose armored marine creatures.'},
+ belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'A motor-driven rubber conveyor carries four spaced cargo loads toward its gold output arrow. Supports bends and side feeds. Press R over an existing belt to turn its output.'},
+ drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'A steel-framed coastal drilling rig. Place it on blue-grey iron seams; its rotating drill produces ore every 1.6 seconds. Route the gold output to a smelter.'},
+ smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'A brick furnace workshop with a chimney and glowing firebox. Feed iron or copper ore into a cyan input. Iron takes 1.6 seconds and copper 2 seconds; plates or copper leave the gold output.'},
+ assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'A sheltered mechanical workshop. Supply two iron plates through a cyan input to machine one gear, then carry it from the gold output to lighthouse storage or another production line.'},
+ sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'An open-sided timber mill with a spinning saw and log racks. Standing trees within five tiles increase its wood output. It supplies fuel without consuming grid power.'},
+ generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'A wood-fired coastal generator with an exposed cooling fan and exhaust. Burns one wood from lighthouse storage every twelve seconds and supplies eighteen power.'},
+ turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'A compact mechanical sentry on a fortified base. Defends nearby industry without ammunition or grid power. Its level is fixed; the lighthouse beam extends acquisition range by 20%.'},
+ gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'An armored gun emplacement with greater damage and range than the sentry. One gear loads sixteen base shots. Supports ten upgrades; aim the lighthouse at armored targets and approaching swarms.'},
+ wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'A low masonry sea-wall barricade. Connect adjacent sections by dragging a defensive line. It delays coastal creatures while your sentries fire.'},
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
  demolish:{name:'Dismantle',cost:{},desc:'Refunds 80% of construction and upgrade materials. Click a tree to collect eight wood, or Shift-drag to clear trees in an area.'}
 };
 Object.assign(TYPES,{
- inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A programmable cargo capsule. Place between a conveyor behind it and a machine ahead. Default: one item into the machine, one left on the belt. The right-side port feeds a separate return line.'},
+ inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A gantry transfer mechanism with a moving cargo cradle. Place it between a conveyor behind and a machine ahead. Default: load one item, leave one on the belt. The right-side port feeds a separate return line.'},
  splitter:{name:'Dispatch hub',hp:160,power:0,cost:{wood:2,plate:6,gear:2},desc:'Place on the main conveyor. Input at the rear, Forward ahead, Machine to the left and Return to the right. Program exact batches; default 1 Machine / 1 Forward / 0 Return.'},
- copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'Extracts copper ore from orange deposits. Route it through a copper smelter to supply electronics.'},
- foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'Converts three iron plates into one steel. Steel is used for advanced upgrades and coal power.'},
- circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'Combines two copper and one plate into a circuit. Circuits unlock advanced upgrades and ship components.'},
- componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'Combines two steel, two circuits and a gear into a ship component. Components are used in pulse turrets.'},
- storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'Stores deliveries locally. Set an output material, then use R to aim it at a conveyor or machine.'},
- coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:'Mines coal from black deposits. Deliver coal to colony storage to feed coal generators.'},
- coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:'Adds 36 power and consumes one coal every 16 seconds.'},
- mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:'Long-range shells deal splash damage in a wide area. Uses four shells per gear.'},
- pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:'Short-range bursts damage groups of nearby hostiles. Uses eight bursts per gear.'}
+ copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'A copper drilling rig on orange coastal ore seams. Send copper ore through the same brick smelter used for iron, then supply circuit workshops.'},
+ foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'A reinforced brick foundry with twin furnace stacks. Converts three iron plates into one steel for advanced machinery, upgrades and coal-fired power.'},
+ circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'An electrical assembly workshop. Combines two copper and one iron plate into a circuit for upgraded coastal defenses and advanced components.'},
+ componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'A heavy component workshop. Combines two steel, two circuits and a gear into an advanced component for pulse defenses and high-level equipment.'},
+ storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'A coastal warehouse with a loading door and cargo stacks. Stores deliveries locally, separate from lighthouse supplies. Select an output material or feed a neighboring recipe; R turns the loading direction.'},
+ coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:'A braced coal extraction rig on dark seams. Carry coal back to lighthouse storage to fuel the colony’s coal generators.'},
+ coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:'A coal-fired generator with a boiler casing and chimney. Burns one coal from lighthouse storage every sixteen seconds and supplies thirty-six power.'},
+ mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:'A fortified mortar with an elevated launch tube. Long-range shells strike groups of coastal creatures. Four base shells per gear; illuminated targets can be acquired 20% farther away.'},
+ pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:'A twin-barrel pulse emplacement for dense groups near the perimeter. Uses eight base bursts per gear. Shine the lighthouse on Shell guards and Abyss walkers to expose their armor.'}
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
@@ -125,7 +128,7 @@ const ROUND_BONUSES=[
  {label:'Barricades take 30% less damage',wallDamage:.7},
  {label:'+45% sawmill speed',speed:1.45,types:['sawmill']},
  {label:'Repairs cost 1 iron plate instead of 2',repairPlates:1},
- {label:'+50% ship component speed',speed:1.5,types:['componentFactory']},
+ {label:'+50% advanced component speed',speed:1.5,types:['componentFactory']},
  {label:'+10% production speed',speed:1.1,types:PRODUCERS}
 ];
 export function roundBonus(wave){
@@ -541,10 +544,19 @@ export function command(s,playerId,cmd){
   s.status='playing';s.paused=false;s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;return null;
  }
  if(s.status!=='playing')return 'The expedition has ended';
+ if(cmd.type==='aimLighthouse'){
+  const core=s.buildings.find(b=>b.type==='hq');
+  if(!core)return 'The lighthouse has fallen';
+  if(!routeTile(cmd)||cmd.x===core.x&&cmd.z===core.z)return 'Choose a direction away from the lighthouse';
+  core.lighthouseAim=Math.atan2(cmd.x-core.x,cmd.z-core.z);
+  if(s.tutorialStep===7)s.tutorialAimIssued=true;
+  return null;
+ }
  if(cmd.type==='finishTutorial'){
   if(p!==s.players[0]||s.tutorialStep===undefined)return 'Only the host can finish active training';
   if(cmd.skip!==true&&s.tutorialStep!==TUTORIAL_STEPS.length-1)return 'Complete the current training task first';
   delete s.tutorialStep;
+  s.enemies=s.enemies.filter(e=>!e.training);
   s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;
   return null;
  }
@@ -623,7 +635,7 @@ export function command(s,playerId,cmd){
  }
  if(cmd.type==='demolish'){
   if(b&&s.time-(b.lastHit??-100)<5)return 'Recently attacked buildings cannot be moved or dismantled for five seconds';
-  if(b?.type==='hq')return 'The command core cannot be dismantled';
+  if(b?.type==='hq')return 'The lighthouse cannot be dismantled';
   if(b){
    refundDismantle(s,b);
    if(b.type==='storage')for(const item of RESOURCE_KEYS)s.resources[item]+=warehouseStock(b,item);
@@ -758,13 +770,14 @@ function spawnWave(s){
    x=sx*(SWARM_SPAWN_EDGE-(i%2?inset:0));
    z=sz*(SWARM_SPAWN_EDGE-(i%2?0:inset));
   }
-  const coreHunter=i<coreHunters,brute=!coreHunter&&i%11===0;
+  const coreHunter=i<coreHunters;
   const mutation=!coreHunter&&waveMutation&&random()<.22?waveMutation:null;
-  const hp=Math.round((35+s.wave*5+.09*s.wave**2)*forecast.health*(coreHunter?1.6:brute?2:1)*(mutation==='armored'?1.5:1));
+  const kind=coreHunter?'drowned':waveKind(s.wave,i,count),species=HOSTILES[kind];
+  const hp=Math.round(species.health*(35+s.wave*5+.09*s.wave**2)*forecast.health*(mutation==='armored'?1.5:1));
   const damage=forecast.damage*(mutation==='frenzied'?1.35:1),speed=(1.0+(i%4)*.12+s.wave*.015)*(mutation==='swift'?1.4:1);
-  s.enemies.push({id:s.nextId++,x,z,hp,maxHp:hp,damage,speed,cooldown:0,brute,coreHunter,mutation});
+  s.enemies.push({id:s.nextId++,kind,x,z,hp,maxHp:hp,damage:damage*species.damage,speed:speed*species.speed,cooldown:0,brute:kind==='guard',coreHunter:coreHunter||kind==='walker',mutation});
  }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;updatePower(s);
- event(s,`Swarm ${s.wave} · ${count} hostiles${coreHunters?' · '+coreHunters+' core hunters':''}${waveMutation?' · '+waveMutation+' mutation':''} · ${forecast.bonus.label}`);
+ event(s,`Swarm ${s.wave} · ${count} hostiles${coreHunters?' · '+coreHunters+' beacon hunters':''}${waveMutation?' · '+waveMutation+' mutation':''} · ${forecast.bonus.label}`);
 }
 function event(s,text){s.events.push({id:s.nextId++,text,time:s.time});if(s.events.length>6)s.events.shift();}
 const hunterTerrain=new WeakMap();
@@ -778,6 +791,12 @@ function hunterForest(s){
 }
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
+ const hq=s.buildings.find(b=>b.type==='hq');
+ turnLighthouse(hq,dt);
+ const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
+ for(const e of s.enemies)exposeHostile(e,lit.has(e),dt);
+ const mistSources=s.enemies.filter(e=>e.hp>0&&hostileKind(e)==='spitter'&&!lit.has(e));
+ const obscured=new Set(s.enemies.filter(e=>!lit.has(e)&&mistSources.some(other=>(other.x-e.x)**2+(other.z-e.z)**2<9)));
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
  updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
@@ -841,31 +860,45 @@ export function step(s,dt=STEP){
   }
   if(TURRETS.includes(b.type)){
    const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
-   if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){let target=null,closest=stats.range*stats.range;for(const e of s.enemies){const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;if(e.hp>0&&d<closest){closest=d;target=e;}}
+   if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){
+    let target=null,closest=(stats.range*LIT_RANGE_MULTIPLIER)**2;
+    for(const e of s.enemies){
+     const dx=e.x-b.x,dz=e.z-b.z,d=dx*dx+dz*dz;
+     const mist=obscured.has(e);
+     const reach=stats.range*(lit.has(e)?LIT_RANGE_MULTIPLIER:mist?.82:1);
+     if(e.hp>0&&e.training!=='exposure'&&d<closest&&d<reach**2){closest=d;target=e;}
+    }
     if(target){
-     target.hp-=stats.damage;target.lastHit=s.time;
-     if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=stats.damage*.65;
+     target.hp-=hostileDamage(target,stats.damage);target.lastHit=s.time;
+     if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=hostileDamage(e,stats.damage*.65);
      if(consumesAmmo)b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);
      s.shots.push({x:b.x,z:b.z,tx:target.x,tz:target.z,radius:stats.radius,time:s.time});
     }}
   }
  }
- const hq=s.buildings.find(b=>b.type==='hq');if(!hq){s.status='defeat';return;}
+ if(!hq){s.status='defeat';return;}
  const forest=s.enemies.length?woodland(s.terrain):null,enemyDestination={x:0,z:0};
  const coreRoutes=s.enemies.some(e=>e.coreHunter)?hunterForest(s):null;
  const industry=s.enemies.length?s.buildings.filter(b=>hasOutputBuffer(b.type)||b.type==='sawmill'||Object.hasOwn(GENERATORS,b.type)):[];
  for(const e of s.enemies){
-  if(e.hp<=0)continue;e.cooldown-=dt;
+  if(e.hp<=0||e.training)continue;e.cooldown-=dt;
   let target=hq,closest=14*14;
   if(!e.coreHunter)for(const b of industry){
    if(b.hp<=0)continue;
    const distance=(e.x-b.x)**2+(e.z-b.z)**2;
    if(distance<closest){target=b;closest=distance;}
   }
-  const d=dist(e,target),move=e.speed*(e.brute?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  target=hostileDestination(e,hq,beam,target,enemyDestination);
+  const kind=hostileKind(e),attackRange=HOSTILES[kind].range;
+  const d=dist(e,target),move=e.speed*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  if(kind==='spitter'&&d<=attackRange&&e.cooldown<=0&&target.hp>0){
+   target.hp-=10*(e.damage||1);target.lastHit=s.time;e.cooldown=2.4;
+   s.shots.push({x:e.x,z:e.z,tx:target.x,tz:target.z,time:s.time,hostile:true});
+  }
+  if(kind==='spitter'&&d<=attackRange)continue;
   const {x:nx,z:nz}=walkAroundTrees(e.coreHunter?coreRoutes:forest,e,target,move,enemyDestination);
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
-  if(obstacle||d<.85){
+  if(obstacle||d<attackRange){
    const victim=obstacle||target;
    if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||victim.type==='wall')){
     const armor=victim.type==='wall'?(bonus?.wallDamage??1):1;
@@ -874,10 +907,11 @@ export function step(s,dt=STEP){
   }
   else{e.x=nx;e.z=nz;}
  }
- const dead=s.enemies.filter(e=>e.hp<=0).length;s.totalKills+=dead;s.enemies=s.enemies.filter(e=>e.hp>0);
+ if(s.enemies.some(e=>e.hp<=0&&e.training==='combat'))s.tutorialDefenseTrained=true;
+ const dead=s.enemies.filter(e=>e.hp<=0&&!e.training).length;s.totalKills+=dead;s.enemies=s.enemies.filter(e=>e.hp>0);
  if(s.tick%20===0){s.stats.history.push({time:s.time,totals:{...s.stats.totals},stockFlow:{...s.stats.stockFlow}});if(s.stats.history.length>61)s.stats.history.shift();}
  const destroyed=s.buildings.filter(b=>b.hp<=0);if(destroyed.length){s.buildings=s.buildings.filter(b=>b.hp>0);updatePower(s);}
- if(hq.hp<=0){s.status='defeat';event(s,'The command core has fallen');}
+ if(hq.hp<=0){s.status='defeat';event(s,'The lighthouse has fallen');}
  else if(s.wave>=FINAL_WAVE&&!s.enemies.length&&!s.survived){
   s.survived=true;s.status='victory';event(s,'The colony survived 25 swarms.');
  }
@@ -889,7 +923,7 @@ export function step(s,dt=STEP){
 }
 export function planMove(s,ids,dx,dz){
  if(!Array.isArray(ids)||ids.length>s.buildings.length||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
- const selected=s.buildings.filter(b=>ids.includes(b.id));if(s.enemies.length&&selected.some(b=>b.type==='hq'))return{error:'The command core cannot be relocated during an active swarm',valid:[],invalid:[]};if(selected.some(b=>s.time-(b.lastHit??-100)<5))return{error:'Recently attacked buildings cannot be relocated for five seconds',valid:[],invalid:[]};if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
+ const selected=s.buildings.filter(b=>ids.includes(b.id));if(s.enemies.length&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse cannot be relocated during an active swarm',valid:[],invalid:[]};if(selected.some(b=>s.time-(b.lastHit??-100)<5))return{error:'Recently attacked buildings cannot be relocated for five seconds',valid:[],invalid:[]};if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
  const stationary={...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))},valid=[],invalid=[];
  for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>BUILD_EDGE||Math.abs(b.z+dz)>BUILD_EDGE?'Core is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Core destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the core destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);
   (reason?invalid:valid).push({id:b.id,type:b.type,x:b.x+dx,z:b.z+dz,reason});
@@ -897,7 +931,7 @@ export function planMove(s,ids,dx,dz){
 }
 function moveArea(s,p,cmd){
  const plan=planMove(s,cmd.ids,cmd.dx,cmd.dz);if(plan.error)return plan.error;
- if(plan.invalid.some(v=>v.type==='hq'))return 'The command core cannot be removed. Choose a valid destination for it.';
+ if(plan.invalid.some(v=>v.type==='hq'))return 'The lighthouse cannot be removed. Choose a valid destination for it.';
  if(plan.invalid.length&&!cmd.override)return plan.invalid.length+' buildings cannot be placed here. Hold Shift to pack invalid buildings into inventory.';
  if(!plan.valid.length&&!cmd.override)return 'No valid buildings to move';
  for(const target of plan.valid){const b=s.buildings.find(b=>b.id===target.id);b.x=target.x;b.z=target.z;}

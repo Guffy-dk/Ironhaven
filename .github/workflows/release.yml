@@ -20,4 +20,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json --latest --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
+        run: gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json release/Ironhaven-ingame.png --latest=false --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
+
+      - name: Verify published installation and promote patcher update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tests = Join-Path $PWD "release/windows-$version/PatcherTests.exe"
+          $verified = $false
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            & $tests "$env:RELEASE_TAG" --exact
+            if ($LASTEXITCODE -eq 0) { $verified = $true; break }
+            if ($attempt -lt 3) { Start-Sleep -Seconds 3 }
+          }
+          if (!$verified) { throw 'Published Windows installation did not verify; latest patcher release was not changed.' }
+          gh release edit "$env:RELEASE_TAG" --latest
