@@ -41,9 +41,9 @@ export class LighthouseFog{
       float distance=length(ray);
       float cone=dot(ray,direction)/max(distance,.01);
       float beam=smoothstep(edge-.026,edge+.028,cone)*(1.0-smoothstep(reach-5.0,reach,distance))*smoothstep(.85,4.0,distance)*beamEnabled;
-      vec3 color=mix(vec3(.23,.33,.38),vec3(1.0,.75,.42),beam);
-      float opacity=(.035+storm*.035+fog*.09)*(1.0-beam*.5) + beam*(.18+fog*.13);
-      gl_FragColor=vec4(color,opacity*(layer==0.0?1.0:.53));
+      vec3 color=mix(vec3(.23,.33,.38),vec3(.65,.62,.5),beam);
+      float opacity=(.035+storm*.035+fog*.09)*(1.0-beam*.5) + beam*(.025+fog*.04);
+      gl_FragColor=vec4(color,opacity*.18*(layer==0.0?1.0:.53));
       #include <colorspace_fragment>
      }
     `

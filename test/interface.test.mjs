@@ -300,7 +300,7 @@ test('field training advances through actual movement, placement and deliveries'
    h.point('pointerdown',tile.x,tile.z);h.point('pointerup',tile.x,tile.z);
   };
   const connect=({x,z})=>{
-   h.key('q');h.tool('belt');h.point('pointerdown',x,z,true);h.point('pointermove',0,0,true);h.point('pointerup',0,0,true);
+   h.key('q');h.tool('belt');h.point('pointerdown',x,z,true);const core=h.save().buildings.find(b=>b.type==='hq');h.point('pointermove',core.x,core.z,true);h.point('pointerup',core.x,core.z,true);
   };
   ticks(5);assert.equal(h.save().tutorialStep,0);
   h.key('d');h.frame(frameTime+=300);ticks(8);ticks(8);h.release('d');h.frame(frameTime+=300);
@@ -354,4 +354,9 @@ test('L and Aim light send bearings; Escape and right click cancel without const
   h.$('aim-light').click();h.$('world').dispatchEvent(new h.dom.PointerEvent('pointerdown',{button:2,bubbles:true}));
   h.point('pointerdown',-10,0);assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
  }finally{await h.close();}
+});
+
+test('a player can inspect a live coastal creature and Escape restores colony selection',async()=>{
+ const saved=starterWorld();saved.state.enemies=[{id:9500,kind:'guard',x:16,z:4,hp:300,maxHp:300,speed:0,cooldown:0}];
+ const h=harness(saved);try{h.$('resume').click();h.point('pointerdown',16,4);assert.equal(h.$('intel-title').textContent,'Shell guard');assert.match(h.$('intel-desc').textContent,/0.65/);assert.ok(h.$('upgrade-turret').hidden);assert.equal(h.$('creature-back').hidden,false);h.key('Escape');assert.equal(h.$('creature-back').hidden,true);assert.equal(h.$('intel-title').textContent,'Lighthouse');}finally{await h.close();}
 });

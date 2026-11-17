@@ -51,12 +51,27 @@ def ring(color,p,major,minor,rotation=None):
  bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=12,minor_segments=5,location=coord(p));o=bpy.context.object
  if rotation:o.rotation_euler=rotation
  return finish(o,color)
+def fuse_organic(objects,voxel=.009):
+ if len(objects)<2:return
+ bpy.ops.object.select_all(action='DESELECT')
+ for obj in objects:obj.select_set(True)
+ bpy.context.view_layer.objects.active=objects[0];bpy.ops.object.join();obj=objects[0]
+ for part in PARTS.values():part[:]=[item for item in part if item not in objects[1:]]
+ mod=obj.modifiers.new('Continuous sculpted anatomy','REMESH');mod.mode='VOXEL';mod.voxel_size=voxel;mod.use_smooth_shade=True
+ bpy.ops.object.modifier_apply(modifier=mod.name)
+ smooth=obj.modifiers.new('Anatomical transitions','SMOOTH');smooth.factor=.7;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
+ for poly in obj.data.polygons:poly.use_smooth=True
+
 def barnacles(center,radius,count):
+ clusters=[(-.37,.22),(.24,-.24),(.05,.04),(.37,.29)]
  for i in range(count):
-  a=i*2.399963;r=radius*math.sqrt((i+.5)/count);x=center[0]+math.cos(a)*r;z=center[2]+math.sin(a)*r
-  y=center[1]-.06*(r/max(radius,.001))**2;scale=.012+(i%4)*.004
-  ring('bone',(x,y,z),scale,.004)
-  ell('dark',(x,y-.003,z),(scale*.65,.003,scale*.65))
+  cx,cz=clusters[i%len(clusters)];a=i*2.399963;r=radius*(.1+random.random()*.3)
+  x=center[0]+cx*radius+math.cos(a)*r;z=center[2]+cz*radius+math.sin(a)*r
+  distance=math.hypot(x-center[0],z-center[2]);y=center[1]-.065*(distance/max(radius,.001))**2
+  scale=.009+random.random()*.022
+  bpy.ops.mesh.primitive_cone_add(vertices=7,radius1=scale,radius2=scale*.57,depth=scale*1.2,end_fill_type='NOTHING',location=coord((x,y,z)))
+  obj=bpy.context.object;obj.rotation_euler.x=(random.random()-.5)*.5;obj.rotation_euler.y=(random.random()-.5)*.5;finish(obj,'bone')
+  ell('dark',(x,y-scale*.25,z),(scale*.5,.002,scale*.5))
 def kelp(a,b,thickness=.006):
  points=[]
  for i in range(8):
@@ -73,6 +88,7 @@ def crab(kind):
   z=(i-2.5)*r*.27;width=r*(.9-abs(i-2.5)*.1)
   ell('ridge' if i%2 else 'shell',(0,h+.06+math.cos(i*.9)*.014,z),(width,.045,r*.21),True)
  for side in [-1,1]:
+  CURRENT='body'
   for i in range(7):
    z=(i-3)*r*.22
    tube('ridge',[(side*r*.77,h+.05,z),(side*r*1.02,h+.095,z-.02),(side*r*1.1,h+.035,z-.04)],[.022,.014,.002])
@@ -80,15 +96,21 @@ def crab(kind):
   ell('dark',(side*r*.56,h+.09,r*.71),(.021,.023,.022))
   # A pincer with open jaws, knuckle joints and individual serrations.
   x=side*r*.92
+  CURRENT='clawLeft' if side<0 else 'clawRight'
   tube('ridge',[(side*r*.72,h-.05,.15),(x,h-.01,r*.88),(x,h-.02,r*1.12)],[.037 if guard else .021,.05 if guard else .026,.035 if guard else .021])
   ell('shell',(x,h-.025,r*1.14),(r*.27,r*.19,r*.27),True)
   for jaw in [-1,1]:
    tube('bone',[(x+jaw*r*.13,h-.025,r*1.25),(x+jaw*r*.17,h-.025,r*1.45),(x+jaw*r*.035,h-.025,r*1.6)],[r*.13,r*.08,.003])
    for tooth in range(3):ell('bone',(x+jaw*r*.105,h-.025,r*(1.3+tooth*.07)),(.009,.009,.009))
- barnacles((0,h+.16 if guard else h+.1,0),r*.77,40 if guard else 14)
+ CURRENT='body'
+ ell('dark',(0,h-.07,r*.64),(r*.27,.055,.06))
+ for side in [-1,1]:tube('bone',[(side*r*.23,h-.08,r*.55),(side*r*.12,h-.12,r*.77),(side*r*.035,h-.075,r*.85)],[.022,.017,.003])
+ barnacles((0,h+.16 if guard else h+.1,0),r*.77,48 if guard else 18)
  for i in range(5 if guard else 2):kelp(((-.5+i*.24)*r,h+.09,-r*.3),((-.6+i*.22)*r,h-.13,-r*.5))
  CURRENT='limbs';length=.47 if guard else .3
- tube('shell',[(0,0,0),(.11,.06,.005),(.19,.09,.025),(length,-h+.04,.08)],[.033,.028,.023,.004])
+ tube('shell',[(0,0,0),(.11,.06,.005),(.19,.09,.025)],[.033,.028,.023])
+ CURRENT='lowerLimbs'
+ tube('shell',[(.19,.09,.025),(.3,-h*.35,.06),(length,-h+.04,.08)],[.024,.017,.003])
  ell('ridge',(.18,.085,.023),(.033,.035,.029),True)
  for i in range(3):ell('ridge',(.09+i*.025,.065+i*.006,.01),(.017,.032,.032))
 
@@ -112,16 +134,21 @@ def drowned():
   ell('skin',(side*.033,.843,.108),(.029,.014,.013))
   ell('pale',(side*.073,.806,.035),(.013,.029,.019))
  ell('skin',(0,.803,.12),(.013,.037,.025));ell('dark',(0,.765,.117),(.029,.006,.008))
+ fuse_organic([obj for obj in PARTS['body'] if obj.get('palette') in ['skin','pale']],.004)
  ell('coat',(0,.888,.028),(.084,.027,.083));ell('coat',(0,.87,.053),(.102,.012,.086))
  for i in range(8):
   x=(i-3.5)*.025;kelp((x,.67,-.064),(x+math.sin(i)*.03,.28+(i%3)*.035,-.125),.005)
  CURRENT='limbs'
- tube('coat',[(0,0,0),(.01,-.14,.015),(.02,-.2,.02),(0,-.32,.04)],[.046,.043,.035,.027])
+ tube('coat',[(0,0,0),(.01,-.14,.015),(.015,-.19,.015)],[.046,.043,.037])
+ CURRENT='lowerLimbs'
+ tube('coat',[(.015,-.19,.015),(.02,-.24,.025),(0,-.32,.04)],[.037,.034,.027])
  for i in range(3):ell('seam',(.014,-.17+i*.015,.025),(.045,.009,.042))
  ell('dark',(0,-.33,.064),(.041,.039,.079))
  for i in range(3):ell('rust',(0,-.355+i*.007,.085),(.043,.003,.056))
  CURRENT='arms'
- tube('coat',[(0,0,0),(.015,-.12,.035),(.027,-.19,.08),(.03,-.28,.12)],[.045,.04,.03,.021])
+ tube('coat',[(0,0,0),(.015,-.12,.035),(.027,-.19,.08)],[.045,.04,.03])
+ CURRENT='forearms'
+ tube('coat',[(.027,-.19,.08),(.03,-.28,.12)],[.03,.021])
  for i in range(3):ell('seam',(.025,-.17+i*.015,.07),(.034,.009,.036))
  ell('pale',(.03,-.3,.135),(.027,.039,.022),True)
  for i in range(4):tube('skin',[(.011+i*.013,-.315,.147),(.009+i*.014,-.355,.158),(.008+i*.014,-.367,.17)],[.006,.005,.002],8)
@@ -130,16 +157,19 @@ def drowned():
 def spitter():
  global CURRENT
  CURRENT='body'
- ell('skin',(0,.23,-.075),(.25,.2,.43),True);ell('pale',(0,.44,.24),(.13,.28,.15),True)
- ell('skin',(0,.69,.34),(.125,.092,.135),True)
- ell('pale',(0,.45,.367),(.155,.195,.13),True)
+ anatomy=[]
+ anatomy.append(ell('skin',(0,.23,-.075),(.25,.2,.43),True));anatomy.append(ell('pale',(0,.44,.24),(.13,.28,.15),True))
+ anatomy.append(ell('skin',(0,.69,.34),(.125,.092,.135),True))
+ anatomy.append(ell('pale',(0,.45,.367),(.155,.195,.13),True));fuse_organic(anatomy,.009)
  for side in [-1,1]:
-  ell('dark',(side*.076,.726,.418),(.018,.018,.013))
+  ell('dark',(side*.076,.726,.418),(.009,.009,.007))
   tube('skin',[(side*.12,.3,.1),(side*.09,.5,.29),(side*.07,.61,.41)],[.012,.01,.005])
   for i in range(7):
    x=side*(.015+i*.008)
    tube('rust',[(x,.68,.462),(side*(.1+i*.007),.66,.5+i*.005)],[.0017,.0005],5)
- ell('dark',(0,.692,.469),(.035,.027,.012))
+
+ for side in [-1,1]:ell('dark',(side*.009,.698,.466),(.004,.009,.004))
+ tube('dark',[(-.046,.668,.46),(0,.66,.474),(.046,.668,.46)],[.002,.003,.002],6)
  for i in range(12):
   x=(i-5.5)*.017;z=.388+math.sqrt(max(0,1-(x/.16)**2))*.09
   tube('skin',[(x*.4,.61,.414),(x,.48,z),(x*.7,.3,.38)],[.003,.004,.002],6)
@@ -149,54 +179,71 @@ def spitter():
 def walker():
  global CURRENT
  CURRENT='body'
- ell('shell',(0,1.48,0),(.29,.34,.21),True);ell('shell',(0,1.82,.07),(.18,.18,.16),True)
+ torso=[ell('shell',(0,1.47,0),(.26,.27,.19),True),ell('shell',(-.22,1.62,-.01),(.14,.13,.14),True),ell('shell',(.22,1.62,-.01),(.14,.13,.14),True),ell('shell',(0,1.78,.1),(.18,.15,.23),True)];fuse_organic(torso,.01)
  for i in range(6):
   y=1.29+i*.087
   for side in [-1,1]:tube('bone',[(0,y,.195),(side*.23,y+.035,.12),(side*.27,y+.055,-.04)],[.018,.024,.013])
- ell('dark',(0,1.845,.222),(.067,.047,.017));ell('eye',(0,1.849,.241),(.022,.026,.006))
+ ell('dark',(0,1.815,.315),(.067,.047,.017));ell('eye',(0,1.819,.333),(.022,.026,.006))
  barnacles((0,1.82,-.03),.25,32)
  for i in range(15):
   x=(i-7)*.034;kelp((x,1.74,-.12),(x*1.3,.87+(i%4)*.055,-.21),.005)
  for i in range(5):tube('rust',[(-.24,1.58+i*.027,-.08),(0,1.55+i*.027,.24),(.24,1.58+i*.027,-.08)],[.005]*3,6)
  CURRENT='limbs'
- tube('shell',[(0,0,0),(.14,-.2,.012),(.26,-.52,.035),(.34,-.9,.08),(.42,-1.25,.12)],[.047,.04,.031,.023,.006])
+ tube('shell',[(0,0,0),(.14,-.2,.012),(.26,-.52,.035)],[.047,.04,.031])
+ CURRENT='lowerLimbs'
+ tube('shell',[(.26,-.52,.035),(.34,-.9,.08),(.42,-1.25,.12)],[.031,.023,.006])
  ell('bone',(.26,-.52,.035),(.052,.057,.047),True)
  for i in range(4):ring('bone',(.27+i*.015,-.55-i*.09,.044+i*.01),.023,.005)
  CURRENT='arms'
- tube('shell',[(0,0,0),(.1,-.22,.03),(.13,-.48,.1),(.17,-.91,.2)],[.034,.029,.023,.011])
+ tube('shell',[(0,0,0),(.1,-.22,.03),(.13,-.48,.1)],[.034,.029,.023])
+ CURRENT='forearms'
+ tube('shell',[(.13,-.48,.1),(.17,-.91,.2)],[.023,.011])
  ell('bone',(.13,-.48,.1),(.036,.042,.034))
  for i in range(3):tube('bone',[(.17,-.89,.2),(.12+i*.047,-1.01,.23),(.1+i*.057,-1.07,.3)],[.01,.007,.002],8)
 
-def export_part(objects,low=False):
+def export_part(objects,low=False,offset=(0,0,0)):
  floats=[];indices=[];lookup={}
  for obj in objects:
   context=bpy.context.evaluated_depsgraph_get()
   if low:
-   mod=obj.modifiers.new('Runtime distance LOD','DECIMATE');mod.ratio=.22
+   mod=obj.modifiers.new('Runtime distance LOD','DECIMATE');mod.ratio=.065 if obj.get('palette','').startswith('source-') else .22
    evaluated=obj.evaluated_get(context);mesh=evaluated.to_mesh()
   else:mesh=obj.data
-  mesh.calc_loop_triangles();normal_matrix=obj.matrix_world.to_3x3().inverted().transposed();base=COLORS[obj['palette']]
+  mesh.calc_loop_triangles();normal_matrix=obj.matrix_world.to_3x3().inverted().transposed();base=COLORS.get(obj['palette'],(1,1,1))
   for tri in mesh.loop_triangles:
    for loop_index in tri.loops:
     loop=mesh.loops[loop_index];v=obj.matrix_world@mesh.vertices[loop.vertex_index].co
     normal=(normal_matrix@mesh.corner_normals[loop_index].vector).normalized()
     x,y,z=v.x,v.z,-v.y;nx,ny,nz=normal.x,normal.z,-normal.y
-    variation=.86+.14*noise(Vector((x*35,y*35,z*35)))
+    variation=.9+.1*noise(Vector((x*35,y*35,z*35)))
+    palette=obj['palette'];layer=2 if palette in ['coat','seam'] else 1 if palette in ['skin','pale'] else 3 if palette=='bone' else 4 if palette=='eye' else 0
+    tint=(.86,.86,.86) if layer==2 else (.93,.95,.88) if layer==1 else (.9,.88,.8) if layer==3 else (.92,.87,.76)
+    if palette.startswith('source-'):
+     layer=5 if palette=='source-crab' else 6;tint=(1,1,1)
+    if palette in ['dark','kelp']:tint=base
+    if palette=='eye':tint=(.92,.81,.56)
+    if palette in ['brick','concrete','roof','steel','glass','timber','warm']:tint=base
     # Vertex grain and dark seams retain their character at every graphics quality.
-    values=(x,y,z,nx,ny,nz,*[min(1,c*variation) for c in base],x*2+z,y*2+z)
+    uv=mesh.uv_layers.active.data[loop_index].uv if palette.startswith('source-') else (x*2+z,y*2+z)
+    values=(x-offset[0],y-offset[1],z-offset[2],nx,ny,nz,*[min(1,c*variation) for c in tint],uv[0],uv[1],float(layer))
     key=tuple(round(v,6) for v in values)
-    if key not in lookup:lookup[key]=len(floats)//11;floats.extend(values)
+    if key not in lookup:lookup[key]=len(floats)//12;floats.extend(values)
     indices.append(lookup[key])
   if low:evaluated.to_mesh_clear();obj.modifiers.remove(mod)
- return {'vertices':len(floats)//11,'indices':base64.b64encode(struct.pack('<%sI'%len(indices),*indices)).decode('ascii'),'data':base64.b64encode(struct.pack('<%sf'%len(floats),*floats)).decode('ascii')}
+ return {'stride':12,'vertices':len(floats)//12,'indices':base64.b64encode(struct.pack('<%sI'%len(indices),*indices)).decode('ascii'),'data':base64.b64encode(struct.pack('<%sf'%len(floats),*floats)).decode('ascii')}
 
 def main():
+ global PARTS,CURRENT
  payload={'format':1,'generator':'Blender '+bpy.app.version_string,'species':{}}
  all_objects=[]
  for kind,fn in [('runner',lambda:crab('runner')),('drowned',drowned),('guard',lambda:crab('guard')),('spitter',spitter),('walker',walker)]:
-  PARTS={'body':[],'limbs':[],'arms':[]};fn();bpy.context.view_layer.update()
-  payload['species'][kind]={part:export_part(objects) for part,objects in PARTS.items() if objects}
-  payload['species'][kind]['low']={part:export_part(objects,True) for part,objects in PARTS.items() if objects}
+  PARTS={'body':[],'limbs':[],'lowerLimbs':[],'arms':[],'forearms':[],'clawLeft':[],'clawRight':[]};fn()
+  import runpy
+  runpy.run_path(str(Path(__file__).with_name('source_anatomy.py')))['apply_anatomy'](globals(),kind)
+  bpy.context.view_layer.update()
+  offsets={'runner':{'lowerLimbs':(.19,.09,.025),'clawLeft':(-.25*.7,.18-.05,.15),'clawRight':(.25*.7,.18-.05,.15)},'guard':{'lowerLimbs':(.19,.09,.025),'clawLeft':(-.44*.7,.32-.05,.15),'clawRight':(.44*.7,.32-.05,.15)},'drowned':{'lowerLimbs':(.015,-.19,.015),'forearms':(.027,-.19,.08)},'walker':{'lowerLimbs':(.26,-.52,.035),'forearms':(.13,-.48,.1)}}.get(kind,{})
+  payload['species'][kind]={part:export_part(objects,False,offsets.get(part,(0,0,0))) for part,objects in PARTS.items() if objects}
+  payload['species'][kind]['low']={part:export_part(objects,True,offsets.get(part,(0,0,0))) for part,objects in PARTS.items() if objects}
   for part,objects in PARTS.items():
    for obj in objects:obj.name=f'{kind}.{part}.{obj.name}';obj['species']=kind;obj['rig_part']=part
    all_objects.extend(objects)

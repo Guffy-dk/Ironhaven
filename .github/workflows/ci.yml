@@ -31,4 +31,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Ironhaven-Windows-preview
-          path: release/Ironhaven-ingame.png
+          path: release/Ironhaven-*.png

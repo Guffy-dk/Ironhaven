@@ -1,0 +1,23 @@
+Ironhaven — third-party art sources
+
+Crab anatomical base and PBR maps: Grab3D
+https://grab3d.com/models/animals/crab/
+https://grab3d.com/dl/crab/crab.glb
+
+Horror monster anatomical base and PBR maps: Grab3D
+https://grab3d.com/models/creatures/horror-monster/
+https://grab3d.com/dl/horror-monster/horror-monster.glb
+
+Both source packages are published under CC0 1.0 Universal:
+https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+Grab3D origin disclosure: AI-assisted. Base mesh and textures generated
+with Meshy, then cleaned, scaled, textured and checked in Blender.
+Ironhaven adaptations: anatomical cropping, species scale, UV-preserving
+near/distance LODs, coastal color treatment, barnacles, kelp and animation.
+No endorsement by the source authors is implied.
+
+The source repository contains original license text, upstream manifests,
+SHA-256 receipts and reproducible Blender adaptation scripts.
+The workshop and creature concept illustrations and coastal surface atlas
+were generated with OpenAI ImageGen. Concepts are not in-game screenshots.

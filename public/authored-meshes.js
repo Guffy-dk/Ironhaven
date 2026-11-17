@@ -11,8 +11,9 @@ export function authoredHostile(kind,part,low=false){
 }
 
 export function decodeMesh(payload,generator){
- const buffer=new T.InterleavedBuffer(new Float32Array(bytes(payload.data).buffer),11),geometry=new T.BufferGeometry();
+ const buffer=new T.InterleavedBuffer(new Float32Array(bytes(payload.data).buffer),payload.stride||11),geometry=new T.BufferGeometry();
  for(const [name,size,offset] of [['position',3,0],['normal',3,3],['color',3,6],['uv',2,9]])geometry.setAttribute(name,new T.InterleavedBufferAttribute(buffer,size,offset));
+ if(payload.stride===12)geometry.setAttribute('coastalSurface',new T.InterleavedBufferAttribute(buffer,1,11));
  geometry.setIndex(new T.BufferAttribute(new Uint32Array(bytes(payload.indices).buffer),1));
  geometry.userData.authoredBy=generator;geometry.computeBoundingSphere();return geometry;
 }

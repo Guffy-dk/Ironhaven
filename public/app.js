@@ -1,3 +1,4 @@
+import {coastalLand,actorElevation} from './shared/coast.js';
 import {lighthouseBeam,lighthouseHeading,LIGHTHOUSE_REACH,LIGHTHOUSE_CONE} from './shared/lighthouse.js';
 import {HOSTILES,hostileKind} from './shared/hostiles.js';
 import { View } from './render.js';
@@ -18,7 +19,7 @@ let state=createGame(),playerId=null,started=false,mode='solo',view,tool=null,di
 const keys=new Set(),motion=new RenderMotion(),renderPoint={x:0,z:0};
 let cameraTravel=0,rowAnchor=null,rowGesture=null,routePlan=null,lastRouteKey='',pointer=null;
 let areaIds=[],selectionGesture=null,movingArea=false,pendingMove=null,showDiagnostics=false,checkpointCache=null,lastAutoCheckpoint='';
-let copiedSetup=[],pasting=false,aimingLight=false;
+let copiedSetup=[],pasting=false,aimingLight=false,selectedEnemyId=null;
 const CHECKPOINTS='ironhaven.checkpoints.v1';
 let programTargetId=null;
 initWindows();
@@ -66,7 +67,9 @@ function updateToolbar(){
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
  document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type;el.hidden=!CATEGORIES[tab].tools.includes(t);el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(t==='repair'?repair:TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
 }
-function setTool(t){aimingLight=false;$('aim-light').classList.remove('active');pasting=false;if(t||selectionGesture?.trees)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
+function endCreatureView(){selectedEnemyId=null;view.exitInspection?.();document.body.classList.remove('inspecting-creature');$('creature-back').hidden=true;}
+$('creature-back').onclick=()=>setTool(null);
+function setTool(t){endCreatureView();aimingLight=false;$('aim-light').classList.remove('active');pasting=false;if(t||selectionGesture?.trees)clearArea();rowAnchor=null;rowGesture=null;routePlan=null;lastRouteKey='';dragging=false;view.previewRoute([]);tool=t;selected=null;view.select(null);view.setTool(t,dir);$('tool-hint').hidden=!t;updateToolbar();updateInspector();updateHover();if(t)tone(350,.04);}
 function beginLightAim(){if(!started)return;setTool(null);clearArea();aimingLight=true;$('aim-light').classList.add('active');updateHover();}
 $('aim-light').onclick=()=>aimingLight?setTool(null):beginLightAim();
 function updateHover(){
@@ -178,6 +181,20 @@ $('create-answer').onclick=async()=>{
 };
 for(const button of document.querySelectorAll('[data-copy]'))button.onclick=async()=>{const input=$(button.dataset.copy);try{await navigator.clipboard.writeText(input.value);toast('Code copied.');}catch{input.focus();input.select();if(document.execCommand('copy'))toast('Code copied.');else toast('Select the code and copy it with Ctrl+C.');}};
 function updateInspector(){
+ if(selectedEnemyId){
+  const enemy=state.enemies.find(e=>e.id===selectedEnemyId);
+  if(enemy){
+   document.body.classList.add('inspecting-creature');$('creature-back').hidden=false;$('intel-icon').hidden=true;
+   const kind=hostileKind(enemy),spec=HOSTILES[kind],roles={runner:'A fast coastal scuttler. The lighthouse briefly drives it sideways out of the beam.',drowned:'A drowned coastal worker. Illumination briefly draws it away from industry toward the lighthouse.',guard:'A heavy crustacean with layered shell armor. Keep it lit for 0.65 seconds to expose its vulnerable tissues.',spitter:'A ranged marine predator. Its mist protects nearby unlit targets; illuminate it to clear that protection.',walker:'A rare deep-sea lighthouse hunter. One second of sustained light exposes its armor.'};
+   for(const id of ['program-building','rotate-building','upgrade-turret','upgrade-impact','input-stock','output-options','warehouse-options','blueprint-site','port-key'])$(id).hidden=true;
+   $('intel').classList.add('has-selection');$('intel-label').textContent='COASTAL HOSTILE';$('intel-icon').innerHTML='';$('intel-title').textContent=spec.name;$('intel-desc').textContent=roles[kind];
+   $('intel-stats').innerHTML=`<div class="stat-row"><span>Health</span><span>${Math.ceil(enemy.hp)} / ${enemy.maxHp}</span></div><div class="stat-row"><span>Illuminated</span><span>${enemy.illuminated?'Yes':'No'}</span></div>`;
+   $('recipe').textContent=kind==='guard'||kind==='walker'?'SUSTAINED LIGHT EXPOSES ARMOR':'';$('intel-tip').textContent='Live creature view · Esc / right-click returns to the colony.';return;
+  }
+  endCreatureView();
+ }
+
+ $('intel-icon').hidden=false;
  const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('intel').classList.toggle('has-selection',!!b||!!tool&&!!def.hp);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool||b.type==='turret';$('program-building').hidden=!b||!!tool||!LOGISTICS_TYPES.includes(b.type);
  const impact=$('upgrade-impact');impact.hidden=!b||!!tool||!upgradeCost(b);if(!impact.hidden)impact.textContent=upgradeImpact(b);
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade ${b.level||1} / ${MAX_UPGRADES} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:'Fully upgraded · 10/10';btn.disabled=!cost||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
@@ -296,7 +313,7 @@ function updateUi(){
  if(started&&state.status!=='playing'&&!ended){ended=true;const won=state.status==='victory';$('end-title').textContent=won?'Ironhaven endures.':'The colony has fallen.';$('end-label').textContent=won?'25 SWARMS SURVIVED':'EXPEDITION ENDED';$('end-summary').textContent=`You held out for ${Math.floor(state.time/60)} minutes and stopped ${state.totalKills} hostiles. Your industry delivered ${state.produced.plate} iron plates and ${state.produced.gear} gears.`;$('end-continue').hidden=!won;$('end-continue').disabled=mode==='client';$('end-dialog').showModal();saveGame(true);}
 }
 const mini=$('minimap'),ctx=mini.getContext('2d');
-function drawMinimap(){const w=mini.width,h=mini.height,sx=w/SIZE,sz=h/SIZE;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);const core=state.buildings.find(b=>b.type==='hq');if(core){const a=Math.PI/2-lighthouseHeading(core);ctx.fillStyle='#eeb96e30';ctx.beginPath();ctx.moveTo((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz);ctx.ellipse((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz,LIGHTHOUSE_REACH*sx,LIGHTHOUSE_REACH*sz,0,a-LIGHTHOUSE_CONE,a+LIGHTHOUSE_CONE);ctx.closePath();ctx.fill();}ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+SIZE/2)*sx,(b.z+SIZE/2)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect(Math.max(0,Math.min(w-2,(e.x+SIZE/2)*sx)),Math.max(0,Math.min(h-2,(e.z+SIZE/2)*sz)),2,2);ctx.fillStyle='#6e8993';for(const t of state.terrain.coal||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+SIZE/2-cw/2)*sx,(view.center.z+SIZE/2-ch/2)*sz,cw*sx,ch*sz);}
+function drawMinimap(){const w=mini.width,h=mini.height,sx=w/SIZE,sz=h/SIZE;ctx.fillStyle='#11262a';ctx.fillRect(0,0,w,h);if(state.terrain.coast){for(let px=0;px<w;px+=2)for(let py=0;py<h;py+=2){ctx.fillStyle=coastalLand(state.terrain,px/sx-SIZE/2,py/sz-SIZE/2,0)?'#35443d':'#17323d';ctx.fillRect(px,py,2,2);}}const core=state.buildings.find(b=>b.type==='hq');if(core){const a=Math.PI/2-lighthouseHeading(core);ctx.fillStyle='#eeb96e30';ctx.beginPath();ctx.moveTo((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz);ctx.ellipse((core.x+SIZE/2)*sx,(core.z+SIZE/2)*sz,LIGHTHOUSE_REACH*sx,LIGHTHOUSE_REACH*sz,0,a-LIGHTHOUSE_CONE,a+LIGHTHOUSE_CONE);ctx.closePath();ctx.fill();}ctx.fillStyle='#31554b';for(const t of state.terrain.trees)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#d49264';for(const t of state.terrain.copper||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.fillStyle='#789d9e';for(const t of state.terrain.ore)ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);for(const b of state.buildings){ctx.fillStyle=b.type==='wall'?'#657e71':b.type==='hq'?'#eeb96e':'#abd3ae';ctx.fillRect((b.x+SIZE/2)*sx,(b.z+SIZE/2)*sz,b.type==='hq'?5:2,b.type==='hq'?5:2);}ctx.fillStyle='#f5816d';for(const e of state.enemies)ctx.fillRect(Math.max(0,Math.min(w-2,(e.x+SIZE/2)*sx)),Math.max(0,Math.min(h-2,(e.z+SIZE/2)*sz)),2,2);ctx.fillStyle='#6e8993';for(const t of state.terrain.coal||[])ctx.fillRect((t.x+SIZE/2)*sx,(t.z+SIZE/2)*sz,2,2);ctx.strokeStyle='#afc8b750';const cw=view.zoom*1.4,ch=view.zoom;ctx.strokeRect((view.center.x+SIZE/2-cw/2)*sx,(view.center.z+SIZE/2-ch/2)*sz,cw*sx,ch*sz);}
 mini.onclick=e=>{const rect=mini.getBoundingClientRect();view.center.set((e.clientX-rect.left)/rect.width*SIZE-SIZE/2,0,(e.clientY-rect.top)/rect.height*SIZE-SIZE/2);};
 function dragEndpoint(origin,cell){
  const [dx,dz]=DIRS[dir],distance=Math.max(0,(cell.x-origin.x)*dx+(cell.z-origin.z)*dz);
@@ -349,6 +366,7 @@ $('world').addEventListener('pointerdown',e=>{
  if(e.button===2){if(selectionGesture?.trees){selectionGesture=null;$('selection-box').hidden=true;}setTool(null);return;}if(e.button!==0||!started)return;
  pointer={x:e.clientX,y:e.clientY};hover=view.point(e.clientX,e.clientY);if(!hover)return;
  if(aimingLight){if(execute({type:'aimLighthouse',...hover})!==false){setTool(null);toast('Lighthouse turning to the new bearing.');}return;}
+ if(!tool&&!pasting&&!movingArea){const picked=view.pickHostile?.(e.clientX,e.clientY),enemy=state.enemies.find(actor=>actor.id===picked)||state.enemies.find(actor=>Math.hypot(actor.x-hover.x,actor.z-hover.z)<.7);if(enemy){selectedEnemyId=enemy.id;selected=null;areaIds=[];view.select(null);view.inspectHostile?.(enemy.id,hostileKind(enemy));$('intel').hidden=false;updateInspector();return;}endCreatureView();}
  if(pasting){placePaste();return;}
  if(movingArea){placeArea(e.shiftKey);return;}
  if(tool==='demolish'&&e.shiftKey){

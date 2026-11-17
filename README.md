@@ -8,11 +8,12 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 ## The expedition
 
-Keep the lighthouse standing through 25 swarms. Mine ore, route conveyors into smelters and assemblers, deliver supplies to the lighthouse and fortify your industry. Starter buildings are in your personal inventory. Field training walks through the first production line; it can be skipped. Continue in endless mode after victory.
+New expeditions place the lighthouse on a rocky northern headland, with waves and shoreline foam around it and industry inland. Existing saved worlds keep their original layout; start a new coastal expedition to use the coastal map. Keep the lighthouse standing through 25 swarms. Mine ore, route conveyors into smelters and assemblers, deliver supplies to the lighthouse and fortify your industry. Starter buildings are in your personal inventory. Field training walks through the first production line; it can be skipped. Continue in endless mode after victory.
 
 - **WASD / arrows:** pan; hold Shift to move faster. Mouse wheel or +/− zooms; clicking the minimap moves the camera.
 - **Z / X / C / V:** production, defense, power, logistics. Number keys select a blueprint.
 - **Left click:** build or select. Drag conveyors and walls to lay a line. **R / Shift+R** rotates; Shift-click or drag routes around obstacles.
+- **Click a creature:** inspect its live model and light response close up. **Esc / right click** returns to the colony.
 - **L / Aim light:** click a map tile to set the lighthouse bearing. **Esc / right-click** cancels aiming. Turning pauses with the simulation.
 - **Space / P:** pause. The host controls pause, speed and saving.
 - **F:** dismantle or harvest a tree; Shift-drag clears trees.
@@ -34,7 +35,7 @@ The beam reaches 40 tiles in a 40-degree cone. Defenses can acquire illuminated 
 
 Runners, Drowned and guards appear from the first swarm; spitters arrive in swarm four. Fear and attraction have limited durations and a ten-second response cooldown so a single fixed beam cannot indefinitely pin a wave. Existing core hunters remain part of the wave composition. Old saved enemies gain compatible species rendering without replacing their health or position.
 
-Blender-authored creature meshes have species-specific silhouettes, distance LODs, surface grain and instanced appendage animation. Six production/workshop types use new Blender-authored brick architecture; upgrades add visible structural equipment. The approved realistic industrial art direction and creature concept sheet are in [docs/design/ART_DIRECTION.md](docs/design/ART_DIRECTION.md). Concept illustrations establish the art direction and are not runtime screenshots. The release includes an in-game image captured from the actual Windows package.
+Blender-authored creature meshes have continuous sculpted anatomy, textured shell, wet skin, oilskin fabric and bone/chitin, distance LODs, articulated knees, elbows and claws, contact shadows and dynamic high-quality shadows. Six production/workshop types use new Blender-authored brick architecture; upgrades add visible structural equipment. The approved realistic industrial art direction and creature concept sheet are in [docs/design/ART_DIRECTION.md](docs/design/ART_DIRECTION.md). Concept illustrations establish the art direction and are not runtime screenshots. The release includes coastal overview and close-up creature images captured from the actual Windows package.
 
 ## Factory and upgrades
 

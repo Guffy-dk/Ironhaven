@@ -1,4 +1,11 @@
 import * as T from './vendor/three.module.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {coastalHeight,coastalLand} from './shared/coast.js';
+import {CoastalWater} from './coastal-water.js';
+import {LighthouseLight} from './lighthouse-light.js';
 import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
@@ -27,10 +34,10 @@ const easeAngle=(current,target,weight)=>current+Math.atan2(Math.sin(target-curr
 let quarryStone;
 function quarryStoneSurface(){
  if(quarryStone)return quarryStone;
- const shape=new T.IcosahedronGeometry(1,2),positions=shape.attributes.position;
+ const shape=new T.IcosahedronGeometry(1,3),positions=shape.attributes.position;
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),worn=1+.09*Math.sin(x*13+z*7)*Math.cos(y*8-z*5);
-  positions.setXYZ(i,x*worn,Math.min(.72,y*worn),z*worn);
+  positions.setXYZ(i,x*worn,y*worn*.83,z*worn);
  }
  shape.computeVertexNormals();
  const map=quarryTexture('gravel');
@@ -261,6 +268,10 @@ export class View{
   this.blasts=new T.InstancedMesh(new T.RingGeometry(.78,1,24).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffc378,transparent:true,opacity:.62,depthWrite:false}),128);
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
   this.dust=createQuarryEffects();this.scene.add(this.dust);
+  this.coastalWater=new CoastalWater(this.scene,SIZE);
+  this.lighthouseLight=new LighthouseLight(this.scene);
+  this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));
+  this.composer.addPass(new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.35,.42,2.2));this.composer.addPass(new OutputPass());
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
   this.coastalHostiles=new CoastalHostiles(this.scene);
@@ -271,7 +282,16 @@ export class View{
   this.configureQuarryLighting();
   document.getElementById('quarry-spruce')?.addEventListener('load',()=>{if(this.style==='quarry')this.terrainKey='';});
  }
- resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.updateProjection();}
+ inspectHostile(id,kind){
+  if(!this.inspectedId)this.inspectionReturn={center:this.center.clone(),zoom:this.zoom};
+  this.inspectedId=id;this.inspectionOrbitStamp='';this.zoom=kind==='walker'?2.6:1.5;this.updateProjection();
+ }
+ exitInspection(){
+  if(!this.inspectedId)return;this.inspectedId=null;
+  if(this.inspectionReturn){this.center.copy(this.inspectionReturn.center);this.zoom=this.inspectionReturn.zoom;this.inspectionReturn=null;this.updateProjection();}
+ }
+ pickHostile(x,y){this.mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);return this.coastalHostiles.pick(this.ray);}
+ resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.composer?.setPixelRatio(this.renderer.getPixelRatio());this.composer?.setSize(innerWidth,innerHeight);this.updateProjection();}
  updateProjection(){const w=innerWidth,h=innerHeight,aspect=w/h;this.camera.left=-this.zoom*aspect;this.camera.right=this.zoom*aspect;this.camera.top=this.zoom;this.camera.bottom=-this.zoom;this.camera.updateProjectionMatrix();
   this.worldPerPixel=2*this.zoom/h;
   for(const [id,model] of this.buildings)sizePortBadges(model,this.worldPerPixel,id===this.selected);
@@ -280,8 +300,8 @@ export class View{
  setQuality(low){this.renderer.shadowMap.enabled=!low;this.renderer.shadowMap.needsUpdate=!low;this.renderer.setPixelRatio(low?Math.min(devicePixelRatio,.8):Math.min(devicePixelRatio,1.5));this.resize();}
  configureQuarryLighting(){
   this.scene.background.setHex(0x454c48);this.scene.fog.color.setHex(0x454c48);this.scene.fog.density=.0065;
-  this.sky.color.setHex(0xdce3eb);this.sky.groundColor.setHex(0x857768);this.sky.intensity=1.46;
-  this.sun.color.setHex(0xffe8ce);this.sun.intensity=2.5;this.sun.shadow.normalBias=.018;
+  this.sky.color.setHex(0xdce3eb);this.sky.groundColor.setHex(0x857768);this.sky.intensity=1.1;
+  this.sun.color.setHex(0xffe8ce);this.sun.intensity=1.7;this.sun.shadow.normalBias=.018;
   this.fill.color.setHex(0xc2ccda);this.fill.intensity=.51;
   this.renderer.toneMappingExposure=1.12;this.renderer.shadowMap.needsUpdate=true;
   this.shadowKey='';
@@ -300,7 +320,7 @@ export class View{
  }
  point(clientX,clientY){this.mouse.set(clientX/innerWidth*2-1,-clientY/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);if(!this.ray.ray.intersectPlane(this.plane,this.hit))return null;return{x:Math.round(this.hit.x),z:Math.round(this.hit.z)};}
  pan(x,z){this.center.x=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.x+x));this.center.z=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.z+z));}
- setZoom(d){this.zoom=Math.max(4,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
+ setZoom(d){this.zoom=Math.max(this.inspectedId?.6:2.5,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
  centerBase(){this.center.set(0,0,0);}
  previewRoute(cells,valid=true,arrows=false){
   const signature=cells.map(c=>`${c.type??''}:${c.x},${c.z},${c.dir}`).join(';')+valid+arrows;if(signature===this.routeKey)return;this.routeKey=signature;
@@ -344,22 +364,31 @@ export class View{
  staticTerrain(s){
   this.renderer.shadowMap.needsUpdate=true;
   const quarry=this.style==='quarry';
-  this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`;
+  this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.shoreZ??'inland'}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
-  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,104,104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
+  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?240:104,s.terrain.coast?240:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
   const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x91816c),albedoTint=new T.Color(0xe8e1d5);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
     const exposed=Math.sin(x*.53+z*.28)+Math.cos(z*.51-x*.32)+.43*Math.sin(x*.96-z*.76);
     color.lerp(gravel,Math.min(.78,Math.max(0,.43*exposed-.12)));
     color.lerp(albedoTint,.76);
     const meadow=Math.sin(x*.47-z*.21)+Math.cos(z*.49+x*.23)+Math.sin(x*1.28-z*.66)*.2;
-    growth.push(T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16));
-   }colors.push(color.r,color.g,color.b);vertices.setY(i,-.026+(d>12?Math.sin(x*.7)*Math.cos(z*.6)*.017:0));}
+    const baseGrowth=T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16);
+    const coastalGrowth=(.6+T.MathUtils.smoothstep(meadow,-.74,.84)*.4)*T.MathUtils.smoothstep(Math.abs(x),.45,1.3)*T.MathUtils.smoothstep(Math.hypot(x,z+8),1,2)*T.MathUtils.smoothstep(coastalHeight(s.terrain,x,z),-.6,-.05);
+    growth.push(s.terrain.coast&&z<-1?coastalGrowth:baseGrowth);
+   }colors.push(color.r,color.g,color.b);vertices.setY(i,-.026+coastalHeight(s.terrain,x,z)+(d>12?Math.sin(x*.7)*Math.cos(z*.6)*.017:0));}
   groundGeometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();
   if(quarry)groundGeometry.setAttribute('quarryGrowth',new T.Float32BufferAttribute(growth,1));
   const ground=new T.Mesh(groundGeometry,quarry?quarryTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
   ground.receiveShadow=true;this.ground.add(ground);let i=0;
-  const grass=new T.InstancedMesh(geometry('cone',quarry?.075:.12,.25,3),mat(quarry?0x8a8051:0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12)continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
+  if(s.terrain.coast){
+   const coastRocks=[];for(let x=-23;x<=23;x+=.85)for(let z=-16;z<2;z+=.85){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
+   const stone=quarryStoneSurface(),cliff=new T.InstancedMesh(stone.shape,stone.material,coastRocks.length),tint=new T.Color();
+   coastRocks.forEach((p,i)=>{this.dummy.position.set(p.x,p.y-.12,p.z);this.dummy.rotation.set(rand()*.4,rand()*6,rand()*.35);this.dummy.scale.set(.38+rand()*.4,.3+rand()*.3,.36+rand()*.4);this.dummy.updateMatrix();cliff.setMatrixAt(i,this.dummy.matrix);cliff.setColorAt(i,tint.setHex(0x757970).multiplyScalar(.75+rand()*.35));});
+   cliff.castShadow=true;cliff.receiveShadow=true;this.terrain.add(cliff);
+  }
+
+  const grass=new T.InstancedMesh(geometry('cone',quarry?.075:.12,.25,3),mat(quarry?0x8a8051:0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12||!coastalLand(s.terrain,x,z))continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
   const groves=new Map();
   for(const tree of s.terrain.trees){const chunk=key(Math.floor(tree.x/24),Math.floor(tree.z/24));if(!groves.has(chunk))groves.set(chunk,[]);groves.get(chunk).push(tree);}
   const spruce=quarry?quarrySpruce():null;
@@ -432,6 +461,12 @@ export class View{
  }
  sync(s,motion,nowTime=s.time){
   const time=motion?.renderTime??nowTime;
+  if(this.inspectedId){const actor=s.enemies.find(e=>e.id===this.inspectedId);if(!actor)this.exitInspection();else{this.center.set(actor.x,actor.kind==='walker'?.9:.36,actor.z);this.inspectionHeading=this.coastalHostiles.headings.get(actor.id)??Math.atan2(-actor.x,-actor.z);
+   const stamp=actor.id+':'+Math.round(actor.x)+':'+Math.round(actor.z)+':'+s.buildings.length;if(this.inspectionOrbitStamp!==stamp){
+    this.inspectionOrbitStamp=stamp;const solids=[];for(const root of this.buildings.values())root.traverse(part=>{if(part.isMesh&&part.visible&&part.material?.opacity!==0)solids.push(part);});
+    const probe=new T.Raycaster(),destination=new T.Vector3(actor.x,.12,actor.z),origin=new T.Vector3();this.inspectionOrbit=0;
+    for(const offset of [0,Math.PI/3,-Math.PI/3,Math.PI/2,-Math.PI/2,Math.PI]){const angle=this.inspectionHeading+offset;origin.set(actor.x+Math.sin(angle)*9,4.5,actor.z+Math.cos(angle)*9);const ray=destination.clone().sub(origin);probe.set(origin,ray.clone().normalize());probe.far=ray.length()-.1;if(!probe.intersectObjects(solids,false).length){this.inspectionOrbit=offset;break;}}
+   }}}
   const dt=Math.max(0,Math.min(.12,time-(this.lastRenderTime??time)));this.lastRenderTime=time;
   const position=actor=>motion?.position(actor,this.renderPosition)??actor;
   const quarry=this.style==='quarry';
@@ -439,7 +474,10 @@ export class View{
   const core=s.buildings.find(b=>b.type==='hq'),heading=motion?.lighthouseAngle??lighthouseHeading(core);
   const beam=lighthouseBeam(core,heading);
   this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
-  if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}`)this.staticTerrain(s);
+  this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
+  this.coastalWater.sync(s.terrain,time,beam);
+  if(beam&&heading!==this.lastLightHeading){this.lastLightHeading=heading;this.renderer.shadowMap.needsUpdate=true;}
+  if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
   if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
@@ -492,7 +530,8 @@ export class View{
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
-  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion,{x:this.center.x,z:this.center.z,rx:this.camera.right+3,rz:this.camera.top*1.6+3,zoom:this.zoom,low:!this.renderer.shadowMap.enabled});
+  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion,{x:this.center.x,z:this.center.z,rx:this.camera.right+3,rz:this.camera.top*1.6+3,zoom:this.zoom,inspect:this.inspectedId,terrain:s.terrain,low:!this.renderer.shadowMap.enabled});
+  if(quarry&&!s.paused&&this.coastalHostiles.hasVisible)this.renderer.shadowMap.needsUpdate=true;
   for(let i=0;i<(quarry?0:n);i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
@@ -555,14 +594,14 @@ export class View{
  }
  draw(){
   const quarry=this.style==='quarry';
-  this.camera.position.copy(this.center).add(quarry?QUARRY_CAMERA:CAMERA_OFFSET);
+  if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).add(quarry?QUARRY_CAMERA:CAMERA_OFFSET);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   if(quarry&&this.renderer.shadowMap.enabled){
    const x=Math.round(this.center.x/6)*6,z=Math.round(this.center.z/6)*6;
    const radius=Math.ceil(Math.max(this.camera.right,this.zoom)*1.1+9),key=`${x}:${z}:${radius}`;
    if(this.shadowKey!==key){this.shadowKey=key;this.setShadowArea(x,z,radius);}
   }
-  this.renderer.render(this.scene,this.camera);
+  if(this.composer&&this.renderer.shadowMap?.enabled)this.composer.render();else this.renderer.render(this.scene,this.camera);
  }
  project(x,z,y=1.3){const v=(this.projected??=new T.Vector3()).set(x,y,z).project(this.camera);return{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight,visible:v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}
 }
