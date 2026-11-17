@@ -28,37 +28,37 @@ export function waveForecast(s,wave=s.wave+1){
  return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
- hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:'The coastal lighthouse is your survival objective, power source and shared store. Deliver supplies here. On island expeditions its broad lantern automatically follows the incoming attack; upgrades improve reach, coverage and turning. Press L to take manual control, then Resume auto light to restore tracking: illuminated hostiles grant defenses 20% extra range and expose armored marine creatures.'},
- belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'A motor-driven rubber conveyor carries four spaced cargo loads toward its gold output arrow. Supports bends and side feeds. Press R over an existing belt to turn its output.'},
- drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'A steel-framed coastal drilling rig. Place it on blue-grey iron seams; its rotating drill produces ore every 1.6 seconds. Route the gold output to a smelter.'},
- smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'A brick furnace workshop with a chimney and glowing firebox. Feed iron or copper ore into a cyan input. Iron takes 1.6 seconds and copper 2 seconds; plates or copper leave the gold output.'},
- assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'A sheltered mechanical workshop. Supply two iron plates through a cyan input to machine one gear, then carry it from the gold output to lighthouse storage or another production line.'},
- sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'An open-sided timber mill with a spinning saw and log racks. Standing trees within five tiles increase its wood output. It supplies fuel without consuming grid power.'},
- generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'A wood-fired coastal generator with an exposed cooling fan and exhaust. Burns one wood from lighthouse storage every twelve seconds and supplies eighteen power.'},
- lamp:{name:'Harbor lamp',hp:75,power:3,fixedLevel:true,cost:{wood:12,plate:35,gear:3},desc:'A fragile industrial lantern on a steel mast. Illuminates a six-tile radius independently of the lighthouse while powered. Local light gives the same armor exposure, mist clearing and targeting benefits. Consumes three power; creatures can target and destroy it. Fixed level.'},
- turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'A compact mechanical sentry on a fortified base. Defends nearby industry without ammunition or grid power. Its level is fixed; the lighthouse beam extends acquisition range by 20%.'},
- gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'An armored gun emplacement with greater damage and range than the sentry. One gear loads sixteen base shots. Supports ten upgrades; aim the lighthouse at armored targets and approaching swarms.'},
- wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'A low masonry sea-wall barricade. Connect adjacent sections by dragging a defensive line. It delays coastal creatures while your sentries fire.'},
- repair:{name:'Repair',cost:{wood:4,plate:2},desc:'Restores up to 300 health. Damaged buildings show a health bar until fully repaired.'},
- demolish:{name:'Dismantle',cost:{},desc:'Refunds 80% of construction and upgrade materials. Click a tree to collect eight wood, or Shift-drag to clear trees in an area.'}
+ hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:"Your main store and power source. Keep it standing through 25 swarms. The beam follows incoming attacks automatically. Press L to aim it yourself; Resume auto light restores tracking."},
+ belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:"Carries up to four items in the arrow’s direction. Drag to lay a line. Press R to rotate a belt or turn a corner."},
+ drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:"Mines iron ore from an iron deposit. Connect the output to a smelter."},
+ smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:"Smelts iron ore into plates and copper ore into copper. Feed ore into a cyan input and collect it from the gold output."},
+ assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:"Makes one gear from two iron plates. Connect its output to storage or another machine."},
+ sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:"Produces wood from trees within five tiles. More trees mean faster production. Needs no power."},
+ generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:"Burns one wood every 12 seconds to supply 18 power. Takes fuel from shared storage."},
+ lamp:{name:'Harbor lamp',hp:75,power:3,fixedLevel:true,cost:{wood:12,plate:35,gear:3},desc:"Lights a six-tile radius while powered. Helps defenses target enemies and exposes armor. Enemies target lamps, so protect them. Uses 3 power, has 75 HP and cannot be upgraded."},
+ turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:"A basic sentry with unlimited ammunition. Needs no power and cannot be upgraded. Lit enemies can be targeted 20% farther away."},
+ gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:"A stronger, upgradable turret. One gear supplies 16 base shots. Uses gears from shared storage."},
+ wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:"Slows an attack while your turrets fire. Drag to build a connected line of barricades."},
+ repair:{name:'Repair',cost:{wood:4,plate:2},desc:"Restores up to 300 HP for wood and iron plates. Cannot repair beyond a building’s maximum HP."},
+ demolish:{name:'Dismantle',cost:{},desc:"Returns 80% of a building’s construction and upgrade materials. Click a tree for eight wood, or Shift-drag to clear several."}
 };
 Object.assign(TYPES,{
- inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:'A gantry transfer mechanism with a moving cargo cradle. Place it between a conveyor behind and a machine ahead. Default: load one item, leave one on the belt. The right-side port feeds a separate return line.'},
- splitter:{name:'Dispatch hub',hp:160,power:0,cost:{wood:2,plate:6,gear:2},desc:'Place on the main conveyor. Input at the rear, Forward ahead, Machine to the left and Return to the right. Program exact batches; default 1 Machine / 1 Forward / 0 Return.'},
- copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:'A copper drilling rig on orange coastal ore seams. Send copper ore through the same brick smelter used for iron, then supply circuit workshops.'},
- foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:'A reinforced brick foundry with twin furnace stacks. Converts three iron plates into one steel for advanced machinery, upgrades and coal-fired power.'},
- circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:'An electrical assembly workshop. Combines two copper and one iron plate into a circuit for upgraded coastal defenses and advanced components.'},
- componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:'A heavy component workshop. Combines two steel, two circuits and a gear into an advanced component for pulse defenses and high-level equipment.'},
- storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:'A coastal warehouse with a loading door and cargo stacks. Stores deliveries locally, separate from lighthouse supplies. Select an output material or feed a neighboring recipe; R turns the loading direction.'},
- coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:'A braced coal extraction rig on dark seams. Carry coal back to lighthouse storage to fuel the colony’s coal generators.'},
- coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:'A coal-fired generator with a boiler casing and chimney. Burns one coal from lighthouse storage every sixteen seconds and supplies thirty-six power.'},
- mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:'A fortified mortar with an elevated launch tube. Long-range shells strike groups of coastal creatures. Four base shells per gear; illuminated targets can be acquired 20% farther away.'},
- pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:'A twin-barrel pulse emplacement for dense groups near the perimeter. Uses eight base bursts per gear. Shine the lighthouse on Shell guards and Abyss walkers to expose their armor.'}
+ inserter:{name:'Transfer relay',hp:140,power:1,cost:{wood:2,plate:5,gear:1},desc:"Loads items from the conveyor behind it into the machine ahead. The right-hand port returns items to a separate belt. Use Program flow to set quantities and filters."},
+ splitter:{name:'Dispatch hub',hp:160,power:0,cost:{wood:2,plate:6,gear:2},desc:"Divides incoming items between a machine, the forward belt and a return belt. Use Program flow to set quantities, filters and bypass behavior."},
+ copperDrill:{name:'Copper drill',hp:220,power:3,cost:{wood:15,plate:18},desc:"Mines copper ore from a copper deposit. Use a smelter to turn the ore into copper."},
+ foundry:{name:'Steel foundry',hp:300,power:4,cost:{plate:30,gear:5},desc:"Makes one steel from three iron plates. Steel is needed for advanced machines and upgrades."},
+ circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:"Makes one circuit from two copper and one iron plate. Supply both materials through its inputs."},
+ componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:"Makes one component from two steel, two circuits and one gear. Components are used in advanced defenses and upgrades."},
+ storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:"Adds deliveries directly to shared storage for building, fuel and ammunition. Accepts finished goods from any side. Rotate to choose where it supplies materials to nearby machines."},
+ coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:"Mines coal from a coal deposit. Deliver it to a warehouse or the lighthouse to fuel coal generators."},
+ coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:"Burns one coal every 16 seconds to supply 36 power. Takes fuel from shared storage."},
+ mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:"Fires shells that damage groups of enemies. One gear supplies four base shells. Needs power; upgrades improve its damage and range."},
+ pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:"Fires short-range bursts that damage groups of enemies. One gear supplies eight base bursts. Needs power."}
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
 export const MAX_UPGRADES=10;
-export const SAVE_SCHEMA=9;
+export const SAVE_SCHEMA=10;
 export const LOGISTICS_TYPES=['inserter','splitter'];
 export const PROGRAM_ROLES=['machine','forward','return'];
 export const ITEM_KEYS=['ore','copperOre',...RESOURCE_KEYS];
@@ -150,9 +150,31 @@ export function productionSpeed(b,bonus,difficulty){
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
 export const buildingPower = b => Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
-export const storageCapacity=s=>300+((s.buildings.find(b=>b.type==='hq')?.level??1)-1)*80;
+// resources is the shared total; warehouse.stock records where its stored subset sits.
+const stockLedgers=new WeakMap();
+function stockLedger(s){
+ let ledger=stockLedgers.get(s);
+ if(!ledger||ledger.buildings!==s.buildings||ledger.count!==s.buildings.length){
+  const warehouses=s.buildings.filter(b=>b.type==='storage'&&b.hp>0),totals={};
+  for(const b of warehouses)for(const [item,n]of Object.entries(b.stock??{}))totals[item]=(totals[item]??0)+n;
+  ledger={buildings:s.buildings,count:s.buildings.length,warehouses,totals,capacity:300+((s.buildings.find(b=>b.type==='hq')?.level??1)-1)*80+warehouses.reduce((n,b)=>n+warehouseCapacity(b),0)};stockLedgers.set(s,ledger);
+ }
+ return ledger;
+}
+export const storageCapacity=s=>stockLedger(s).capacity;
 export const warehouseCapacity=b=>300+((b.level||1)-1)*180;
 export const warehouseStock=(b,item)=>b.stock?.[item]??0;
+export function spendResource(s,item,amount,preferred=null){
+ if(amount<0||s.resources[item]<amount)return false;
+ const ledger=stockLedger(s);
+ let remaining=preferred?amount:Math.max(0,amount-Math.max(0,s.resources[item]-(ledger.totals[item]??0)));
+ if(preferred&&warehouseStock(preferred,item)<amount)return false;
+ for(const b of preferred?[preferred]:ledger.warehouses){
+  if(!remaining)break;const take=Math.min(remaining,warehouseStock(b,item));if(!take)continue;
+  b.stock[item]-=take;if(!b.stock[item])delete b.stock[item];ledger.totals[item]-=take;remaining-=take;
+ }
+ s.resources[item]-=amount;return true;
+}
 const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
 export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
 const plateYieldUnits=b=>(b.level||1)>1?6+(b.level-2):4;
@@ -201,6 +223,11 @@ function normalizeOutput(b){
  if(b.outputBuffer!==undefined)b.outputBuffer=Array.isArray(b.outputBuffer)&&b.item?
   b.outputBuffer.filter(item=>ITEM_KEYS.includes(item)).slice(0,OUTPUT_CAPACITY-1):[];
 }
+function mergeWarehouseStock(s,b,packed=false){
+ s.produced??={plate:0,gear:0};
+ for(const item of RESOURCE_KEYS){const amount=b.stock?.[item]??0;s.resources[item]+=amount;if(item==='plate'||item==='gear')s.produced[item]=(s.produced[item]??0)+amount;}
+ if(packed)delete b.stock;
+}
 function normalizeWarehouse(b){
  if(!warehouseExportValid(b.exportItem))delete b.exportItem;
  if(b.stock!==undefined)b.stock=Object.fromEntries(RESOURCE_KEYS.flatMap(item=>{
@@ -217,7 +244,7 @@ function normalizeConveyor(b){
 }
 function validBeltProgress(progress){return Number.isFinite(progress)&&progress>=0&&progress<=1;}
 export function migrateGame(s){
- if(!s||![1,2,3,4,5,6,7,8,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ if(!s||![1,2,3,4,5,6,7,8,9,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  const previous=s.version,old=previous<SAVE_SCHEMA;
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];
  s.terrain.copper||=makeTerrain(s.seed).copper;s.terrain.coal||=makeTerrain(s.seed).coal;
@@ -242,13 +269,13 @@ export function migrateGame(s){
   if(previous<7&&s.status==='victory'){s.survived=s.wave>=FINAL_WAVE;s.status=s.survived?'victory':'playing';s.nextWave=Math.max(s.nextWave,s.time+30);}
   if(previous<7&&s.tutorialStep===0)s.cameraTrained=false;
  }
- if(old)openDeposits(s.terrain);
+ if(previous<9)openDeposits(s.terrain);
  delete s.evacuation;
- for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage')normalizeWarehouse(b);if(b.type==='belt')normalizeConveyor(b);}
+ for(const b of s.buildings){b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b);}if(b.type==='belt')normalizeConveyor(b);}
  for(const p of s.players){
   for(const [type,items] of Object.entries(p.inventory))if(Array.isArray(items))for(const b of items)if(b){
    if(hasOutputBuffer(type))normalizeOutput(b);
-   if(type==='storage')normalizeWarehouse(b);
+   if(type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b,true);}
   }
   const packed=p.inventory.copperSmelter;
   if(!Array.isArray(packed))continue;
@@ -350,6 +377,7 @@ export function addPlayer(s,name='Engineer'){
 function packBuilding(player,building){
  const {id,x,z,dir,type,active,...packed}=building;
  if(type==='belt')emptyConveyor(packed);
+ if(type==='storage')delete packed.stock;
  (player.inventory[type]||=[]).push(packed);
 }
 function emptyConveyor(b){b.item=null;delete b.itemTick;delete b.itemSide;delete b.itemProgress;delete b.beltQueue;}
@@ -502,7 +530,7 @@ export function planRoute(s,type,start,end,dir=0){
 function place(s,p,type,x,z,dir){
  const packed=p.inventory?.[type]?.shift();const b=building(s,type,x,z,dir);
  if(packed){Object.assign(b,packed,{id:b.id,x,z,dir});if(type==='belt')emptyConveyor(b);}
- else for(const[r,n]of Object.entries(TYPES[type].cost))s.resources[r]-=n;
+ else for(const[r,n]of Object.entries(TYPES[type].cost))spendResource(s,r,n);
  return b;
 }
 export function copySetup(s,ids){
@@ -590,7 +618,7 @@ export function command(s,playerId,cmd){
  }
  if(cmd.type==='upgradeSelection'){
   const plan=planGroupUpgrade(s,cmd.ids);if(plan.error)return plan.error;
-  for(const [r,n] of Object.entries(plan.cost))s.resources[r]-=n;
+  for(const [r,n] of Object.entries(plan.cost))spendResource(s,r,n);
   for(const target of plan.targets)applyUpgrade(target);
   updatePower(s);return null;
  }
@@ -641,7 +669,7 @@ export function command(s,playerId,cmd){
  if(cmd.type==='upgrade'){
   if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return b.type==='lamp'?'Harbor lamps have a fixed level':b.type==='turret'?'Sentry turrets cannot be upgraded':'Building is fully upgraded (10/10)';
   for(const[r,n]of Object.entries(cost))if(s.resources[r]<n)return 'Not enough materials to upgrade';
-  for(const[r,n]of Object.entries(cost))s.resources[r]-=n;
+  for(const[r,n]of Object.entries(cost))spendResource(s,r,n);
   applyUpgrade(b);updatePower(s);return null;
  }
  if(cmd.type==='demolish'){
@@ -649,7 +677,6 @@ export function command(s,playerId,cmd){
   if(b?.type==='hq')return 'The lighthouse cannot be dismantled';
   if(b){
    refundDismantle(s,b);
-   if(b.type==='storage')for(const item of RESOURCE_KEYS)s.resources[item]+=warehouseStock(b,item);
    s.buildings=s.buildings.filter(v=>v.id!==b.id);
   }
   else{const i=s.terrain.trees.findIndex(t=>t.x===x&&t.z===z);if(i>=0){s.terrain.trees.splice(i,1);harvestWood(s,1);}else{const ri=s.terrain.rocks.findIndex(t=>t.x===x&&t.z===z);if(ri>=0)s.terrain.rocks.splice(ri,1);else return 'Nothing to dismantle';}}
@@ -659,11 +686,12 @@ export function command(s,playerId,cmd){
   if(!b)return 'Select a building';if(b.hp>=maxHp(b))return 'Building is at full health';
   const cost=Object.entries(repairCost(roundBonus(s.wave)));
   if(cost.some(([r,n])=>s.resources[r]<n))return 'Not enough materials';
-  for(const[r,n]of cost)s.resources[r]-=n;
+  for(const[r,n]of cost)spendResource(s,r,n);
   b.hp=Math.min(maxHp(b),b.hp+300);return null;
  }return 'Unknown command';
 }
 export function updatePower(s,dt=0){
+ stockLedgers.delete(s);
  const core=s.buildings.find(b=>b.type==='hq'),base=core?powerOutput(core):18;
  const generatorPower=s.buildings.reduce((power,b)=>{
   const generator=GENERATORS[b.type];return power+(generator&&s.resources[generator.fuel]>0?powerOutput(b):0);
@@ -683,14 +711,13 @@ function recordStockFlow(s,item,amount){
 }
 export function storageFull(s,b,item){
  if(!RESOURCE_KEYS.includes(item))return false;
- if(b?.type==='storage')return warehouseStock(b,item)>=warehouseCapacity(b);
- return b?.type==='hq'&&s.resources[item]>=storageCapacity(s);
+ return (b?.type==='storage'&&warehouseStock(b,item)>=warehouseCapacity(b))||((b?.type==='storage'||b?.type==='hq')&&s.resources[item]>=storageCapacity(s));
 }
-function hasOutputSide(b){return b.type==='belt'||b.type==='storage'&&!!b.exportItem||Object.hasOwn(RECIPES,b.type);}
+function hasOutputSide(b){return b.type==='belt'||Object.hasOwn(RECIPES,b.type);}
 export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
  if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
- if(b.type==='hq'||b.type==='storage')return RESOURCE_KEYS.includes(item)&&!storageFull(s,b,item);
+ if(b.type==='hq'||b.type==='storage')return from?.type!=='storage'&&RESOURCE_KEYS.includes(item)&&!storageFull(s,b,item);
  if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
  if(b.type==='belt'){
   const last=b.beltQueue?.at(-1)??b;
@@ -700,14 +727,10 @@ export function canAcceptItem(s,b,item,from,cycles=4){
 }
 function accept(s,b,item,from,cycles=4){
  if(!canAcceptItem(s,b,item,from,cycles))return false;
- if(b.type==='hq'){
+ if(b.type==='hq'||b.type==='storage'){
+  if(b.type==='storage'){const ledger=stockLedger(s);(b.stock??={})[item]=warehouseStock(b,item)+1;ledger.totals[item]=(ledger.totals[item]??0)+1;}
   s.resources[item]++;recordStockFlow(s,item,1);
   if(item==='plate'||item==='gear')s.produced[item]++;
-  return true;
- }
- if(b.type==='storage'){
-  const stock=b.stock??={};
-  stock[item]=warehouseStock(b,item)+1;
   return true;
  }
  if(b.type==='belt'||b.type==='splitter'){
@@ -843,11 +866,11 @@ export function step(s,dt=STEP){
    const item=b.exportItem==='recipe'?
     Object.keys(RECIPES[out?.type]?.input??{}).find(item=>warehouseStock(b,item)>0&&canAcceptItem(s,out,item,b,1)):b.exportItem;
    if(item&&warehouseStock(b,item)>0&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
-    if(--b.stock[item]===0)delete b.stock[item];
+    spendResource(s,item,1,b);recordStockFlow(s,item,-1);
    }
   }
   const generator=GENERATORS[b.type];
-  if(generator&&s.resources[generator.fuel]>0){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress+1e-9>=generator.seconds){b.progress=Math.max(0,b.progress-generator.seconds);recordStockFlow(s,generator.fuel,-1);if(--s.resources[generator.fuel]===0)updatePower(s);}}
+  if(generator&&s.resources[generator.fuel]>0){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress+1e-9>=generator.seconds){b.progress=Math.max(0,b.progress-generator.seconds);recordStockFlow(s,generator.fuel,-1);spendResource(s,generator.fuel,1);if(s.resources[generator.fuel]===0)updatePower(s);}}
   if(!b.active)continue;
   const extract=({drill:'ore',copperDrill:'copperOre',coalMine:'coal'})[b.type];
   if(extract||RECIPES[b.type]){
@@ -873,7 +896,7 @@ export function step(s,dt=STEP){
    if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-s.resources.wood);const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}
   }
   if(TURRETS.includes(b.type)){
-   const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){s.resources.gear--;recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
+   const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){spendResource(s,'gear',1);recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
    if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){
     let target=null,closest=(stats.range*LIT_RANGE_MULTIPLIER)**2;
     for(const e of s.enemies){

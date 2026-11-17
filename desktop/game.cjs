@@ -141,6 +141,29 @@ async function start() {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   const island=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-island.png'),island.toPNG());
+  gameWindow.show();gameWindow.focus();gameWindow.webContents.focus();
+  gameWindow.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
+  gameWindow.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
+  const settings=await gameWindow.webContents.executeJavaScript(`(async () => {
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(!document.getElementById('menu-dialog').open)throw Error('Escape did not open the menu');
+    document.querySelector('[data-menu-target="settings"]').click();document.querySelector('[data-menu-target="controls"]').click();
+    const slider=document.getElementById('pan-speed');slider.value='150';slider.dispatchEvent(new Event('input',{bubbles:true}));
+    return JSON.parse(localStorage.getItem('ironhaven.preferences.v1')).controls.panSpeed;
+  })()`);
+  if(settings!==1.5)throw Error('Windows pan speed preference did not save');
+  gameWindow.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
+  gameWindow.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
+  const back=await gameWindow.webContents.executeJavaScript(`(async () => {
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {open:document.getElementById('menu-dialog').open,title:document.getElementById('menu-title').textContent,focus:document.activeElement?.id};
+  })()`);
+  if(!back.open||back.title!=='Settings')throw Error('Windows Escape did not return to the settings parent page: '+JSON.stringify(back));
+  await gameWindow.webContents.executeJavaScript(`(async () => {
+    document.querySelector('[data-menu-target="controls"]').click();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const settingsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-settings.png'),settingsCapture.toPNG());
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }

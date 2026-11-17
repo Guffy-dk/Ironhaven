@@ -5,27 +5,17 @@ const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=100000;};
 function fixture(){const s=createGame(),p=addPlayer(s);s.nextWave=99999;s.buildings=s.buildings.filter(b=>b.type==='hq');s.terrain.trees=[];s.terrain.rocks=[];rich(s);const build=(type,x,z,dir=0)=>{assert.equal(command(s,p.id,{type:'build',building:type,x,z,dir}),null);return s.buildings.find(b=>b.x===x&&b.z===z);};return{s,p,build};}
 function setProgram(s,p,b,values={}){return command(s,p.id,{type:'configureLogistics',x:b.x,z:b.z,id:b.id,program:{...DEFAULT_PROGRAM,...values}});}
 function setWarehouse(s,p,b,item){return command(s,p.id,{type:'configureWarehouse',x:b.x,z:b.z,id:b.id,item});}
-test('legacy shared stock stays at the core and a warehouse exports to it only after receiving local cargo',()=>{
+test('warehouse deliveries enter shared stock immediately without needing a lighthouse route',()=>{
  const {s,p,build}=fixture(),warehouse=build('storage',-1,0),inbound=build('belt',-2,0);
- s.resources.plate=425;
- assert.equal(setWarehouse(s,p,warehouse,'plate'),null);
- const loaded=migrateGame(JSON.parse(JSON.stringify(s)));
- const exporter=loaded.buildings.find(b=>b.id===warehouse.id),source=loaded.buildings.find(b=>b.id===inbound.id);
- for(let i=0;i<20;i++)step(loaded);
- assert.equal(loaded.resources.plate,425);
- assert.equal(exporter.stock,undefined);
- source.item='plate';source.itemTick=loaded.tick;
- for(let i=0;i<20;i++)step(loaded);
- assert.equal(exporter.stock.plate,1);
- assert.equal(loaded.resources.plate,425);
- loaded.resources.plate=0;
- for(let i=0;i<20;i++)step(loaded);
- assert.deepEqual(exporter.stock,{});
- assert.equal(loaded.resources.plate,1);
+ s.resources.plate=425;assert.equal(setWarehouse(s,p,warehouse,'plate'),null);
+ const loaded=migrateGame(JSON.parse(JSON.stringify(s))),exporter=loaded.buildings.find(b=>b.id===warehouse.id),source=loaded.buildings.find(b=>b.id===inbound.id);
+ source.item='plate';source.itemTick=loaded.tick;for(let i=0;i<40;i++)step(loaded);
+ assert.equal(exporter.stock.plate,1);assert.equal(loaded.resources.plate,426);
+ for(let i=0;i<40;i++)step(loaded);assert.equal(exporter.stock.plate,1);assert.equal(loaded.resources.plate,426);
 });
 test('blocked conveyors fill evenly and drain without losing their saved cargo',()=>{
  const {s,p,build}=fixture(),warehouse=build('storage',5,3),belts=[build('belt',6,3),build('belt',7,3,1),build('belt',7,4,1)];
- warehouse.stock={plate:30,gear:2};assert.equal(setWarehouse(s,p,warehouse,'plate'),null);
+ warehouse.stock={plate:30,gear:2};s.resources.plate=330;s.resources.gear=2;assert.equal(setWarehouse(s,p,warehouse,'plate'),null);
  for(let i=0;i<150;i++)step(s);
  assert.deepEqual(belts.map(conveyorCount),[4,4,4]);assert.deepEqual(warehouse.stock,{plate:18,gear:2});
  for(const belt of belts){
@@ -34,17 +24,17 @@ test('blocked conveyors fill evenly and drain without losing their saved cargo',
  }
  const loaded=migrateGame(JSON.parse(JSON.stringify(s)));
  assert.deepEqual(loaded.buildings.filter(b=>b.type==='belt').map(conveyorCount),Array(3).fill(BELT_CAPACITY));
- assert.equal(setWarehouse(loaded,p,warehouse,null),null);
+ assert.equal(setWarehouse(loaded,p,warehouse,null),null);const stockBeforeConstruction=loaded.resources.plate;
  assert.equal(command(loaded,p.id,{type:'build',building:'storage',x:7,z:5}),null);
  for(let i=0;i<100;i++)step(loaded);
  assert.deepEqual(loaded.buildings.find(b=>b.x===7&&b.z===5).stock,{plate:12});
- assert.equal(loaded.resources.plate,s.resources.plate-30);
+ assert.equal(loaded.resources.plate,stockBeforeConstruction-30+12);
  assert.equal(loaded.buildings.filter(b=>b.type==='belt').reduce((n,b)=>n+conveyorCount(b),0),0);
 });
 test('a warehouse feeds the adjacent component recipe using only its own belt deliveries',()=>{
  const {s,p,build}=fixture(),warehouse=build('storage',5,3),factory=build('componentFactory',6,3);
  const source=build('belt',4,3),other=build('storage',5,5);
- other.stock={steel:2,circuit:2,gear:1};
+ for(const r of RESOURCE_KEYS)s.resources[r]=0;other.stock={steel:2,circuit:2,gear:1};Object.assign(s.resources,other.stock);
  assert.equal(setWarehouse(s,p,warehouse,'power'),'Invalid warehouse material');
  assert.equal(setWarehouse(s,p,warehouse,'recipe'),null);
  assert.equal(copySetup(s,[warehouse.id])[0].exportItem,'recipe');
@@ -80,7 +70,7 @@ test('custom 2 / 3 / 1 batches repeat exactly and preserve all 60 items',()=>{
  const f=splitterFixture({machine:2,forward:3,return:1,bypass:false});const got=deliverSplit(f,60);assert.deepEqual(got,{machine:20,forward:30,back:10});assert.equal(got.machine+got.forward+got.back,60);assert.deepEqual(f.b.shipments,{machine:20,forward:30,return:10,bypassed:0});
 });
 test('blocked exact output retains the item and quota; bypass resumes the quota later',()=>{
- const f=splitterFixture({bypass:false});f.machine.stock={plate:300};f.b.item='plate';f.b.itemTick=0;const remaining=f.b.remaining;for(let i=0;i<40;i++)step(f.s);assert.equal(f.b.item,'plate');assert.equal(f.b.remaining,remaining);assert.equal(f.forward.item,null);
+ const f=splitterFixture({bypass:false});f.machine.stock={plate:300};f.s.resources.plate=300;f.b.item='plate';f.b.itemTick=0;const remaining=f.b.remaining;for(let i=0;i<40;i++)step(f.s);assert.equal(f.b.item,'plate');assert.equal(f.b.remaining,remaining);assert.equal(f.forward.item,null);
  assert.equal(setProgram(f.s,f.p,f.b,{bypass:true}),null);for(let i=0;i<8;i++)step(f.s);assert.equal(f.forward.item,'plate');assert.equal(f.b.remaining,1);assert.equal(f.b.shipments.bypassed,1);
 });
 test('item filter passes unrelated cargo without spending the active batch',()=>{

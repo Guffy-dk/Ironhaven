@@ -142,3 +142,16 @@ test('every coastal upgrade adds visible structure while workshop bases share au
  const base=makeModel('smelter',0,[],1,'quarry'),upgraded=makeModel('smelter',0,[],8,'quarry');
  assert.equal(base.children.find(p=>p.geometry?.userData.authoredBy)?.geometry,upgraded.children.find(p=>p.geometry?.userData.authoredBy)?.geometry);
 });
+
+test('painted conveyor directions run from each actual input edge to the configured output through bends and junctions',()=>{
+ for(let out=0;out<4;out++){
+  const model=makeModel('belt',out,[0,1,2,3].filter(d=>d!==out),1,'quarry');
+  const lanes=model.children.filter(o=>o.material?.customProgramCacheKey?.()==='rubber-belt-direction-v1');assert.equal(lanes.length,3);
+  for(const lane of lanes){
+   const p=lane.geometry.attributes.position,uv=lane.geometry.attributes.uv,n=p.count;
+   assert.equal(uv.getX(0),0);assert.equal(uv.getX(n-1),1);
+   const endX=(p.getX(n-1)+p.getX(n-2))/2,endZ=(p.getZ(n-1)+p.getZ(n-2))/2;
+   assert.ok(Math.abs(endX-DIRS[out][0]*.51)<1e-6);assert.ok(Math.abs(endZ-DIRS[out][1]*.51)<1e-6);
+  }
+ }
+});

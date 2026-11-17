@@ -3,6 +3,7 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {conveyorSurface} from './conveyor-surface.js';
 import {coastalHeight,coastalLand} from './shared/coast.js';
 import {BaseLampLights,makeLampModel} from './base-lamps.js';
 import {CoastalWater} from './coastal-water.js';
@@ -65,8 +66,8 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
    const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],height=quarry?.18:.13,width=quarry?.22:.285;
    const curve=new T.QuadraticBezierCurve3(new T.Vector3(ax*.51,height,az*.51),new T.Vector3(0,height,0),new T.Vector3(bx*.51,height,bz*.51));
    const cacheKey=`road:${style}:${input}:${dir}`;let road=geos.get(cacheKey);
-   if(!road){const vertices=[],indices=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,width*sign);vertices.push(v.x,v.y,v.z);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
-   const lane=new T.Mesh(road,mat(quarry?0x282a28:painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
+   if(!road){const vertices=[],indices=[],uvs=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,width*sign);vertices.push(v.x,v.y,v.z);uvs.push(i/16,(sign+1)/2);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
+   const lane=new T.Mesh(road,quarry?conveyorSurface():mat(painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
    for(const sign of[-1,1]){const railKey=`rail:${style}:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*(width+.025));v.y=height+.02;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,quarry?.016:.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(quarry?painted(0x666764):C.gold)));}
    if(quarry){
     for(const t of [.12,.37,.62,.87]){
@@ -84,15 +85,15 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
    }
    else box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
-  const a=new T.Mesh(beltArrow,mat(quarry?0xc9c1aa:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
-  if(quarry)a.scale.setScalar(.56);
-  const offset=quarry?.17:.14;
+  const a=new T.Mesh(beltArrow,mat(quarry?0xffe8b0:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
+  if(quarry)a.scale.setScalar(.85);
+  const offset=quarry?.32:.14;
   a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry)modernizeModel(g,'belt',level);return g;
  }
  if(quarry&&type!=='wall'){
   const model=makeQuarryModel(originalType,painted,level);
   if(!model.userData.authored)modernizeModel(model,originalType,level);
-  if(type==='storage')for(let d=0;d<4;d++)port(model,d,d===0&&inputs.includes(0)?'OUT':'IN',d===0&&inputs.includes(0)?C.gold:cyan);
+  if(type==='storage')warehousePorts(model,inputs);
   if(type==='inserter'){port(model,2,'IN',cyan);port(model,0,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
   if(type==='splitter'){port(model,2,'IN',cyan);port(model,0,'FWD',C.gold);port(model,3,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
   if(['drill','smelter','assembler'].includes(type)){
@@ -150,7 +151,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
  plate(g);
  if(type==='storage'){
   box(g,C.dark,0,.25,0,.85,.3,.85);for(const x of[-.22,.22])for(const z of[-.22,.22]){cyl(g,C.steel,x,.65,z,.18,.65,12);cyl(g,C.gold,x,.6,z,.19,.06,12);}box(g,painted(C.light),0,1.03,0,.9,.08,.9);
-  for(let d=0;d<4;d++)port(g,d,d===0&&inputs.includes(0)?'OUT':'IN',d===0&&inputs.includes(0)?C.gold:cyan);
+  warehousePorts(g,inputs);
  }else if(type==='hq'){
   box(g,C.dark,0,.16,0,1.7,.32,1.7);box(g,painted(C.light),0,.4,0,1.42,.4,1.42);box(g,C.steel,0,.8,0,1.12,.5,1.12);
   cyl(g,C.dark,0,1.2,0,.58,.7,6);cyl(g,C.gold,0,1.2,0,.6,.18,6);cyl(g,painted(C.light),0,1.6,0,.42,.16,6);
@@ -193,6 +194,16 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
  if(originalType==='componentFactory')for(const x of[-.24,.24])cyl(g,0xb2a1cc,x,.9,.2,.12,.35,8);
  if(type!=='hq'&&type!=='turret'&&type!=='generator'&&type!=='sawmill')g.rotation.y=-dir*Math.PI/2;
  return g;
+}
+
+function warehousePorts(group,outputs){
+ for(let d=0;d<4;d++){
+  port(group,d,'IN',cyan);
+  if(d===0&&outputs.includes(0)){
+   group.children.at(-1).position.z+=.12;
+   port(group,0,'OUT',C.gold);group.children.at(-1).position.z-=.12;
+  }
+ }
 }
 const portMaterials=new Map();
 function barricadeNeighbors(cell,grid){return DIRS.flatMap(([x,z],d)=>grid.get(key(cell.x+x,cell.z+z))?.type==='wall'?[d]:[]);}
@@ -418,9 +429,9 @@ export class View{
   trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
   }
   if(quarry){
-   this.quarryDeposit(s.terrain.ore,0x93b3b9,0x697c79,rand);
-   this.quarryDeposit(s.terrain.copper??[],0xd8a177,0x947463,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x625f6d,0x4e4d56,rand);
+   this.quarryDeposit(s.terrain.ore,0x96d2df,0x61797a,rand);
+   this.quarryDeposit(s.terrain.copper??[],0xf1b17c,0x8c624a,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x344653,0x19272e,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
@@ -448,12 +459,12 @@ export class View{
    const scatter=new T.InstancedMesh(shape,material,patch.length*3);
    let index=0;
    for(const {x,z} of patch)for(let fragment=0;fragment<3;fragment++){
-   const base=fragment===0,size=base?.16+random()*.09:.035+random()*.07;
+   const base=fragment===0,size=base?.23+random()*.07:.06+random()*.07;
    pose.position.set(x+(random()-.5)*(base?.47:.83),base?.062:.051+size*.17,z+(random()-.5)*(base?.47:.83));
    pose.rotation.set(random()*.4,random()*6,random()*.31);
    pose.scale.set(size*1.16,size*(base?.39:.56),size*.88);pose.updateMatrix();
    scatter.setMatrixAt(index,pose.matrix);
-   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,base?.11:random()*.63+.31));
+   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,base?.68:random()*.23+.75));
    }
    scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
   }

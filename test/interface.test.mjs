@@ -10,12 +10,13 @@ import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
 const html=(await readFile(new URL('../public/index.html',import.meta.url),'utf8')).replace(/<script[^>]*src="\.\/app\.js"[^>]*><\/script>/,'').replace(/<link[^>]+>/g,'');
-const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(cell,valid,tool,radius){this.preview={cell,valid,tool,radius};}sync(){}draw(){}centerBase(){}setZoom(){}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
-function harness(saved,{tutorial=false}={}){
+const bundle=await build({entryPoints:[fileURLToPath(new URL('../public/app.js',import.meta.url))],bundle:true,format:'iife',write:false,plugins:[{name:'gpu-stub',setup(b){b.onResolve({filter:/^\.\/render\.js$/},()=>({path:'renderer',namespace:'qa'}));b.onLoad({filter:/.*/,namespace:'qa'},()=>({contents:`export class View{constructor(){globalThis.__view=this;this.center={x:0,z:0,set(x,y,z){this.x=x;this.z=z;}};this.cursor={visible:false};this.zoom=14;}setTool(t){this.tool=t;}previewRoute(c){this.route=c;}markArea(ids){this.area=ids;}select(b){this.selected=b;}hover(cell,valid,tool,radius){this.preview={cell,valid,tool,radius};}sync(){}draw(){}centerBase(){}setZoom(d){this.lastZoomDelta=d;}setQuality(){}pan(x,z){this.center.x+=x;this.center.z+=z;}project(x,z){return{x:x+500,y:z+400,visible:true}}point(x,y){return{x:Math.round(x),z:Math.round(y)}}}` }));}}]});
+function harness(saved,{tutorial=false,preferences}={}){
  const dom=new Window({url:'https://ironhaven.test/'}),frames=[],ticks=[];
  dom.document.write(html);dom.requestAnimationFrame=f=>(frames.push(f),1);dom.setInterval=f=>(ticks.push(f),ticks.length);dom.setTimeout=()=>1;
  dom.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:(t,k)=>k in t?t[k]:()=>{}});
  for(const d of dom.document.querySelectorAll('dialog')){d.showModal=()=>d.setAttribute('open','');d.close=()=>d.removeAttribute('open');}
+ if(preferences)dom.localStorage.setItem('ironhaven.preferences.v1',JSON.stringify(preferences));
  if(saved)dom.localStorage.setItem('ironhaven.save.v1',JSON.stringify(saved));
  if(!tutorial)dom.localStorage.setItem('ironhaven.skipTutorial','true');
  dom.eval(bundle.outputFiles[0].text);
@@ -55,7 +56,7 @@ test('selecting a warehouse sets its recipe export from the inspector',async()=>
  const saved=starterWorld(),{state,playerId}=saved;
  state.terrain.trees=state.terrain.rocks=[];
  assert.equal(command(state,playerId,{type:'build',building:'storage',x:10,z:1}),null);
- state.buildings.find(b=>b.type==='storage').stock={steel:3};
+ state.resources.steel=3;state.buildings.find(b=>b.type==='storage'&&b.x===10).stock={steel:3};
  const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',10,1);h.point('pointerup',10,1);
   assert.equal(h.$('warehouse-options').hidden,false);
@@ -378,6 +379,52 @@ test('Power category builds a paid local lamp with coverage and fixed-level insp
   h.point('pointermove',6,-2);assert.equal(h.dom.__view.preview.radius,6);
   const before=h.save().resources;h.point('pointerdown',6,-2);h.point('pointerup',6,-2);
   const s=h.save(),lamp=s.buildings.find(b=>b.type==='lamp');assert.ok(lamp);assert.equal(lamp.hp,75);assert.equal(s.resources.plate,before.plate-35);
-  h.key('q');h.point('pointerdown',6,-2);assert.equal(h.$('intel-title').textContent,'Harbor lamp');assert.equal(h.$('upgrade-turret').hidden,true);assert.match(h.$('intel-desc').textContent,/creatures can target and destroy/);
+  h.key('q');h.point('pointerdown',6,-2);assert.equal(h.$('intel-title').textContent,'Harbor lamp');assert.equal(h.$('upgrade-turret').hidden,true);assert.match(h.$('intel-desc').textContent,/Enemies target lamps/);
+ }finally{await h.close();}
+});
+
+
+test('Escape cancels construction first, then opens a clean menu and goes back one level',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.tool('belt');h.key('Escape');assert.equal(h.$('menu-dialog').open,false);
+  h.key('Escape');assert.equal(h.$('menu-dialog').open,true);
+  h.dom.dispatchEvent(new h.dom.KeyboardEvent('keydown',{key:'Escape',repeat:true,bubbles:true,cancelable:true}));assert.equal(h.$('menu-dialog').open,true);
+  assert.equal(h.dom.document.querySelector('[data-menu-page="home"]').hidden,false);
+  h.dom.document.querySelector('[data-menu-target="settings"]').click();h.dom.document.querySelector('[data-menu-target="controls"]').click();
+  assert.equal(h.$('menu-title').textContent,'Controls');
+  const focusedEscape=new h.dom.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});h.$('pan-speed').dispatchEvent(focusedEscape);assert.equal(focusedEscape.defaultPrevented,true);
+  assert.equal(h.$('menu-title').textContent,'Settings');h.key('Escape');assert.equal(h.$('menu-title').textContent,'Colony menu');h.key('Escape');assert.equal(h.$('menu-dialog').open,false);
+ }finally{await h.close();}
+});
+test('pan and zoom preferences affect real camera inputs, persist and leave the shared world unchanged',async()=>{
+ const h=harness();let savedPreferences;try{
+  h.$('start-solo').click();const before=h.save();h.frame(1000);
+  h.$('pan-speed').value='200';h.$('pan-speed').dispatchEvent(new h.dom.Event('input'));
+  h.$('zoom-speed').value='50';h.$('zoom-speed').dispatchEvent(new h.dom.Event('input'));
+  const x=h.dom.__view.center.x;h.key('d');h.frame(1050);h.release('d');assert.ok(Math.abs(h.dom.__view.center.x-x-1)<1e-9);
+  h.$('world').dispatchEvent(new h.dom.WheelEvent('wheel',{deltaY:100}));assert.equal(h.dom.__view.lastZoomDelta,.75);
+  h.$('zoom-in').click();assert.equal(h.dom.__view.lastZoomDelta,-1);
+  savedPreferences=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.deepEqual(h.save(),before);
+ }finally{await h.close();}
+ const reopened=harness(undefined,{preferences:savedPreferences});try{assert.equal(reopened.$('pan-speed').value,'200');assert.equal(reopened.$('zoom-speed').value,'50');reopened.$('reset-controls').click();assert.equal(reopened.$('pan-speed').value,'100');}finally{await reopened.close();}
+});
+test('master volume scales actual sound gain and the mute controls stay in sync',async()=>{
+ const h=harness();try{
+  const gains=[];h.dom.AudioContext=class{currentTime=0;resume(){}createOscillator(){return{type:'sine',frequency:{},connect(){},start(){},stop(){}};}createGain(){return{gain:{setValueAtTime(v){gains.push(v);},exponentialRampToValueAtTime(){}},connect(){}};}};
+  h.$('master-volume').value='50';h.$('master-volume').dispatchEvent(new h.dom.Event('input'));
+  h.$('mute-audio').checked=false;h.$('mute-audio').dispatchEvent(new h.dom.Event('change'));h.$('test-audio').click();
+  assert.equal(gains.at(-1),.0125);assert.equal(h.$('sound').getAttribute('aria-label'),'Mute sound');
+  h.$('sound').click();assert.equal(h.$('mute-audio').checked,true);
+  assert.equal(JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1')).audio.masterVolume,.5);
+ }finally{await h.close();}
+});
+
+test('players can toggle mineral names and upgrade counts without altering the colony',async()=>{
+ const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');machine.level=4;machine.hp=maxHp(machine);
+ const h=harness(saved);try{
+  h.$('resume').click();h.frame(1000);assert.match(h.$('building-'+machine.id).textContent,/3/);assert.ok(h.$('mineral-labels').children.length>0);
+  const before=h.save();h.$('show-levels').checked=false;h.$('show-levels').dispatchEvent(new h.dom.Event('change'));h.$('show-minerals').checked=false;h.$('show-minerals').dispatchEvent(new h.dom.Event('change'));h.frame(1300);
+  assert.equal(h.$('building-'+machine.id),null);assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
+  const prefs=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(prefs.interface.buildingLevels,false);assert.equal(prefs.interface.mineralLabels,false);
  }finally{await h.close();}
 });

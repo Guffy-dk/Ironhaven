@@ -36,13 +36,13 @@ test('every new factory consumes its exact ingredients and delivers a useful pro
   for(const r of RESOURCE_KEYS)s.resources[r]=0;run(s,recipe.seconds*2+1);assert.equal(s.resources[recipe.output],2,type+' should deliver two outputs');assert.equal(b.input.length,0);
  }
 });
-test('copper drills require copper and warehouse upgrades expand only local capacity',()=>{
+test('copper drills require copper and warehouses and their upgrades expand shared storage capacity',()=>{
  const{s,p}=make();rich(s);assert.match(command(s,p.id,{type:'build',building:'copperDrill',x:3,z:4}),/copper deposits/);
  assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4}),null);
  const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(warehouseCapacity(warehouse),300);
- assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(warehouseCapacity(warehouse),480);assert.equal(storageCapacity(s),oldCapacity);
+ assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(warehouseCapacity(warehouse),480);assert.equal(storageCapacity(s),oldCapacity+480);
  warehouse.stock={gear:7};
- const gear=s.resources.gear;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.gear,gear+7);assert.equal(inventoryCount(s,p.id,'storage'),0);
+ const gear=s.resources.gear;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.gear,gear);assert.equal(inventoryCount(s,p.id,'storage'),0);
 });
 test('world exports round-trip and old wins reopen for the 25-swarm objective',()=>{
  const{s,p}=make(),text=JSON.stringify({state:s,playerId:p.id}),loaded=parseSave(text);assert.equal(loaded.state.version,SAVE_SCHEMA);assert.deepEqual(loaded.state.resources,s.resources);
