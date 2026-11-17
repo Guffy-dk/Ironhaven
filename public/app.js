@@ -413,6 +413,7 @@ $('rotate-building').onclick=()=>{const b=state.buildings.find(b=>b.id===selecte
 $('upgrade-turret').onclick=()=>{const b=state.buildings.find(b=>b.id===selected);if(b&&execute({type:'upgrade',x:b.x,z:b.z})!==false){tone(880,.16);updateUi();}};
 $('world').addEventListener('wheel',e=>{e.preventDefault();view.setZoom(e.deltaY*.015*preferences.controls.zoomSpeed);},{passive:false});
 window.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&e.repeat){e.preventDefault();return;}
  if(e.key==='Escape'&&$('menu-dialog').open){e.preventDefault();colonyMenu.escape();return;}
  if(e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable)return;
  if(e.ctrlKey||e.metaKey){

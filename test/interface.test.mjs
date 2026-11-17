@@ -388,6 +388,7 @@ test('Escape cancels construction first, then opens a clean menu and goes back o
  const h=harness();try{
   h.$('start-solo').click();h.tool('belt');h.key('Escape');assert.equal(h.$('menu-dialog').open,false);
   h.key('Escape');assert.equal(h.$('menu-dialog').open,true);
+  h.dom.dispatchEvent(new h.dom.KeyboardEvent('keydown',{key:'Escape',repeat:true,bubbles:true,cancelable:true}));assert.equal(h.$('menu-dialog').open,true);
   assert.equal(h.dom.document.querySelector('[data-menu-page="home"]').hidden,false);
   h.dom.document.querySelector('[data-menu-target="settings"]').click();h.dom.document.querySelector('[data-menu-target="controls"]').click();
   assert.equal(h.$('menu-title').textContent,'Controls');
