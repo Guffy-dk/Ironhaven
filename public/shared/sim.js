@@ -1,10 +1,11 @@
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
+import {LAMP_RADIUS,lampField} from './lamps.js';
 import {coastalLand,establishIsland,islandLanding} from './coast.js';
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
 import {attackBearing,turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
 
-import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination} from './hostiles.js';
+import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination,hostileMoveMultiplier} from './hostiles.js';
 
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
@@ -34,6 +35,7 @@ export const TYPES = {
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:'A sheltered mechanical workshop. Supply two iron plates through a cyan input to machine one gear, then carry it from the gold output to lighthouse storage or another production line.'},
  sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:'An open-sided timber mill with a spinning saw and log racks. Standing trees within five tiles increase its wood output. It supplies fuel without consuming grid power.'},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:'A wood-fired coastal generator with an exposed cooling fan and exhaust. Burns one wood from lighthouse storage every twelve seconds and supplies eighteen power.'},
+ lamp:{name:'Harbor lamp',hp:75,power:3,fixedLevel:true,cost:{wood:12,plate:35,gear:3},desc:'A fragile industrial lantern on a steel mast. Illuminates a six-tile radius independently of the lighthouse while powered. Local light gives the same armor exposure, mist clearing and targeting benefits. Consumes three power; creatures can target and destroy it. Fixed level.'},
  turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:'A compact mechanical sentry on a fortified base. Defends nearby industry without ammunition or grid power. Its level is fixed; the lighthouse beam extends acquisition range by 20%.'},
  gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:'An armored gun emplacement with greater damage and range than the sentry. One gear loads sixteen base shots. Supports ten upgrades; aim the lighthouse at armored targets and approaching swarms.'},
  wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:'A low masonry sea-wall barricade. Connect adjacent sections by dragging a defensive line. It delays coastal creatures while your sentries fire.'},
@@ -102,7 +104,7 @@ const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 for(let i=3;i<=MAX_UPGRADES;i++)TURRET_LEVELS.push({name:'Mk '+ROMAN[i],hp:700+(i-2)*180,damage:72+(i-2)*12,range:11+(i-2)*.25,interval:.28/(1+(i-2)*.04),cost:{plate:21+(i-2)*7,gear:4+(i-2)*2}});
 export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
 export const SAWMILL_RADIUS=5;
-export const buildingRadius=b=>b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0;
+export const buildingRadius=b=>b?.type==='lamp'?LAMP_RADIUS:b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0;
 export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
 export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16}};
 export function turretStats(b){
@@ -156,7 +158,7 @@ export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.typ
 const plateYieldUnits=b=>(b.level||1)>1?6+(b.level-2):4;
 export const plateYield=b=>plateYieldUnits(b)/4;
 export function upgradeCost(b){
- if(b.type==='turret')return null;
+ if(b.type==='turret'||TYPES[b.type]?.fixedLevel)return null;
  const level=b.level||1;if(level>MAX_UPGRADES)return null;
  if(b.type==='belt')return level===1?{wood:1}:{wood:level,plate:Math.floor(level/2)};
  const base=TYPES[b.type].cost;
@@ -637,7 +639,7 @@ export function command(s,playerId,cmd){
   b.dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:(b.dir+1)%4;return null;
  }
  if(cmd.type==='upgrade'){
-  if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return b.type==='turret'?'Sentry turrets cannot be upgraded':'Building is fully upgraded (10/10)';
+  if(!b)return 'Select a building to upgrade';const cost=upgradeCost(b);if(!cost)return b.type==='lamp'?'Harbor lamps have a fixed level':b.type==='turret'?'Sentry turrets cannot be upgraded':'Building is fully upgraded (10/10)';
   for(const[r,n]of Object.entries(cost))if(s.resources[r]<n)return 'Not enough materials to upgrade';
   for(const[r,n]of Object.entries(cost))s.resources[r]-=n;
   applyUpgrade(b);updatePower(s);return null;
@@ -792,7 +794,7 @@ function spawnWave(s){
 function event(s,text){s.events.push({id:s.nextId++,text,time:s.time});if(s.events.length>6)s.events.shift();}
 const hunterTerrain=new WeakMap();
 function hunterForest(s){
- const blockers=s.buildings.filter(b=>!['hq','belt','inserter','splitter','wall'].includes(b.type));
+ const blockers=s.buildings.filter(b=>!['hq','belt','inserter','splitter','wall','lamp'].includes(b.type));
  const key=blockers.map(b=>b.x+','+b.z).join(';')+':'+s.terrain.trees.length;
  const cached=hunterTerrain.get(s.terrain);
  if(cached?.key===key)return cached.forest;
@@ -804,12 +806,13 @@ export function step(s,dt=STEP){
  const hq=s.buildings.find(b=>b.type==='hq');
  if(hq?.islandBeacon&&hq.lighthouseAuto)hq.lighthouseAim=attackBearing(s.enemies.some(e=>!e.training)?s.waveSide:waveForecast(s).side);
  turnLighthouse(hq,dt);
- const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
+ updatePower(s,dt);
+ const beam=lighthouseBeam(hq),lamps=lampField(s.buildings),localSources=new Map(),lit=new Set();
+ for(const e of s.enemies){const source=lamps.sourceAt(e);if(source)localSources.set(e,source);if(source||isInLighthouseBeam(beam,e))lit.add(e);}
  for(const e of s.enemies)exposeHostile(e,lit.has(e),dt);
  const mistSources=s.enemies.filter(e=>e.hp>0&&hostileKind(e)==='spitter'&&!lit.has(e));
  const obscured=new Set(s.enemies.filter(e=>!lit.has(e)&&mistSources.some(other=>(other.x-e.x)**2+(other.z-e.z)**2<9)));
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
- updatePower(s,dt);
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
  const moving=[],busy=new Set();
@@ -890,18 +893,19 @@ export function step(s,dt=STEP){
  if(!hq){s.status='defeat';return;}
  const forest=s.enemies.length?woodland(s.terrain):null,enemyDestination={x:0,z:0};
  const coreRoutes=s.enemies.some(e=>e.coreHunter)?hunterForest(s):null;
- const industry=s.enemies.length?s.buildings.filter(b=>hasOutputBuffer(b.type)||b.type==='sawmill'||Object.hasOwn(GENERATORS,b.type)):[];
+ const industry=s.enemies.length?s.buildings.filter(b=>hasOutputBuffer(b.type)||b.type==='sawmill'||b.type==='lamp'||Object.hasOwn(GENERATORS,b.type)):[];
  for(const e of s.enemies){
   if(e.hp<=0||e.training)continue;e.cooldown-=dt;
   let target=hq,closest=14*14;
-  if(!e.coreHunter)for(const b of industry){
+  for(const b of industry){
+   if(e.coreHunter&&b.type!=='lamp')continue;
    if(b.hp<=0)continue;
    const distance=(e.x-b.x)**2+(e.z-b.z)**2;
    if(distance<closest){target=b;closest=distance;}
   }
-  target=hostileDestination(e,hq,beam,target,enemyDestination);
+  target=hostileDestination(e,localSources.get(e)??hq,beam||localSources.get(e),target,enemyDestination);
   const kind=hostileKind(e),attackRange=HOSTILES[kind].range;
-  const d=dist(e,target),move=e.speed*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  const d=dist(e,target),move=e.speed*hostileMoveMultiplier(e)*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
   if(kind==='spitter'&&d<=attackRange&&e.cooldown<=0&&target.hp>0){
    target.hp-=10*(e.damage||1);target.lastHit=s.time;e.cooldown=2.4;
    s.shots.push({x:e.x,z:e.z,tx:target.x,tz:target.z,time:s.time,hostile:true});
@@ -911,7 +915,7 @@ export function step(s,dt=STEP){
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
   if(obstacle||d<attackRange){
    const victim=obstacle||target;
-   if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||victim.type==='wall')){
+   if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||victim.type==='wall'||victim.type==='lamp')){
     const armor=victim.type==='wall'?(bonus?.wallDamage??1):1;
     victim.hp-=(e.coreHunter?28:e.brute?24:10)*(e.damage||1)*armor;victim.lastHit=s.time;e.cooldown=.8;
    }

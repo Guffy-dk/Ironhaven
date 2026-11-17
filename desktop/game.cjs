@@ -93,6 +93,16 @@ async function start() {
     return {aiming,saved:!!saved,aimed:Number.isFinite(core?.lighthouseAim),cancelled:document.getElementById('tool-hint').hidden};
   })()`);
   if(!interaction.aiming||!interaction.saved||!interaction.aimed||!interaction.cancelled)throw Error('Windows lighthouse controls failed: '+JSON.stringify(interaction));
+  const lampControls=await gameWindow.webContents.executeJavaScript(`(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown',{key:'c',bubbles:true}));
+    document.querySelector('[data-type="lamp"]').click();
+    const canvas=document.getElementById('world');
+    canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+    window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+    document.getElementById('save').click();
+    const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));return saved.state.buildings.some(b=>b.type==='lamp'&&b.hp===75);
+  })()`);
+  if(!lampControls)throw Error('Windows Harbor lamp placement failed');
   // Capture a reproducible playtest colony using the exact packaged Windows renderer.
   // The fixture is removed by the build script before the player archive is packaged.
   const fixture=await readFile(path.join(__dirname,'smoke-world.json'),'utf8');

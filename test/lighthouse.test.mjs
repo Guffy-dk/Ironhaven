@@ -57,11 +57,16 @@ test('shell armor opens under sustained light and recovers after leaving; bosses
   assert.ok(hostileDamage(e,100)<100);
  }
 });
-test('shore runners scatter to beam flank, Drowned leave industry for the light; reaction is bounded',()=>{
+test('lit runners briefly slow without flanking, Drowned approach the light; reactions remain bounded',()=>{
  const {s,core}=fixture();core.lighthouseHeading=Math.PI/2;
  const machine=createGame().buildings.find(b=>b.type==='smelter');Object.assign(machine,{x:10,z:3});s.buildings.push(machine);
  const runner=enemy('runner',8,0,{speed:1}),drowned=enemy('drowned',10,0,{id:9001,speed:1});s.enemies=[runner,drowned];
- step(s);assert.ok(Math.abs(runner.z)>0);assert.ok(drowned.x<10);assert.ok(Math.abs(drowned.z)<.001);
+ const dark=structuredClone(s);dark.buildings[0].lighthouseHeading=Math.PI;
+ step(s);step(dark);const unlit=dark.enemies.find(e=>e.id===runner.id);
+ const litDx=runner.x-8,litDz=runner.z,darkDx=unlit.x-8,darkDz=unlit.z;
+ assert.ok(Math.abs(litDx*darkDz-litDz*darkDx)<1e-10,'Light must preserve the approach direction');
+ assert.ok(Math.abs(Math.hypot(litDx,litDz)/Math.hypot(darkDx,darkDz)-.85)<1e-10);
+ assert.ok(drowned.x<10);assert.ok(Math.abs(drowned.z)<.001);
  const reaction=enemy('runner',4,0);for(let i=0;i<80;i++)exposeHostile(reaction,true,.05);
  assert.equal(reaction.lightResponse,0);assert.ok(reaction.lightRest>0);
 });

@@ -17,6 +17,7 @@ export function smokeWorld(){
  build('assembler',-2,2,3);build('belt',-2,1,0);build('belt',-1,1,0);
  build('storage',-3,-1);build('foundry',-2,-2);build('circuitLab',2,-2);build('componentFactory',3,-2);
  build('generator',-4,2);build('coalGenerator',-4,1);build('sawmill',5,-1);
+ build('lamp',-5,1);build('lamp',5,3);
  build('gunTurret',-1,3);build('turret',4,1);build('mortar',-3,3);
  for(const tile of [[-2,4],[-1,4],[0,4],[1,4]])build('wall',...tile);
  for(const [x,z,levels] of [[2,3,4],[-2,-2,7],[3,-2,9]])for(let i=0;i<levels;i++){const error=command(state,p.id,{type:'upgrade',x,z});if(error)throw Error(error);}

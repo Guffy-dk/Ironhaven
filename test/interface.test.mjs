@@ -371,3 +371,13 @@ test('new island controls expose automatic light and allow resuming after manual
   h.$('auto-light').click();assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAuto,true);
  }finally{await h.close();}
 });
+
+test('Power category builds a paid local lamp with coverage and fixed-level inspector controls',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.key('c');h.key('3');assert.equal(h.dom.__view.tool,'lamp');
+  h.point('pointermove',6,-2);assert.equal(h.dom.__view.preview.radius,6);
+  const before=h.save().resources;h.point('pointerdown',6,-2);h.point('pointerup',6,-2);
+  const s=h.save(),lamp=s.buildings.find(b=>b.type==='lamp');assert.ok(lamp);assert.equal(lamp.hp,75);assert.equal(s.resources.plate,before.plate-35);
+  h.key('q');h.point('pointerdown',6,-2);assert.equal(h.$('intel-title').textContent,'Harbor lamp');assert.equal(h.$('upgrade-turret').hidden,true);assert.match(h.$('intel-desc').textContent,/creatures can target and destroy/);
+ }finally{await h.close();}
+});
