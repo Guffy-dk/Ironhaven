@@ -34,10 +34,10 @@ export const TYPES = {
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:"Smelts iron ore into plates and copper ore into copper. Feed ore into a cyan input and collect it from the gold output."},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:"Makes one gear from two iron plates. Connect its output to storage or another machine."},
  sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:"Produces wood from trees within five tiles. More trees mean faster production. Needs no power."},
- generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:"Burns one wood every 12 seconds to supply 18 power. Takes fuel from lighthouse storage."},
+ generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:"Burns one wood every 12 seconds to supply 18 power. Takes fuel from shared storage."},
  lamp:{name:'Harbor lamp',hp:75,power:3,fixedLevel:true,cost:{wood:12,plate:35,gear:3},desc:"Lights a six-tile radius while powered. Helps defenses target enemies and exposes armor. Enemies target lamps, so protect them. Uses 3 power, has 75 HP and cannot be upgraded."},
  turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:"A basic sentry with unlimited ammunition. Needs no power and cannot be upgraded. Lit enemies can be targeted 20% farther away."},
- gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:"A stronger, upgradable turret. One gear supplies 16 base shots. Keep it supplied from lighthouse storage."},
+ gunTurret:{name:'Gun turret',hp:350,power:2,cost:{wood:15,plate:22,gear:3},desc:"A stronger, upgradable turret. One gear supplies 16 base shots. Uses gears from shared storage."},
  wall:{name:'Barricade',hp:700,power:0,cost:{wood:5,plate:2},desc:"Slows an attack while your turrets fire. Drag to build a connected line of barricades."},
  repair:{name:'Repair',cost:{wood:4,plate:2},desc:"Restores up to 300 HP for wood and iron plates. Cannot repair beyond a building’s maximum HP."},
  demolish:{name:'Dismantle',cost:{},desc:"Returns 80% of a building’s construction and upgrade materials. Click a tree for eight wood, or Shift-drag to clear several."}
@@ -50,8 +50,8 @@ Object.assign(TYPES,{
  circuitLab:{name:'Circuit assembler',hp:240,power:4,cost:{plate:25,gear:5},desc:"Makes one circuit from two copper and one iron plate. Supply both materials through its inputs."},
  componentFactory:{name:'Component factory',hp:320,power:6,cost:{plate:35,steel:10,circuit:8},desc:"Makes one component from two steel, two circuits and one gear. Components are used in advanced defenses and upgrades."},
  storage:{name:'Warehouse',hp:600,power:0,cost:{wood:25,plate:30},desc:"Adds deliveries directly to shared storage for building, fuel and ammunition. Accepts finished goods from any side. Rotate to choose where it supplies materials to nearby machines."},
- coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:"Mines coal from a coal deposit. Deliver it to lighthouse storage to fuel coal generators."},
- coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:"Burns one coal every 16 seconds to supply 36 power. Takes fuel from lighthouse storage."},
+ coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:"Mines coal from a coal deposit. Deliver it to a warehouse or the lighthouse to fuel coal generators."},
+ coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:"Burns one coal every 16 seconds to supply 36 power. Takes fuel from shared storage."},
  mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:"Fires shells that damage groups of enemies. One gear supplies four base shells. Needs power; upgrades improve its damage and range."},
  pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:"Fires short-range bursts that damage groups of enemies. One gear supplies eight base bursts. Needs power."}
 });
