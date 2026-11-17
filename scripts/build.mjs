@@ -1,4 +1,5 @@
 import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
+import {resolve} from 'node:path';
 import { build } from 'esbuild';
 import {packageHtml} from './package-html.mjs';
 import {validateRelease,releaseMarkdown} from './release-metadata.mjs';
@@ -9,11 +10,11 @@ await cp('node_modules/three/build/three.core.js','public/vendor/three.core.js')
 await cp('node_modules/three/LICENSE','public/vendor/THREE-LICENSE.txt');
 // The bundle is an internal Windows Electron resource, not a browser distribution.
 await rm('dist',{recursive:true,force:true});
-const result=await build({entryPoints:['public/app.js'],bundle:true,minify:true,format:'iife',target:['es2022'],write:false,legalComments:'inline'});
+const result=await build({entryPoints:['public/app.js'],bundle:true,minify:true,format:'iife',target:['es2022'],write:false,legalComments:'inline',plugins:[{name:'shared-three',setup(b){b.onResolve({filter:/^three$/},()=>({path:resolve('public/vendor/three.module.js')}));}}]});
 const css=await readFile('public/style.css','utf8');
 const threeLicense=await readFile('node_modules/three/LICENSE','utf8');
 let source=await readFile('public/index.html','utf8');
-for(const [asset,mime] of [['quarry-materials.jpg','image/jpeg'],['quarry-spruce.png','image/png']]){
+for(const [asset,mime] of [['crab-color.png','image/png'],['crab-normal.png','image/png'],['horror-color.png','image/png'],['horror-normal.png','image/png'],['coastal-surfaces.png','image/png'],['quarry-materials.jpg','image/jpeg'],['quarry-spruce.png','image/png']]){
  const bytes=await readFile('public/art/'+asset);
  source=source.replace(`src="./art/${asset}"`,()=>`src="data:${mime};base64,${bytes.toString('base64')}"`);
 }
@@ -25,4 +26,5 @@ await mkdir('release',{recursive:true});
 await writeFile('release/Ironhaven.html',html);
 await writeFile('release/RELEASE_NOTES.md',releaseMarkdown(currentRelease));
 await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
+await cp('docs/design/THIRD_PARTY_ASSETS.txt','release/THIRD_PARTY_ASSETS.txt');
 console.log(`Built embedded Windows resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);

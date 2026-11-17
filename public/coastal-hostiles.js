@@ -1,23 +1,11 @@
 import * as T from './vendor/three.module.js';
+import {coastalMaterial} from './coastal-material.js';
 import {authoredHostile} from './authored-meshes.js';
+import {actorElevation,coastalLand} from './shared/coast.js';
 import {hostileKind} from './shared/hostiles.js';
 import {isInLighthouseBeam} from './shared/lighthouse.js';
 
 const prototypes=new Map();
-let grain;
-function surface(){
- if(grain)return grain;
- const size=128,data=new Uint8Array(size*size*4);
- let seed=91471;
- for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-  seed=(Math.imul(seed,1664525)+1013904223)>>>0;
-  const v=Math.round(205+(seed/4294967296)*38+Math.sin(x*.8+Math.sin(y*.13)*5)*8),i=(y*size+x)*4;
-  data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
- }
- grain=new T.DataTexture(data,size,size);grain.wrapS=grain.wrapT=T.RepeatWrapping;
- grain.magFilter=T.LinearFilter;grain.minFilter=T.LinearMipmapLinearFilter;grain.generateMipmaps=true;grain.needsUpdate=true;
- return grain;
-}
 // Rigid body and appendage meshes are authored and exported by Blender.
 // Socket metadata stays in simulation coordinates for deterministic gait interpolation.
 function build(kind){
@@ -38,9 +26,9 @@ function build(kind){
   sockets=[{x:-.22,y:1.28,z:-.1,side:-1,phase:0},{x:.22,y:1.28,z:-.1,side:1,phase:Math.PI},{x:-.2,y:1.28,z:.14,side:-1,angle:.5,phase:Math.PI},{x:.2,y:1.28,z:.14,side:1,angle:.5,phase:0}];
   armSockets=[{x:-.3,y:1.64,z:.08,side:-1,phase:0},{x:.3,y:1.64,z:.08,side:1,phase:Math.PI}];
  }
- const material=new T.MeshStandardMaterial({vertexColors:true,map:surface(),bumpMap:surface(),bumpScale:.009,roughness:kind==='drowned'?.84:.48,metalness:0});
- const rigid={body:authoredHostile(kind,'body'),limbs:authoredHostile(kind,'limbs'),arms:authoredHostile(kind,'arms')};
- return {...rigid,low:Object.fromEntries(Object.keys(rigid).map(part=>[part,authoredHostile(kind,part,true)])),sockets,armSockets,height,frequency,material};
+ const material=coastalMaterial();
+ const rigid={body:authoredHostile(kind,'body'),limbs:authoredHostile(kind,'limbs'),arms:authoredHostile(kind,'arms'),lowerLimbs:authoredHostile(kind,'lowerLimbs'),forearms:authoredHostile(kind,'forearms'),clawLeft:authoredHostile(kind,'clawLeft'),clawRight:authoredHostile(kind,'clawRight')};
+ return {...rigid,low:Object.fromEntries(Object.keys(rigid).map(part=>[part,authoredHostile(kind,part,true)])),sockets,armSockets,height,frequency,material,knee:kind==='drowned'?[.015,-.19,.015]:kind==='walker'?[.26,-.52,.035]:[.19,.09,.025],elbow:kind==='drowned'?[.027,-.19,.08]:[.13,-.48,.1]};
 }
 export function hostilePrototype(kind){
  if(!['runner','drowned','guard','spitter','walker'].includes(kind))throw Error('Unknown hostile species');
@@ -49,34 +37,41 @@ export function hostilePrototype(kind){
 export class CoastalHostiles{
  constructor(scene,capacity=500){
   this.object=new T.Group();this.object.name='coastal-hostiles';scene.add(this.object);this.capacity=capacity;
-  this.pose=new T.Object3D();this.root=new T.Matrix4();this.tint=new T.Color();this.headings=new Map();
+  this.pose=new T.Object3D();this.segment=new T.Object3D();this.root=new T.Matrix4();this.tint=new T.Color();this.headings=new Map();
+  const data=new Uint8Array(64*64*4);for(let y=0;y<64;y++)for(let x=0;x<64;x++){const i=(y*64+x)*4,r=Math.hypot((x-31.5)/31.5,(y-31.5)/31.5);data[i]=data[i+1]=data[i+2]=255;data[i+3]=Math.round(Math.max(0,1-r)**2*125);}
+  const shadowMap=new T.DataTexture(data,64,64);shadowMap.needsUpdate=true;shadowMap.magFilter=T.LinearFilter;
+  this.contact=new T.InstancedMesh(new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),new T.MeshBasicMaterial({map:shadowMap,color:0x101912,transparent:true,depthWrite:false}),capacity);this.contact.frustumCulled=false;this.contact.renderOrder=1;this.contact.count=0;this.object.add(this.contact);
   this.species=new Map();
   for(const kind of ['runner','drowned','guard','spitter','walker']){
    const p=hostilePrototype(kind),meshes={};
-   for(const [part,multiplier] of [['body',1],['limbs',p.sockets.length],['arms',p.armSockets.length]]){
+   for(const [part,multiplier] of [['body',1],['limbs',p.sockets.length],['lowerLimbs',p.sockets.length],['arms',p.armSockets.length],['forearms',p.armSockets.length],['clawLeft',1],['clawRight',1]]){
     if(!p[part]||!multiplier)continue;
     const mesh=new T.InstancedMesh(p[part],p.material,capacity*multiplier);
-    mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.count=0;mesh.frustumCulled=false;mesh.receiveShadow=true;
-    // Moving swarms don't invalidate the cached static-building shadow atlas.
+    mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.count=0;mesh.frustumCulled=false;mesh.receiveShadow=true;mesh.castShadow=true;
+    // Nearby high-quality creatures contribute actual articulated shadows.
     this.object.add(mesh);meshes[part]=mesh;
    }
-   this.species.set(kind,{prototype:p,meshes,count:0});
+   this.species.set(kind,{prototype:p,meshes,count:0,ids:[]});
   }
  }
+ pick(ray){const targets=[...this.species.values()].map(group=>group.meshes.body).filter(mesh=>mesh.visible);const hit=ray.intersectObjects(targets,false)[0];if(!hit)return null;for(const group of this.species.values())if(group.meshes.body===hit.object)return group.ids[hit.instanceId];return null;}
  sync(enemies,time,dt,beam,position,motion,bounds){
-  const low=!!bounds?.low||enemies.length>100||bounds?.zoom>18;
-  for(const group of this.species.values()){group.count=0;for(const [part,mesh] of Object.entries(group.meshes))mesh.geometry=low?group.prototype.low[part]:group.prototype[part];}
-  const next=new Map();
+  const low=!!bounds?.low||(!bounds?.inspect&&(enemies.length>100||bounds?.zoom>18));
+  for(const group of this.species.values()){if(group.prototype.material.userData.shader)group.prototype.material.userData.shader.uniforms.coastalTime.value=time;group.count=0;group.ids=[];for(const [part,mesh] of Object.entries(group.meshes)){mesh.geometry=low?group.prototype.low[part]:group.prototype[part];mesh.castShadow=!bounds?.low;}}
+  const next=new Map();let contactCount=0;
   for(const e of enemies.slice(0,this.capacity)){
    if(bounds&&(Math.abs(e.x-bounds.x)>bounds.rx||Math.abs(e.z-bounds.z)>bounds.rz))continue;
    const kind=hostileKind(e),group=this.species.get(kind),p=group.prototype,index=group.count++,at=position(e),old=this.headings.get(e.id),previous=motion?.previous.get(e.id);
+   if(coastalLand(bounds?.terrain,at.x,at.z,0)){const radius=kind==='walker'?.85:kind==='guard'?.7:kind==='runner'?.45:.4;this.segment.position.set(at.x,actorElevation(bounds?.terrain,at.x,at.z)+.003,at.z);this.segment.rotation.set(0,Math.atan2(-e.x,-e.z),0);this.segment.scale.set(radius*2,1,radius*1.6);this.segment.updateMatrix();this.contact.setMatrixAt(contactCount++,this.segment.matrix);}
+   group.ids[index]=e.id;
    const moving=previous&&Math.hypot(e.x-previous.x,e.z-previous.z)>.0001;
    const target=moving?Math.atan2(e.x-previous.x,e.z-previous.z):old??Math.atan2(-e.x,-e.z);
    const angle=old===undefined?target:old+Math.atan2(Math.sin(target-old),Math.cos(target-old))*(1-Math.exp(-dt*12));next.set(e.id,angle);
    const phase=time*p.frequency+e.id*.73,bob=Math.sin(phase)*.008;
-   this.pose.position.set(at.x,p.height+bob,at.z);this.pose.rotation.set(0,angle,0);this.pose.scale.setScalar(1);this.pose.updateMatrix();this.root.copy(this.pose.matrix);
-   const visible=isInLighthouseBeam(beam,at);this.tint.setScalar(visible?1.28:.88);
+   this.pose.position.set(at.x,p.height+bob+actorElevation(bounds?.terrain,at.x,at.z),at.z);this.pose.rotation.set(0,angle,0);this.pose.scale.setScalar(1);this.pose.updateMatrix();this.root.copy(this.pose.matrix);
+   const visible=isInLighthouseBeam(beam,at);this.tint.setScalar(visible?1.03:.9);
    group.meshes.body.setMatrixAt(index,this.root);group.meshes.body.setColorAt(index,this.tint);
+   for(const [part,side] of [['clawLeft',-1],['clawRight',1]]){const mesh=group.meshes[part];if(!mesh)continue;const r=kind==='guard'?.44:.25,h=kind==='guard'?.32:.18,attack=Math.max(0,(e.cooldown||0)-.35);this.segment.position.set(side*r*.7,h-.05,.15);this.segment.rotation.set(-attack*.3,side*(Math.sin(phase*.35)*.035+attack*.28),side*attack*.15);this.segment.scale.setScalar(1);this.segment.updateMatrix();this.segment.matrix.premultiply(this.root);mesh.setMatrixAt(index,this.segment.matrix);mesh.setColorAt(index,this.tint);}
    for(const [part,sockets] of [['limbs',p.sockets],['arms',p.armSockets]]){
     const mesh=group.meshes[part];if(!mesh)continue;
     sockets.forEach((socket,i)=>{
@@ -86,12 +81,22 @@ export class CoastalHostiles{
      if(socket.side<0)this.pose.rotation.y+=Math.PI;
      this.pose.scale.setScalar(1);this.pose.updateMatrix();this.pose.matrix.premultiply(this.root);
      mesh.setMatrixAt(index*sockets.length+i,this.pose.matrix);mesh.setColorAt(index*sockets.length+i,this.tint);
+     const lower=group.meshes[part==='limbs'?'lowerLimbs':'forearms'];
+     if(lower){
+      this.segment.position.set(...(part==='limbs'?p.knee:p.elbow));
+      const lift=Math.max(0,Math.sin(phase+socket.phase))*(moving?1:0);
+      this.segment.rotation.set(part==='arms'?-.15+stride*.4:kind==='drowned'?lift*.8:0,0,part==='limbs'&&kind!=='drowned'?lift*.42:0);
+      this.segment.scale.setScalar(1);this.segment.updateMatrix();this.segment.matrix.premultiply(this.pose.matrix);
+      lower.setMatrixAt(index*sockets.length+i,this.segment.matrix);lower.setColorAt(index*sockets.length+i,this.tint);
+     }
     });
    }
   }
+  this.contact.count=contactCount;this.contact.visible=contactCount>0;if(contactCount)this.contact.instanceMatrix.needsUpdate=true;
+  this.hasVisible=[...this.species.values()].some(group=>group.count>0);
   this.headings=next;
   for(const {prototype:p,meshes,count} of this.species.values())for(const [part,mesh] of Object.entries(meshes)){
-   mesh.count=count*(part==='body'?1:part==='limbs'?p.sockets.length:p.armSockets.length);mesh.visible=mesh.count>0;
+   mesh.count=count*(part==='body'||part==='clawLeft'||part==='clawRight'?1:part==='limbs'||part==='lowerLimbs'?p.sockets.length:p.armSockets.length);mesh.visible=mesh.count>0;
    if(mesh.count){mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;}
   }
  }

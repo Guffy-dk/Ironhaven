@@ -1,0 +1,22 @@
+[
+  {
+    "source": "https://grab3d.com/dl/crab/crab.glb",
+    "license": "CC0-1.0",
+    "licenseSource": "https://grab3d.com/dl/crab/LICENSE.txt",
+    "bytes": 27764708,
+    "sha256": "6aebb245bc9faf7934dd44af26b2303d0021692ff2f680cd4105c6001cb7a77f",
+    "upstreamManifest": "licenses/crab-manifest.json",
+    "origin": "AI-assisted, Meshy-generated and Blender-cleaned by Grab3D",
+    "adapter": "scripts/blender/source_anatomy.py"
+  },
+  {
+    "source": "https://grab3d.com/dl/horror-monster/horror-monster.glb",
+    "license": "CC0-1.0",
+    "licenseSource": "https://grab3d.com/dl/horror-monster/LICENSE.txt",
+    "bytes": 30770940,
+    "sha256": "b5249c165b9fdbf2d17be8ff847b9c2f2f1eb4f7d23382bec5be8bf8a4100d5e",
+    "upstreamManifest": "licenses/horror-monster-manifest.json",
+    "origin": "AI-assisted, Meshy-generated and Blender-cleaned by Grab3D",
+    "adapter": "scripts/blender/source_anatomy.py"
+  }
+]

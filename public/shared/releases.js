@@ -7,6 +7,9 @@ export const RELEASES = [
  {
   version:'0.14.0',date:'2026-11-17',title:'Lighthouse in the fog',
   changes:[
+   'New expeditions place the lighthouse on a rocky coastal headland with water, shoreline foam and inland industry. Legacy worlds retain their layout. Training delivery markers follow the new lighthouse location.',
+   'Coastal creatures combine UV-preserved anatomical meshes with shell, wet skin, weathered oilskin and bone/chitin textures, animated appendages, contact shadows and dynamic shadows. Click a creature to inspect it close up; Escape returns to the colony.',
+   'The lantern now emits actual scene lighting, a narrow scattering beam through fog and a bright optical glow. Graphics quality controls retain a lighter rendering path.',
    'Five coastal hostile species with distinct 3D silhouettes and animated appendages: Shore runners, Drowned, Shell guards, Fog spitters and the Abyss walker. Spitters arrive from swarm four and an Abyss walker joins every fifth swarm.',
    'Press L or Aim light, then click a map tile. The lighthouse turns gradually; Escape or right-click cancels aiming. A live minimap cone shows its bearing. Lighting extends defense acquisition range by 20%.',
    'Shore runners briefly scatter out of the beam; Drowned are drawn toward the lighthouse. Sustained illumination exposes Shell guard armor and the Abyss walker. Light responses are time-limited so one beam cannot trap a wave forever.',

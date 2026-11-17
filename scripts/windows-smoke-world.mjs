@@ -1,3 +1,4 @@
+import {establishCoast} from '../public/shared/coast.js';
 import {writeFile} from 'node:fs/promises';
 import {createGame,addPlayer,command,step,RESOURCE_KEYS} from '../public/shared/sim.js';
 // A reproducible in-engine playtest colony for Windows renderer/startup validation.
@@ -18,11 +19,13 @@ export function smokeWorld(){
  build('gunTurret',-1,3);build('turret',4,1);build('mortar',-3,3);
  for(const tile of [[-2,4],[-1,4],[0,4],[1,4]])build('wall',...tile);
  for(const [x,z,levels] of [[2,3,4],[-2,-2,7],[3,-2,9]])for(let i=0;i<levels;i++){const error=command(state,p.id,{type:'upgrade',x,z});if(error)throw Error(error);}
+ establishCoast(state);
+ for(let z=0;z>-8;z--)build('belt',0,z,3);
  for(const r of RESOURCE_KEYS)state.resources[r]=200;
  state.wave=4;state.nextWave=0;step(state);
  const kinds=['runner','drowned','guard','spitter','walker'];
- state.enemies=kinds.map((kind,i)=>{const e=state.enemies.find(e=>e.kind===kind);if(!e)throw Error('Missing smoke species '+kind);return {...e,x:-4+i*2,z:4.4,speed:0};});
- const core=state.buildings.find(b=>b.type==='hq');core.lighthouseHeading=core.lighthouseAim=.15;
+ state.enemies=kinds.map((kind,i)=>{const e=state.enemies.find(e=>e.kind===kind);if(!e)throw Error('Missing smoke species '+kind);return {...e,x:-4+i*2,z:6,speed:0};});
+ const core=state.buildings.find(b=>b.type==='hq');core.lighthouseHeading=core.lighthouseAim=0;
  step(state);state.paused=true;return {state,playerId:p.id};
 }
 if(process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));

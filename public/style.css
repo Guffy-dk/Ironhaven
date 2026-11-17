@@ -140,3 +140,5 @@ dialog .close-dialog{font-size:22px}
 .fuel-alert{margin-top:7px;padding:6px 8px;background:#2b2619;color:#f6d59a;border:1px solid #ab7a44;font-size:12px}
 
 .camera-tools #aim-light{width:auto;padding:0 13px;font-size:12px;white-space:nowrap}.camera-tools #aim-light.active{color:#ffd794;border-color:#ffd794;background:#4a4030}
+
+body.inspecting-creature .bottom-ui,body.inspecting-creature .left-panel .objectives,body.inspecting-creature .left-panel .team{display:none}.creature-back{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:14px 24px;background:#14292bea;border:1px solid #c8b68b99;color:#ead6ae;z-index:8;font-size:13px}.creature-back small{display:block;color:var(--muted);font-size:10px;margin-top:6px}

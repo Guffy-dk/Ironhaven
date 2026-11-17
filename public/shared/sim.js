@@ -1,4 +1,5 @@
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
+import {coastalLand,establishCoast} from './coast.js';
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
 import {turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
@@ -374,6 +375,7 @@ export function createExpedition(name,{difficulty,skipTutorial=false,swarmSeed=0
  if(swarmSeed)state.swarmSeed=swarmSeed;
  for(const b of state.buildings)if(b.type!=='hq')packBuilding(player,b);
  state.buildings=state.buildings.filter(b=>b.type==='hq');
+ establishCoast(state);
  if(!skipTutorial)state.tutorialStep=0;
  updatePower(state);
  return {state,playerId:player.id};
@@ -382,6 +384,7 @@ export function removePlayer(s,id){const leaving=s.players.find(p=>p.id===id),re
 function placementError(s,type,x,z,ignoreBelts=false){
  const def=TYPES[type];if(!Object.hasOwn(TYPES,type)||!def||type==='hq'||['repair','demolish'].includes(type))return 'Invalid building';
  if(!Number.isInteger(x)||!Number.isInteger(z)||Math.abs(x)>BUILD_EDGE||Math.abs(z)>BUILD_EDGE)return 'Outside the construction zone';
+ if(!coastalLand(s.terrain,x,z))return 'Build on dry land above the shoreline';
  const occupied=s.buildings.find(b=>b.x===x&&b.z===z);
  if(occupied&&!(ignoreBelts&&occupied.type==='belt'))return 'Tile is occupied';
  if(s.terrain.trees.some(b=>b.x===x&&b.z===z)||s.terrain.rocks.some(b=>b.x===x&&b.z===z))return 'Clear the tile with Dismantle first';
@@ -924,8 +927,9 @@ export function step(s,dt=STEP){
 export function planMove(s,ids,dx,dz){
  if(!Array.isArray(ids)||ids.length>s.buildings.length||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
  const selected=s.buildings.filter(b=>ids.includes(b.id));if(s.enemies.length&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse cannot be relocated during an active swarm',valid:[],invalid:[]};if(selected.some(b=>s.time-(b.lastHit??-100)<5))return{error:'Recently attacked buildings cannot be relocated for five seconds',valid:[],invalid:[]};if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
+ if(s.terrain.coast&&(dx||dz)&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse is anchored to the headland',valid:[],invalid:[]};
  const stationary={...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))},valid=[],invalid=[];
- for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>BUILD_EDGE||Math.abs(b.z+dz)>BUILD_EDGE?'Core is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Core destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the core destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);
+ for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>BUILD_EDGE||Math.abs(b.z+dz)>BUILD_EDGE?'Lighthouse is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Lighthouse destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the lighthouse destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);
   (reason?invalid:valid).push({id:b.id,type:b.type,x:b.x+dx,z:b.z+dz,reason});
  }return{error:null,valid,invalid};
 }

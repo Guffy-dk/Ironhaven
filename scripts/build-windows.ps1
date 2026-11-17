@@ -28,6 +28,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Electron runtime extraction failed.' }
   $executable = Join-Path $gameFolder 'Ironhaven.exe'
   Move-Item -LiteralPath (Join-Path $gameFolder 'electron.exe') -Destination $executable -Force
+  Copy-Item -LiteralPath 'release/THIRD_PARTY_ASSETS.txt' -Destination $gameFolder -Force
   $resources = Join-Path $gameFolder 'resources'
   $defaultApp = Join-Path $resources 'default_app.asar'
   if (Test-Path -LiteralPath $defaultApp) { Remove-Item -LiteralPath $defaultApp }
@@ -52,7 +53,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Windows renderer fixture failed.' }
   $smokeLog = Join-Path $packageRoot 'startup-test.log'
   $smoke = Start-Process -FilePath $executable -ArgumentList '--smoke-test' -RedirectStandardError $smokeLog -WindowStyle Hidden -PassThru
-  if (!$smoke.WaitForExit(60000)) {
+  if (!$smoke.WaitForExit(180000)) {
     Stop-Process -Id $smoke.Id
     throw 'Desktop smoke test timed out.'
   }

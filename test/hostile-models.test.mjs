@@ -32,3 +32,18 @@ test('mixed swarms retain positions, positive limb transforms, capacity and clea
  swarm.sync([],2,.05,null,e=>e,null);assert.equal(swarm.headings.size,0);
  for(const {meshes} of swarm.species.values())for(const mesh of Object.values(meshes)){assert.equal(mesh.count,0);assert.equal(mesh.visible,false);}
 });
+
+
+test('authored distance meshes retain valid UVs and indexed geometry at reduced cost',()=>{
+ for(const kind of ['runner','drowned','guard','spitter','walker']){
+  const p=hostilePrototype(kind);
+  for(const name of ['body','limbs','lowerLimbs','arms','forearms','clawLeft','clawRight']){
+   const high=p[name],low=p.low[name];if(!high)continue;
+   assert.ok(low.attributes.position.array.every(Number.isFinite),kind+' '+name);
+   assert.ok(low.index.count<=high.index.count);
+   assert.ok(low.attributes.uv.count===low.attributes.position.count);
+   for(const index of low.index.array)assert.ok(index<low.attributes.position.count);
+  }
+  assert.ok(p.low.body.index.count<p.body.index.count*.4,kind+' must have a meaningful distance LOD');
+ }
+});

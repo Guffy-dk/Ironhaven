@@ -18,3 +18,7 @@ Read [design/ART_DIRECTION.md](design/ART_DIRECTION.md). The approved workshop r
 ## Verification
 
 Use Node.js 22 or later, `npm ci`, `npm test` and `npm run build`. On Windows run `./scripts/build-windows.ps1`; CI covers patcher validation and the actual Windows app startup and lighthouse controls. Actual multi-PC LAN and player hardware performance are separate checks.
+
+## Fidelity and coast follow-up
+
+The first released-candidate creature shapes were rejected by the user as too simple. The follow-up sculpts continuous anatomy in Blender, adds UV-preserved CC0 anatomical bases and PBR material surfaces, animated appendages and dynamic shadows, provides live creature inspection, moves new-expedition lighthouses to a headland and adds actual beacon lighting, fog scattering and HDR glow. The old candidate was never tagged or published; patcher latest remained 0.13.3 throughout the rework.

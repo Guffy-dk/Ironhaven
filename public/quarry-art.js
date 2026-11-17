@@ -124,7 +124,7 @@ export function makeQuarryModel(type,paint,level=1){
   for(const y of [.94,1.46])window(g,0,y,.455-(y-.94)*.04,.12);
   const lantern=new T.Group();lantern.name='lantern';lantern.position.y=2.19;g.add(lantern);
   cyl(lantern,0x835d38,0,-.045,0,.25,.27,12);
-  const lens=cyl(lantern,0xffd38d,0,.025,.29,.17,.085,14,true);lens.rotation.x=Math.PI/2;
+  const lens=cyl(lantern,0xffd38d,0,.025,.29,.17,.085,24,true);lens.material=new T.MeshBasicMaterial({color:new T.Color(4.5,3.4,1.8),toneMapped:false});lens.rotation.x=Math.PI/2;
   for(let i=0;i<8;i++){
    const a=i*Math.PI/4;
    cyl(g,0x3b4d50,Math.sin(a)*.42,2.15,Math.cos(a)*.42,.035,.46,7);

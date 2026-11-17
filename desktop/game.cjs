@@ -41,7 +41,7 @@ async function start() {
   gameWindow = new BrowserWindow({
     width: 1280, height: 800, minWidth: 900, minHeight: 600, show: false,
     title: 'Ironhaven', backgroundColor: '#101e21',
-    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: !smokeTest },
   });
   if(smokeTest)gameWindow.webContents.on('console-message',(_event,details)=>{
     if(/Shader Error|not compiled|VALIDATE_STATUS false|Uncaught/i.test(details.message||''))graphicsErrors.push(details.message);
@@ -68,7 +68,7 @@ async function start() {
     throw Error('Desktop game did not initialize: ' + JSON.stringify(result));
   }
   const graphics = await gameWindow.webContents.executeJavaScript(`(async () => {
-    await Promise.all(['quarry-materials', 'quarry-spruce'].map(id => document.getElementById(id).decode()));
+    await Promise.all(['quarry-materials','quarry-spruce','coastal-surfaces','crab-color','crab-normal','horror-color','horror-normal'].map(id => document.getElementById(id).decode()));
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const gl = document.getElementById('world').getContext('webgl2');
     return {
@@ -101,17 +101,29 @@ async function start() {
     localStorage.setItem('ironhaven.save.v1',${JSON.stringify(fixture)});
     document.getElementById('resume').click();
     document.getElementById('pause').click();
-    for(let i=0;i<4;i++)document.getElementById('zoom-in').click();
-    document.getElementById('world').dispatchEvent(new WheelEvent('wheel',{deltaY:-66.666,bubbles:true}));
+    for(let i=0;i<2;i++)document.getElementById('zoom-in').click();
     document.getElementById('save').click();
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     if(saved.state.enemies.length!==5||!saved.state.paused)throw Error('Windows capture scene did not load');
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();
-    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5+1.4/181),bubbles:true}));
+    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/181),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   const capture=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ingame.png'),capture.toPNG());
+  const inspected=await gameWindow.webContents.executeJavaScript(`(async () => {
+    const canvas=document.getElementById('world');
+    for(let y=.64;y<.81;y+=.008){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
+      if(document.getElementById('intel-title').textContent==='Shell guard')break;
+    }
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    return document.getElementById('intel-title').textContent;
+  })()`);
+  if(inspected!=='Shell guard')throw Error('Windows creature inspection failed: '+inspected);
+  const creatures=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-creatures.png'),creatures.toPNG());
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }
