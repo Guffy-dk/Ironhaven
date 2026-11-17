@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {box,cyl} from './render-primitives.js';
+import {makeCoastalBuilding} from './coastal-buildings.js';
 import {quarryTexture} from './quarry-textures.js';
 
 const iron=0x454848, steel=0x6c7476, stone=0x868179, mortar=0xa09b8b;
@@ -27,6 +28,7 @@ function materialFor(name){
 
 // Consolidate the fixed parts of each building while keeping its moving parts and ports separate.
 export function batchQuarryModel(g,key){
+ if(g.userData.authored)return;
  const parts=g.children.filter(o=>o.isMesh&&!o.name&&o.material.isMeshStandardMaterial);
  if(parts.length<2)return;
  let groups=structures.get(key);
@@ -100,7 +102,8 @@ function chimney(g,x,z,height,diameter=.13){
  box(g,iron,x,height,z,diameter+.04,.075,diameter+.04);
 }
 
-export function makeQuarryModel(type,paint){
+export function makeQuarryModel(type,paint,level=1){
+ const authored=makeCoastalBuilding(type,level,batchQuarryModel);if(authored)return authored;
  const g=new T.Group();
  g.userData.type=type;
  if(type==='hq'){

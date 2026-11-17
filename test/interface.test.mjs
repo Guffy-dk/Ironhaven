@@ -316,7 +316,9 @@ test('field training advances through actual movement, placement and deliveries'
    }
   }
   const trained=h.save();assert.ok(trained.produced.plate>0&&trained.produced.gear>0);
-  assert.equal(trained.tutorialStep,7);assert.ok(!h.$('tutorial-finish').hidden);
+  assert.equal(trained.tutorialStep,7);assert.ok(h.$('tutorial-finish').hidden);
+  for(const target of [{x:14,z:0},{x:14,z:-6},{x:4,z:-11}]){h.key('l');h.point('pointerdown',target.x,target.z);ticks(160);}
+  assert.equal(h.save().tutorialStep,TUTORIAL_STEPS.length-1);assert.ok(!h.$('tutorial-finish').hidden);
   h.$('tutorial-finish').click();const finished=h.save();
   assert.equal(finished.tutorialStep,undefined);assert.ok(h.$('tutorial-guide').hidden);
   assert.equal(finished.nextWave-finished.time,100);

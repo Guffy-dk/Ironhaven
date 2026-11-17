@@ -88,3 +88,24 @@ test('old enemies still load, new species and lighthouse bearings survive saved-
  assert.equal(hostileKind(loaded.enemies[1]),'guard');assert.equal(hostileKind({coreHunter:true}),'walker');
  const before=structuredClone(loaded);migrateGame(loaded);assert.deepEqual(loaded.enemies,before.enemies);
 });
+
+test('lighthouse training requires aiming, sustained illumination and a real extended-range sentry kill',()=>{
+ const {s,p,core}=fixture();
+ const sentry=createGame().buildings.find(b=>b.type==='turret');Object.assign(sentry,{x:4,z:-3,cooldown:0});s.buildings.push(sentry);
+ s.tutorialStep=7;step(s);assert.equal(s.tutorialStep,7);
+ assert.equal(command(s,p.id,{type:'finishTutorial'}),'Complete the current training task first');
+ command(s,p.id,{type:'aimLighthouse',x:14,z:0});for(let i=0;i<80&&s.tutorialStep===7;i++)step(s);
+ assert.equal(s.tutorialStep,8);step(s);const guard=s.enemies.find(e=>e.training==='exposure');assert.ok(guard);
+ const hp=core.hp;for(let i=0;i<30;i++)step(s);assert.equal(s.tutorialStep,8);assert.equal(core.hp,hp);
+ command(s,p.id,{type:'aimLighthouse',x:14,z:-6});for(let i=0;i<100&&s.tutorialStep===8;i++)step(s);
+ assert.equal(s.tutorialStep,9);step(s);assert.ok(s.enemies.some(e=>e.training==='combat'));
+ for(let i=0;i<40;i++)step(s);assert.equal(s.tutorialStep,9,'Unlit target remains outside normal sentry range');
+ command(s,p.id,{type:'aimLighthouse',x:4,z:-11});for(let i=0;i<140&&s.tutorialStep===9;i++)step(s);
+ assert.equal(s.tutorialStep,10);assert.equal(s.enemies.filter(e=>e.training).length,0);assert.equal(s.totalKills,0);
+ assert.equal(core.hp,hp);assert.equal(s.wave,0);
+ assert.equal(command(s,p.id,{type:'finishTutorial'}),null);assert.equal(s.nextWave-s.time,100);
+});
+test('skipping a light lesson removes every harmless practice creature',()=>{
+ const {s,p}=fixture();s.tutorialStep=8;step(s);assert.ok(s.enemies.some(e=>e.training));
+ command(s,p.id,{type:'finishTutorial',skip:true});assert.equal(s.enemies.length,0);
+});

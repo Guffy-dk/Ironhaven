@@ -48,6 +48,8 @@ try {
   & "$packageRoot\PatcherTests.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed.' }
 
+  node scripts/windows-smoke-world.mjs (Join-Path $game 'smoke-world.json')
+  if ($LASTEXITCODE -ne 0) { throw 'Windows renderer fixture failed.' }
   $smokeLog = Join-Path $packageRoot 'startup-test.log'
   $smoke = Start-Process -FilePath $executable -ArgumentList '--smoke-test' -RedirectStandardError $smokeLog -WindowStyle Hidden -PassThru
   if (!$smoke.WaitForExit(60000)) {
@@ -59,6 +61,7 @@ try {
     throw "Desktop startup smoke test failed ($($smoke.ExitCode))."
   }
 
+  Remove-Item -LiteralPath (Join-Path $game 'smoke-world.json')
   tar.exe -a -cf $zip -C $packageRoot Ironhaven
   if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed.' }
   @{

@@ -13,7 +13,7 @@ The `lighthouse-preview` draft has been integrated with the latest main branch f
 
 ## Art direction still in progress
 
-Read [design/ART_DIRECTION.md](design/ART_DIRECTION.md). The approved workshop reference and new creature sheet are generated concepts, not runtime screenshots. The first creature meshes are functional prototypes. The detailed architecture, terrain, conveyor and structural-upgrade redesign has not been completed. Do not describe the full graphical overhaul as finished or revert to pixel art.
+Read [design/ART_DIRECTION.md](design/ART_DIRECTION.md). The approved workshop reference and new creature sheet are generated concepts, not runtime screenshots. The runtime now uses Blender-authored coastal creature meshes with LODs, six detailed brick workshop variants, mechanical conveyors with rollers and support frames, and structural modernization per upgrade. Editable Blender sources and repeatable export scripts are retained in the repository. Do not describe the full graphical overhaul as finished or revert to pixel art.
 
 ## Verification
 

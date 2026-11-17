@@ -34,7 +34,7 @@ The beam reaches 40 tiles in a 40-degree cone. Defenses can acquire illuminated 
 
 Runners, Drowned and guards appear from the first swarm; spitters arrive in swarm four. Fear and attraction have limited durations and a ten-second response cooldown so a single fixed beam cannot indefinitely pin a wave. Existing core hunters remain part of the wave composition. Old saved enemies gain compatible species rendering without replacing their health or position.
 
-The current models have species-specific silhouettes, material grain and instanced appendage animation. The approved realistic industrial art direction and creature concept sheet are in [docs/design/ART_DIRECTION.md](docs/design/ART_DIRECTION.md). The full detailed architecture and landscape overhaul remains in development; concept illustrations are not runtime screenshots.
+Blender-authored creature meshes have species-specific silhouettes, distance LODs, surface grain and instanced appendage animation. Six production/workshop types use new Blender-authored brick architecture; upgrades add visible structural equipment. The approved realistic industrial art direction and creature concept sheet are in [docs/design/ART_DIRECTION.md](docs/design/ART_DIRECTION.md). Concept illustrations establish the art direction and are not runtime screenshots. The release includes an in-game image captured from the actual Windows package.
 
 ## Factory and upgrades
 
@@ -72,4 +72,4 @@ npm run build
 
 This builds and tests the patcher, performs an isolated Windows startup smoke test, packages the game and writes the checksum manifest. Release versions come from `public/shared/releases.js`, `package.json` and `package-lock.json`; keep them in sync. Push a matching `v0.x.y` tag to run `.github/workflows/release.yml`. The release publishes **Ironhaven-Windows-x64.zip**, **Ironhaven-Patcher.exe** and **Ironhaven-Windows-manifest.json**. The patcher verifies the manifest's size and SHA-256 digest before installation.
 
-Automated tests do not establish reachability between two physical PCs. Full hardware performance and the complete industrial art overhaul need separate validation.
+Automated tests do not establish reachability between two physical PCs. Player hardware performance needs separate validation.

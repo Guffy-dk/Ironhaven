@@ -13,7 +13,8 @@ export const RELEASES = [
    'Fog spitters attack at range and reduce defense acquisition range around unlit hostiles. Illuminate the spitter or its protected targets to restore clear targeting.',
    'Fix a shader compilation error in the lighthouse fog draft. Preserve existing worlds, checkpoints and LAN play with authoritative light and creature simulation.',
    'Windows x64 is the sole distribution target. Browser publishing and the downloadable browser artifact have been removed. Install through the Windows patcher.',
-   'The detailed industrial architectural overhaul remains in development. Creature models are an initial runtime implementation, not the final fidelity of the concept art.'
+   'New Blender-authored coastal creatures and brick production workshops with distance detail levels. Structural modernization adds visible equipment per upgrade instead of recoloring roofs. The concept art remains a visual target, not a runtime screenshot.',
+   'Field training now requires real lighthouse aiming, sustained illumination of armor and an assisted sentry kill beyond normal range. Building descriptions and current UI consistently describe coastal industry and the lighthouse objective.'
   ]
  },
  {

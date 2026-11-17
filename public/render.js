@@ -3,7 +3,7 @@ import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERA
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
 const CAMERA_OFFSET=new T.Vector3(0,32,27);
-const QUARRY_CAMERA=new T.Vector3(0,38,23);
+const QUARRY_CAMERA=new T.Vector3(0,27,27);
 const geos=new Map();
 const beltArrow=(()=>{
  const arrow=new T.Shape();
@@ -14,6 +14,7 @@ const beltArrow=(()=>{
 const cyan=0x79d8d0;
 const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
 import {mat,geometry,box,cyl} from './render-primitives.js';
+import {modernizeModel} from './coastal-buildings.js';
 import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
 import {quarryTerrainMaterial,quarrySpruce,quarryTexture} from './quarry-textures.js';
 import {createQuarryEffects,quarryActorGeometry,updateQuarryEffects} from './quarry-effects.js';
@@ -26,7 +27,7 @@ const easeAngle=(current,target,weight)=>current+Math.atan2(Math.sin(target-curr
 let quarryStone;
 function quarryStoneSurface(){
  if(quarryStone)return quarryStone;
- const shape=new T.IcosahedronGeometry(1,1),positions=shape.attributes.position;
+ const shape=new T.IcosahedronGeometry(1,2),positions=shape.attributes.position;
  for(let i=0;i<positions.count;i++){
   const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i),worn=1+.09*Math.sin(x*13+z*7)*Math.cos(y*8-z*5);
   positions.setXYZ(i,x*worn,Math.min(.72,y*worn),z*worn);
@@ -46,28 +47,42 @@ function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,
 export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
  const quarry=style==='quarry';
  const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
- const painted=base=>level>1?upgradeColor(level):base;
+ const painted=base=>!quarry&&level>1?upgradeColor(level):base;
  const g=new T.Group();g.userData.type=originalType;
  if(type==='belt'){
   // Each incoming lane curves into the output; geometry ends exactly at tile edges.
   const unique=[...new Set(inputs.filter(v=>v!==dir))];if(!unique.length)unique.push((dir+2)%4);
   for(const input of unique){
-   const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],height=quarry?.09:.13,width=quarry?.22:.285;
+   const[ax,az]=DIRS[input],[bx,bz]=DIRS[dir],height=quarry?.18:.13,width=quarry?.22:.285;
    const curve=new T.QuadraticBezierCurve3(new T.Vector3(ax*.51,height,az*.51),new T.Vector3(0,height,0),new T.Vector3(bx*.51,height,bz*.51));
    const cacheKey=`road:${style}:${input}:${dir}`;let road=geos.get(cacheKey);
    if(!road){const vertices=[],indices=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,width*sign);vertices.push(v.x,v.y,v.z);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
    const lane=new T.Mesh(road,mat(quarry?0x282a28:painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
    for(const sign of[-1,1]){const railKey=`rail:${style}:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*(width+.025));v.y=height+.02;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,quarry?.016:.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(quarry?painted(0x666764):C.gold)));}
-   if(quarry)box(g,0x494b46,ax*.42,.046,az*.42,Math.abs(az)*.46+.065,.09,Math.abs(ax)*.46+.065);
+   if(quarry){
+    for(const t of [.12,.37,.62,.87]){
+     const p=curve.getPoint(t),tangent=curve.getTangent(t),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();
+     const roller=cyl(g,0x707c79,p.x,p.y-.035,p.z,.032,width*2+.05,12);
+     roller.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),normal);
+     for(const side of [-1,1]){
+      const px=p.x+normal.x*(width+.025)*side,pz=p.z+normal.z*(width+.025)*side;
+      box(g,0x465251,px,.08,pz,.035,.16,.035);
+      box(g,0x79796a,px,.012,pz,.08,.025,.08);
+     }
+    }
+    const t=curve.getTangent(.95),p=curve.getPoint(.85),normal=new T.Vector3(-t.z,0,t.x).normalize();
+    const motor=box(g,0x697771,p.x+normal.x*.31,.15,p.z+normal.z*.31,.13,.15,.19);motor.rotation.y=Math.atan2(t.x,t.z);
+   }
    else box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
   const a=new T.Mesh(beltArrow,mat(quarry?0xc9c1aa:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
   if(quarry)a.scale.setScalar(.56);
   const offset=quarry?.17:.14;
-  a.position.set(DIRS[dir][0]*offset,quarry?.118:.19,DIRS[dir][1]*offset);g.add(a);return g;
+  a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry)modernizeModel(g,'belt',level);return g;
  }
  if(quarry&&type!=='wall'){
-  const model=makeQuarryModel(originalType,painted);
+  const model=makeQuarryModel(originalType,painted,level);
+  if(!model.userData.authored)modernizeModel(model,originalType,level);
   if(type==='storage')for(let d=0;d<4;d++)port(model,d,d===0&&inputs.includes(0)?'OUT':'IN',d===0&&inputs.includes(0)?C.gold:cyan);
   if(type==='inserter'){port(model,2,'IN',cyan);port(model,0,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
   if(type==='splitter'){port(model,2,'IN',cyan);port(model,0,'FWD',C.gold);port(model,3,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
@@ -120,7 +135,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
     if(inputs.includes(1))section(-.33,.33,.327,connected(1));
    }
   }
-  if(quarry)batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);
+  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);}
   return g;
  }
  plate(g);
@@ -285,7 +300,7 @@ export class View{
  }
  point(clientX,clientY){this.mouse.set(clientX/innerWidth*2-1,-clientY/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);if(!this.ray.ray.intersectPlane(this.plane,this.hit))return null;return{x:Math.round(this.hit.x),z:Math.round(this.hit.z)};}
  pan(x,z){this.center.x=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.x+x));this.center.z=Math.max(-BUILD_EDGE,Math.min(BUILD_EDGE,this.center.z+z));}
- setZoom(d){this.zoom=Math.max(8,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
+ setZoom(d){this.zoom=Math.max(4,Math.min(SIZE*.58,this.zoom+d));this.updateProjection();}
  centerBase(){this.center.set(0,0,0);}
  previewRoute(cells,valid=true,arrows=false){
   const signature=cells.map(c=>`${c.type??''}:${c.x},${c.z},${c.dir}`).join(';')+valid+arrows;if(signature===this.routeKey)return;this.routeKey=signature;
@@ -464,7 +479,7 @@ export class View{
      const rear=(b.dir+2)%4,side=DIRS[cargo.itemSide]&&cargo.itemSide!==b.dir?cargo.itemSide:rear;
      const [ix,iz]=DIRS[side],[ox,oz]=DIRS[b.dir],bend=side!==rear;
      const enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5;
-     this.dummy.position.set(b.x+enter*ix+leave*ox,quarry?.162:.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
+     this.dummy.position.set(b.x+enter*ix+leave*ox,quarry?.255:.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
      this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
      this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
     };
@@ -477,7 +492,7 @@ export class View{
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
-  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion);
+  if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion,{x:this.center.x,z:this.center.z,rx:this.camera.right+3,rz:this.camera.top*1.6+3,zoom:this.zoom,low:!this.renderer.shadowMap.enabled});
   for(let i=0;i<(quarry?0:n);i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));
