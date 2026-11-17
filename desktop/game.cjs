@@ -141,6 +141,7 @@ async function start() {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   const island=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-island.png'),island.toPNG());
+  gameWindow.show();gameWindow.focus();gameWindow.webContents.focus();
   gameWindow.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
   gameWindow.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
   const settings=await gameWindow.webContents.executeJavaScript(`(async () => {
