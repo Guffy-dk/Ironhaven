@@ -207,7 +207,7 @@ def export_part(objects,low=False,offset=(0,0,0)):
   context=bpy.context.evaluated_depsgraph_get()
   if low:
    mod=obj.modifiers.new('Runtime distance LOD','DECIMATE');mod.ratio=.065 if obj.get('palette','').startswith('source-') else .22
-   evaluated=obj.evaluated_get(context);mesh=evaluated.to_mesh()
+   context.update();evaluated=obj.evaluated_get(context);mesh=evaluated.to_mesh()
   else:mesh=obj.data
   mesh.calc_loop_triangles();normal_matrix=obj.matrix_world.to_3x3().inverted().transposed();base=COLORS.get(obj['palette'],(1,1,1))
   for tri in mesh.loop_triangles:
