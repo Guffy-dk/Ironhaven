@@ -61,7 +61,7 @@ export class LighthouseFog{
    uniforms.time.value=time;
    uniforms.beamEnabled.value=beam?1:0;
    uniforms.storm.value=storm;
-   if(beam){uniforms.core.value.set(beam.x,beam.z);uniforms.direction.value.set(beam.dx,beam.dz);}
+   if(beam){uniforms.reach.value=beam.reach;uniforms.edge.value=Math.cos(beam.cone);uniforms.core.value.set(beam.x,beam.z);uniforms.direction.value.set(beam.dx,beam.dz);}
   }
  }
 }

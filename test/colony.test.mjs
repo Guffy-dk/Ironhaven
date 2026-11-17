@@ -57,7 +57,7 @@ test('standard swarm seven keeps its health while swarm eight survives a max-lev
 
 test('seeded large maps vary beyond the clear center and keep starter deposits available',()=>{
  const first=makeTerrain(123),second=makeTerrain(456);
- assert.equal(BUILD_EDGE*2+1,181);
+ assert.equal(BUILD_EDGE*2+1,257);
  assert.deepEqual(first,makeTerrain(123));
  assert.notDeepEqual(first.trees,second.trees);
  assert.notDeepEqual(first.coal,second.coal);

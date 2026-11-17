@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.14.0';
+export const CURRENT_VERSION = '0.15.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.15.0',date:'2026-11-17',title:'Island beacon',
+  changes:[
+   'New expeditions use a 257 by 257 construction grid and a large island with more than twice the usable land of the former coastal map. Existing worlds retain their terrain and buildings.',
+   'The lighthouse stands at the center. Its 128-tile, 72-degree beam automatically faces the incoming coastal attack before and during each wave. Manual aiming overrides tracking; Resume auto light restores it. Lighthouse upgrades improve reach, coverage and turning.',
+   'Hostiles emerge just offshore at landings around all eight sides of the island instead of appearing at the square map boundary.',
+   'Separate mineral seams occupy under five percent of island land. Low surface chips replace bulky ore piles; selecting a mining machine highlights its usable mineral tiles; ordinary buildings and conveyors can share mineral ground. The central factory area stays open, with tutorial resources nearby.',
+   'Update field training, minimap, water and light rendering for the island. Finishing training restores automatic tracking. Old inland and headland saves retain their layouts and combat rules.'
+  ]
+ },
  {
   version:'0.14.0',date:'2026-11-17',title:'Lighthouse in the fog',
   changes:[
