@@ -391,7 +391,8 @@ test('Escape cancels construction first, then opens a clean menu and goes back o
   assert.equal(h.dom.document.querySelector('[data-menu-page="home"]').hidden,false);
   h.dom.document.querySelector('[data-menu-target="settings"]').click();h.dom.document.querySelector('[data-menu-target="controls"]').click();
   assert.equal(h.$('menu-title').textContent,'Controls');
-  h.key('Escape');assert.equal(h.$('menu-title').textContent,'Settings');h.key('Escape');assert.equal(h.$('menu-title').textContent,'Colony menu');h.key('Escape');assert.equal(h.$('menu-dialog').open,false);
+  const focusedEscape=new h.dom.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});h.$('pan-speed').dispatchEvent(focusedEscape);assert.equal(focusedEscape.defaultPrevented,true);
+  assert.equal(h.$('menu-title').textContent,'Settings');h.key('Escape');assert.equal(h.$('menu-title').textContent,'Colony menu');h.key('Escape');assert.equal(h.$('menu-dialog').open,false);
  }finally{await h.close();}
 });
 test('pan and zoom preferences affect real camera inputs, persist and leave the shared world unchanged',async()=>{

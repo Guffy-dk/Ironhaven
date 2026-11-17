@@ -156,9 +156,9 @@ async function start() {
   gameWindow.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
   const back=await gameWindow.webContents.executeJavaScript(`(async () => {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    return document.getElementById('menu-dialog').open&&document.getElementById('menu-title').textContent==='Settings';
+    return {open:document.getElementById('menu-dialog').open,title:document.getElementById('menu-title').textContent,focus:document.activeElement?.id};
   })()`);
-  if(!back)throw Error('Windows Escape did not return to the settings parent page');
+  if(!back.open||back.title!=='Settings')throw Error('Windows Escape did not return to the settings parent page: '+JSON.stringify(back));
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.querySelector('[data-menu-target="controls"]').click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
