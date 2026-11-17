@@ -106,7 +106,7 @@ async function start() {
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     if(saved.state.enemies.length!==5||!saved.state.paused)throw Error('Windows capture scene did not load');
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();
-    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/181),bubbles:true}));
+    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   const capture=await gameWindow.webContents.capturePage();
@@ -124,6 +124,13 @@ async function start() {
   if(inspected!=='Shell guard')throw Error('Windows creature inspection failed: '+inspected);
   const creatures=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-creatures.png'),creatures.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async () => {
+    document.getElementById('creature-back').click();document.getElementById('auto-light').click();
+    for(let i=0;i<50;i++)document.getElementById('zoom-out').click();
+    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  })()`);
+  const island=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-island.png'),island.toPNG());
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }

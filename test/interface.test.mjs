@@ -360,3 +360,14 @@ test('a player can inspect a live coastal creature and Escape restores colony se
  const saved=starterWorld();saved.state.enemies=[{id:9500,kind:'guard',x:16,z:4,hp:300,maxHp:300,speed:0,cooldown:0}];
  const h=harness(saved);try{h.$('resume').click();h.point('pointerdown',16,4);assert.equal(h.$('intel-title').textContent,'Shell guard');assert.match(h.$('intel-desc').textContent,/0.65/);assert.ok(h.$('upgrade-turret').hidden);assert.equal(h.$('creature-back').hidden,false);h.key('Escape');assert.equal(h.$('creature-back').hidden,true);assert.equal(h.$('intel-title').textContent,'Lighthouse');}finally{await h.close();}
 });
+
+
+test('new island controls expose automatic light and allow resuming after manual aiming',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();assert.equal(h.$('auto-light').hidden,false);
+  assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAuto,true);
+  h.$('aim-light').click();h.point('pointerdown',20,6);
+  assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAuto,false);
+  h.$('auto-light').click();assert.equal(h.save().buildings.find(b=>b.type==='hq').lighthouseAuto,true);
+ }finally{await h.close();}
+});

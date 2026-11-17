@@ -8,7 +8,7 @@ Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven*
 
 ## The expedition
 
-New expeditions place the lighthouse on a rocky northern headland, with waves and shoreline foam around it and industry inland. Existing saved worlds keep their original layout; start a new coastal expedition to use the coastal map. Keep the lighthouse standing through 25 swarms. Mine ore, route conveyors into smelters and assemblers, deliver supplies to the lighthouse and fortify your industry. Starter buildings are in your personal inventory. Field training walks through the first production line; it can be skipped. Continue in endless mode after victory.
+New expeditions use a large island within a 257 × 257 build grid, with more than twice the dry land of the former coastal map. The central lighthouse automatically tracks incoming coastal attacks with a broad beam. Separated mineral seams and open factory ground leave room to expand. Existing saved worlds keep their original layout; start a new expedition to use the island map. Keep the lighthouse standing through 25 swarms. Mine ore, route conveyors into smelters and assemblers, deliver supplies to the lighthouse and fortify your industry. Starter buildings are in your personal inventory. Field training walks through the first production line; it can be skipped. Continue in endless mode after victory.
 
 - **WASD / arrows:** pan; hold Shift to move faster. Mouse wheel or +/− zooms; clicking the minimap moves the camera.
 - **Z / X / C / V:** production, defense, power, logistics. Number keys select a blueprint.
@@ -23,7 +23,7 @@ New expeditions place the lighthouse on a rocky northern headland, with waves an
 
 ## Coastal hostiles and the lighthouse
 
-The beam reaches 40 tiles in a 40-degree cone. Defenses can acquire illuminated targets at 120% of their ordinary range; it does not increase damage, projectile splash or range against unlit targets. The minimap shows the actual bearing while the lantern turns.
+On new islands the base beam reaches 128 tiles across a 72-degree sector and automatically aims at the threatened coast before and during each wave. Upgrades improve reach, sector width and turning speed. L takes manual control; Resume auto light restores automatic tracking. Existing worlds retain their 40-tile, 40-degree beam. Defenses can acquire illuminated targets at 120% of their ordinary range; it does not increase damage, projectile splash or range against unlit targets. The minimap shows the actual bearing while the lantern turns.
 
 | Species | Threat | Light response |
 | --- | --- | --- |

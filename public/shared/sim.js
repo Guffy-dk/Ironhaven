@@ -1,8 +1,8 @@
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
-import {coastalLand,establishCoast} from './coast.js';
+import {coastalLand,establishIsland,islandLanding} from './coast.js';
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
-import {turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
+import {attackBearing,turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
 
 import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination} from './hostiles.js';
 
@@ -27,7 +27,7 @@ export function waveForecast(s,wave=s.wave+1){
  return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
- hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:'The coastal lighthouse is your survival objective, power source and shared store. Deliver supplies here. Press L and aim its lantern: illuminated hostiles grant defenses 20% extra range and expose armored marine creatures.'},
+ hq:{name:'Lighthouse',hp:2400,power:0,cost:{},desc:'The coastal lighthouse is your survival objective, power source and shared store. Deliver supplies here. On island expeditions its broad lantern automatically follows the incoming attack; upgrades improve reach, coverage and turning. Press L to take manual control, then Resume auto light to restore tracking: illuminated hostiles grant defenses 20% extra range and expose armored marine creatures.'},
  belt:{name:'Conveyor',hp:65,power:0,cost:{wood:1},desc:'A motor-driven rubber conveyor carries four spaced cargo loads toward its gold output arrow. Supports bends and side feeds. Press R over an existing belt to turn its output.'},
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:'A steel-framed coastal drilling rig. Place it on blue-grey iron seams; its rotating drill produces ore every 1.6 seconds. Route the gold output to a smelter.'},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:'A brick furnace workshop with a chimney and glowing firebox. Feed iron or copper ore into a cyan input. Iron takes 1.6 seconds and copper 2 seconds; plates or copper leave the gold output.'},
@@ -375,7 +375,7 @@ export function createExpedition(name,{difficulty,skipTutorial=false,swarmSeed=0
  if(swarmSeed)state.swarmSeed=swarmSeed;
  for(const b of state.buildings)if(b.type!=='hq')packBuilding(player,b);
  state.buildings=state.buildings.filter(b=>b.type==='hq');
- establishCoast(state);
+ establishIsland(state);
  if(!skipTutorial)state.tutorialStep=0;
  updatePower(state);
  return {state,playerId:player.id};
@@ -462,7 +462,7 @@ export function planRoute(s,type,start,end,dir=0){
  const first=grid.get(key(start.x,start.z)),last=grid.get(key(end.x,end.z));
  // Existing conveyors can be endpoints. A route cannot replace a crossing conveyor.
  const allowed=(x,z)=>{
-  if(Math.abs(x)>BUILD_EDGE||Math.abs(z)>BUILD_EDGE||blocked.has(key(x,z)))return false;
+  if(Math.abs(x)>BUILD_EDGE||Math.abs(z)>BUILD_EDGE||!coastalLand(s.terrain,x,z)||blocked.has(key(x,z)))return false;
   const b=grid.get(key(x,z));
   if(!b)return true;
   if(type==='wall')return b.type==='wall';
@@ -547,11 +547,16 @@ export function command(s,playerId,cmd){
   s.status='playing';s.paused=false;s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;return null;
  }
  if(s.status!=='playing')return 'The expedition has ended';
+ if(cmd.type==='autoLighthouse'){
+  const core=s.buildings.find(b=>b.type==='hq');if(!core?.islandBeacon)return 'Automatic light requires an island beacon';
+  core.lighthouseAuto=true;return null;
+ }
  if(cmd.type==='aimLighthouse'){
   const core=s.buildings.find(b=>b.type==='hq');
   if(!core)return 'The lighthouse has fallen';
   if(!routeTile(cmd)||cmd.x===core.x&&cmd.z===core.z)return 'Choose a direction away from the lighthouse';
   core.lighthouseAim=Math.atan2(cmd.x-core.x,cmd.z-core.z);
+  if(core.islandBeacon)core.lighthouseAuto=false;
   if(s.tutorialStep===7)s.tutorialAimIssued=true;
   return null;
  }
@@ -559,6 +564,7 @@ export function command(s,playerId,cmd){
   if(p!==s.players[0]||s.tutorialStep===undefined)return 'Only the host can finish active training';
   if(cmd.skip!==true&&s.tutorialStep!==TUTORIAL_STEPS.length-1)return 'Complete the current training task first';
   delete s.tutorialStep;
+  const beacon=s.buildings.find(b=>b.type==='hq');if(beacon?.islandBeacon)beacon.lighthouseAuto=true;
   s.enemies=s.enemies.filter(e=>!e.training);
   s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;
   return null;
@@ -773,6 +779,7 @@ function spawnWave(s){
    x=sx*(SWARM_SPAWN_EDGE-(i%2?inset:0));
    z=sz*(SWARM_SPAWN_EDGE-(i%2?0:inset));
   }
+  if(s.terrain.coast?.kind==='island')({x,z}=islandLanding(s.terrain,attackBearing(side)+(random()*2-1)*.18,1.5+random()*2));
   const coreHunter=i<coreHunters;
   const mutation=!coreHunter&&waveMutation&&random()<.22?waveMutation:null;
   const kind=coreHunter?'drowned':waveKind(s.wave,i,count),species=HOSTILES[kind];
@@ -795,6 +802,7 @@ function hunterForest(s){
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
  const hq=s.buildings.find(b=>b.type==='hq');
+ if(hq?.islandBeacon&&hq.lighthouseAuto)hq.lighthouseAim=attackBearing(s.enemies.some(e=>!e.training)?s.waveSide:waveForecast(s).side);
  turnLighthouse(hq,dt);
  const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
  for(const e of s.enemies)exposeHostile(e,lit.has(e),dt);
@@ -927,7 +935,7 @@ export function step(s,dt=STEP){
 export function planMove(s,ids,dx,dz){
  if(!Array.isArray(ids)||ids.length>s.buildings.length||!ids.length||ids.some(id=>!Number.isInteger(id))||!Number.isInteger(dx)||!Number.isInteger(dz))return{error:'Invalid selection or move offset',valid:[],invalid:[]};
  const selected=s.buildings.filter(b=>ids.includes(b.id));if(s.enemies.length&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse cannot be relocated during an active swarm',valid:[],invalid:[]};if(selected.some(b=>s.time-(b.lastHit??-100)<5))return{error:'Recently attacked buildings cannot be relocated for five seconds',valid:[],invalid:[]};if(selected.length!==new Set(ids).size)return{error:'Selection changed. Select the buildings again.',valid:[],invalid:[]};
- if(s.terrain.coast&&(dx||dz)&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse is anchored to the headland',valid:[],invalid:[]};
+ if(s.terrain.coast&&(dx||dz)&&selected.some(b=>b.type==='hq'))return{error:'The lighthouse is anchored to its foundation',valid:[],invalid:[]};
  const stationary={...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))},valid=[],invalid=[];
  for(const b of selected){let reason;if(b.type==='hq'){reason=Math.abs(b.x+dx)>BUILD_EDGE||Math.abs(b.z+dz)>BUILD_EDGE?'Lighthouse is outside the construction zone':stationary.buildings.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Lighthouse destination is occupied':s.terrain.trees.some(v=>v.x===b.x+dx&&v.z===b.z+dz)||s.terrain.rocks.some(v=>v.x===b.x+dx&&v.z===b.z+dz)?'Clear the lighthouse destination first':null;}else reason=placementError(stationary,b.type,b.x+dx,b.z+dz);
   (reason?invalid:valid).push({id:b.id,type:b.type,x:b.x+dx,z:b.z+dz,reason});

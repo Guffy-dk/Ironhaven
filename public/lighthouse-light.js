@@ -10,10 +10,10 @@ export class LighthouseLight{
   this.light.position.y=2.22;this.light.castShadow=true;
   this.light.shadow.mapSize.set(1024,1024);this.light.shadow.normalBias=.025;this.light.shadow.bias=-.00015;
   this.object.add(this.light);scene.add(this.light.target);
-  const positions=[],uv=[],segments=48,near=.12,far=LIGHTHOUSE_REACH;
+  const positions=[],uv=[],segments=48,near=.12,far=160;
   for(let i=0;i<segments;i++){
    const a=i*Math.PI*2/segments,b=(i+1)*Math.PI*2/segments;
-   const point=(angle,d)=>[Math.cos(angle)*(.065+d*Math.tan(LIGHTHOUSE_CONE*.35)),Math.sin(angle)*(.055+d*.01)-d*.032,d];
+   const point=(angle,d)=>[Math.cos(angle)*(.065+d*Math.tan(Math.PI/5*.35)),Math.sin(angle)*(.055+d*.004)-d*.008,d];
    for(const [angle,d,v] of [[a,near,0],[b,near,0],[b,far,1],[a,near,0],[b,far,1],[a,far,1]]){
     positions.push(...point(angle,d));uv.push(angle/(Math.PI*2),v);
    }
@@ -38,7 +38,8 @@ export class LighthouseLight{
  sync(core,beam,time,low){
   this.object.visible=!!beam;if(!beam)return;
   this.object.position.set(core.x,0,core.z);this.object.rotation.y=Math.atan2(beam.dx,beam.dz);
-  this.light.target.position.set(core.x+beam.dx*LIGHTHOUSE_REACH,.12,core.z+beam.dz*LIGHTHOUSE_REACH);this.light.target.updateMatrixWorld();
+  this.light.target.position.set(core.x+beam.dx*beam.reach,.12,core.z+beam.dz*beam.reach);this.light.target.updateMatrixWorld();
+  this.light.distance=beam.reach+4;this.light.angle=beam.cone;this.light.intensity=500;this.volume.scale.set(beam.reach/160*Math.tan(beam.cone*.35)/Math.tan(Math.PI/5*.35),1,beam.reach/160);
   this.light.castShadow=!low;this.volume.visible=!low;this.volume.material.uniforms.time.value=time;
  }
 }

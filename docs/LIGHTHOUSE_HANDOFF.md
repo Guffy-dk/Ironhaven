@@ -22,3 +22,7 @@ Use Node.js 22 or later, `npm ci`, `npm test` and `npm run build`. On Windows ru
 ## Fidelity and coast follow-up
 
 The first released-candidate creature shapes were rejected by the user as too simple. The follow-up sculpts continuous anatomy in Blender, adds UV-preserved CC0 anatomical bases and PBR material surfaces, animated appendages and dynamic shadows, provides live creature inspection, moves new-expedition lighthouses to a headland and adds actual beacon lighting, fog scattering and HDR glow. The old candidate was never tagged or published; patcher latest remained 0.13.3 throughout the rework.
+
+## Island release 0.15.0
+
+New expeditions use `establishIsland`, a 257×257 build grid and a central auto-tracking lighthouse. Existing headland and inland worlds retain their original terrain, lighthouse bearing rules and 40-tile beam. Island spawns use the shared shoreline definition and stay offshore; water foam uses the same island formula. Base island coverage is 128 tiles / 72 degrees, with range, cone and turning upgrades. Manual aiming disables automatic tracking; Resume auto light and finishing tutorial restore it. Mineral fields remain buildable by ordinary structures, use low chips, and are highlighted only while choosing their mining machine. The Windows smoke workflow also captures the full island.

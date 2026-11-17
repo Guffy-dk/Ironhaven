@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,warehouseCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
+import {BUILD_EDGE,createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,warehouseCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
 import {parseSave} from '../public/shared/saves.js';
 const make=()=>{const s=createGame();s.nextWave=9999;return{s,p:addPlayer(s)};};
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=10000000;};
@@ -26,7 +26,7 @@ test('invalid iron relocation is atomic unless overridden, then invalid drill is
 });
 test('occupied destinations and an invalid core cannot silently destroy the colony',()=>{
  const{s,p}=make(),core=s.buildings[0];const before=JSON.stringify(s);
- assert.match(command(s,p.id,{type:'moveArea',ids:[core.id],dx:120,dz:0,override:true}),/lighthouse cannot be removed/);assert.equal(JSON.stringify(s),before);
+ assert.match(command(s,p.id,{type:'moveArea',ids:[core.id],dx:BUILD_EDGE+1,dz:0,override:true}),/lighthouse cannot be removed/);assert.equal(JSON.stringify(s),before);
  const t=s.buildings.find(b=>b.type==='turret');assert.ok(planMove(s,[t.id],-t.x,-t.z).invalid.length);assert.match(command(s,p.id,{type:'moveArea',ids:[t.id],dx:-t.x,dz:-t.z}),/cannot be placed/);
 });
 test('every new factory consumes its exact ingredients and delivers a useful processed material',()=>{

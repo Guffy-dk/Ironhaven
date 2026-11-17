@@ -251,7 +251,7 @@ export class View{
  constructor(canvas){
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0x172d31);this.scene.fog=new T.FogExp2(0x172d31,.011);
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.18;
-  this.camera=new T.OrthographicCamera(-20,20,20,-20,.1,180);this.center=new T.Vector3(0,0,0);this.zoom=14;this.camera.position.set(0,32,27);this.camera.lookAt(0,0,0);
+  this.camera=new T.OrthographicCamera(-20,20,20,-20,.1,1040);this.center=new T.Vector3(0,0,0);this.zoom=14;this.camera.position.set(0,32,27);this.camera.lookAt(0,0,0);
   this.sky=new T.HemisphereLight(0xd5e3c4,0x294548,2.2);this.scene.add(this.sky);const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-95,right:95,top:95,bottom:-95,far:245});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
   const fill=new T.DirectionalLight(0x83b8b2,1.3);fill.position.set(15,12,-20);this.scene.add(fill);this.fill=fill;
   this.ground=new T.Group();this.scene.add(this.ground);this.terrain=new T.Group();this.scene.add(this.terrain);
@@ -274,7 +274,7 @@ export class View{
   this.composer.addPass(new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.35,.42,2.2));this.composer.addPass(new OutputPass());
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
-  this.coastalHostiles=new CoastalHostiles(this.scene);
+  this.coastalHostiles=new CoastalHostiles(this.scene);this.depositHighlights=new Map();
   this.reserveBeltCargo(256);
   this.enemyBody=new T.InstancedMesh(geometry('box',.3,.48,.24),mat(0xc18a74),500);this.enemyHead=new T.InstancedMesh(geometry('box',.24,.24,.24),mat(0xc7b696),500);this.enemyLegs=new T.InstancedMesh(geometry('box',.11,.25,.13),mat(0x3e4b47),2000);for(const m of [this.enemyBody,this.enemyHead,this.enemyLegs]){m.instanceMatrix.setUsage(T.DynamicDrawUsage);m.count=0;m.frustumCulled=false;this.scene.add(m);}this.dummy=new T.Object3D();this.projected=new T.Vector3();this.enemyColor=new T.Color();this.renderPosition={x:0,z:0};this.routeMesh=null;this.routeKey='';this.areaMesh=null;this.areaKey='';
   this.resize();window.addEventListener('resize',()=>this.resize());
@@ -342,7 +342,7 @@ export class View{
   if(!bs.length)return;const mesh=new T.InstancedMesh(new T.RingGeometry(.48,.55,4,1,Math.PI/4),new T.MeshBasicMaterial({color:0x89d8df,side:T.DoubleSide,transparent:true,opacity:.85,depthTest:false}),bs.length);
   bs.forEach((b,i)=>{this.dummy.position.set(b.x,.3,b.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.areaMesh=mesh;this.scene.add(mesh);
  }
- setTool(type,dir=0,neighbors=[]){this.previewRange.visible=false;this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
+ setTool(type,dir=0,neighbors=[]){this.miningTool=type;for(const [kind,mesh] of this.depositHighlights??[])mesh.visible=kind===type;this.previewRange.visible=false;this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
   if(type&&!['demolish','repair'].includes(type)){this.ghost=makeModel(type,dir,neighbors,1,this.style);this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
  }
  hover(cell,valid,tool,radius=0){this.cursor.visible=!!cell&&!!tool;this.previewRange.visible=!!cell&&radius>0;
@@ -364,8 +364,9 @@ export class View{
  staticTerrain(s){
   this.renderer.shadowMap.needsUpdate=true;
   const quarry=this.style==='quarry';
-  this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.shoreZ??'inland'}`;
+  this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
+  this.depositHighlights.clear();
   const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?240:104,s.terrain.coast?240:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
   const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x91816c),albedoTint=new T.Color(0xe8e1d5);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
@@ -382,12 +383,17 @@ export class View{
   const ground=new T.Mesh(groundGeometry,quarry?quarryTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
   ground.receiveShadow=true;this.ground.add(ground);let i=0;
   if(s.terrain.coast){
-   const coastRocks=[];for(let x=-23;x<=23;x+=.85)for(let z=-16;z<2;z+=.85){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
+   const coastRocks=[];for(let x=s.terrain.coast.kind==='island'?-120:-23;x<=(s.terrain.coast.kind==='island'?120:23);x+=1.4)for(let z=s.terrain.coast.kind==='island'?-115:-16;z<(s.terrain.coast.kind==='island'?115:2);z+=1.4){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
    const stone=quarryStoneSurface(),cliff=new T.InstancedMesh(stone.shape,stone.material,coastRocks.length),tint=new T.Color();
    coastRocks.forEach((p,i)=>{this.dummy.position.set(p.x,p.y-.12,p.z);this.dummy.rotation.set(rand()*.4,rand()*6,rand()*.35);this.dummy.scale.set(.38+rand()*.4,.3+rand()*.3,.36+rand()*.4);this.dummy.updateMatrix();cliff.setMatrixAt(i,this.dummy.matrix);cliff.setColorAt(i,tint.setHex(0x757970).multiplyScalar(.75+rand()*.35));});
    cliff.castShadow=true;cliff.receiveShadow=true;this.terrain.add(cliff);
   }
 
+  for(const [type,resource,tint] of [['drill','ore',0x92c2c7],['copperDrill','copper',0xe4b27b],['coalMine','coal',0xa3a6bc]]){
+   const tiles=s.terrain[resource]??[],overlay=new T.InstancedMesh(new T.PlaneGeometry(.84,.84).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:tint,transparent:true,opacity:.23,depthWrite:false}),tiles.length);
+   tiles.forEach((p,i)=>{this.dummy.position.set(p.x,.012,p.z);this.dummy.rotation.set(0,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();overlay.setMatrixAt(i,this.dummy.matrix);});
+   overlay.visible=this.miningTool===type;this.depositHighlights.set(type,overlay);this.terrain.add(overlay);
+  }
   const grass=new T.InstancedMesh(geometry('cone',quarry?.075:.12,.25,3),mat(quarry?0x8a8051:0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12||!coastalLand(s.terrain,x,z))continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
   const groves=new Map();
   for(const tree of s.terrain.trees){const chunk=key(Math.floor(tree.x/24),Math.floor(tree.z/24));if(!groves.has(chunk))groves.set(chunk,[]);groves.get(chunk).push(tree);}
@@ -440,7 +446,7 @@ export class View{
    const scatter=new T.InstancedMesh(shape,material,patch.length*3);
    let index=0;
    for(const {x,z} of patch)for(let fragment=0;fragment<3;fragment++){
-   const base=fragment===0,size=base?.35+random()*.16:.08+random()*.21;
+   const base=fragment===0,size=base?.16+random()*.09:.035+random()*.07;
    pose.position.set(x+(random()-.5)*(base?.47:.83),base?.062:.051+size*.17,z+(random()-.5)*(base?.47:.83));
    pose.rotation.set(random()*.4,random()*6,random()*.31);
    pose.scale.set(size*1.16,size*(base?.39:.56),size*.88);pose.updateMatrix();
@@ -477,7 +483,7 @@ export class View{
   this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
   this.coastalWater.sync(s.terrain,time,beam);
   if(beam&&heading!==this.lastLightHeading){this.lastLightHeading=heading;this.renderer.shadowMap.needsUpdate=true;}
-  if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
+  if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
   const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
   if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
@@ -594,7 +600,8 @@ export class View{
  }
  draw(){
   const quarry=this.style==='quarry';
-  if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).add(quarry?QUARRY_CAMERA:CAMERA_OFFSET);
+  if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).addScaledVector(quarry?QUARRY_CAMERA:CAMERA_OFFSET,Math.max(1,(this.zoom??14)/20));
+  if(this.scene.fog)this.scene.fog.density=(quarry?.0065:.011)/Math.max(1,(this.zoom??14)/20);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   if(quarry&&this.renderer.shadowMap.enabled){
    const x=Math.round(this.center.x/6)*6,z=Math.round(this.center.z/6)*6;
