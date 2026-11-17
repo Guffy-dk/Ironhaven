@@ -32,11 +32,6 @@ export function hostileDamage(e,damage){
 export function hostileDestination(e,core,beam,target,out){
  const kind=hostileKind(e);
  if(e.illuminated&&e.lightResponse>0&&beam){
-  if(kind==='runner'){
-   // Scuttle to the nearer flank of the beam rather than retreating off the map.
-   const side=((e.x-core.x)*beam.dz-(e.z-core.z)*beam.dx)>=0?1:-1;
-   out.x=e.x+beam.dz*side*5;out.z=e.z-beam.dx*side*5;return out;
-  }
   if(kind==='drowned'){
    // Approach the light source; the player can draw them away from industry.
    return core;
@@ -44,3 +39,6 @@ export function hostileDestination(e,core,beam,target,out){
  }
  return target;
 }
+
+// A short slowdown helps defenses keep a wave together instead of forcing flank walls.
+export function hostileMoveMultiplier(e){return hostileKind(e)==='runner'&&e.illuminated&&e.lightResponse>0?.75:1;}

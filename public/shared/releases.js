@@ -1,9 +1,17 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.15.0';
+export const CURRENT_VERSION = '0.15.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.15.1',date:'2026-11-17',title:'Hold the line',
+  changes:[
+   'Shore runners no longer flee sideways from the lantern. Light briefly slows them by 25% while they continue toward their ordinary target, helping early defenses hold one approach rather than splitting the first wave around both flanks.',
+   'The slowing response lasts 1.4 seconds with a 10-second response cooldown. Drowned attraction, armor exposure, mist clearing and the 20% lit defense range bonus remain intact.',
+   'Update field training, the field guide and creature descriptions to explain slowing instead of fear. Add regression coverage proving all five species route around tree tiles, cannot cut blocked corners, and can use a passage after felling.'
+  ]
+ },
  {
   version:'0.15.0',date:'2026-11-17',title:'Island beacon',
   changes:[

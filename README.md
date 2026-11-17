@@ -27,13 +27,13 @@ On new islands the base beam reaches 128 tiles across a 72-degree sector and aut
 
 | Species | Threat | Light response |
 | --- | --- | --- |
-| Shore runner | Fast crab-like raider | Briefly scatters sideways out of the beam |
+| Shore runner | Fast crab-like raider | Briefly slows by 25% in the beam, retaining its approach direction |
 | Drowned | Slow industrial raider | Briefly abandons nearby industry and approaches the lighthouse |
 | Shell guard | Heavy melee unit; receives half damage through closed armor | 0.65 seconds of exposure removes armor protection; darkness restores it |
 | Fog spitter | Ranged attack from 5.5 tiles; mist reduces acquisition range around unlit targets to 82% | Lighting the spitter clears its mist; lighting an individual target bypasses it |
 | Abyss walker | Large lighthouse hunter, every fifth swarm | One second of exposure removes its 25% damage reduction |
 
-Runners, Drowned and guards appear from the first swarm; spitters arrive in swarm four. Fear and attraction have limited durations and a ten-second response cooldown so a single fixed beam cannot indefinitely pin a wave. Existing core hunters remain part of the wave composition. Old saved enemies gain compatible species rendering without replacing their health or position.
+Runners, Drowned and guards appear from the first swarm; spitters arrive in swarm four. Slowing and attraction have limited durations and a ten-second response cooldown so a single fixed beam cannot indefinitely pin a wave. Existing core hunters remain part of the wave composition. Old saved enemies gain compatible species rendering without replacing their health or position.
 
 Blender-authored creature meshes have continuous sculpted anatomy, textured shell, wet skin, oilskin fabric and bone/chitin, distance LODs, animated appendages, UV-preserved anatomical bases, contact shadows and dynamic high-quality shadows. Six production/workshop types use new Blender-authored brick architecture; upgrades add visible structural equipment. The approved realistic industrial art direction and creature concept sheet are in [docs/design/ART_DIRECTION.md](docs/design/ART_DIRECTION.md). Concept illustrations establish the art direction and are not runtime screenshots. The release includes coastal overview and close-up creature images captured from the actual Windows package.
 

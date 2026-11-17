@@ -4,7 +4,7 @@ import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
 import {attackBearing,turnLighthouse,lighthouseBeam,isInLighthouseBeam,LIT_RANGE_MULTIPLIER} from './lighthouse.js';
 
-import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination} from './hostiles.js';
+import {HOSTILES,hostileKind,waveKind,exposeHostile,hostileDamage,hostileDestination,hostileMoveMultiplier} from './hostiles.js';
 
 export const SIZE = MAP_SIZE, STEP = .05, MAX_PLAYERS = 4, FINAL_WAVE = 25;
 export {BUILD_EDGE};
@@ -901,7 +901,7 @@ export function step(s,dt=STEP){
   }
   target=hostileDestination(e,hq,beam,target,enemyDestination);
   const kind=hostileKind(e),attackRange=HOSTILES[kind].range;
-  const d=dist(e,target),move=e.speed*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
+  const d=dist(e,target),move=e.speed*hostileMoveMultiplier(e)*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
   if(kind==='spitter'&&d<=attackRange&&e.cooldown<=0&&target.hp>0){
    target.hp-=10*(e.damage||1);target.lastHit=s.time;e.cooldown=2.4;
    s.shots.push({x:e.x,z:e.z,tx:target.x,tz:target.z,time:s.time,hostile:true});
