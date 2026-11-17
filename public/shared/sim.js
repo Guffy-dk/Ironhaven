@@ -802,7 +802,7 @@ function hunterForest(s){
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
  const hq=s.buildings.find(b=>b.type==='hq');
- if(hq?.islandBeacon&&hq.lighthouseAuto&&s.tutorialStep===undefined)hq.lighthouseAim=attackBearing(s.enemies.length?s.waveSide:waveForecast(s).side);
+ if(hq?.islandBeacon&&hq.lighthouseAuto)hq.lighthouseAim=attackBearing(s.enemies.some(e=>!e.training)?s.waveSide:waveForecast(s).side);
  turnLighthouse(hq,dt);
  const beam=lighthouseBeam(hq),lit=new Set(s.enemies.filter(e=>isInLighthouseBeam(beam,e)));
  for(const e of s.enemies)exposeHostile(e,lit.has(e),dt);

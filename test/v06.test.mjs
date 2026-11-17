@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {addPlayer,command,createGame,step,waveForecast,inventoryCount,SAVE_SCHEMA,key} from '../public/shared/sim.js';
+import {SWARM_SPAWN_EDGE} from '../public/shared/woodland.js';
 import {factoryStatus} from '../public/shared/diagnostics.js';
 import {parseSave} from '../public/shared/saves.js';
 
 test('all 25 swarms begin at the expanded map edge',()=>{
- const corner=(sx,sz)=>e=>(e.x===sx*90||e.z===sz*90)&&e.x*sx>60&&e.z*sz>60;
- const onEdge=[e=>e.x===-90,e=>e.z===-90,e=>e.x===90,e=>e.z===90,corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)];
+ const corner=(sx,sz)=>e=>(e.x===sx*SWARM_SPAWN_EDGE||e.z===sz*SWARM_SPAWN_EDGE)&&e.x*sx>SWARM_SPAWN_EDGE-30&&e.z*sz>SWARM_SPAWN_EDGE-30;
+ const onEdge=[e=>e.x===-SWARM_SPAWN_EDGE,e=>e.z===-SWARM_SPAWN_EDGE,e=>e.x===SWARM_SPAWN_EDGE,e=>e.z===SWARM_SPAWN_EDGE,corner(1,-1),corner(1,1),corner(-1,1),corner(-1,-1)];
  for(let wave=1;wave<=25;wave++){
   const state=createGame(),player=addPlayer(state);
   state.wave=wave-1;
