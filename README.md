@@ -27,8 +27,8 @@ On new islands the base beam reaches 128 tiles across a 72-degree sector and aut
 
 | Species | Threat | Light response |
 | --- | --- | --- |
-| Shore runner | Fast crab-like raider | Briefly slows by 25% in the beam, retaining its approach direction |
-| Drowned | Slow industrial raider | Briefly abandons nearby industry and approaches the lighthouse |
+| Shore runner | Fast crab-like raider | Briefly slows by 15% in the beam, retaining its approach direction |
+| Drowned | Slow industrial raider | Briefly approaches the light source, including a nearby Harbor lamp |
 | Shell guard | Heavy melee unit; receives half damage through closed armor | 0.65 seconds of exposure removes armor protection; darkness restores it |
 | Fog spitter | Ranged attack from 5.5 tiles; mist reduces acquisition range around unlit targets to 82% | Lighting the spitter clears its mist; lighting an individual target bypasses it |
 | Abyss walker | Large lighthouse hunter, every fifth swarm | One second of exposure removes its 25% damage reduction |
@@ -74,3 +74,7 @@ npm run build
 This builds and tests the patcher, performs an isolated Windows startup smoke test, packages the game and writes the checksum manifest. Release versions come from `public/shared/releases.js`, `package.json` and `package-lock.json`; keep them in sync. Push a matching `v0.x.y` tag to run `.github/workflows/release.yml`. The release publishes **Ironhaven-Windows-x64.zip**, **Ironhaven-Patcher.exe** and **Ironhaven-Windows-manifest.json**. The patcher verifies the manifest's size and SHA-256 digest before installation. The release workflow installs the real published archive with the patcher test executable before promoting it to the latest patcher update.
 
 Automated tests do not establish reachability between two physical PCs. Player hardware performance needs separate validation.
+
+## Harbor lamps
+
+Use C then 3 to place a Harbor lamp. It costs 12 wood, 35 iron plates and 3 gears; needs 3 power; has 75 HP and a fixed level. Its six-tile light radius works independently of the lighthouse, with the same armor exposure, mist clearing and targeting benefits. Nearby creatures can deliberately attack it, including lighthouse hunters. Losing power or being destroyed removes its illumination. The placement preview shows coverage.

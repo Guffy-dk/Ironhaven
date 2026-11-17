@@ -44,7 +44,7 @@ test('Quarry models have finite geometry, distinct silhouettes and the same port
    let baseVertices=0,upgradedVertices=0;
    base.traverse(o=>{baseVertices+=o.geometry?.attributes.position.count||0;});
    quarry.traverse(o=>{upgradedVertices+=o.geometry?.attributes.position.count||0;});
-   assert.ok(upgradedVertices>baseVertices,`${type} upgrade must add visible structure`);
+   if(!TYPES[type].fixedLevel)assert.ok(upgradedVertices>baseVertices,`${type} upgrade must add visible structure`);
    for(const model of surfaces.filter(o=>o.material.map)){
     assert.equal(model.geometry.attributes.uv.count,model.geometry.attributes.position.count);
     assert.ok(model.material.bumpScale>0);
@@ -72,7 +72,7 @@ test('all building types show a distinct body color for each purchased upgrade',
  const swatches=Array.from({length:MAX_UPGRADES+1},(_,i)=>upgradeColor(i+1));
  assert.equal(new Set(swatches).size,MAX_UPGRADES+1);
  for(const [type,def] of Object.entries(TYPES)){
-  if(!def.hp)continue;
+  if(!def.hp||def.fixedLevel)continue;
   for(let level=2;level<=MAX_UPGRADES+1;level++){
    const expected=swatches[level-1].slice(1);
    const model=makeModel(type,1,[0,2],level);
@@ -131,7 +131,7 @@ test('north-up projection maps W up and A left',()=>{
 
 test('every coastal upgrade adds visible structure while workshop bases share authored Blender meshes',()=>{
  for(const [type,def] of Object.entries(TYPES)){
-  if(!def.hp||type==='turret')continue;
+  if(!def.hp||def.fixedLevel||type==='turret')continue;
   let previous=0;
   for(let level=1;level<=MAX_UPGRADES+1;level++){
    const model=makeModel(type,0,[],level,'quarry');let vertices=0;

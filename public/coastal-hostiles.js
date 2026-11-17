@@ -69,7 +69,7 @@ export class CoastalHostiles{
    const angle=old===undefined?target:old+Math.atan2(Math.sin(target-old),Math.cos(target-old))*(1-Math.exp(-dt*12));next.set(e.id,angle);
    const phase=time*p.frequency+e.id*.73,bob=Math.sin(phase)*.008;
    this.pose.position.set(at.x,p.height+bob+actorElevation(bounds?.terrain,at.x,at.z),at.z);this.pose.rotation.set(0,angle,0);this.pose.scale.setScalar(1);this.pose.updateMatrix();this.root.copy(this.pose.matrix);
-   const visible=isInLighthouseBeam(beam,at);this.tint.setScalar(visible?1.03:.9);
+   const visible=e.illuminated||isInLighthouseBeam(beam,at);this.tint.setScalar(visible?1.03:.9);
    group.meshes.body.setMatrixAt(index,this.root);group.meshes.body.setColorAt(index,this.tint);
    for(const [part,side] of [['clawLeft',-1],['clawRight',1]]){const mesh=group.meshes[part];if(!mesh)continue;const r=kind==='guard'?.44:.25,h=kind==='guard'?.32:.18,attack=Math.max(0,(e.cooldown||0)-.35);this.segment.position.set(side*r*.7,h-.05,.15);this.segment.rotation.set(-attack*.3,side*(Math.sin(phase*.35)*.035+attack*.28),side*attack*.15);this.segment.scale.setScalar(1);this.segment.updateMatrix();this.segment.matrix.premultiply(this.root);mesh.setMatrixAt(index,this.segment.matrix);mesh.setColorAt(index,this.tint);}
    for(const [part,sockets] of [['limbs',p.sockets],['arms',p.armSockets]]){

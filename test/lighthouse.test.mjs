@@ -65,7 +65,7 @@ test('lit runners briefly slow without flanking, Drowned approach the light; rea
  step(s);step(dark);const unlit=dark.enemies.find(e=>e.id===runner.id);
  const litDx=runner.x-8,litDz=runner.z,darkDx=unlit.x-8,darkDz=unlit.z;
  assert.ok(Math.abs(litDx*darkDz-litDz*darkDx)<1e-10,'Light must preserve the approach direction');
- assert.ok(Math.abs(Math.hypot(litDx,litDz)/Math.hypot(darkDx,darkDz)-.75)<1e-10);
+ assert.ok(Math.abs(Math.hypot(litDx,litDz)/Math.hypot(darkDx,darkDz)-.85)<1e-10);
  assert.ok(drowned.x<10);assert.ok(Math.abs(drowned.z)<.001);
  const reaction=enemy('runner',4,0);for(let i=0;i<80;i++)exposeHostile(reaction,true,.05);
  assert.equal(reaction.lightResponse,0);assert.ok(reaction.lightRest>0);

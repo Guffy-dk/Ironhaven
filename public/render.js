@@ -4,6 +4,7 @@ import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {coastalHeight,coastalLand} from './shared/coast.js';
+import {BaseLampLights,makeLampModel} from './base-lamps.js';
 import {CoastalWater} from './coastal-water.js';
 import {LighthouseLight} from './lighthouse-light.js';
 import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
@@ -52,6 +53,7 @@ function quarryStoneSurface(){
 }
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
 export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
+ if(type==='lamp')return makeLampModel(style);
  const quarry=style==='quarry';
  const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
  const painted=base=>!quarry&&level>1?upgradeColor(level):base;
@@ -269,7 +271,7 @@ export class View{
   this.blasts.frustumCulled=false;this.blasts.count=0;this.scene.add(this.blasts);
   this.dust=createQuarryEffects();this.scene.add(this.dust);
   this.coastalWater=new CoastalWater(this.scene,SIZE);
-  this.lighthouseLight=new LighthouseLight(this.scene);
+  this.lighthouseLight=new LighthouseLight(this.scene);this.baseLampLights=new BaseLampLights(this.scene);
   this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));
   this.composer.addPass(new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.35,.42,2.2));this.composer.addPass(new OutputPass());
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
@@ -481,7 +483,7 @@ export class View{
   const beam=lighthouseBeam(core,heading);
   this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
   this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
-  this.coastalWater.sync(s.terrain,time,beam);
+  this.coastalWater.sync(s.terrain,time,beam);this.baseLampLights.sync(s.buildings,this.center,this.zoom,!this.renderer.shadowMap.enabled);
   if(beam&&heading!==this.lastLightHeading){this.lastLightHeading=heading;this.renderer.shadowMap.needsUpdate=true;}
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
@@ -495,14 +497,15 @@ export class View{
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;
-    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern']){
+    for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern','bulb']){
      const part=g.getObjectByName(name);
      if(part){g.userData[name]=part;part.traverse(o=>{o.castShadow=false;});}
     }
     g.position.set(b.x,0,b.z);sizePortBadges(g,this.worldPerPixel,b.id===this.selected);
     this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
    }else if(g.position.x!==b.x||g.position.z!==b.z){g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
-   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon,lantern}=g.userData;
+   const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon,lantern,bulb}=g.userData;
+   if(bulb){bulb.material.emissiveIntensity=b.active?2.5:0;bulb.material.color.setHex(b.active?0xffdeb1:0x4b5148);}
    if(lantern)lantern.rotation.y=heading;
    if(rotor&&b.active)rotor.rotation.y=time*(GENERATORS[b.type]?5:2)*productionSpeed(b);
    if(capsule){const age=time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(time*3)*.03:0),0);}

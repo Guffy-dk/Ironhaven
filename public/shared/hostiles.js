@@ -41,4 +41,4 @@ export function hostileDestination(e,core,beam,target,out){
 }
 
 // A short slowdown helps defenses keep a wave together instead of forcing flank walls.
-export function hostileMoveMultiplier(e){return hostileKind(e)==='runner'&&e.illuminated&&e.lightResponse>0?.75:1;}
+export function hostileMoveMultiplier(e){return hostileKind(e)==='runner'&&e.illuminated&&e.lightResponse>0?.85:1;}
