@@ -499,7 +499,7 @@ function clearArea(){areaIds=[];movingArea=false;pasting=false;selectionGesture=
 function beginMove(){if(!areaIds.length)return;tool=null;view.setTool(null);movingArea=true;pasting=false;$('tool-hint').hidden=false;previewMove();}
 function copyArea(){
  const layout=copySetup(state,areaIds);
- if(!layout.length){toast('Select a building to copy. The core is unique.',true);return;}
+ if(!layout.length){toast('Select a building to copy. The lighthouse is unique.',true);return;}
  copiedSetup=layout;updateAreaTools();toast(layout.length+' buildings copied · Ctrl+V to place');
 }
 function beginPaste(){
