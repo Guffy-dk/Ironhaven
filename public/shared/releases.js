@@ -1,9 +1,20 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.18.0';
+export const CURRENT_VERSION = '0.19.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.19.0',date:'2026-11-18',title:'Smoother large colonies and close-range defense',
+  changes:[
+   'Reduce authored creature and workshop mesh data by 41% without removing vertices, changing their positions, losing UV detail or simplifying triangles. Use compact normal, color and index buffers.',
+   'Batch repeated static workshop parts into spatial groups to reduce rendering overhead in large factories. Preserve individual selection, level plates, outlines, shadows and building movement.',
+   'Reuse static shadows during distant swarms and lighthouse tracking. Close creature views retain animated shadows; distant creatures retain contact shadows. Render lamps and repeated workshops during loading and drain pending GPU work before play. Consolidate lamp fittings without removing detail or light sources.',
+   'Reuse building, woodland and sawmill spatial indexes in the simulation. Query nearby industrial targets in large colonies while preserving targeting order, movement, physical transport and save compatibility.',
+   'Give pulse turrets faster bursts, a wider close-range blast and stronger damage. Mortars retain longer reach and a larger blast; pulse defense requires more power and a steady ammunition supply.',
+   'Expand repeatable campaign playtests across map seeds, difficulty settings and defense compositions, including a single-gun control. Keep late turret component costs and the reduced drill and smelter upgrade gains.'
+  ]
+ },
  {
   version:'0.18.0',date:'2026-11-18',title:'Readable factories and paced progression',
   changes:[

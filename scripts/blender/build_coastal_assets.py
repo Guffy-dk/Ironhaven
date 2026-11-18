@@ -249,6 +249,8 @@ def main():
    all_objects.extend(objects)
   print(kind, {part:p['vertices'] for part,p in payload['species'][kind].items() if part!='low'},flush=True)
  (ROOT/'public/art/coastal-meshes.json').write_text(json.dumps(payload,separators=(',',':')))
+ import subprocess
+ subprocess.run(['node',str(ROOT/'scripts/pack-meshes.mjs'),str(ROOT/'public/art/coastal-meshes.json')],check=True)
  # Retain an editable native Blender source, with named rig-part objects.
  bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'docs/design/coastal-creatures.blend'),compress=True)
  print('Exported coastal species meshes and editable Blender source.',flush=True)

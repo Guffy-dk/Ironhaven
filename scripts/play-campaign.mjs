@@ -2,11 +2,14 @@
 // starter inventory and mined resources; no injected stock, health, kills or levels.
 import {writeFile,mkdir} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
-import {createExpedition,command,step,RESOURCE_KEYS,TYPES,maxHp,upgradeCost,upgradeLocked,TURRETS,storageUsed,storageCapacity,key,DIRS,waveForecast} from '../public/shared/sim.js';
+import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';
+const {createExpedition,command,step,RESOURCE_KEYS,TYPES,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,key,DIRS,waveForecast}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
 await mkdir('work',{recursive:true});
-const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry';
-const {state:s,playerId:host}=createExpedition('Campaign pilot',{skipTutorial:true,swarmSeed:seed});
-const plans=[],reserved=new Set(),rows=[];let built=0,repairs=0,upgrades=0;
+const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',difficulty=process.argv[4]||'standard';
+if(!Object.hasOwn(DIFFICULTIES,difficulty)||!['industry','single','pulse','no_artillery'].includes(policy))throw Error('Use a known difficulty and industry/single/pulse/no_artillery policy');
+const suffix=difficulty==='standard'?'':'-'+difficulty;
+const {state:s,playerId:host}=createExpedition('Campaign pilot',{skipTutorial:true,swarmSeed:seed,difficulty});
+const plans=[],reserved=new Set(),rows=[];let built=0,repairs=0,upgrades=0,lastKills=0,lastKillTime=0;
 const add=(type,x,z,dir=0)=>{plans.push({type,x,z,dir});reserved.add(key(x,z));};
 // One physical receiving warehouse and numbered hub supply the three recipes.
 for(const t of [['drill',4,3,2],['smelter',3,3,2],['storage',2,3,2],['splitter',1,3,2],['assembler',0,3,2],['storage',-1,3,2],['sawmill',7,6,0],['sawmill',8,6,0],['sawmill',8,7,0],['generator',3,-2,0],['generator',3,-3,0],['generator',3,-4,0]])add(...t);
@@ -15,7 +18,7 @@ for(const t of [['drill',4,5,2],['smelter',3,5,2],['storage',2,5,3],['belt',2,4,
 for(const z of [-7,-5])for(const t of [['drill',-13,z,0],['smelter',-12,z,0],['storage',-11,z,0],['assembler',-10,z,0],['storage',-9,z,0]])add(...t);
 for(const t of [['drill',-13,-9,0],['smelter',-12,-9,0],['storage',-11,-9,0],['foundry',-10,-9,0],['storage',-9,-9,0]])add(...t);
 for(const [x,z]of [[-12,-12],[0,-14],[12,-12],[-14,0],[14,0],[-12,12],[0,14],[12,12]])add('gunTurret',x,z);
-for(const [x,z]of [[-6,0],[6,0],[0,-6],[0,6]])add('gunTurret',x,z);
+for(const [x,z]of [[-6,0],[6,0],[0,-6],[0,6]])add(policy==='pulse'?'pulseTurret':'gunTurret',x,z);
 for(const [x,z]of [[-6,-7],[6,-7],[-7,6],[6,7]])add('mortar',x,z);
 // Route copper to an input of the circuit assembler, steel to the component factory.
 function path(start,goal){const queue=[start],seen=new Map([[key(start.x,start.z),null]]);let end;
@@ -31,8 +34,10 @@ const initialPlans=plans.length,attempted=new Set();
 function send(cmd){return command(s,host,cmd);}
 function at(x,z){return s.buildings.find(b=>b.x===x&&b.z===z);}
 function exportAt(x,z,item){const b=at(x,z);if(b?.type==='storage'&&b.exportItem!==item)send({type:'configureWarehouse',id:b.id,x,z,item});}
+function covered(x,z){return s.buildings.some(b=>TURRETS.includes(b.type)&&b.hp>0&&Math.hypot(b.x-x,b.z-z)<turretStats(b).range);}
 function act(){
- for(const p of plans){if(at(p.x,p.z))continue;if(policy==='single'&&s.enemies.length)continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
+ const stalled=s.enemies.length&&s.time-lastKillTime>120;
+ for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
   if(policy!=='single'&&p.type==='gunTurret'&&(!at(0,3)||s.resources.plate<60))continue;
   if(policy==='single'&&TURRETS.includes(p.type)&&!(p.x===3&&p.z===0))continue;
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
@@ -52,6 +57,8 @@ function act(){
  exportAt(1,5,s.resources.steel>60&&s.resources.module<40&&at(-3,0)?'steel':null);
  // Restore lost infrastructure with normal construction; save some stock for ammunition.
  for(const b of s.buildings){
+  // Do not repair-feed an isolated raider forever; abandon uncovered industry.
+  if(stalled&&b.type!=='hq'&&!TURRETS.includes(b.type)&&!covered(b.x,b.z))continue;
   if((policy!=='single'||b.type==='hq'||TURRETS.includes(b.type))&&b.hp<maxHp(b)*.65&&s.resources.plate>=4){if(!send({type:'repair',x:b.x,z:b.z}))repairs++;}
  }
  const targets=s.buildings.filter(b=>['hq','drill','smelter','assembler','copperDrill','coalMine','foundry','circuitLab','componentFactory','generator','coalGenerator','storage','sawmill',...TURRETS].includes(b.type)).sort((a,b)=>(a.level||1)-(b.level||1)||a.id-b.id);
@@ -63,9 +70,9 @@ function act(){
 }
 const snapshots=[];const began=performance.now();let previousWave=0,maxStock=storageUsed(s);
 for(let ticks=0;ticks<20*15000&&s.status==='playing';ticks++){
- if(ticks%40===0)act();step(s);maxStock=Math.max(maxStock,storageUsed(s));
+ if(ticks%40===0)act();step(s);if(!s.enemies.length||s.totalKills!==lastKills){lastKills=s.totalKills;lastKillTime=s.time;}maxStock=Math.max(maxStock,storageUsed(s));
  if(s.wave!==previousWave){const snapshot={wave:s.wave,time:Math.round(s.time),kills:s.totalKills,resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),buildings:s.buildings.length,turrets:s.buildings.filter(b=>TURRETS.includes(b.type)).map(b=>({type:b.type,level:b.level})),coreHp:Math.round(s.buildings.find(b=>b.type==='hq')?.hp??0)};rows.push(snapshot);if([5,9,13,17,21,25].includes(s.wave))snapshots.push([s.wave,JSON.stringify({state:s,playerId:host})]);console.error(JSON.stringify({wave:s.wave,time:snapshot.time,buildings:snapshot.buildings,coreHp:snapshot.coreHp,gear:snapshot.resources.gear,module:snapshot.resources.module}));previousWave=s.wave;}
 }
-for(const [wave,save]of snapshots)await writeFile(`work/campaign-${policy}-${seed}-wave-${wave}.json`,save);
-const report={seed,policy,outcome:s.status,wave:s.wave,seconds:Math.round(s.time),kills:s.totalKills,built,repairs,upgrades,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),waves:rows,caveat:'A scripted simulation player, not a manual Windows playthrough. No resources, levels, kills or health injected.'};
-const file=`work/campaign-${policy}-${seed}.json`;await writeFile(file,JSON.stringify(report,null,2));await writeFile(`work/campaign-${policy}-${seed}-save.json`,JSON.stringify({state:s,playerId:host}));console.log(JSON.stringify({...report,waves:undefined,file},null,2));
+for(const [wave,save]of snapshots)await writeFile(`work/campaign-${policy}-${seed}${suffix}-wave-${wave}.json`,save);
+const report={seed,policy,difficulty,outcome:s.status,wave:s.wave,seconds:Math.round(s.time),kills:s.totalKills,built,repairs,upgrades,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),waves:rows,caveat:'A scripted simulation player, not a manual Windows playthrough. No resources, levels, kills or health injected.'};
+const file=`work/campaign-${policy}-${seed}${suffix}.json`;await writeFile(file,JSON.stringify(report,null,2));await writeFile(`work/campaign-${policy}-${seed}${suffix}-save.json`,JSON.stringify({state:s,playerId:host}));console.log(JSON.stringify({...report,waves:undefined,file},null,2));

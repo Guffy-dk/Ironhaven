@@ -1,3 +1,4 @@
+import {StructureInstances} from './structure-instances.js';
 import * as T from './vendor/three.module.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -270,7 +271,7 @@ export class View{
   this.sky=new T.HemisphereLight(0xd5e3c4,0x294548,2.2);this.scene.add(this.sky);const sun=new T.DirectionalLight(0xffd89c,3);sun.position.set(-14,27,13);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-95,right:95,top:95,bottom:-95,far:245});sun.shadow.bias=-.0005;sun.shadow.normalBias=.07;this.scene.add(sun);this.sun=sun;
   const fill=new T.DirectionalLight(0x83b8b2,1.3);fill.position.set(15,12,-20);this.scene.add(fill);this.fill=fill;
   this.ground=new T.Group();this.scene.add(this.ground);this.terrain=new T.Group();this.scene.add(this.terrain);
-  this.buildings=new Map();this.items=new Map();this.cellGrid=new Map();this.terrainKey='';this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),0);this.mouse=new T.Vector2();this.hit=new T.Vector3();this.selected=null;
+  this.buildings=new Map();this.structureInstances=new StructureInstances(this.scene);this.items=new Map();this.cellGrid=new Map();this.terrainKey='';this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),0);this.mouse=new T.Vector2();this.hit=new T.Vector3();this.selected=null;
   const grid=new T.GridHelper(SIZE,SIZE,0x8ba797,0x577d73);grid.position.y=.012;grid.material.transparent=true;grid.material.opacity=.18;this.grid=grid;this.scene.add(grid);grid.visible=false;
   this.cursor=new T.Mesh(new T.PlaneGeometry(.98,.98),new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.22,depthWrite:false,side:T.DoubleSide}));this.cursor.rotation.x=-Math.PI/2;this.cursor.position.y=.03;this.cursor.visible=false;this.scene.add(this.cursor);
   const ring=new T.RingGeometry(.68,.72,48);this.selection=new T.Mesh(ring,new T.MeshBasicMaterial({color:C.gold,side:T.DoubleSide,transparent:true,opacity:.9}));this.selection.rotation.x=-Math.PI/2;this.selection.position.y=.04;this.selection.visible=false;this.scene.add(this.selection);
@@ -308,16 +309,18 @@ export class View{
  pickHostile(x,y){this.mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);return this.coastalHostiles.pick(this.ray);}
  warmLamps(){
   if(this.lampsWarmed)return;
-  const lamp=makeLampModel('quarry'),halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrix=new T.Matrix4();halos.getMatrixAt(0,oldMatrix);
-  const intensities=this.baseLampLights.lights.map(l=>l.intensity);
-  lamp.position.set(this.center.x,0,this.center.z);this.scene.add(lamp);
-  halos.count=Math.max(1,oldCount);halos.setMatrixAt(0,new T.Matrix4().makeTranslation(this.center.x,.025,this.center.z));halos.instanceMatrix.needsUpdate=true;
-  this.baseLampLights.lights.forEach(l=>{l.intensity=16;});
+  const lamps=[makeLampModel('quarry')],halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrices=Array.from({length:8},(_,i)=>{const matrix=new T.Matrix4();halos.getMatrixAt(i,matrix);return matrix;});
+  const intensities=this.baseLampLights.lights.map(l=>l.intensity),positions=this.baseLampLights.lights.map(l=>l.position.clone());
+  lamps.forEach((lamp,i)=>{lamp.position.set(this.center.x+(i%4-1.5)*1.5,0,this.center.z+(Math.floor(i/4)-.5)*1.5);this.scene.add(lamp);});
+  halos.count=Math.max(8,oldCount);
+  this.baseLampLights.lights.forEach((l,i)=>{const x=this.center.x+(i%4-1.5)*1.5,z=this.center.z+(Math.floor(i/4)-.5)*1.5;l.intensity=16;l.position.set(x,1.13,z);halos.setMatrixAt(i,new T.Matrix4().makeTranslation(x,.025,z));});halos.instanceMatrix.needsUpdate=true;
   // Driver pipelines, shadow variants and halo upload need an actual first draw,
   // not just WebGL program linking. Finish this work while the loading screen is up.
-  this.renderer.shadowMap.needsUpdate=true;this.draw();this.renderer.getContext().finish();
-  this.scene.remove(lamp);halos.count=oldCount;halos.setMatrixAt(0,oldMatrix);halos.instanceMatrix.needsUpdate=true;
-  this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
+  const warm=makeModel('storage',0,[0],3,'quarry'),warm2=warm.clone(true);warm.position.set(this.center.x,0,this.center.z);warm2.position.copy(warm.position);this.structureInstances.sync(new Map([...this.buildings,['_warm1',warm],['_warm2',warm2]]));
+  this.renderer.shadowMap.needsUpdate=true;this.draw();// Readback drains Chromium's GPU queue before the loading screen closes.
+  const gl=this.renderer.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));this.structureInstances.sync(this.buildings);
+  lamps.forEach(lamp=>this.scene.remove(lamp));halos.count=oldCount;oldMatrices.forEach((matrix,i)=>halos.setMatrixAt(i,matrix));halos.instanceMatrix.needsUpdate=true;
+  this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];l.position.copy(positions[i]);});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
  }
  resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.composer?.setPixelRatio(this.renderer.getPixelRatio());this.composer?.setSize(innerWidth,innerHeight);this.updateProjection();}
  updateProjection(){const w=innerWidth,h=innerHeight,aspect=w/h;this.camera.left=-this.zoom*aspect;this.camera.right=this.zoom*aspect;this.camera.top=this.zoom;this.camera.bottom=-this.zoom;this.camera.updateProjectionMatrix();
@@ -501,7 +504,7 @@ export class View{
   const time=motion?.renderTime??nowTime;
   if(this.inspectedId){const actor=s.enemies.find(e=>e.id===this.inspectedId);if(!actor)this.exitInspection();else{this.center.set(actor.x,actor.kind==='walker'?.9:.36,actor.z);this.inspectionHeading=this.coastalHostiles.headings.get(actor.id)??Math.atan2(-actor.x,-actor.z);
    const stamp=actor.id+':'+Math.round(actor.x)+':'+Math.round(actor.z)+':'+s.buildings.length;if(this.inspectionOrbitStamp!==stamp){
-    this.inspectionOrbitStamp=stamp;const solids=[];for(const root of this.buildings.values())root.traverse(part=>{if(part.isMesh&&part.visible&&part.material?.opacity!==0)solids.push(part);});
+    this.inspectionOrbitStamp=stamp;const solids=[];for(const root of this.buildings.values())root.traverse(part=>{if(part.isMesh&&(part.visible||part.userData.staticInstanceProxy)&&part.material?.opacity!==0)solids.push(part);});
     const probe=new T.Raycaster(),destination=new T.Vector3(actor.x,.12,actor.z),origin=new T.Vector3();this.inspectionOrbit=0;
     for(const offset of [0,Math.PI/3,-Math.PI/3,Math.PI/2,-Math.PI/2,Math.PI]){const angle=this.inspectionHeading+offset;origin.set(actor.x+Math.sin(angle)*9,4.5,actor.z+Math.cos(angle)*9);const ray=destination.clone().sub(origin);probe.set(origin,ray.clone().normalize());probe.far=ray.length()-.1;if(!probe.intersectObjects(solids,false).length){this.inspectionOrbit=offset;break;}}
    }}}
@@ -514,10 +517,9 @@ export class View{
   this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
   this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
   this.coastalWater.sync(s.terrain,time,beam);this.baseLampLights.sync(s.buildings,this.center,this.zoom,!this.renderer.shadowMap.enabled);
-  if(beam&&heading!==this.lastLightHeading){this.lastLightHeading=heading;this.renderer.shadowMap.needsUpdate=true;}
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
   const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
-  const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
+  let structuresChanged=false;const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){structuresChanged=true;this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
   if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
    const belts=s.buildings.reduce((count,b)=>count+Number(b.type==='belt'),0);
    this.reserveBeltCargo(belts*BELT_CAPACITY);
@@ -533,8 +535,8 @@ export class View{
     }
     if(b.type==='splitter')g.traverse(o=>{if(o.isSprite)o.material=o.material.clone();});
     g.position.set(b.x,0,b.z);sizePortBadges(g,this.worldPerPixel,b.id===this.selected);
-    this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
-   }else if(g.position.x!==b.x||g.position.z!==b.z){g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
+    structuresChanged=true;this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
+   }else if(g.position.x!==b.x||g.position.z!==b.z){structuresChanged=true;g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
    const {rotor,cargoCapsule:capsule,dispatchDial:dial,head,beacon,lantern,bulb}=g.userData;
    if(bulb){bulb.material.emissiveIntensity=b.active?2.5:0;bulb.material.color.setHex(b.active?0xffdeb1:0x4b5148);}
    if(lantern)lantern.rotation.y=heading;
@@ -571,8 +573,9 @@ export class View{
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
   const n=Math.min(s.enemies.length,500),headings=quarry?new Map():null;
+  if(structuresChanged)this.structureInstances.sync(this.buildings);
   if(quarry)this.coastalHostiles.sync(s.enemies,time,dt,beam,position,motion,{x:this.center.x,z:this.center.z,rx:this.camera.right+3,rz:this.camera.top*1.6+3,zoom:this.zoom,inspect:this.inspectedId,terrain:s.terrain,low:!this.renderer.shadowMap.enabled});
-  if(quarry&&!s.paused&&this.coastalHostiles.hasVisible)this.renderer.shadowMap.needsUpdate=true;
+  if(quarry&&(this.coastalHostiles.shadowCastersChanged||!s.paused&&this.coastalHostiles.hasDynamicShadows))this.renderer.shadowMap.needsUpdate=true;
   for(let i=0;i<(quarry?0:n);i++){
    const e=s.enemies[i],{x,z}=position(e),scale=e.coreHunter?1.65:e.brute?1.45:1,angle=Math.atan2(-x,-z),sway=Math.sin(time*8+i)*.04;
    this.enemyBody.setColorAt(i,this.enemyColor.setHex(e.coreHunter?0xffc45a:e.mutation==='armored'?0x91acff:e.mutation==='frenzied'?0xff6654:e.mutation==='swift'?0x84f2a8:0xffffff));

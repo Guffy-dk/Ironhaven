@@ -56,8 +56,8 @@ export class CoastalHostiles{
  }
  pick(ray){const targets=[...this.species.values()].map(group=>group.meshes.body).filter(mesh=>mesh.visible);const hit=ray.intersectObjects(targets,false)[0];if(!hit)return null;for(const group of this.species.values())if(group.meshes.body===hit.object)return group.ids[hit.instanceId];return null;}
  sync(enemies,time,dt,beam,position,motion,bounds){
-  const low=!!bounds?.low||(!bounds?.inspect&&(enemies.length>100||bounds?.zoom>18));
-  for(const group of this.species.values()){if(group.prototype.material.userData.shader)group.prototype.material.userData.shader.uniforms.coastalTime.value=time;group.count=0;group.ids=[];for(const [part,mesh] of Object.entries(group.meshes)){mesh.geometry=low?group.prototype.low[part]:group.prototype[part];mesh.castShadow=!bounds?.low;}}
+  const low=!!bounds?.low||(!bounds?.inspect&&(enemies.length>100||bounds?.zoom>18)),castShadows=!low;
+  for(const group of this.species.values()){if(group.prototype.material.userData.shader)group.prototype.material.userData.shader.uniforms.coastalTime.value=time;group.count=0;group.ids=[];for(const [part,mesh] of Object.entries(group.meshes)){mesh.geometry=low?group.prototype.low[part]:group.prototype[part];mesh.castShadow=castShadows;}}
   const next=new Map();let contactCount=0;
   for(const e of enemies.slice(0,this.capacity)){
    if(bounds&&(Math.abs(e.x-bounds.x)>bounds.rx||Math.abs(e.z-bounds.z)>bounds.rz))continue;
@@ -94,6 +94,7 @@ export class CoastalHostiles{
   }
   this.contact.count=contactCount;this.contact.visible=contactCount>0;if(contactCount)this.contact.instanceMatrix.needsUpdate=true;
   this.hasVisible=[...this.species.values()].some(group=>group.count>0);
+  const dynamic=castShadows&&this.hasVisible;this.shadowCastersChanged=this.castShadows!==castShadows||this.hasDynamicShadows!==dynamic;this.castShadows=castShadows;this.hasDynamicShadows=dynamic;
   this.headings=next;
   for(const {prototype:p,meshes,count} of this.species.values())for(const [part,mesh] of Object.entries(meshes)){
    mesh.count=count*(part==='body'||part==='clawLeft'||part==='clawRight'?1:part==='limbs'||part==='lowerLimbs'?p.sockets.length:p.armSockets.length);mesh.visible=mesh.count>0;
