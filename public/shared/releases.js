@@ -1,9 +1,16 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.20.0';
+export const CURRENT_VERSION = '0.20.1';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.20.1',date:'2026-11-18',title:'Readable level numbers',
+  changes:[
+   'Use normal numbers for floating building levels, inspector values, turret marks and upgrade-unlock messages. Keep Roman numerals only on the signs textured onto the building models.',
+   'Clarify the field guide and interface settings to distinguish normal UI level numbers from the painted building signs.'
+  ]
+ },
  {
   version:'0.20.0',date:'2026-11-18',title:'Harbor interface and distinct workshops',
   changes:[
