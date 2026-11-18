@@ -1,4 +1,7 @@
 const paths={
+ play:'M8 4 20 12 8 20V4Z',
+ pause:'M8 4v16M16 4v16',
+ arrowUpRight:'M5 19 19 5M5 5h14v14',
  lamp:'M4 22h16M12 22V8M8 8h8l2 5H6l2-5Zm-1 5v5h10v-5M9 2h6M12 2v6',
  ore:'m2 16 4-7 5-2 4 4 4-1 3 6-5 4H6Z M6 9l3 6 6-4m-6 4 3 5m4-6 3-4',
  coal:'m2 16 4-7 5-2 4 4 4-1 3 6-5 4H6Z M6 9l3 6 6-4m-6 4 3 5m4-6 3-4',
@@ -21,7 +24,7 @@ const paths={
  drill:'M5 22V4h14v18M3 4h18M8 22h8M12 5v13m-4-8 8 3m-8 1 8 3M4 22h16',
  belt:'M2 7h20v12H2V7Zm3 3 4 3-4 3m6-6 4 3-4 3m6-6 4 3-4 3M3 4h18',
  smelter:'M4 22V9h16v13H4Zm3-13V3h5v6m4 0V5h3v4M8 17c-2-2 2-3 2-6 1 3 6 4 3 7-2 2-4 1-5-1Z',
- assembler:'M3 21V8l6 3V6l6 4V3h6v18H3Zm3-5h2m3 0h2m3 0h2M7 21v-2m6 2v-2',
+ assembler:'m9 3 1-2h4l1 3 3 1 3-1 2 4-2 2v4l2 2-2 4-3-1-3 2-1 2h-4l-1-3-3-1-3 1-2-4 2-2v-4L1 8l2-4 3 1 3-2ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z',
  sawmill:'M2 19h20M5 19V8m14 11V8M3 8h18M12 3v12m-4-5 4 4 4-4M7 22v-3m10 3v-3',
  generator:'M3 9h18v11H3V9Zm2 0V5h4v4m7 0V3h3v6M6 20v2m12-2v2m-7-10-3 5h4l-1 4 5-6h-4l1-3',
  turret:'M5 22h14M8 22v-9h8v9M6 13V6h12v7H6Zm6-7V2m6 7h5M9 16h6',
@@ -31,5 +34,5 @@ const paths={
  sound:'M3 10h4l5-5v16l-5-5H3v-6Zm13-2c4 3 4 7 0 10m3-13c6 5 6 12 0 16',
  mute:'M3 10h4l5-5v16l-5-5H3v-6Zm13 0 6 6m0-6-6 6'
 };
-export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({gunTurret:'turret',coalMine:'drill',coalGenerator:'generator',copperDrill:'drill',foundry:'smelter',circuitLab:'circuit',componentFactory:'assembler'})[name]]||paths.hq}"/></svg>`;}
+export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({gunTurret:'turret',coalMine:'drill',coalGenerator:'generator',copperDrill:'drill',foundry:'steel',circuitLab:'circuit',componentFactory:'module'})[name]]||paths.hq}"/></svg>`;}
 export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',coal:'COAL',power:'POWER'};

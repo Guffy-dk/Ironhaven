@@ -15,3 +15,7 @@ test('invalid or unavailable preference storage falls back safely and clamps sup
  assert.equal(normalizePreferences({version:99}).controls.panSpeed,1);
  assert.equal(savePreferences({setItem(){throw Error('full');}},normalizePreferences(null)),false);
 });
+test('existing player preferences enable type labels by default and preserve the new opt-out',()=>{
+ assert.equal(normalizePreferences({version:1,interface:{buildingLevels:false}}).interface.buildingTypes,true);
+ assert.equal(normalizePreferences({version:1,interface:{buildingTypes:false}}).interface.buildingTypes,false);
+});

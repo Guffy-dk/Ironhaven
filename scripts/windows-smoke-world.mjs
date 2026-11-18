@@ -9,10 +9,11 @@ export function smokeWorld(){
  establishIsland(state);
  state.terrain.trees=state.terrain.trees.filter(t=>Math.hypot(t.x,t.z)>9);
  state.terrain.rocks=state.terrain.rocks.filter(t=>Math.hypot(t.x,t.z)>8);
- state.terrain.ore.push({x:4,z:3});
+ state.terrain.ore.push({x:4,z:3});state.terrain.copper.push({x:5,z:-3});state.terrain.coal.push({x:-5,z:-3});
  state.terrain.trees.push(...[[-7,-2],[-7,0],[7,-1],[7,-2],[7,0]].map(([x,z])=>({x,z,h:1.4})));
  for(const r of RESOURCE_KEYS)state.resources[r]=100000;
  const build=(type,x,z,dir=0)=>{const error=command(state,p.id,{type:'build',building:type,x,z,dir});if(error)throw Error(type+': '+error);return state.buildings.find(b=>b.x===x&&b.z===z);};
+ build('copperDrill',5,-3,2);build('coalMine',-5,-3);
  build('drill',4,3,2);build('belt',3,3,2);build('smelter',2,3,3);
  build('belt',2,2,3);build('belt',2,1,2);build('belt',1,1,2);build('belt',0,1,3);
  build('assembler',-2,2,3);build('belt',-2,1,0);build('belt',-1,1,0);

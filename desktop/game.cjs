@@ -118,6 +118,7 @@ async function start() {
     localStorage.setItem('ironhaven.save.v1',${JSON.stringify(fixture)});
     document.getElementById('resume').click();
     document.getElementById('pause').click();
+    window.dispatchEvent(new KeyboardEvent('keydown',{key:'z',bubbles:true}));
     for(let i=0;i<2;i++)document.getElementById('zoom-in').click();
     document.getElementById('save').click();
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
@@ -155,6 +156,8 @@ async function start() {
   gameWindow.show();gameWindow.focus();gameWindow.webContents.focus();
   gameWindow.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
   gameWindow.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
+  await gameWindow.webContents.executeJavaScript(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+  const menuCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-menu.png'),menuCapture.toPNG());
   const settings=await gameWindow.webContents.executeJavaScript(`(async () => {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     if(!document.getElementById('menu-dialog').open)throw Error('Escape did not open the menu');

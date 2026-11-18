@@ -1,3 +1,5 @@
+import {weatheredPaint} from './industrial-paint.js';
+import {BUILDING_IDENTITIES} from './shared/building-identity.js';
 import * as T from './vendor/three.module.js';
 import {box,cyl} from './render-primitives.js';
 import {makeCoastalBuilding} from './coastal-buildings.js';
@@ -18,10 +20,11 @@ function surface(g,name,color,x,y,z,w,h,d){
 function materialFor(name){
  if(name==='plain')return structureMaterial;
  if(!surfaceMaterials.has(name)){
-  const map=quarryTexture(name),metal=name==='roof'||name==='metal';
+  const map=quarryTexture(name==='paint'?'metal':name),metal=['roof','metal','paint'].includes(name);
   surfaceMaterials.set(name,new T.MeshStandardMaterial({
    vertexColors:true,map,bumpMap:map,bumpScale:metal?.008:.016,roughness:metal?.58:.94,metalness:metal?.48:.02
   }));
+  if(name==='paint')weatheredPaint(surfaceMaterials.get(name));
  }
  return surfaceMaterials.get(name);
 }
@@ -139,13 +142,14 @@ export function makeQuarryModel(type,paint,level=1){
   box(g,wood,-.31,.13,.44,.17,.17,.15);
   box(g,timber,.32,.1,.44,.14,.12,.15);
  }else if(['drill','copperDrill','coalMine'].includes(type)){
-  const accent=type==='copperDrill'?copper:type==='coalMine'?0x4d5159:wood;
+  const accent=new T.Color(BUILDING_IDENTITIES[type].paint).getHex();
   box(g,paint(stone),0,.09,0,.86,.18,.85);
   for(const x of [-.27,.27])for(const z of [-.26,.26]){
    const strut=box(g,accent,x*.8,.66,z,.084,1.09,.083);
    strut.rotation.z=Math.sign(x)*.16;
   }
-  surface(g,'roof',roof,-.11,1.23,0,.61,.06,.65).rotation.z=.17;
+  surface(g,'paint',accent,-.11,1.23,0,.61,.06,.65).rotation.z=.17;
+  for(let i=0;i<6;i++){const x=-.11+(i-2.5)*.105;box(g,0xabbec5,x,1.267+(x+.11)*Math.sin(.17),0,.012,.012,.64).rotation.z=.17;}
   for(const z of [-.27,.27]){
    box(g,timber,0,.56,z,.53,.065,.072);
    for(const sign of [-1,1])box(g,accent,0,.61,z,.052,.7,.038).rotation.z=sign*.66;
@@ -156,7 +160,9 @@ export function makeQuarryModel(type,paint,level=1){
   const rotor=axle(g,.6);
   cyl(rotor,steel,0,0,0,.075,.75,8);
   for(const y of [-.24,-.09])box(rotor,iron,0,y,0,.26,.06,.13);
-  box(g,timber,.34,.23,0,.31,.13,.28);
+  box(g,accent,.34,.26,0,.29,.26,.3);
+  for(const z of [-.11,0,.11])box(g,0xdbe2d6,.34,.398,z,.22,.018,.027);
+  if(type==='coalMine'){box(g,0x303c46,.29,.53,-.13,.32,.24,.3);box(g,0x9eafc1,.29,.66,-.13,.35,.025,.33);}
  }else if(type==='smelter'||type==='foundry'){
   const foundry=type==='foundry';
   shed(g,paint(foundry?0xd5c0ab:0xf5e3d3),0xc8cccd,.79,.72,foundry?.65:.57,true);
