@@ -53,7 +53,7 @@ Object.assign(TYPES,{
  coalMine:{name:'Coal mine',hp:240,power:4,cost:{plate:36,steel:6,gear:6},desc:"Mines coal from a coal deposit. Deliver it to a warehouse or the lighthouse to fuel coal generators."},
  coalGenerator:{name:'Coal generator',hp:340,power:0,cost:{plate:55,steel:12,gear:8},desc:"Burns one coal every 16 seconds to supply 36 power. Takes fuel from shared storage."},
  mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:"Fires shells that damage groups of enemies. One gear supplies four base shells. Needs power; upgrades improve its damage and range."},
- pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:"Fires short-range bursts that damage groups of enemies. One gear supplies eight base bursts. Needs power."}
+ pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:"Fires rapid short-range bursts into packed groups. Trades range and heavy power use for sustained area damage. One gear supplies eight base bursts."}
 });
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
@@ -110,7 +110,7 @@ export function turretStats(b){
  const normal=TURRET_LEVELS[Math.max(0,Math.min(TURRET_LEVELS.length-1,(b.level||1)-1))];
  if(b.type==='turret'){const n=Math.max(0,(b.level||1)-1);return {name:normal.name,hp:Math.round(TYPES.turret.hp*(1+n*.14)),damage:14*(1+n*.065),range:7.5+n*.1,interval:.64/(1+n*.02)};}
  if(b.type==='mortar')return {...normal,hp:TYPES.mortar.hp+normal.hp-350,damage:normal.damage*1.6,range:normal.range+2,interval:normal.interval*3,radius:2.25,ammoDivisor:4};
- if(b.type==='pulseTurret')return {...normal,hp:TYPES.pulseTurret.hp+normal.hp-350,damage:normal.damage*.8,range:normal.range-3,interval:normal.interval*1.5,radius:1.35,ammoDivisor:2};
+ if(b.type==='pulseTurret')return {...normal,hp:TYPES.pulseTurret.hp+normal.hp-350,damage:normal.damage*1.1,range:normal.range-3,interval:normal.interval*1.05,radius:1.6,ammoDivisor:2};
  return normal;
 }
 export const maxHp = b => TURRETS.includes(b.type) ? turretStats(b).hp : Math.round(TYPES[b.type].hp*(1+((b.level||1)-1)*.25));
@@ -262,6 +262,7 @@ function normalizeConveyor(b){
 }
 function validBeltProgress(progress){return Number.isFinite(progress)&&progress>=0&&progress<=1;}
 export function migrateGame(s){
+ spatialCaches.delete(s);
  if(!s||![1,2,3,4,5,6,7,8,9,10,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  const previous=s.version,old=previous<SAVE_SCHEMA;
  for(const p of s.players)if(p.inventory?.inserter){(p.inventory.splitter??=[]).push(...p.inventory.inserter);delete p.inventory.inserter;}
@@ -330,10 +331,10 @@ const sawmillRadius=sawmillOffsets.flatMap(x=>sawmillOffsets.map(z=>[x,z])).filt
 export function sawmillTrees(terrain,b){
  let index=woodlandTiles.get(terrain);
  if(index?.trees!==terrain.trees||index.count!==terrain.trees.length){
-  index={trees:terrain.trees,count:terrain.trees.length,tiles:new Set(terrain.trees.map(t=>key(t.x,t.z)))};
+  index={trees:terrain.trees,count:terrain.trees.length,tiles:new Set(terrain.trees.map(t=>key(t.x,t.z))),counts:new Map()};
   woodlandTiles.set(terrain,index);
  }
- return sawmillRadius.reduce((n,[x,z])=>n+Number(index.tiles.has(key(b.x+x,b.z+z))),0);
+ const site=key(b.x,b.z);if(!index.counts.has(site))index.counts.set(site,sawmillRadius.reduce((n,[x,z])=>n+Number(index.tiles.has(key(b.x+x,b.z+z))),0));return index.counts.get(site);
 }
 export const sawmillRate=(s,b)=>Math.sqrt(sawmillTrees(s.terrain,b)/6)*productionSpeed(b,roundBonus(s.wave),s.difficulty);
 export function makeTerrain(seed=2026){
@@ -368,7 +369,7 @@ export function makeTerrain(seed=2026){
  for(let x=-BUILD_EDGE;x<=BUILD_EDGE;x++)for(let z=-BUILD_EDGE;z<=BUILD_EDGE;z++)if(Math.hypot(x,z)>16&&!occupied.has(key(x,z))&&!trees.has(key(x,z))&&rand()<.007)rocks.push({x,z,h:.3+rand()*.6});
  return openDeposits({trees:[...trees.values()],ore,rocks,copper,coal});
 }
-function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};if(LOGISTICS_TYPES.includes(type)){b.program={...DEFAULT_PROGRAM};programRole(b);}s.buildings.push(b);return b;}
+function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES[type].hp,progress:0,input:[],item:null,ammo:0,cooldown:0,active:true,level:1};if(LOGISTICS_TYPES.includes(type)){b.program={...DEFAULT_PROGRAM};programRole(b);}s.buildings.push(b);invalidateSpatial(s);return b;}
 export function createGame(seed=2026,{difficulty='standard'}={}){
  if(!Object.hasOwn(DIFFICULTIES,difficulty))difficulty='standard';
  const s={version:SAVE_SCHEMA,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:180,gear:20,copper:0,steel:0,circuit:0,module:0,coal:0,power:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[]};
@@ -835,14 +836,31 @@ function spawnWave(s){
  event(s,`Swarm ${s.wave} · ${count} hostiles${coreHunters?' · '+coreHunters+' beacon hunters':''}${waveMutation?' · '+waveMutation+' mutation':''} · ${forecast.bonus.label}`);
 }
 function event(s,text){s.events.push({id:s.nextId++,text,time:s.time});if(s.events.length>6)s.events.shift();}
-const hunterTerrain=new WeakMap();
-function hunterForest(s){
- const blockers=s.buildings.filter(b=>!['hq','belt','inserter','splitter','wall','lamp'].includes(b.type));
- const key=blockers.map(b=>b.x+','+b.z).join(';')+':'+s.terrain.trees.length;
- const cached=hunterTerrain.get(s.terrain);
- if(cached?.key===key)return cached.forest;
- const forest=woodland({trees:[...s.terrain.trees,...blockers]});
- hunterTerrain.set(s.terrain,{key,forest});return forest;
+const spatialCaches=new WeakMap(),INDUSTRY_CELL=14;
+function invalidateSpatial(s){const cached=spatialCaches.get(s);if(cached)cached.dirty=true;}
+function spatialIndex(s){
+ let cached=spatialCaches.get(s);
+ if(cached&&!cached.dirty&&cached.count===s.buildings.length&&cached.terrain===s.terrain&&cached.trees===s.terrain.trees&&cached.treeCount===s.terrain.trees.length)return cached;
+ const grid=new Map(),industry=[],buckets=new Map(),lamps=new Map(),blockers=[];
+ s.buildings.forEach((b,order)=>{
+  grid.set(key(b.x,b.z),b);
+  if(!['hq','belt','splitter','wall','lamp'].includes(b.type))blockers.push(b);
+  if(hasOutputBuffer(b.type)||b.type==='sawmill'||b.type==='lamp'||Object.hasOwn(GENERATORS,b.type)){
+   industry.push(b);const cell=key(Math.floor(b.x/INDUSTRY_CELL),Math.floor(b.z/INDUSTRY_CELL)),entry={b,order};
+   if(!buckets.has(cell))buckets.set(cell,[]);buckets.get(cell).push(entry);
+   if(b.type==='lamp'){if(!lamps.has(cell))lamps.set(cell,[]);lamps.get(cell).push(entry);}
+  }
+ });
+ cached={count:s.buildings.length,terrain:s.terrain,trees:s.terrain.trees,treeCount:s.terrain.trees.length,grid,industry,buckets,lamps,blockers};spatialCaches.set(s,cached);return cached;
+}
+function hunterForest(s){const index=spatialIndex(s);return index.forest??=woodland({trees:[...s.terrain.trees,...index.blockers]});}
+function industryTarget(index,e,hq){
+ let target=hq,closest=INDUSTRY_CELL**2,order=Infinity;
+ const consider=(b,at)=>{if(b.hp<=0||e.coreHunter&&b.type!=='lamp')return;const d=(e.x-b.x)**2+(e.z-b.z)**2;if(d<closest||target!==hq&&d===closest&&at<order){target=b;closest=d;order=at;}};
+ if(index.industry.length<=64){index.industry.forEach(consider);return target;}
+ const buckets=e.coreHunter?index.lamps:index.buckets,x=Math.floor(e.x/INDUSTRY_CELL),z=Math.floor(e.z/INDUSTRY_CELL);
+ for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)for(const {b,order}of buckets.get(key(x+dx,z+dz))??[])consider(b,order);
+ return target;
 }
 export function step(s,dt=STEP){
  if(s.paused||s.status!=='playing')return;s.tick++;s.time+=dt;s.shots=s.shots.filter(v=>s.time-v.time<.25);
@@ -856,7 +874,7 @@ export function step(s,dt=STEP){
  const mistSources=s.enemies.filter(e=>e.hp>0&&hostileKind(e)==='spitter'&&!lit.has(e));
  const obscured=new Set(s.enemies.filter(e=>!lit.has(e)&&mistSources.some(other=>(other.x-e.x)**2+(other.z-e.z)**2<9)));
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
- const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
+ const spatial=spatialIndex(s),grid=spatial.grid;
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
  const moving=[],busy=new Set();
  for(const b of s.buildings){
@@ -933,16 +951,9 @@ export function step(s,dt=STEP){
  if(!hq){s.status='defeat';return;}
  const forest=s.enemies.length?woodland(s.terrain):null,enemyDestination={x:0,z:0};
  const coreRoutes=s.enemies.some(e=>e.coreHunter)?hunterForest(s):null;
- const industry=s.enemies.length?s.buildings.filter(b=>hasOutputBuffer(b.type)||b.type==='sawmill'||b.type==='lamp'||Object.hasOwn(GENERATORS,b.type)):[];
  for(const e of s.enemies){
   if(e.hp<=0||e.training)continue;e.cooldown-=dt;
-  let target=hq,closest=14*14;
-  for(const b of industry){
-   if(e.coreHunter&&b.type!=='lamp')continue;
-   if(b.hp<=0)continue;
-   const distance=(e.x-b.x)**2+(e.z-b.z)**2;
-   if(distance<closest){target=b;closest=distance;}
-  }
+  let target=industryTarget(spatial,e,hq);
   target=hostileDestination(e,localSources.get(e)??hq,beam||localSources.get(e),target,enemyDestination);
   const kind=hostileKind(e),attackRange=HOSTILES[kind].range;
   const d=dist(e,target),move=e.speed*hostileMoveMultiplier(e)*(e.brute&&!e.kind?.7:1)*(d>42&&!e.lastHit?1.85:1)*dt;
@@ -990,6 +1001,7 @@ function moveArea(s,p,cmd){
  if(plan.invalid.some(v=>v.type==='hq'))return 'The lighthouse cannot be removed. Choose a valid destination for it.';
  if(plan.invalid.length&&!cmd.override)return plan.invalid.length+' buildings cannot be placed here. Hold Shift to pack invalid buildings into inventory.';
  if(!plan.valid.length&&!cmd.override)return 'No valid buildings to move';
+ invalidateSpatial(s);
  for(const target of plan.valid){const b=s.buildings.find(b=>b.id===target.id);b.x=target.x;b.z=target.z;}
  if(cmd.override)for(const target of plan.invalid){const b=s.buildings.find(b=>b.id===target.id);packBuilding(p,b);s.buildings=s.buildings.filter(v=>v.id!==b.id);}
  updatePower(s);return null;

@@ -47,3 +47,11 @@ test('authored distance meshes retain valid UVs and indexed geometry at reduced 
   assert.ok(p.low.body.index.count<p.body.index.count*.4,kind+' must have a meaningful distance LOD');
  }
 });
+
+test('distance creatures retain contact shadows while expensive articulated shadows return for close inspection',()=>{
+ const scene=new T.Scene(),swarm=new CoastalHostiles(scene),enemies=[{id:1,kind:'guard',x:0,z:0,hp:10}],bounds={x:0,z:0,rx:30,rz:30,zoom:44,low:false};
+ swarm.sync(enemies,1,.05,null,e=>e,null,bounds);assert.equal(swarm.hasDynamicShadows,false);assert.equal(swarm.species.get('guard').meshes.body.castShadow,false);assert.equal(swarm.contact.visible,true);assert.equal(swarm.shadowCastersChanged,true);
+ swarm.sync(enemies,2,.05,null,e=>e,null,bounds);assert.equal(swarm.shadowCastersChanged,false);
+ swarm.sync(enemies,3,.05,null,e=>e,null,{...bounds,inspect:1});assert.equal(swarm.hasDynamicShadows,true);assert.equal(swarm.species.get('guard').meshes.body.castShadow,true);assert.equal(swarm.shadowCastersChanged,true);
+ swarm.sync([],4,.05,null,e=>e,null,{...bounds,inspect:1});assert.equal(swarm.hasDynamicShadows,false);assert.equal(swarm.shadowCastersChanged,true);
+});

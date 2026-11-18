@@ -116,4 +116,6 @@ for kind in ['smelter','foundry','assembler','circuitLab','componentFactory','st
  for obj in g['PARTS']['body']:obj.name=kind+'.'+obj.name
  print('Workshop',kind,flush=True)
 (ROOT/'public/art/coastal-buildings.json').write_text(json.dumps(payload,separators=(',',':')))
+import subprocess
+subprocess.run(['node',str(ROOT/'scripts/pack-meshes.mjs'),str(ROOT/'public/art/coastal-buildings.json')],check=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'docs/design/coastal-workshops.blend'),compress=True)

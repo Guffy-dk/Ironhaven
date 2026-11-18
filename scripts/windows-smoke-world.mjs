@@ -1,4 +1,5 @@
 import {establishIsland} from '../public/shared/coast.js';
+import {pathToFileURL} from 'node:url';
 import {writeFile} from 'node:fs/promises';
 import {createGame,addPlayer,command,step,RESOURCE_KEYS} from '../public/shared/sim.js';
 // A reproducible in-engine playtest colony for Windows renderer/startup validation.
@@ -32,4 +33,4 @@ export function smokeWorld(){
  for(const b of state.buildings)if(['turret','gunTurret','mortar','pulseTurret'].includes(b.type))b.cooldown=1000;
  step(state);state.paused=true;return {state,playerId:p.id};
 }
-if(process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href&&process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));

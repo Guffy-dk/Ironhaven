@@ -41,3 +41,7 @@ test('fractional conveyor upgrades carry unspent time across tile boundaries ins
 test('old placed and packed turret health keeps its damage ratio when level stats change, without repeat conversion',()=>{
  const{s,p,build}=fixture(),gun=build('gunTurret',5,5);gun.level=11;gun.hp=1070;s.version=10;p.inventory.mortar=[{level:3,hp:332.5}];migrateGame(s);assert.equal(gun.hp,Math.round(maxHp(gun)*.5));assert.equal(p.inventory.mortar[0].hp,Math.round(maxHp({type:'mortar',level:3})*.5));const health=gun.hp;migrateGame(s);assert.equal(gun.hp,health);
 });
+
+test('pulse emplacements trade artillery range and power for substantially higher close-range area damage',()=>{
+ for(const level of [1,10,20,30]){const pulse=turretStats({type:'pulseTurret',level}),mortar=turretStats({type:'mortar',level});assert.ok(pulse.damage/pulse.interval>1.8*mortar.damage/mortar.interval);assert.ok(pulse.range<mortar.range);assert.ok(pulse.radius<mortar.radius);assert.ok(pulse.damage<398,'final-wave runners survive a direct pulse hit');assert.equal(pulse.ammoDivisor,2);}
+});
