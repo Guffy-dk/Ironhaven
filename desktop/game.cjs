@@ -10,6 +10,7 @@ const repositoryUrl = 'https://github.com/Guffy-dk/Ironhaven';
 const smokeTest = process.argv.includes('--smoke-test');
 let gameWindow;
 const graphicsErrors=[];
+function smokePhase(label){if(smokeTest)console.error('[smoke] '+label);}
 
 app.setName('Ironhaven');
 if (smokeTest) {
@@ -21,6 +22,7 @@ if (smokeTest) {
 protocol.registerSchemesAsPrivileged([{ scheme: 'ironhaven', privileges: { standard: true, secure: true } }]);
 
 async function start() {
+  smokePhase('Reading embedded game');
   const html = await readFile(path.join(__dirname, 'Ironhaven.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
   if (!script) throw Error('The game bundle is missing its script. Reinstall this version with the patcher.');
@@ -51,7 +53,9 @@ async function start() {
     return { action: 'deny' };
   });
   gameWindow.webContents.on('will-navigate', event => event.preventDefault());
+  smokePhase('Loading game and warming renderer');
   await gameWindow.loadURL(gameUrl);
+  smokePhase('Game document loaded');
 
   if (!smokeTest) {
     gameWindow.show();
@@ -79,6 +83,7 @@ async function start() {
   if (!graphics.quarry || !graphics.drawable) {
     throw Error('Desktop graphics did not initialize: ' + JSON.stringify(graphics));
   }
+  smokePhase('Initial graphics verified');
   const interaction=await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('skip-tutorial').checked=true;
     document.getElementById('start-solo').click();
@@ -93,6 +98,7 @@ async function start() {
     return {aiming,saved:!!saved,aimed:Number.isFinite(core?.lighthouseAim),cancelled:document.getElementById('tool-hint').hidden};
   })()`);
   if(!interaction.aiming||!interaction.saved||!interaction.aimed||!interaction.cancelled)throw Error('Windows lighthouse controls failed: '+JSON.stringify(interaction));
+  smokePhase('Lighthouse controls verified');
   const lampControls=await gameWindow.webContents.executeJavaScript(`(() => {
     window.dispatchEvent(new KeyboardEvent('keydown',{key:'c',bubbles:true}));
     document.querySelector('[data-type="lamp"]').click();
@@ -103,6 +109,7 @@ async function start() {
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));return saved.state.buildings.some(b=>b.type==='lamp'&&b.hp===75);
   })()`);
   if(!lampControls)throw Error('Windows Harbor lamp placement failed');
+  smokePhase('Lamp placement verified; loading capture fixture');
   // Capture a reproducible playtest colony using the exact packaged Windows renderer.
   // The fixture is removed by the build script before the player archive is packaged.
   const fixture=await readFile(path.join(__dirname,'smoke-world.json'),'utf8');
@@ -119,8 +126,10 @@ async function start() {
     map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
+  smokePhase('Fixture rendered; capturing colony');
   const capture=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ingame.png'),capture.toPNG());
+  smokePhase('Colony captured; inspecting creature');
   const inspected=await gameWindow.webContents.executeJavaScript(`(async () => {
     const canvas=document.getElementById('world');
     for(let y=.64;y<.81;y+=.008){
@@ -132,6 +141,7 @@ async function start() {
     return document.getElementById('intel-title').textContent;
   })()`);
   if(inspected!=='Shell guard')throw Error('Windows creature inspection failed: '+inspected);
+  smokePhase('Creature selected; capturing close view');
   const creatures=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-creatures.png'),creatures.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async () => {
@@ -140,6 +150,7 @@ async function start() {
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
+  smokePhase('Capturing island');
   const island=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-island.png'),island.toPNG());
   gameWindow.show();gameWindow.focus();gameWindow.webContents.focus();
   gameWindow.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
@@ -163,6 +174,7 @@ async function start() {
     document.querySelector('[data-menu-target="controls"]').click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
+  smokePhase('Settings verified; capturing controls');
   const settingsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-settings.png'),settingsCapture.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('menu-dialog').close();
@@ -181,7 +193,9 @@ async function start() {
     if(!document.getElementById('program-dialog').open||!document.getElementById('program-ports').textContent.includes('4 OUT'))throw Error('Numbered port configuration failed');
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
+  smokePhase('Numbered ports verified; capturing hub');
   const portsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ports.png'),portsCapture.toPNG());
+  smokePhase('Captures complete');
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }

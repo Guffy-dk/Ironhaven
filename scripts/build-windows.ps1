@@ -55,6 +55,7 @@ try {
   $smoke = Start-Process -FilePath $executable -ArgumentList '--smoke-test' -RedirectStandardError $smokeLog -WindowStyle Hidden -PassThru
   if (!$smoke.WaitForExit(180000)) {
     Stop-Process -Id $smoke.Id
+    Get-Content -LiteralPath $smokeLog -Tail 80 -ErrorAction SilentlyContinue
     throw 'Desktop smoke test timed out.'
   }
   if ($smoke.ExitCode -ne 0) {

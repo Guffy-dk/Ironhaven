@@ -309,17 +309,17 @@ export class View{
  pickHostile(x,y){this.mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);return this.coastalHostiles.pick(this.ray);}
  warmLamps(){
   if(this.lampsWarmed)return;
-  const lamp=makeLampModel('quarry'),halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrix=new T.Matrix4();halos.getMatrixAt(0,oldMatrix);
-  const intensities=this.baseLampLights.lights.map(l=>l.intensity);
-  lamp.position.set(this.center.x,0,this.center.z);this.scene.add(lamp);
-  halos.count=Math.max(1,oldCount);halos.setMatrixAt(0,new T.Matrix4().makeTranslation(this.center.x,.025,this.center.z));halos.instanceMatrix.needsUpdate=true;
-  this.baseLampLights.lights.forEach(l=>{l.intensity=16;});
+  const lamps=Array.from({length:8},()=>makeLampModel('quarry')),halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrices=Array.from({length:8},(_,i)=>{const matrix=new T.Matrix4();halos.getMatrixAt(i,matrix);return matrix;});
+  const intensities=this.baseLampLights.lights.map(l=>l.intensity),positions=this.baseLampLights.lights.map(l=>l.position.clone());
+  lamps.forEach((lamp,i)=>{lamp.position.set(this.center.x+(i%4-1.5)*1.5,0,this.center.z+(Math.floor(i/4)-.5)*1.5);this.scene.add(lamp);});
+  halos.count=Math.max(8,oldCount);
+  this.baseLampLights.lights.forEach((l,i)=>{const x=this.center.x+(i%4-1.5)*1.5,z=this.center.z+(Math.floor(i/4)-.5)*1.5;l.intensity=16;l.position.set(x,1.13,z);halos.setMatrixAt(i,new T.Matrix4().makeTranslation(x,.025,z));});halos.instanceMatrix.needsUpdate=true;
   // Driver pipelines, shadow variants and halo upload need an actual first draw,
   // not just WebGL program linking. Finish this work while the loading screen is up.
   const warm=makeModel('storage',0,[0],3,'quarry'),warm2=warm.clone(true);warm.position.set(this.center.x,0,this.center.z);warm2.position.copy(warm.position);this.structureInstances.sync(new Map([...this.buildings,['_warm1',warm],['_warm2',warm2]]));
   this.renderer.shadowMap.needsUpdate=true;this.draw();this.renderer.getContext().finish();this.structureInstances.sync(this.buildings);
-  this.scene.remove(lamp);halos.count=oldCount;halos.setMatrixAt(0,oldMatrix);halos.instanceMatrix.needsUpdate=true;
-  this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
+  lamps.forEach(lamp=>this.scene.remove(lamp));halos.count=oldCount;oldMatrices.forEach((matrix,i)=>halos.setMatrixAt(i,matrix));halos.instanceMatrix.needsUpdate=true;
+  this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];l.position.copy(positions[i]);});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
  }
  resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.composer?.setPixelRatio(this.renderer.getPixelRatio());this.composer?.setSize(innerWidth,innerHeight);this.updateProjection();}
  updateProjection(){const w=innerWidth,h=innerHeight,aspect=w/h;this.camera.left=-this.zoom*aspect;this.camera.right=this.zoom*aspect;this.camera.top=this.zoom;this.camera.bottom=-this.zoom;this.camera.updateProjectionMatrix();

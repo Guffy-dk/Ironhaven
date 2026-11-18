@@ -31,7 +31,7 @@ export class BaseLampLights{
   const data=new Uint8Array(32*32*4);for(let y=0;y<32;y++)for(let x=0;x<32;x++){const i=(y*32+x)*4,r=Math.hypot((x-15.5)/15.5,(y-15.5)/15.5);data[i]=255;data[i+1]=211;data[i+2]=150;data[i+3]=Math.round(Math.max(0,1-r)**2*35);}
   const texture=new T.DataTexture(data,32,32);texture.needsUpdate=true;texture.magFilter=T.LinearFilter;
   this.geometry=new T.PlaneGeometry(LAMP_RADIUS*2,LAMP_RADIUS*2).rotateX(-Math.PI/2);this.material=new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,blending:T.AdditiveBlending});
-  this.halos=new T.InstancedMesh(this.geometry,this.material,1);this.halos.count=0;this.halos.frustumCulled=false;scene.add(this.halos);this.pose=new T.Object3D();
+  this.halos=new T.InstancedMesh(this.geometry,this.material,8);this.halos.count=0;this.halos.frustumCulled=false;scene.add(this.halos);this.pose=new T.Object3D();
  }
  sync(buildings,center,zoom,low){
   const active=buildings.filter(b=>b.type==='lamp'&&b.hp>0&&b.active),near=active.filter(b=>Math.abs(b.x-center.x)<zoom*1.8+LAMP_RADIUS&&Math.abs(b.z-center.z)<zoom*1.6+LAMP_RADIUS);
