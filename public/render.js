@@ -88,9 +88,9 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
    }
    else box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
-  const a=new T.Mesh(beltArrow,mat(quarry?0xffe8b0:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
-  if(quarry)a.scale.setScalar(.32);
-  const offset=quarry?.32:.14;
+  const a=new T.Mesh(beltArrow,mat(quarry?0xc9c1aa:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
+  a.name='belt-direction';if(quarry)a.scale.setScalar(.56);
+  const offset=quarry?.17:.14;
   a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry){modernizeModel(g,'belt',level);if(level>1)levelPlaque(g,'belt',level,dir);}return g;
  }
  if(quarry&&type!=='wall'){

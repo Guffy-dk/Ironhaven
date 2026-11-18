@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.19.0';
+export const CURRENT_VERSION = '0.20.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.20.0',date:'2026-11-18',title:'Harbor interface and distinct workshops',
+  changes:[
+   'Refresh the interface with rounded navy panels, clearer typography, softer borders, card-based construction buttons and a cleaner Escape menu. Keep the coastal palette and keyboard shortcuts.',
+   'Give each workshop a distinct painted roof and facade treatment while retaining the authored geometry and weathering. Use blue steel iron derricks, copper-toned copper rigs and a coal hopper on coal mines.',
+   'Identify mines and factories with matching trade symbols, accents and short map labels. Assemblers use gears, steel works an I-beam, circuit factories a chip and component factories a component symbol. Roman numerals continue to identify upgrade levels.',
+   'Add Show building types to Interface settings. Labels spread vertically to reduce overlaps, become compact at wider zoom and share their visual key with the construction menu and field guide. Extend training to explain the new mine and factory identities.',
+   'Restore the cream direction arrows from version 0.16, including their original size and position. Keep conveyor upgrade trim and Roman level markers.'
+  ]
+ },
  {
   version:'0.19.0',date:'2026-11-18',title:'Smoother large colonies and close-range defense',
   changes:[

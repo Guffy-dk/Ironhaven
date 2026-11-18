@@ -1,3 +1,5 @@
+import {weatheredPaint} from './industrial-paint.js';
+import {BUILDING_IDENTITIES} from './shared/building-identity.js';
 import {ROOF_HEIGHTS} from './building-levels.js';
 import * as T from './vendor/three.module.js';
 import buildings from './art/coastal-buildings.json' with {type:'json'};
@@ -9,9 +11,12 @@ function material(name){
  if(!materials.has(name)){
   const texture=({brick:'brick',roof:'roof',concrete:'gravel',timber:'timber',steel:'metal'})[name];
   const map=texture?quarryTexture(texture):null;
-  materials.set(name,new T.MeshStandardMaterial({vertexColors:true,map,bumpMap:map,bumpScale:map?.012:0,
+  const painted=name==='roof'||name==='brick';
+  const mat=new T.MeshStandardMaterial({vertexColors:true,map,bumpMap:map,bumpScale:map?.012:0,
    roughness:name==='glass'?.2:name==='steel'||name==='roof'?.57:.92,metalness:name==='steel'?.5:0,
-   emissive:name==='warm'?0x895020:0x000000,emissiveIntensity:name==='warm'?.5:0}));
+   emissive:name==='warm'?0x895020:0x000000,emissiveIntensity:name==='warm'?.5:0});
+  if(painted){weatheredPaint(mat,name==='roof'?.48:.72);mat.userData.paintSurface=name;}
+  materials.set(name,mat);
  }
  return materials.get(name);
 }
@@ -48,7 +53,13 @@ export function makeCoastalBuilding(type,level,batch){
  if(!cache.has(key)){
   if(!bases.has(type)){
    const base=new T.Group();
-   for(const [name,payload] of Object.entries(source)){const mesh=new T.Mesh(decodeMesh(payload,buildings.generator),material(name));mesh.castShadow=true;mesh.receiveShadow=true;base.add(mesh);}
+   for(const [name,payload] of Object.entries(source)){
+    const geometry=decodeMesh(payload,buildings.generator),identity=BUILDING_IDENTITIES[type];
+    // Keep the modeled relief and weathering; give each workshop a readable painted roof.
+    if(name==='roof'&&identity?.paint){const color=new T.Color(identity.paint),attribute=geometry.attributes.color;for(let i=0;i<attribute.count;i++){const shade=Math.max(.82,Math.min(1.12,(attribute.getX(i)+attribute.getY(i)+attribute.getZ(i))/.99));attribute.setXYZ(i,color.r*shade,color.g*shade,color.b*shade);}}
+    if(name==='brick'&&['circuitLab','componentFactory','assembler'].includes(type)){const color=new T.Color(type==='circuitLab'?'#d2ded7':type==='componentFactory'?'#9eafbb':'#c9c1a6'),attribute=geometry.attributes.color;for(let i=0;i<attribute.count;i++){const shade=Math.max(.82,Math.min(1.12,(attribute.getX(i)+attribute.getY(i)+attribute.getZ(i))/1.34));attribute.setXYZ(i,color.r*shade,color.g*shade,color.b*shade);}}
+    const mesh=new T.Mesh(geometry,material(name));mesh.castShadow=true;mesh.receiveShadow=true;base.add(mesh);
+   }
    bases.set(type,base);
   }
   const group=bases.get(type).clone(true);group.userData={type,authored:true,detailLevel:level};

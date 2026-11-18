@@ -424,7 +424,7 @@ test('mineral names stay removed and Roman level badges can be toggled',async()=
  const h=harness(saved);try{
   h.$('resume').click();h.frame(1000);assert.match(h.$('building-'+machine.id).textContent,/IV/);assert.equal(h.$('mineral-labels').hidden,true);
   const before=h.save();h.$('show-levels').checked=false;h.$('show-levels').dispatchEvent(new h.dom.Event('change'));h.$('show-minerals').checked=false;h.$('show-minerals').dispatchEvent(new h.dom.Event('change'));h.frame(1300);
-  assert.equal(h.$('building-'+machine.id),null);assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
+  assert.ok(h.$('building-'+machine.id)?.querySelector('.world-kind'));assert.doesNotMatch(h.$('building-'+machine.id).textContent,/IV/);h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1600);assert.ok(!h.$('building-'+machine.id));assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
   const prefs=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(prefs.interface.buildingLevels,false);assert.equal(prefs.interface.mineralLabels,false);
  }finally{await h.close();}
 });
@@ -434,4 +434,10 @@ test('Q deletes single and drag-selected structures while Escape cancels tools',
   h.$('start-solo').click();h.tool('belt');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('Escape');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('q');assert.ok(!h.save().buildings.some(b=>b.x===3&&b.z===4));
   h.tool('belt');for(const x of [3,4,5]){h.point('pointerdown',x,6);h.point('pointerup',x,6);}h.key('Escape');h.point('pointerdown',1,4);h.point('pointermove',8,9);h.point('pointerup',8,9);assert.ok(h.dom.__view.area.length>=3);h.key('q');assert.ok(!h.save().buildings.some(b=>b.z===6&&b.x>=3&&b.x<=5));assert.ok(h.save().buildings.some(b=>b.type==='hq'));h.tool('drill');assert.match(h.$('intel-tip').textContent,/Bright tile borders/);assert.doesNotMatch(h.$('intel-tip').textContent,/Q or Esc/);
  }finally{await h.close();}
+});
+test('building trades share readable map names, construction symbols and a persistent label toggle',async()=>{
+ const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');const h=harness(saved);let stored;
+ try{h.$('resume').click();h.frame(1000);const label=h.$('building-'+machine.id);assert.match(label?.textContent||'',/SMELTER/);assert.ok(label.querySelector('svg'));const before=label.firstChild;h.frame(1250);assert.ok(label.firstChild===before,'Unchanged SVG labels must not rebuild every frame');assert.match(h.$('building-key').textContent,/Smelter.*Assembler.*Steel foundry.*Circuit assembler.*Component factory/);assert.equal(h.$('show-building-types').checked,true);h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1500);assert.ok(!h.$('building-'+machine.id));stored=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(stored.interface.buildingTypes,false);
+ }finally{await h.close();}
+ const reopened=harness(saved,{preferences:stored});try{assert.equal(reopened.$('show-building-types').checked,false);}finally{await reopened.close();}
 });

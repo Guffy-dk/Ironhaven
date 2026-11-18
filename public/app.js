@@ -1,3 +1,4 @@
+import {BUILDING_IDENTITIES} from './shared/building-identity.js';
 import {ROMAN_LEVELS} from './shared/levels.js';
 import {loadPreferences,savePreferences} from './preferences.js';
 import {initColonyMenu} from './colony-menu.js';
@@ -29,6 +30,7 @@ const preferenceStorage={getItem:readStorage,setItem(key,value){if(!writeStorage
 const preferences=loadPreferences(preferenceStorage);muted=preferences.audio.muted;
 const colonyMenu=initColonyMenu($('menu-dialog'),()=>keys.clear());
 initWindows();
+$('building-key').innerHTML=Object.entries(BUILDING_IDENTITIES).map(([type,id])=>`<div class="building-key-item" style="--building-accent:${id.accent}">${icon(id.icon,22)}<span>${TYPES[type].name}</span></div>`).join('');
 $('version-label').textContent=displayVersion(CURRENT_VERSION)+' '+RELEASE_STAGE.toUpperCase();
 $('start-patch-notes').textContent=RELEASE_STAGE.toUpperCase()+' '+displayVersion(CURRENT_VERSION)+' · WHAT’S NEW ↗';
 $('patch-history').innerHTML=RELEASES.map((r,i)=>`<article class="patch-entry"><div class="patch-version"><strong>${escape(displayVersion(r.version))}</strong>${i===0?'<span class="current-release">CURRENT</span>':''}<time>${escape(r.date)}</time></div><h3>${escape(r.title)}</h3><ul>${r.changes.map(c=>`<li>${escape(c)}</li>`).join('')}</ul></article>`).join('');
@@ -63,11 +65,12 @@ function costText(type,cost=TYPES[type].cost){
  return Object.entries(cost).map(([r,n])=>`${n}${abbreviations[r]}`).join(' · ')||'FREE';
 }
 function initHotbar(){
- $('hotbar').innerHTML=TOOL_LIST.map((t)=>`<button class="build-btn" data-type="${t}" title="${TYPES[t].name} (${shortcutFor(t)})"><span class="key">${shortcutFor(t)}</span>${icon(t)}${!['repair','demolish'].includes(t)?'<span class="inventory-count" title="Buildings in your inventory">0</span>':''}<span class="build-name">${TYPES[t].name}</span><span class="build-cost">${costText(t)}</span></button>`).join('');
+ $('hotbar').innerHTML=TOOL_LIST.map((t)=>`<button class="build-btn" data-type="${t}" style="--building-accent:${BUILDING_IDENTITIES[t]?.accent||'#edc38f'}" title="${TYPES[t].name} (${shortcutFor(t)})"><span class="key">${shortcutFor(t)}</span><span class="build-symbol">${icon(BUILDING_IDENTITIES[t]?.icon||t)}</span>${!['repair','demolish'].includes(t)?'<span class="inventory-count" title="Buildings in your inventory">0</span>':''}<span class="build-name">${TYPES[t].name}</span><span class="build-cost">${costText(t)}</span></button>`).join('');
  $('hotbar').addEventListener('click',e=>{const b=e.target.closest('[data-type]');if(b&&started)setTool(tool===b.dataset.type?null:b.dataset.type);});
  document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>setCategory(el.dataset.tab));
 }
 function updateToolbar(){
+ $('hotbar').style.setProperty('--tool-columns',String(CATEGORIES[tab].tools.length));
  const repair=repairCost(roundBonus(state.wave)),repairLabel=$('hotbar').querySelector('[data-type=repair] .build-cost');
  const repairText=costText('repair',repair);if(repairLabel.textContent!==repairText)repairLabel.textContent=repairText;
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
@@ -206,7 +209,7 @@ function updateInspector(){
  const impact=$('upgrade-impact');impact.hidden=!b||!!tool||!upgradeCost(b);if(!impact.hidden)impact.textContent=upgradeImpact(b);
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade to ${(b.level||1)+1} / ${maxUpgrades(b.type)+1} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:`Fully upgraded · Level ${maxUpgrades(b.type)+1}`;btn.disabled=!cost||!!upgradeLocked(state,b)||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
 
- $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=def.desc;
+ $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(BUILDING_IDENTITIES[type]?.icon||type,28);$('intel').style.setProperty('--building-accent',BUILDING_IDENTITIES[type]?.accent||'#edc38f');$('intel-title').textContent=def.name;$('intel-desc').textContent=def.desc;
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
  const productionToggle=$('toggle-production');productionToggle.hidden=!b||!!tool||!(hasOutputBuffer(type)||type==='sawmill');productionToggle.textContent=b?.disabled?'Resume production':'Pause production';
  const outputOptions=$('output-options');outputOptions.hidden=!b||!!tool||!hasOutputBuffer(type);
@@ -318,7 +321,7 @@ function updateUi(){
  const goals=[{text:'An industry that works',sub:state.produced.plate+' / 10 iron plates delivered',done:state.produced.plate>=10},{text:'Machines of resistance',sub:state.produced.gear+' / 5 gears delivered',done:state.produced.gear>=5},{text:'Survive the swarms',sub:Math.min(FINAL_WAVE,state.wave)+' / '+FINAL_WAVE+' swarms · '+state.totalKills+' hostiles stopped',done:isPostVictory(state)}];
  $('objectives').innerHTML=goals.map(g=>`<div class="objective ${g.done?'done':''}"><span class="check">${g.done?'✓':''}</span><div>${g.text}<small>${g.sub}</small></div></div>`).join('');
  $('team').innerHTML=state.players.length?`<div class="team-title">ENGINEERS · ${state.players.length}/4</div>`+state.players.map(p=>`<div class="teammate"><span class="avatar">${String(p.color+1).padStart(2,'0')}</span><span>${escape(p.name)}</span><span class="role">${p.id===state.players[0]?.id?'HOST':p.id===playerId?'YOU':'GUEST'}</span></div>`).join(''):'';
- $('pause').textContent=state.paused?'▶':'Ⅱ';$('speed').textContent=state.speed+'×';$('save').disabled=mode==='client';$('export-save').disabled=mode==='client';$('menu-save').disabled=mode==='client';$('restart').disabled=mode==='client';$('open-lan').disabled=mode==='client';$('leave-lan').hidden=mode==='solo';$('leave-lan').textContent=mode==='host'?'Close LAN (keep the world)':'Leave LAN world';$('end-restart').disabled=mode==='client';$('end-restart').textContent=mode==='client'?'Waiting for host':'Start a new expedition ↗';$('pause').disabled=mode==='client';$('speed').disabled=mode==='client';updateConnection();updateToolbar();updateInspector();drawMinimap();
+ $('pause').innerHTML=icon(state.paused?'play':'pause',16);$('pause').setAttribute('aria-label',state.paused?'Resume':'Pause');$('speed').textContent=state.speed+'×';$('save').disabled=mode==='client';$('export-save').disabled=mode==='client';$('menu-save').disabled=mode==='client';$('restart').disabled=mode==='client';$('open-lan').disabled=mode==='client';$('leave-lan').hidden=mode==='solo';$('leave-lan').textContent=mode==='host'?'Close LAN (keep the world)':'Leave LAN world';$('end-restart').disabled=mode==='client';$('end-restart').innerHTML=mode==='client'?'Waiting for host':`Start a new expedition <span>${icon('arrowUpRight',18)}</span>`;$('pause').disabled=mode==='client';$('speed').disabled=mode==='client';updateConnection();updateToolbar();updateInspector();drawMinimap();
  if(state.wave>lastWave){lastWave=state.wave;toast(`Swarm ${state.wave} · ${state.enemies.length} hostiles · Bonus activated: ${roundBonus(state.wave).label}`);tone(160,.6,.035,'sawtooth');}
  if(started&&state.status!=='playing'&&!ended){ended=true;const won=state.status==='victory';$('end-title').textContent=won?'Ironhaven endures.':'The colony has fallen.';$('end-label').textContent=won?'25 SWARMS SURVIVED':'EXPEDITION ENDED';$('end-summary').textContent=`You held out for ${Math.floor(state.time/60)} minutes and stopped ${state.totalKills} hostiles. Your industry delivered ${state.produced.plate} iron plates and ${state.produced.gear} gears.`;$('end-continue').hidden=!won;$('end-continue').disabled=mode==='client';$('end-dialog').showModal();saveGame(true);}
 }
@@ -483,10 +486,10 @@ function updateSound(){$('sound').innerHTML=icon(muted?'mute':'sound',19);$('sou
 function persistPreferences(){savePreferences(preferenceStorage,preferences);}
 function renderPreferences(){
  for(const [id,value] of [['pan-speed',preferences.controls.panSpeed],['zoom-speed',preferences.controls.zoomSpeed],['master-volume',preferences.audio.masterVolume]]){$(id).value=String(Math.round(value*100));$(id+'-value').value=Math.round(value*100)+'%';}
- $('mute-audio').checked=muted;$('show-minerals').checked=preferences.interface.mineralLabels;$('show-levels').checked=preferences.interface.buildingLevels;
+ $('mute-audio').checked=muted;$('show-minerals').checked=preferences.interface.mineralLabels;$('show-levels').checked=preferences.interface.buildingLevels;$('show-building-types').checked=preferences.interface.buildingTypes;
 }
 for(const [id,key] of [['pan-speed','panSpeed'],['zoom-speed','zoomSpeed']])$(id).oninput=()=>{preferences.controls[key]=Math.min(2.5,Math.max(.25,Number($(id).value)/100));persistPreferences();renderPreferences();};
-for(const [id,key]of [['show-minerals','mineralLabels'],['show-levels','buildingLevels']])$(id).onchange=()=>{preferences.interface[key]=$(id).checked;persistPreferences();renderPreferences();};
+for(const [id,key]of [['show-minerals','mineralLabels'],['show-levels','buildingLevels'],['show-building-types','buildingTypes']])$(id).onchange=()=>{preferences.interface[key]=$(id).checked;persistPreferences();renderPreferences();};
 $('master-volume').oninput=()=>{preferences.audio.masterVolume=Number($('master-volume').value)/100;persistPreferences();renderPreferences();};
 function setMuted(value){muted=preferences.audio.muted=value;persistPreferences();updateSound();renderPreferences();}
 $('mute-audio').onchange=()=>setMuted($('mute-audio').checked);
@@ -497,17 +500,24 @@ $('menu-field-guide').onclick=()=>{$('menu-dialog').close();$('help-dialog').sho
 updateSound();renderPreferences();
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
 function buildingLabels(){
- const root=$('building-labels'),wanted=new Set(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
- for(const b of state.buildings){
+ const root=$('building-labels'),wanted=new Set(),occupied=new Map(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
+ for(const b of (selected?[...state.buildings].sort((a,b)=>(b.id===selected)-(a.id===selected)):state.buildings)){
+  const identity=preferences.interface.buildingTypes&&(view.zoom<24||selected===b.id)?BUILDING_IDENTITIES[b.type]:null;
   const damaged=b.hp<maxHp(b),ammoLow=usesAmmo(b.type)&&(b.ammo<=3||state.resources.gear<=1&&b.ammo<=6);
   const status=showDiagnostics&&(RECIPES[b.type]||['inserter','splitter','drill','copperDrill','sawmill','generator','turret'].includes(b.type))?factoryStatus(state,b,grid):null;
   const upgrades=preferences.interface.buildingLevels&&(b.level||1)>1&&view.zoom<45&&(!['belt','wall'].includes(b.type)||selected===b.id);
-  if(!damaged&&!ammoLow&&!status&&!upgrades)continue;
-  const pos=view.project(b.x,b.z,b.type==='hq'?2.8:1.65);if(!pos.visible)continue;
+  if(!identity&&!damaged&&!ammoLow&&!status&&!upgrades)continue;
+  const pos=view.project(b.x,b.z,b.type==='hq'?2.8:BUILDING_IDENTITIES[b.type]?.height??1.65);if(!pos.visible)continue;
   const id='building-'+b.id;wanted.add(id);let el=$(id);if(!el){el=document.createElement('div');el.className='building-label';el.id=id;root.append(el);}
-  el.style.left=pos.x+'px';el.style.top=pos.y+'px';
-  const content=(upgrades?`<span class="world-upgrades" title="Level ${b.level||1}">${ROMAN_LEVELS[(b.level||1)-1]}</span>`:'')+(damaged?`<span class="world-health ${b.hp/maxHp(b)<.3?'critical':''}" title="${Math.ceil(b.hp)} / ${maxHp(b)} HP"><i style="width:${Math.max(0,b.hp/maxHp(b)*100)}%"></i></span>`:'')+(ammoLow?`<span class="world-ammo ${b.ammo===0?'empty':''}">${b.ammo===0?'NO AMMO':'LOW AMMO · '+b.ammo}</span>`:'')+(status?`<span class="world-machine-status ${status}">${STATUS_LABELS[status]}</span>`:'');
-  if(el.innerHTML!==content)el.innerHTML=content;
+  let lift=0,compact=view.zoom>=16&&selected!==b.id;
+  if(identity){
+   const width=compact?(upgrades?50:26):(30+identity.label.length*5.6+(upgrades?26:0)),height=24+(damaged?10:0)+(ammoLow?18:0)+(status?22:0);
+   for(const offset of [0,26,52,78]){lift=offset;const rect={left:pos.x-width/2,right:pos.x+width/2,top:pos.y-offset-height,bottom:pos.y-offset};const cells=[];for(let x=Math.floor((rect.left-3)/64);x<=Math.floor((rect.right+3)/64);x++)for(let y=Math.floor((rect.top-3)/64);y<=Math.floor((rect.bottom+3)/64);y++)cells.push(x+','+y);if(!cells.some(cell=>(occupied.get(cell)||[]).some(r=>rect.left<r.right+3&&rect.right>r.left-3&&rect.top<r.bottom+3&&rect.bottom>r.top-3))){for(const cell of cells){if(!occupied.has(cell))occupied.set(cell,[]);occupied.get(cell).push(rect);}break;}if(offset===78)compact=true;}
+  }
+  el.style.left=pos.x+'px';el.style.top=(pos.y-lift)+'px';el.style.setProperty('--label-lift',lift+'px');el.style.setProperty('--building-accent',identity?.accent||'#edc38f');
+  const typeTag=identity?`<span class="world-kind ${compact?'compact':''}" title="${escape(TYPES[b.type].name)}">${icon(identity.icon,14)}<span class="type-name">${identity.label}</span>${upgrades?`<b class="type-level world-upgrades">${ROMAN_LEVELS[(b.level||1)-1]}</b>`:''}</span>`:'';
+  const content=typeTag+(upgrades&&!identity?`<span class="world-upgrades" title="Level ${b.level||1}">${ROMAN_LEVELS[(b.level||1)-1]}</span>`:'')+(damaged?`<span class="world-health ${b.hp/maxHp(b)<.3?'critical':''}" title="${Math.ceil(b.hp)} / ${maxHp(b)} HP"><i style="width:${Math.max(0,b.hp/maxHp(b)*100)}%"></i></span>`:'')+(ammoLow?`<span class="world-ammo ${b.ammo===0?'empty':''}">${b.ammo===0?'NO AMMO':'LOW AMMO · '+b.ammo}</span>`:'')+(status?`<span class="world-machine-status ${status}">${STATUS_LABELS[status]}</span>`:'');
+  if(el.__labelContent!==content){el.innerHTML=content;el.__labelContent=content;}
  }
  for(const el of [...root.children])if(!wanted.has(el.id))el.remove();
 }

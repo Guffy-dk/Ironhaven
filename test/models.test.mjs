@@ -155,3 +155,14 @@ test('conveyor lanes run from each actual input edge to the configured output th
   }
  }
 });
+
+test('belts restore the cream v0.16 arrow size and placement for every rotation and upgrade',()=>{
+ for(const dir of [0,1,2,3])for(const level of [1,8,21]){
+  const arrow=makeModel('belt',dir,[],level,'quarry').getObjectByName('belt-direction');assert.ok(arrow);assert.equal(arrow.scale.x,.56);assert.equal(arrow.scale.y,.56);assert.equal(arrow.position.x,DIRS[dir][0]*.17);assert.equal(arrow.position.z,DIRS[dir][1]*.17);assert.equal(arrow.position.y,.208);assert.equal(arrow.material.color.getHex(),0xc9c1aa);
+ }
+});
+test('workshop roofs retain authored detail while their paint identifies the production trade',()=>{
+ const roofColors=new Set();for(const type of ['smelter','assembler','foundry','circuitLab','componentFactory','storage']){
+  const model=makeModel(type,0,[],1,'quarry');assert.equal(model.userData.authored,true);const roof=model.children.find(o=>o.isMesh&&o.material.userData.paintSurface==='roof');assert.ok(roof,type);assert.ok(roof.geometry.attributes.position.count>100);const c=roof.geometry.attributes.color;roofColors.add([c.getX(0),c.getY(0),c.getZ(0)].map(v=>Math.round(v*255)).join(','));assert.ok(roof.material.map&&roof.material.bumpMap);
+ }assert.equal(roofColors.size,6,'Each factory type needs its own roof paint');
+});
