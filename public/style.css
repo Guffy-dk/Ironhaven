@@ -151,3 +151,5 @@ body.inspecting-creature .bottom-ui,body.inspecting-creature .left-panel .object
 
 .numbered-ports{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:16px 0}.port-cell{min-height:46px;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#152b2c;color:#eed7a2;border:1px solid #415655}.port-cell:empty{visibility:hidden}.port-cell small{font-size:10px;color:#a4b9b7}.port-center{font-size:10px;color:#a9d5ce}.shared-storage strong{font-size:14px}.shared-storage small{font-size:8px}
 .resources .shared-storage{grid-template-columns:1fr;align-content:center;min-width:100px;text-align:center}.resources .shared-storage strong,.resources .shared-storage small{grid-column:1;white-space:nowrap}.resources .shared-storage small{letter-spacing:.2px;margin-top:3px}
+
+.floating-window,dialog{scrollbar-width:thin;scrollbar-color:#647572 #172a2a}

@@ -432,6 +432,6 @@ test('mineral names stay removed and Roman level badges can be toggled',async()=
 test('Q deletes single and drag-selected structures while Escape cancels tools',async()=>{
  const h=harness();try{
   h.$('start-solo').click();h.tool('belt');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('Escape');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('q');assert.ok(!h.save().buildings.some(b=>b.x===3&&b.z===4));
-  h.tool('belt');for(const x of [3,4,5]){h.point('pointerdown',x,6);h.point('pointerup',x,6);}h.key('Escape');h.point('pointerdown',1,4);h.point('pointermove',8,9);h.point('pointerup',8,9);assert.ok(h.dom.__view.area.length>=3);h.key('q');assert.ok(!h.save().buildings.some(b=>b.z===6&&b.x>=3&&b.x<=5));assert.ok(h.save().buildings.some(b=>b.type==='hq'));
+  h.tool('belt');for(const x of [3,4,5]){h.point('pointerdown',x,6);h.point('pointerup',x,6);}h.key('Escape');h.point('pointerdown',1,4);h.point('pointermove',8,9);h.point('pointerup',8,9);assert.ok(h.dom.__view.area.length>=3);h.key('q');assert.ok(!h.save().buildings.some(b=>b.z===6&&b.x>=3&&b.x<=5));assert.ok(h.save().buildings.some(b=>b.type==='hq'));h.tool('drill');assert.match(h.$('intel-tip').textContent,/Bright tile borders/);assert.doesNotMatch(h.$('intel-tip').textContent,/Q or Esc/);
  }finally{await h.close();}
 });
