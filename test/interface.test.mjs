@@ -101,10 +101,10 @@ test('the inspector shows existing saved upgrade colors and updates the swatch i
  saved.state.wave=25;const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',belt.x,belt.z);h.point('pointerup',belt.x,belt.z);
   const upgradeRow=()=>h.$('intel-stats').querySelector('.upgrade-swatch').parentElement;
-  assert.equal(upgradeRow().textContent,'II · 2 / 21');
+  assert.equal(upgradeRow().textContent,'2 / 21');
   assert.ok(upgradeRow().innerHTML.includes(upgradeColor(2)));
   h.key('u');
-  assert.equal(upgradeRow().textContent,'III · 3 / 21');
+  assert.equal(upgradeRow().textContent,'3 / 21');
   assert.ok(upgradeRow().innerHTML.includes(upgradeColor(3)));
  }finally{await h.close();}
 });
@@ -419,12 +419,12 @@ test('master volume scales actual sound gain and the mute controls stay in sync'
  }finally{await h.close();}
 });
 
-test('mineral names stay removed and Roman level badges can be toggled',async()=>{
+test('mineral names stay removed and numeric level badges can be toggled',async()=>{
  const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');machine.level=4;machine.hp=maxHp(machine);
  const h=harness(saved);try{
-  h.$('resume').click();h.frame(1000);assert.match(h.$('building-'+machine.id).textContent,/IV/);assert.equal(h.$('mineral-labels').hidden,true);
+  h.$('resume').click();h.frame(1000);assert.equal(h.$('building-'+machine.id).querySelector('.world-upgrades').textContent,'4');assert.equal(h.$('mineral-labels').hidden,true);
   const before=h.save();h.$('show-levels').checked=false;h.$('show-levels').dispatchEvent(new h.dom.Event('change'));h.$('show-minerals').checked=false;h.$('show-minerals').dispatchEvent(new h.dom.Event('change'));h.frame(1300);
-  assert.ok(h.$('building-'+machine.id)?.querySelector('.world-kind'));assert.doesNotMatch(h.$('building-'+machine.id).textContent,/IV/);h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1600);assert.ok(!h.$('building-'+machine.id));assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
+  assert.ok(h.$('building-'+machine.id)?.querySelector('.world-kind'));assert.ok(!h.$('building-'+machine.id).querySelector('.world-upgrades'));h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1600);assert.ok(!h.$('building-'+machine.id));assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
   const prefs=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(prefs.interface.buildingLevels,false);assert.equal(prefs.interface.mineralLabels,false);
  }finally{await h.close();}
 });

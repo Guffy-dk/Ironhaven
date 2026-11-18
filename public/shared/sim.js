@@ -1,4 +1,3 @@
-import {romanLevel} from './levels.js';
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
 import {LAMP_RADIUS,lampField} from './lamps.js';
 import {coastalLand,establishIsland,islandLanding} from './coast.js';
@@ -96,9 +95,8 @@ export function productionRecipe(b){
  return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
 }
 export const DIRECTIONAL = ['splitter','belt','storage','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
-const ROMAN=Array.from({length:30},(_,i)=>romanLevel(i+1));
 export const TURRET_LEVELS=Array.from({length:30},(_,n)=>({
- name:'Mk '+ROMAN[n],hp:350+n*55,damage:28+n*3,range:10+n*.1,interval:.38/(1+n*.025),
+ name:'Mk '+(n+1),hp:350+n*55,damage:28+n*3,range:10+n*.1,interval:.38/(1+n*.025),
  cost:n?{plate:12+n*7,gear:2+n*2}:null
 }));
 export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
@@ -185,7 +183,7 @@ export const plateYield=b=>plateYieldUnits(b)/4;
 export const UPGRADE_SWARMS=[0,0,1,3,5,7,10,13,16,20,23];
 export function upgradeLocked(s,b){
  if(!upgradeCost(b))return null;const required=TURRETS.includes(b.type)?Math.max(0,Math.ceil(((b.level||1)-1)*24/28)):b.type==='belt'?Math.max(0,(b.level||1)-1):(UPGRADE_SWARMS[b.level||1]??0);
- return s.wave<required?`Level ${(ROMAN[b.level||1]??String((b.level||1)+1))} unlocks at swarm ${required}`:null;
+ return s.wave<required?`Level ${(b.level||1)+1} unlocks at swarm ${required}`:null;
 }
 export function upgradeCost(b){
  if(TYPES[b.type]?.fixedLevel)return null;
