@@ -6964,27 +6964,27 @@
     "lamps": [
       {
         "count": 0,
-        "programs": 37,
+        "programs": 36,
         "lightSlots": 8,
-        "frameMs": 7
+        "frameMs": 13
       },
       {
         "count": 1,
-        "programs": 37,
+        "programs": 36,
         "lightSlots": 8,
-        "frameMs": 23
+        "frameMs": 20
       },
       {
         "count": 2,
-        "programs": 37,
+        "programs": 36,
         "lightSlots": 8,
-        "frameMs": 21
+        "frameMs": 26
       },
       {
         "count": 8,
-        "programs": 37,
+        "programs": 36,
         "lightSlots": 8,
-        "frameMs": 52
+        "frameMs": 38
       }
     ],
     "errors": []

@@ -1,6 +1,6 @@
-import {romanLevel} from './shared/levels.js';
+import {ROMAN_LEVELS} from './shared/levels.js';
 import * as T from './vendor/three.module.js';
-export const ROMAN_LEVELS=Array.from({length:30},(_,i)=>romanLevel(i+1));
+export {ROMAN_LEVELS};
 export const ROOF_HEIGHTS={smelter:.76,foundry:1.18,assembler:.72,circuitLab:.82,componentFactory:1.25,storage:.7,drill:1.28,copperDrill:1.28,coalMine:1.28,generator:.7,coalGenerator:.7,sawmill:.86,splitter:.36};
 const plaques=new Map();
 export function levelPlaque(group,type,level=1,dir=0){

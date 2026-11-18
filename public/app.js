@@ -1,4 +1,4 @@
-import {ROMAN_LEVELS} from './building-levels.js';
+import {ROMAN_LEVELS} from './shared/levels.js';
 import {loadPreferences,savePreferences} from './preferences.js';
 import {initColonyMenu} from './colony-menu.js';
 import {coastalLand,actorElevation} from './shared/coast.js';
@@ -204,7 +204,7 @@ function updateInspector(){
  $('intel-icon').hidden=false;
  const b=state.buildings.find(b=>b.id===selected),type=tool||b?.type||'hq',def=TYPES[type];$('program-building').textContent='Configure ports (E) ↗';$('intel').classList.toggle('has-selection',!!b||!!tool&&!!def.hp);$('rotate-building').hidden=!b||!!tool||!DIRECTIONAL.includes(b.type);$('upgrade-turret').hidden=!b||!!tool||def.fixedLevel;$('program-building').hidden=!b||!!tool||b.type!=='splitter';
  const impact=$('upgrade-impact');impact.hidden=!b||!!tool||!upgradeCost(b);if(!impact.hidden)impact.textContent=upgradeImpact(b);
- if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade to ${(b.level||1)+1} / ${maxUpgrades(b.type)+1} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:`Fully upgraded · ${maxUpgrades(b.type)}/${maxUpgrades(b.type)}`;btn.disabled=!cost||!!upgradeLocked(state,b)||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
+ if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade to ${(b.level||1)+1} / ${maxUpgrades(b.type)+1} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:`Fully upgraded · Level ${maxUpgrades(b.type)+1}`;btn.disabled=!cost||!!upgradeLocked(state,b)||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
 
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(type,28);$('intel-title').textContent=def.name;$('intel-desc').textContent=def.desc;
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
