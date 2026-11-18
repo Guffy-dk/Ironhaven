@@ -17,7 +17,7 @@ test('field training defers swarms until the host finishes or skips',()=>{
 });
 test('starter belts deliver both plates and gears; production is deterministic',()=>{
  const a=createGame(),b=createGame();a.nextWave=b.nextWave=9999;run(a,60);run(b,60);
- assert.ok(a.produced.plate>=20);assert.ok(a.produced.gear>=10);assert.ok(a.resources.wood>165);assert.deepEqual(a,b);
+ assert.ok(a.produced.plate>=18);assert.ok(a.produced.gear>=9);assert.ok(a.resources.wood>100);assert.deepEqual(a,b);
 });
 test('building validates terrain, money, orientation and inventory',()=>{
  const s=createGame(),p=addPlayer(s),start=s.resources.wood;

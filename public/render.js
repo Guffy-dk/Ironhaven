@@ -3,6 +3,8 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {outlineBuilding,outlineMaterial} from './building-outlines.js';
+import {levelPlaque} from './building-levels.js';
 import {conveyorSurface} from './conveyor-surface.js';
 import {coastalHeight,coastalLand} from './shared/coast.js';
 import {BaseLampLights,makeLampModel} from './base-lamps.js';
@@ -68,7 +70,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
    const cacheKey=`road:${style}:${input}:${dir}`;let road=geos.get(cacheKey);
    if(!road){const vertices=[],indices=[],uvs=[],points=curve.getPoints(16);for(let i=0;i<points.length;i++){const tangent=curve.getTangent(i/16),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();for(const sign of[-1,1]){const v=points[i].clone().addScaledVector(normal,width*sign);vertices.push(v.x,v.y,v.z);uvs.push(i/16,(sign+1)/2);}if(i<16){const j=i*2;indices.push(j,j+2,j+1,j+1,j+2,j+3);}}road=new T.BufferGeometry();road.setAttribute('position',new T.Float32BufferAttribute(vertices,3));road.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));road.setIndex(indices);road.computeVertexNormals();geos.set(cacheKey,road);}
    const lane=new T.Mesh(road,quarry?conveyorSurface():mat(painted(0x647565),false,T.DoubleSide));lane.receiveShadow=true;g.add(lane);
-   for(const sign of[-1,1]){const railKey=`rail:${style}:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*(width+.025));v.y=height+.02;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,quarry?.016:.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(quarry?painted(0x666764):C.gold)));}
+   for(const sign of[-1,1]){const railKey=`rail:${style}:${input}:${dir}:${sign}`;let geo=geos.get(railKey);if(!geo){const pts=[];for(let i=0;i<=16;i++){const v=curve.getPoint(i/16),t=curve.getTangent(i/16);v.addScaledVector(new T.Vector3(-t.z,0,t.x).normalize(),sign*(width+.025));v.y=height+.02;pts.push(v);}geo=new T.TubeGeometry(new T.CatmullRomCurve3(pts),20,quarry?.016:.025,4,false);geos.set(railKey,geo);}g.add(new T.Mesh(geo,mat(quarry?(level>=8?0xc4ae76:level>=4?0x719eaa:0x858c83):C.gold)));}
    if(quarry){
     for(const t of [.12,.37,.62,.87]){
      const p=curve.getPoint(t),tangent=curve.getTangent(t),normal=new T.Vector3(-tangent.z,0,tangent.x).normalize();
@@ -81,27 +83,27 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
      }
     }
     const t=curve.getTangent(.95),p=curve.getPoint(.85),normal=new T.Vector3(-t.z,0,t.x).normalize();
-    const motor=box(g,0x697771,p.x+normal.x*.31,.15,p.z+normal.z*.31,.13,.15,.19);motor.rotation.y=Math.atan2(t.x,t.z);
+    const motor=box(g,level>=15?0xb6bdba:level>=8?0x739caa:0x697771,p.x+normal.x*.31,.15,p.z+normal.z*.31,.13,.15,.19);motor.rotation.y=Math.atan2(t.x,t.z);
    }
    else box(g,C.mint,ax*.44,.16,az*.44,Math.abs(az)*.34+.045,.03,Math.abs(ax)*.34+.045,true);
   }
   const a=new T.Mesh(beltArrow,mat(quarry?0xffe8b0:C.gold,true));a.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);
-  if(quarry)a.scale.setScalar(.85);
+  if(quarry)a.scale.setScalar(.32);
   const offset=quarry?.32:.14;
-  a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry)modernizeModel(g,'belt',level);return g;
+  a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry){modernizeModel(g,'belt',level);if(level>1)levelPlaque(g,'belt',level,dir);}return g;
  }
  if(quarry&&type!=='wall'){
   const model=makeQuarryModel(originalType,painted,level);
   if(!model.userData.authored)modernizeModel(model,originalType,level);
   if(type==='storage')warehousePorts(model,inputs);
   if(type==='inserter'){port(model,2,'IN',cyan);port(model,0,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
-  if(type==='splitter'){port(model,2,'IN',cyan);port(model,0,'FWD',C.gold);port(model,3,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
+  if(type==='splitter'){port(model,2,'1',cyan);port(model,0,'2',C.gold);port(model,3,'3',C.gold);port(model,1,'4',C.gold);}
   if(['drill','smelter','assembler'].includes(type)){
    port(model,0,'OUT',C.gold);
    if(type!=='drill')for(const side of [1,2,3])port(model,side,'IN',cyan);
   }
   if(DIRECTIONAL.includes(originalType))model.rotation.y=-dir*Math.PI/2;
-  batchQuarryModel(model,`${originalType}:${level}`);
+  batchQuarryModel(model,`${originalType}:${level}`);levelPlaque(model,originalType,level);outlineBuilding(model);
   return model;
  }
  if(type==='inserter'){
@@ -122,13 +124,13 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
   const section=(left,right,top,bottom)=>{
    const x=(left+right)/2,z=(top+bottom)/2,w=right-left,d=bottom-top;
    if(quarry){
-    box(g,0x635c51,x,.096,z,w,.192,d).userData.surface='brick';
-    box(g,painted(0x8a826c),x,.24,z,w,.112,d);
+    box(g,0x606b6c,x,.096,z,w,.192,d).userData.surface='gravel';
+    box(g,0xb9b8a5,x,.24,z,w,.112,d);
     const alongX=w>=d,length=alongX?w:d,blocks=Math.max(1,Math.round(length/.24));
     for(let row=0;row<2;row++)for(let i=0;i<blocks;i++){
      const span=length/blocks,offset=(i+.5)*span-length/2;
-     const shade=[0x8b816e,0xa79a7e,0x978b71][(i+row)%3],width=span*.96;
-     box(g,shade,x+(alongX?offset:0),.32+row*.105,z+(alongX?0:offset),
+     const shade=[0xc6c7b4,0xaab6af,0xd5d1ba][(i+row)%3],width=span*.96;
+     box(g,shade,x+(alongX?offset:0),.37+row*.13,z+(alongX?0:offset),
       alongX?width:w*.87,.128,alongX?d*.83:width);
     }
     return;
@@ -145,7 +147,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
     if(inputs.includes(1))section(-.33,.33,.327,connected(1));
    }
   }
-  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);}
+  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);levelPlaque(g,'wall',level);outlineBuilding(g);}
   return g;
  }
  plate(g);
@@ -247,7 +249,7 @@ function port(g,side,text,color){
  const arrow=new T.Mesh(portArrow,mat(color,true));
  arrow.name=`arrow-${text}`;
  arrow.position.set(dx*.66,.21,dz*.66);
- arrow.rotation.y=-(side+(text==='IN'?2:0))*Math.PI/2;
+ arrow.rotation.y=-(side+(text==='IN'||text==='1'?2:0))*Math.PI/2;
  g.add(arrow);
  if(!['inserter','splitter'].includes(g.userData.type))return;
  const label=new T.Sprite(portBadgeMaterial(text,color));
@@ -304,6 +306,19 @@ export class View{
   if(this.inspectionReturn){this.center.copy(this.inspectionReturn.center);this.zoom=this.inspectionReturn.zoom;this.inspectionReturn=null;this.updateProjection();}
  }
  pickHostile(x,y){this.mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);return this.coastalHostiles.pick(this.ray);}
+ warmLamps(){
+  if(this.lampsWarmed)return;
+  const lamp=makeLampModel('quarry'),halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrix=new T.Matrix4();halos.getMatrixAt(0,oldMatrix);
+  const intensities=this.baseLampLights.lights.map(l=>l.intensity);
+  lamp.position.set(this.center.x,0,this.center.z);this.scene.add(lamp);
+  halos.count=Math.max(1,oldCount);halos.setMatrixAt(0,new T.Matrix4().makeTranslation(this.center.x,.025,this.center.z));halos.instanceMatrix.needsUpdate=true;
+  this.baseLampLights.lights.forEach(l=>{l.intensity=16;});
+  // Driver pipelines, shadow variants and halo upload need an actual first draw,
+  // not just WebGL program linking. Finish this work while the loading screen is up.
+  this.renderer.shadowMap.needsUpdate=true;this.draw();this.renderer.getContext().finish();
+  this.scene.remove(lamp);halos.count=oldCount;halos.setMatrixAt(0,oldMatrix);halos.instanceMatrix.needsUpdate=true;
+  this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
+ }
  resize(){this.renderer.setSize(innerWidth,innerHeight,false);this.composer?.setPixelRatio(this.renderer.getPixelRatio());this.composer?.setSize(innerWidth,innerHeight);this.updateProjection();}
  updateProjection(){const w=innerWidth,h=innerHeight,aspect=w/h;this.camera.left=-this.zoom*aspect;this.camera.right=this.zoom*aspect;this.camera.top=this.zoom;this.camera.bottom=-this.zoom;this.camera.updateProjectionMatrix();
   this.worldPerPixel=2*this.zoom/h;
@@ -356,7 +371,11 @@ export class View{
   bs.forEach((b,i)=>{this.dummy.position.set(b.x,.3,b.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.areaMesh=mesh;this.scene.add(mesh);
  }
  setTool(type,dir=0,neighbors=[]){this.miningTool=type;for(const [kind,mesh] of this.depositHighlights??[])mesh.visible=kind===type;this.previewRange.visible=false;this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
-  if(type&&!['demolish','repair'].includes(type)){this.ghost=makeModel(type,dir,neighbors,1,this.style);this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
+  if(type&&!['demolish','repair'].includes(type)){this.ghost=type==='belt'?new T.Group():makeModel(type,dir,neighbors,1,this.style);
+   if(type==='belt'){
+    const deck=new T.Mesh(new T.PlaneGeometry(.96,.57).rotateX(-Math.PI/2),new T.MeshBasicMaterial());deck.rotation.y=-dir*Math.PI/2;deck.position.y=.2;this.ghost.add(deck);
+    const arrow=new T.Mesh(beltArrow,new T.MeshBasicMaterial({color:0xf4e8bd,depthTest:false}));arrow.name='arrow-preview';arrow.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);arrow.position.set(DIRS[dir][0]*.16,.23,DIRS[dir][1]*.16);this.ghost.add(arrow);
+   }this.ghostMaterial=new T.MeshBasicMaterial({color:C.mint,transparent:true,opacity:.45,depthWrite:false});this.ghost.traverse(o=>{if(o.name==='structure-outline')o.visible=false;if(o.isMesh){if(!o.name.startsWith('arrow-'))o.material=this.ghostMaterial;o.castShadow=false;}});sizePortBadges(this.ghost,this.worldPerPixel,true);this.scene.add(this.ghost);}
  }
  hover(cell,valid,tool,radius=0){this.cursor.visible=!!cell&&!!tool;this.previewRange.visible=!!cell&&radius>0;
   if(!cell){if(this.ghost)this.ghost.visible=false;return;}
@@ -403,8 +422,8 @@ export class View{
   }
 
   for(const [type,resource,tint] of [['drill','ore',0x92c2c7],['copperDrill','copper',0xe4b27b],['coalMine','coal',0xa3a6bc]]){
-   const tiles=s.terrain[resource]??[],overlay=new T.InstancedMesh(new T.PlaneGeometry(.84,.84).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:tint,transparent:true,opacity:.23,depthWrite:false}),tiles.length);
-   tiles.forEach((p,i)=>{this.dummy.position.set(p.x,.012,p.z);this.dummy.rotation.set(0,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();overlay.setMatrixAt(i,this.dummy.matrix);});
+   const tiles=s.terrain[resource]??[],overlay=new T.InstancedMesh(new T.RingGeometry(.46,.5,4,1,Math.PI/4).scale(Math.SQRT2,Math.SQRT2,1).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xc8eee0,transparent:true,opacity:.9,depthWrite:false,depthTest:false}),tiles.length);
+   tiles.forEach((p,i)=>{this.dummy.position.set(p.x,.025,p.z);this.dummy.rotation.set(0,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();overlay.setMatrixAt(i,this.dummy.matrix);});
    overlay.visible=this.miningTool===type;this.depositHighlights.set(type,overlay);this.terrain.add(overlay);
   }
   const grass=new T.InstancedMesh(geometry('cone',quarry?.075:.12,.25,3),mat(quarry?0x8a8051:0x638067),650);let gi=0;while(gi<650){const x=(rand()-.5)*65,z=(rand()-.5)*65;if(Math.hypot(x,z)<12||!coastalLand(s.terrain,x,z))continue;this.dummy.position.set(x,.07,z);this.dummy.rotation.set(0,rand()*6,.1);this.dummy.scale.set(.6+rand(),.6+rand(),.6+rand());this.dummy.updateMatrix();grass.setMatrixAt(gi++,this.dummy.matrix);}this.terrain.add(grass);
@@ -512,6 +531,7 @@ export class View{
      const part=g.getObjectByName(name);
      if(part){g.userData[name]=part;part.traverse(o=>{o.castShadow=false;});}
     }
+    if(b.type==='splitter')g.traverse(o=>{if(o.isSprite)o.material=o.material.clone();});
     g.position.set(b.x,0,b.z);sizePortBadges(g,this.worldPerPixel,b.id===this.selected);
     this.scene.add(g);this.buildings.set(b.id,g);this.renderer.shadowMap.needsUpdate=true;
    }else if(g.position.x!==b.x||g.position.z!==b.z){g.position.set(b.x,0,b.z);this.renderer.shadowMap.needsUpdate=true;}
@@ -521,6 +541,7 @@ export class View{
    if(rotor&&b.active)rotor.rotation.y=time*(GENERATORS[b.type]?5:2)*productionSpeed(b);
    if(capsule){const age=time-(b.lastTransfer?.time??-100);if(age>=0&&age<.45&&b.lastTransfer.role!=='forward'){const t=age/.45;capsule.position.set(-1*(1-t)+(b.lastTransfer.role==='machine'?t:0),.4+Math.sin(t*Math.PI)*.45,b.lastTransfer.role==='return'?t:0);}else capsule.position.set(0,.57+(b.active?Math.sin(time*3)*.03:0),0);}
    if(dial)dial.rotation.y=(b.phase||0)*Math.PI*2/3;
+   if(b.type==='splitter'){const active=[3,2,4][b.phase||0];for(const n of [2,3,4]){const port=g.getObjectByName('port-'+n);if(port)port.material.opacity=n===active?1:.55;}}
    if(head){
     const aim=b.aim||0;
     head.rotation.y=quarry&&g.userData.aimSeen?easeAngle(head.rotation.y,aim,1-Math.exp(-dt*18)):aim;
@@ -622,6 +643,7 @@ export class View{
    const radius=Math.ceil(Math.max(this.camera.right,this.zoom)*1.1+9),key=`${x}:${z}:${radius}`;
    if(this.shadowKey!==key){this.shadowKey=key;this.setShadowArea(x,z,radius);}
   }
+  outlineMaterial.uniforms.width.value=Math.min(.028,Math.max(.008,(this.worldPerPixel??.02)*.65));
   if(this.composer&&this.renderer.shadowMap?.enabled)this.composer.render();else this.renderer.render(this.scene,this.camera);
  }
  project(x,z,y=1.3){const v=(this.projected??=new T.Vector3()).set(x,y,z).project(this.camera);return{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight,visible:v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}

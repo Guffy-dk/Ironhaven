@@ -5,7 +5,7 @@ function fixture(){const s=createGame(),p=addPlayer(s);s.buildings=s.buildings.f
 function empty(s){for(const r of RESOURCE_KEYS)s.resources[r]=0;s.resources.power=0;}
 test('goods delivered only to a remote warehouse immediately fund construction and remain accounted exactly once',()=>{
  const{s,p,build}=fixture(),wh=build('storage',20,20),smelter=build('smelter',19,20,0);empty(s);smelter.input=Array(4).fill('ore');
- for(let i=0;i<140;i++)step(s);assert.equal(s.resources.plate,4);assert.equal(warehouseStock(wh,'plate'),4);assert.equal(outputCount(smelter),0);
+ for(let i=0;i<200;i++)step(s);assert.equal(s.resources.plate,4);assert.equal(warehouseStock(wh,'plate'),4);assert.equal(outputCount(smelter),0);
  assert.ok(command(s,p.id,{type:'build',building:'sawmill',x:8,z:3}));
  // Fund a nearby tree and a cheap barricade solely from stored goods.
  s.resources.wood=5;assert.equal(command(s,p.id,{type:'build',building:'wall',x:6,z:0}),null);
@@ -33,5 +33,5 @@ test('schema-nine warehouse contents merge into shared totals once, including pa
 });
 test('removing a warehouse reduces capacity without discarding or crediting stored goods twice',()=>{
  const{s,p,build}=fixture(),wh=build('storage',20,20);empty(s);wh.stock={gear:5};s.resources.gear=5;const capacity=storageCapacity(s);
- assert.equal(command(s,p.id,{type:'demolish',x:20,z:20}),null);assert.equal(s.resources.gear,5);assert.equal(storageCapacity(s),capacity-300);
+ assert.equal(command(s,p.id,{type:'demolish',x:20,z:20}),null);assert.equal(s.resources.gear,5);assert.equal(storageCapacity(s),capacity-200);
 });

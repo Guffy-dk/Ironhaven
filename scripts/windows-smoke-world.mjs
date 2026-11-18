@@ -15,18 +15,21 @@ export function smokeWorld(){
  build('drill',4,3,2);build('belt',3,3,2);build('smelter',2,3,3);
  build('belt',2,2,3);build('belt',2,1,2);build('belt',1,1,2);build('belt',0,1,3);
  build('assembler',-2,2,3);build('belt',-2,1,0);build('belt',-1,1,0);
+ build('splitter',-1,-3);build('storage',-2,-3);build('belt',0,-3);build('belt',-1,-4,3);build('belt',-1,-2,1);
  build('storage',-3,-1);build('foundry',-2,-2);build('circuitLab',2,-2);build('componentFactory',3,-2);
  build('generator',-4,2);build('coalGenerator',-4,1);build('sawmill',5,-1);
  build('lamp',-5,1);build('lamp',5,3);
  build('gunTurret',-1,3);build('turret',4,1);build('mortar',-3,3);
  for(const tile of [[-2,4],[-1,4],[0,4],[1,4]])build('wall',...tile);
- for(const [x,z,levels] of [[2,3,4],[-2,-2,7],[3,-2,9]])for(let i=0;i<levels;i++){const error=command(state,p.id,{type:'upgrade',x,z});if(error)throw Error(error);}
+ state.wave=25;
+ for(const [x,z,levels] of [[2,3,4],[-2,-2,7],[3,-2,9],[-4,1,4],[-1,3,29],[-3,3,14]])for(let i=0;i<levels;i++){const error=command(state,p.id,{type:'upgrade',x,z});if(error)throw Error(error);}
 
- for(const r of RESOURCE_KEYS)state.resources[r]=200;
+ for(const r of RESOURCE_KEYS)state.resources[r]=35;
  state.wave=4;state.nextWave=0;step(state);
  const kinds=['runner','drowned','guard','spitter','walker'];
  state.enemies=kinds.map((kind,i)=>{const e=state.enemies.find(e=>e.kind===kind);if(!e)throw Error('Missing smoke species '+kind);return {...e,x:-4+i*2,z:6,speed:0};});
  const core=state.buildings.find(b=>b.type==='hq');core.lighthouseHeading=core.lighthouseAim=0;core.lighthouseAuto=false;
+ for(const b of state.buildings)if(['turret','gunTurret','mortar','pulseTurret'].includes(b.type))b.cooldown=1000;
  step(state);state.paused=true;return {state,playerId:p.id};
 }
 if(process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));

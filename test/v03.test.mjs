@@ -1,15 +1,15 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {BUILD_EDGE,createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,warehouseCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
+import {BUILD_EDGE,createGame,addPlayer,command,step,planMove,upgradeCost,MAX_UPGRADES,maxUpgrades,maxHp,RESOURCE_KEYS,RECIPES,storageCapacity,warehouseCapacity,TYPES,inventoryCount,SAVE_SCHEMA} from '../public/shared/sim.js';
 import {parseSave} from '../public/shared/saves.js';
 const make=()=>{const s=createGame();s.nextWave=9999;return{s,p:addPlayer(s)};};
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=10000000;};
 const run=(s,n)=>{for(let i=0;i<n*20;i++)step(s);};
 test('all upgradable building types accept exactly ten upgrades with increasing costs and health',()=>{
  for(const type of Object.keys(TYPES).filter(t=>TYPES[t].hp&&!TYPES[t].fixedLevel&&t!=='turret')){
-  const{s,p}=make();s.buildings=[{id:900,type,x:5,z:4,dir:0,hp:TYPES[type].hp,level:1,input:[],progress:0,item:null,ammo:0,cooldown:0,active:true}];rich(s);const b=s.buildings[0];let lastCost=0,lastHp=b.hp;
-  for(let i=0;i<MAX_UPGRADES;i++){const cost=upgradeCost(b),sum=Object.values(cost).reduce((n,v)=>n+v,0);assert.ok(sum>lastCost,type+' costs must rise');lastCost=sum;assert.equal(command(s,p.id,{type:'upgrade',x:5,z:4}),null);assert.ok(maxHp(b)>lastHp,type+' health must improve');lastHp=maxHp(b);}
-  assert.equal(b.level,11);assert.equal(upgradeCost(b),null);assert.match(command(s,p.id,{type:'upgrade',x:5,z:4}),/fully upgraded/);
+  const{s,p}=make();s.wave=25;s.buildings=[{id:900,type,x:5,z:4,dir:0,hp:TYPES[type].hp,level:1,input:[],progress:0,item:null,ammo:0,cooldown:0,active:true}];rich(s);const b=s.buildings[0];let lastCost=0,lastHp=b.hp;
+  for(let i=0;i<maxUpgrades(type);i++){const cost=upgradeCost(b),sum=Object.values(cost).reduce((n,v)=>n+v,0);assert.ok(sum>lastCost,type+' costs must rise');lastCost=sum;assert.equal(command(s,p.id,{type:'upgrade',x:5,z:4}),null);assert.ok(maxHp(b)>lastHp,type+' health must improve');lastHp=maxHp(b);}
+  assert.equal(b.level,maxUpgrades(type)+1);assert.equal(upgradeCost(b),null);assert.match(command(s,p.id,{type:'upgrade',x:5,z:4}),/fully upgraded/);
  }
 });
 test('moving a valid area preserves ids, damage, upgrades and resources',()=>{
@@ -39,8 +39,8 @@ test('every new factory consumes its exact ingredients and delivers a useful pro
 test('copper drills require copper and warehouses and their upgrades expand shared storage capacity',()=>{
  const{s,p}=make();rich(s);assert.match(command(s,p.id,{type:'build',building:'copperDrill',x:3,z:4}),/copper deposits/);
  assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4}),null);
- const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(warehouseCapacity(warehouse),300);
- assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(warehouseCapacity(warehouse),480);assert.equal(storageCapacity(s),oldCapacity+480);
+ const oldCapacity=storageCapacity(s);assert.equal(command(s,p.id,{type:'build',building:'storage',x:4,z:4}),null);const warehouse=s.buildings.find(b=>b.type==='storage');assert.equal(warehouseCapacity(warehouse),200);
+ assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(warehouseCapacity(warehouse),230);assert.equal(storageCapacity(s),oldCapacity+230);
  warehouse.stock={gear:7};
  const gear=s.resources.gear;assert.equal(command(s,p.id,{type:'demolish',x:4,z:4}),null);assert.equal(s.resources.gear,gear);assert.equal(inventoryCount(s,p.id,'storage'),0);
 });
@@ -52,6 +52,6 @@ test('a complete copper line mines, smelts and transports copper to the core',()
  const{s,p}=make();assert.equal(command(s,p.id,{type:'build',building:'copperDrill',x:8,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'belt',x:9,z:-4,dir:0}),null);assert.equal(command(s,p.id,{type:'build',building:'smelter',x:10,z:-4,dir:3}),null);assert.equal(command(s,p.id,{type:'buildRow',building:'belt',start:{x:10,z:-5},end:{x:0,z:0},dir:2}),null);run(s,60);assert.ok(s.resources.copper>=10);assert.ok(s.produced.plate>0);
 });
 test('full core storage causes backpressure and a core upgrade resumes delivery',()=>{
- const{s,p}=make(),smelter=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(b=>b.type==='hq'||b===smelter);smelter.x=-1;smelter.z=0;smelter.dir=0;smelter.item='plate';s.resources.plate=300;step(s);assert.equal(s.resources.plate,300);assert.equal(smelter.item,'plate');
- assert.equal(command(s,p.id,{type:'upgrade',x:0,z:0}),null);s.resources.plate=300;step(s);assert.equal(s.resources.plate,301);assert.equal(smelter.item,null);
+ const{s,p}=make(),smelter=s.buildings.find(b=>b.type==='smelter');s.buildings=s.buildings.filter(b=>b.type==='hq'||b===smelter);smelter.x=-1;smelter.z=0;smelter.dir=0;smelter.item='plate';for(const r of RESOURCE_KEYS)s.resources[r]=0;s.resources.plate=500;step(s);assert.equal(s.resources.plate,500);assert.equal(smelter.item,'plate');
+ s.resources.gear=6;assert.equal(command(s,p.id,{type:'upgrade',x:0,z:0}),null);for(const r of RESOURCE_KEYS)s.resources[r]=0;s.resources.plate=500;step(s);assert.equal(s.resources.plate,501);assert.equal(smelter.item,null);
 });

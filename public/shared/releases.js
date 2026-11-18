@@ -1,9 +1,22 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.17.0';
+export const CURRENT_VERSION = '0.18.0';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
 export const RELEASES = [
+ {
+  version:'0.18.0',date:'2026-11-18',title:'Readable factories and paced progression',
+  changes:[
+   'Reduce drill and smelter upgrade speed from +50% to +25% of base speed per level. Smelters conserve material at one plate per ore. Other industrial speed upgrades give +10%. Late upgrades require later swarms and escalating gears, steel, circuits and components.',
+   'Storage now has one shared capacity across all materials: 500 at the lighthouse, +30 per lighthouse upgrade; warehouses add 200, +30 per upgrade. Show one combined storage counter instead of a cap on each resource. Existing goods are retained even above the new cap; receipts pause until space is free. Building and ammunition use all shared goods, while warehouse outputs only withdraw their own local stock.',
+   'Give the six workshops different rooflines, heights and industrial equipment. Add more distinct naval weapon silhouettes, pale concrete walls, material contrast and subtle structure outlines. Add roof-mounted Roman level plates and distinct belt upgrade trims. Replace the large white belt chevrons with plain rubber and a small exit marking. Belt placement uses a clear flat preview with direction, without railings obscuring the route.',
+   'Remove mineral name labels. Show exact mineable tile borders when placing the matching extractor. Q or Delete dismantles a selected building or drag selection; Escape cancels tools and selection. The lighthouse and recently attacked structures remain protected.',
+   'Remove Transfer relays and convert existing ones to Dispatch hubs. Preserve Dispatch hub programming, with ports numbered 1 (input), 2 (ahead), 3 (left), 4 (right) on the model and in a connected-port diagram. Set per-port quantities, disable outlets with zero, or choose equal distribution. Full routes retain cargo rather than consuming and discarding ore.',
+   'Extend conveyors to twenty meaningful speed upgrades: base travel 0.20 seconds per tile, level XXI 0.05 seconds. Give all four turret types thirty levels, with gradual damage and range gains, component costs for late levels and unlocks across the swarms. Smooth the enemy health curve so larger swarms, armor and ammunition still require a supplied defense network.',
+   'Add Pause / Resume production to machine inspectors, allowing stock and shared storage space to be managed without dismantling machines.',
+   'Keep a fixed pool of local lights and precompile lamp materials during loading to avoid repeated lighting shader compilation when placing lamps. Guard invalid creature shading values before bloom to fix large black rectangles appearing during zoomed-out swarms.'
+  ]
+ },
  {
   version:'0.17.0',date:'2026-11-18',title:'Settings and storage',
   changes:[

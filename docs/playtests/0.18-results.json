@@ -1,0 +1,6992 @@
+{
+  "version": "0.18.0",
+  "date": "2026-11-18",
+  "method": "Scripted authoritative simulation, ordinary player commands and starter inventory. No injected stock, health, upgrades, kills or early wave skips. Renderer measurements use headless Chromium/SwiftShader.",
+  "cases": [
+    {
+      "seed": 417,
+      "policy": "industry",
+      "outcome": "victory",
+      "wave": 25,
+      "seconds": 5416,
+      "kills": 2675,
+      "built": 532,
+      "repairs": 817,
+      "upgrades": 368,
+      "maxStock": 1618,
+      "capacity": 2310,
+      "componentsProduced": 61,
+      "waves": [
+        {
+          "wave": 1,
+          "time": 100,
+          "kills": 0,
+          "resources": {
+            "wood": 204,
+            "plate": 2,
+            "gear": 58,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 88,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 2,
+          "time": 330,
+          "kills": 14,
+          "resources": {
+            "wood": 317,
+            "plate": 27,
+            "gear": 84,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 98,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 3,
+          "time": 1279,
+          "kills": 33,
+          "resources": {
+            "wood": 317,
+            "plate": 56,
+            "gear": 373,
+            "copper": 0,
+            "steel": 60,
+            "circuit": 3,
+            "module": 0,
+            "coal": 98
+          },
+          "buildings": 124,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 3
+            },
+            {
+              "type": "turret",
+              "level": 3
+            },
+            {
+              "type": "turret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 4,
+          "time": 1462,
+          "kills": 57,
+          "resources": {
+            "wood": 347,
+            "plate": 54,
+            "gear": 268,
+            "copper": 0,
+            "steel": 63,
+            "circuit": 3,
+            "module": 0,
+            "coal": 117
+          },
+          "buildings": 127,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 5,
+          "time": 1669,
+          "kills": 87,
+          "resources": {
+            "wood": 265,
+            "plate": 52,
+            "gear": 184,
+            "copper": 0,
+            "steel": 116,
+            "circuit": 3,
+            "module": 0,
+            "coal": 139
+          },
+          "buildings": 127,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            }
+          ],
+          "coreHp": 3000
+        },
+        {
+          "wave": 6,
+          "time": 1846,
+          "kills": 123,
+          "resources": {
+            "wood": 401,
+            "plate": 247,
+            "gear": 230,
+            "copper": 0,
+            "steel": 141,
+            "circuit": 4,
+            "module": 0,
+            "coal": 157
+          },
+          "buildings": 265,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 7,
+          "time": 2025,
+          "kills": 166,
+          "resources": {
+            "wood": 193,
+            "plate": 509,
+            "gear": 252,
+            "copper": 0,
+            "steel": 111,
+            "circuit": 8,
+            "module": 16,
+            "coal": 177
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 8,
+          "time": 2197,
+          "kills": 216,
+          "resources": {
+            "wood": 348,
+            "plate": 75,
+            "gear": 105,
+            "copper": 0,
+            "steel": 76,
+            "circuit": 11,
+            "module": 20,
+            "coal": 195
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 9,
+          "time": 2367,
+          "kills": 274,
+          "resources": {
+            "wood": 361,
+            "plate": 314,
+            "gear": 187,
+            "copper": 0,
+            "steel": 94,
+            "circuit": 13,
+            "module": 28,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 4200
+        },
+        {
+          "wave": 10,
+          "time": 2556,
+          "kills": 339,
+          "resources": {
+            "wood": 330,
+            "plate": 283,
+            "gear": 207,
+            "copper": 0,
+            "steel": 77,
+            "circuit": 14,
+            "module": 28,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 11,
+          "time": 2740,
+          "kills": 412,
+          "resources": {
+            "wood": 308,
+            "plate": 188,
+            "gear": 203,
+            "copper": 0,
+            "steel": 97,
+            "circuit": 11,
+            "module": 28,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 12,
+          "time": 2919,
+          "kills": 494,
+          "resources": {
+            "wood": 260,
+            "plate": 458,
+            "gear": 197,
+            "copper": 0,
+            "steel": 111,
+            "circuit": 13,
+            "module": 38,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 13,
+          "time": 3091,
+          "kills": 585,
+          "resources": {
+            "wood": 212,
+            "plate": 344,
+            "gear": 204,
+            "copper": 0,
+            "steel": 97,
+            "circuit": 15,
+            "module": 36,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 14,
+          "time": 3258,
+          "kills": 685,
+          "resources": {
+            "wood": 182,
+            "plate": 404,
+            "gear": 203,
+            "copper": 0,
+            "steel": 96,
+            "circuit": 12,
+            "module": 29,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 15,
+          "time": 3433,
+          "kills": 794,
+          "resources": {
+            "wood": 403,
+            "plate": 210,
+            "gear": 178,
+            "copper": 0,
+            "steel": 96,
+            "circuit": 14,
+            "module": 19,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 16,
+          "time": 3629,
+          "kills": 913,
+          "resources": {
+            "wood": 338,
+            "plate": 277,
+            "gear": 171,
+            "copper": 0,
+            "steel": 92,
+            "circuit": 12,
+            "module": 18,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 17,
+          "time": 3814,
+          "kills": 1041,
+          "resources": {
+            "wood": 167,
+            "plate": 556,
+            "gear": 205,
+            "copper": 0,
+            "steel": 82,
+            "circuit": 15,
+            "module": 31,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 18,
+          "time": 4003,
+          "kills": 1179,
+          "resources": {
+            "wood": 392,
+            "plate": 497,
+            "gear": 208,
+            "copper": 0,
+            "steel": 37,
+            "circuit": 14,
+            "module": 31,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6000
+        },
+        {
+          "wave": 19,
+          "time": 4194,
+          "kills": 1328,
+          "resources": {
+            "wood": 344,
+            "plate": 449,
+            "gear": 219,
+            "copper": 0,
+            "steel": 86,
+            "circuit": 20,
+            "module": 21,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 20,
+          "time": 4366,
+          "kills": 1487,
+          "resources": {
+            "wood": 192,
+            "plate": 516,
+            "gear": 203,
+            "copper": 0,
+            "steel": 84,
+            "circuit": 12,
+            "module": 8,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 21,
+          "time": 4560,
+          "kills": 1657,
+          "resources": {
+            "wood": 221,
+            "plate": 279,
+            "gear": 192,
+            "copper": 0,
+            "steel": 73,
+            "circuit": 12,
+            "module": 1,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 22,
+          "time": 4745,
+          "kills": 1838,
+          "resources": {
+            "wood": 394,
+            "plate": 304,
+            "gear": 173,
+            "copper": 0,
+            "steel": 103,
+            "circuit": 10,
+            "module": 0,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 23,
+          "time": 4927,
+          "kills": 2030,
+          "resources": {
+            "wood": 319,
+            "plate": 503,
+            "gear": 189,
+            "copper": 0,
+            "steel": 97,
+            "circuit": 12,
+            "module": 4,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 24,
+          "time": 5122,
+          "kills": 2233,
+          "resources": {
+            "wood": 293,
+            "plate": 233,
+            "gear": 145,
+            "copper": 0,
+            "steel": 59,
+            "circuit": 10,
+            "module": 1,
+            "coal": 187
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 25,
+          "time": 5305,
+          "kills": 2448,
+          "resources": {
+            "wood": 265,
+            "plate": 342,
+            "gear": 203,
+            "copper": 0,
+            "steel": 119,
+            "circuit": 10,
+            "module": 1,
+            "coal": 203
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        }
+      ]
+    },
+    {
+      "seed": 2026,
+      "policy": "industry",
+      "outcome": "victory",
+      "wave": 25,
+      "seconds": 5608,
+      "kills": 2675,
+      "built": 627,
+      "repairs": 814,
+      "upgrades": 399,
+      "maxStock": 1622,
+      "capacity": 3310,
+      "componentsProduced": 60,
+      "waves": [
+        {
+          "wave": 1,
+          "time": 100,
+          "kills": 0,
+          "resources": {
+            "wood": 204,
+            "plate": 2,
+            "gear": 58,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 88,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 2,
+          "time": 324,
+          "kills": 14,
+          "resources": {
+            "wood": 315,
+            "plate": 8,
+            "gear": 82,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 96,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 3,
+          "time": 523,
+          "kills": 33,
+          "resources": {
+            "wood": 224,
+            "plate": 22,
+            "gear": 125,
+            "copper": 0,
+            "steel": 14,
+            "circuit": 10,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 107,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 4,
+          "time": 1616,
+          "kills": 57,
+          "resources": {
+            "wood": 366,
+            "plate": 46,
+            "gear": 324,
+            "copper": 0,
+            "steel": 113,
+            "circuit": 3,
+            "module": 0,
+            "coal": 200
+          },
+          "buildings": 126,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 5,
+          "time": 1787,
+          "kills": 87,
+          "resources": {
+            "wood": 321,
+            "plate": 54,
+            "gear": 200,
+            "copper": 0,
+            "steel": 160,
+            "circuit": 3,
+            "module": 0,
+            "coal": 200
+          },
+          "buildings": 128,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 6,
+          "time": 1975,
+          "kills": 123,
+          "resources": {
+            "wood": 204,
+            "plate": 41,
+            "gear": 189,
+            "copper": 0,
+            "steel": 200,
+            "circuit": 3,
+            "module": 0,
+            "coal": 200
+          },
+          "buildings": 177,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 7,
+          "time": 2170,
+          "kills": 166,
+          "resources": {
+            "wood": 379,
+            "plate": 381,
+            "gear": 231,
+            "copper": 0,
+            "steel": 171,
+            "circuit": 7,
+            "module": 0,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 8,
+          "time": 2364,
+          "kills": 216,
+          "resources": {
+            "wood": 220,
+            "plate": 642,
+            "gear": 256,
+            "copper": 0,
+            "steel": 163,
+            "circuit": 10,
+            "module": 20,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 9,
+          "time": 2545,
+          "kills": 274,
+          "resources": {
+            "wood": 388,
+            "plate": 208,
+            "gear": 117,
+            "copper": 0,
+            "steel": 107,
+            "circuit": 10,
+            "module": 37,
+            "coal": 199
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 10,
+          "time": 2721,
+          "kills": 339,
+          "resources": {
+            "wood": 170,
+            "plate": 220,
+            "gear": 204,
+            "copper": 0,
+            "steel": 97,
+            "circuit": 10,
+            "module": 46,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 11,
+          "time": 2934,
+          "kills": 412,
+          "resources": {
+            "wood": 355,
+            "plate": 197,
+            "gear": 202,
+            "copper": 0,
+            "steel": 101,
+            "circuit": 12,
+            "module": 46,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 12,
+          "time": 3128,
+          "kills": 494,
+          "resources": {
+            "wood": 280,
+            "plate": 215,
+            "gear": 115,
+            "copper": 0,
+            "steel": 96,
+            "circuit": 12,
+            "module": 46,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 13,
+          "time": 3306,
+          "kills": 585,
+          "resources": {
+            "wood": 349,
+            "plate": 215,
+            "gear": 201,
+            "copper": 0,
+            "steel": 96,
+            "circuit": 15,
+            "module": 43,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 14,
+          "time": 3485,
+          "kills": 685,
+          "resources": {
+            "wood": 336,
+            "plate": 462,
+            "gear": 207,
+            "copper": 0,
+            "steel": 92,
+            "circuit": 8,
+            "module": 39,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 15,
+          "time": 3674,
+          "kills": 794,
+          "resources": {
+            "wood": 402,
+            "plate": 377,
+            "gear": 189,
+            "copper": 0,
+            "steel": 96,
+            "circuit": 12,
+            "module": 40,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 16,
+          "time": 3848,
+          "kills": 913,
+          "resources": {
+            "wood": 164,
+            "plate": 385,
+            "gear": 114,
+            "copper": 0,
+            "steel": 92,
+            "circuit": 10,
+            "module": 40,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 17,
+          "time": 4024,
+          "kills": 1041,
+          "resources": {
+            "wood": 381,
+            "plate": 335,
+            "gear": 192,
+            "copper": 0,
+            "steel": 86,
+            "circuit": 20,
+            "module": 40,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            }
+          ],
+          "coreHp": 6000
+        },
+        {
+          "wave": 18,
+          "time": 4200,
+          "kills": 1179,
+          "resources": {
+            "wood": 375,
+            "plate": 579,
+            "gear": 248,
+            "copper": 0,
+            "steel": 58,
+            "circuit": 16,
+            "module": 37,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6000
+        },
+        {
+          "wave": 19,
+          "time": 4375,
+          "kills": 1328,
+          "resources": {
+            "wood": 329,
+            "plate": 517,
+            "gear": 217,
+            "copper": 0,
+            "steel": 64,
+            "circuit": 10,
+            "module": 31,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 20,
+          "time": 4566,
+          "kills": 1487,
+          "resources": {
+            "wood": 122,
+            "plate": 60,
+            "gear": 128,
+            "copper": 0,
+            "steel": 31,
+            "circuit": 12,
+            "module": 28,
+            "coal": 200
+          },
+          "buildings": 265,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 21,
+          "time": 4743,
+          "kills": 1657,
+          "resources": {
+            "wood": 311,
+            "plate": 351,
+            "gear": 191,
+            "copper": 0,
+            "steel": 85,
+            "circuit": 14,
+            "module": 28,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 22,
+          "time": 4930,
+          "kills": 1838,
+          "resources": {
+            "wood": 403,
+            "plate": 269,
+            "gear": 228,
+            "copper": 0,
+            "steel": 129,
+            "circuit": 13,
+            "module": 26,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 23,
+          "time": 5141,
+          "kills": 2030,
+          "resources": {
+            "wood": 312,
+            "plate": 312,
+            "gear": 221,
+            "copper": 0,
+            "steel": 165,
+            "circuit": 7,
+            "module": 25,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 24,
+          "time": 5327,
+          "kills": 2233,
+          "resources": {
+            "wood": 176,
+            "plate": 452,
+            "gear": 224,
+            "copper": 0,
+            "steel": 185,
+            "circuit": 13,
+            "module": 25,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 25,
+          "time": 5514,
+          "kills": 2448,
+          "resources": {
+            "wood": 404,
+            "plate": 338,
+            "gear": 197,
+            "copper": 0,
+            "steel": 147,
+            "circuit": 11,
+            "module": 24,
+            "coal": 192
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            }
+          ],
+          "coreHp": 6600
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "industry",
+      "outcome": "defeat",
+      "wave": 24,
+      "seconds": 5492,
+      "kills": 2412,
+      "built": 518,
+      "repairs": 879,
+      "upgrades": 345,
+      "maxStock": 1626,
+      "capacity": 1500,
+      "componentsProduced": 56,
+      "waves": [
+        {
+          "wave": 1,
+          "time": 100,
+          "kills": 0,
+          "resources": {
+            "wood": 204,
+            "plate": 2,
+            "gear": 58,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 88,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 2,
+          "time": 294,
+          "kills": 14,
+          "resources": {
+            "wood": 322,
+            "plate": 20,
+            "gear": 82,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 97,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            },
+            {
+              "type": "turret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 3,
+          "time": 1581,
+          "kills": 33,
+          "resources": {
+            "wood": 208,
+            "plate": 51,
+            "gear": 370,
+            "copper": 0,
+            "steel": 57,
+            "circuit": 1,
+            "module": 0,
+            "coal": 84
+          },
+          "buildings": 123,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 4,
+          "time": 1757,
+          "kills": 57,
+          "resources": {
+            "wood": 376,
+            "plate": 42,
+            "gear": 270,
+            "copper": 0,
+            "steel": 61,
+            "circuit": 1,
+            "module": 0,
+            "coal": 110
+          },
+          "buildings": 127,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            },
+            {
+              "type": "gunTurret",
+              "level": 2
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 5,
+          "time": 1939,
+          "kills": 87,
+          "resources": {
+            "wood": 273,
+            "plate": 36,
+            "gear": 186,
+            "copper": 0,
+            "steel": 100,
+            "circuit": 1,
+            "module": 0,
+            "coal": 146
+          },
+          "buildings": 127,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            },
+            {
+              "type": "gunTurret",
+              "level": 3
+            }
+          ],
+          "coreHp": 3000
+        },
+        {
+          "wave": 6,
+          "time": 2105,
+          "kills": 123,
+          "resources": {
+            "wood": 167,
+            "plate": 163,
+            "gear": 235,
+            "copper": 0,
+            "steel": 152,
+            "circuit": 1,
+            "module": 0,
+            "coal": 178
+          },
+          "buildings": 263,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 7,
+          "time": 2277,
+          "kills": 166,
+          "resources": {
+            "wood": 268,
+            "plate": 472,
+            "gear": 257,
+            "copper": 0,
+            "steel": 113,
+            "circuit": 7,
+            "module": 8,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "turret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 8,
+          "time": 2445,
+          "kills": 216,
+          "resources": {
+            "wood": 355,
+            "plate": 623,
+            "gear": 273,
+            "copper": 0,
+            "steel": 114,
+            "circuit": 9,
+            "module": 20,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 3600
+        },
+        {
+          "wave": 9,
+          "time": 2620,
+          "kills": 274,
+          "resources": {
+            "wood": 379,
+            "plate": 201,
+            "gear": 139,
+            "copper": 0,
+            "steel": 86,
+            "circuit": 8,
+            "module": 25,
+            "coal": 199
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            },
+            {
+              "type": "mortar",
+              "level": 1
+            }
+          ],
+          "coreHp": 4200
+        },
+        {
+          "wave": 10,
+          "time": 2816,
+          "kills": 339,
+          "resources": {
+            "wood": 278,
+            "plate": 245,
+            "gear": 220,
+            "copper": 0,
+            "steel": 66,
+            "circuit": 12,
+            "module": 26,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "turret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 11,
+          "time": 2999,
+          "kills": 412,
+          "resources": {
+            "wood": 402,
+            "plate": 155,
+            "gear": 191,
+            "copper": 0,
+            "steel": 92,
+            "circuit": 11,
+            "module": 26,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 12,
+          "time": 3171,
+          "kills": 494,
+          "resources": {
+            "wood": 271,
+            "plate": 244,
+            "gear": 135,
+            "copper": 0,
+            "steel": 99,
+            "circuit": 12,
+            "module": 26,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 13,
+          "time": 3340,
+          "kills": 585,
+          "resources": {
+            "wood": 224,
+            "plate": 555,
+            "gear": 215,
+            "copper": 0,
+            "steel": 84,
+            "circuit": 11,
+            "module": 40,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "turret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 2
+            }
+          ],
+          "coreHp": 4800
+        },
+        {
+          "wave": 14,
+          "time": 3509,
+          "kills": 685,
+          "resources": {
+            "wood": 275,
+            "plate": 465,
+            "gear": 205,
+            "copper": 0,
+            "steel": 99,
+            "circuit": 13,
+            "module": 36,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 15,
+          "time": 3680,
+          "kills": 794,
+          "resources": {
+            "wood": 234,
+            "plate": 360,
+            "gear": 189,
+            "copper": 0,
+            "steel": 94,
+            "circuit": 11,
+            "module": 25,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 16,
+          "time": 3874,
+          "kills": 913,
+          "resources": {
+            "wood": 388,
+            "plate": 272,
+            "gear": 157,
+            "copper": 0,
+            "steel": 86,
+            "circuit": 12,
+            "module": 20,
+            "coal": 199
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 17,
+          "time": 4066,
+          "kills": 1041,
+          "resources": {
+            "wood": 210,
+            "plate": 575,
+            "gear": 191,
+            "copper": 0,
+            "steel": 85,
+            "circuit": 13,
+            "module": 36,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 4
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            },
+            {
+              "type": "mortar",
+              "level": 3
+            }
+          ],
+          "coreHp": 5400
+        },
+        {
+          "wave": 18,
+          "time": 4259,
+          "kills": 1179,
+          "resources": {
+            "wood": 393,
+            "plate": 507,
+            "gear": 206,
+            "copper": 0,
+            "steel": 42,
+            "circuit": 13,
+            "module": 36,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6000
+        },
+        {
+          "wave": 19,
+          "time": 4452,
+          "kills": 1328,
+          "resources": {
+            "wood": 335,
+            "plate": 436,
+            "gear": 210,
+            "copper": 0,
+            "steel": 85,
+            "circuit": 12,
+            "module": 27,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "turret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 20,
+          "time": 4626,
+          "kills": 1487,
+          "resources": {
+            "wood": 172,
+            "plate": 517,
+            "gear": 204,
+            "copper": 0,
+            "steel": 90,
+            "circuit": 12,
+            "module": 14,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 21,
+          "time": 4824,
+          "kills": 1657,
+          "resources": {
+            "wood": 242,
+            "plate": 300,
+            "gear": 159,
+            "copper": 0,
+            "steel": 98,
+            "circuit": 11,
+            "module": 6,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 22,
+          "time": 5009,
+          "kills": 1838,
+          "resources": {
+            "wood": 402,
+            "plate": 67,
+            "gear": 115,
+            "copper": 0,
+            "steel": 92,
+            "circuit": 10,
+            "module": 6,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 23,
+          "time": 5192,
+          "kills": 2030,
+          "resources": {
+            "wood": 273,
+            "plate": 207,
+            "gear": 121,
+            "copper": 0,
+            "steel": 107,
+            "circuit": 10,
+            "module": 6,
+            "coal": 200
+          },
+          "buildings": 267,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 4
+            }
+          ],
+          "coreHp": 6600
+        },
+        {
+          "wave": 24,
+          "time": 5393,
+          "kills": 2233,
+          "resources": {
+            "wood": 377,
+            "plate": 11,
+            "gear": 218,
+            "copper": 0,
+            "steel": 135,
+            "circuit": 13,
+            "module": 6,
+            "coal": 152
+          },
+          "buildings": 246,
+          "turrets": [
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "turret",
+              "level": 8
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "gunTurret",
+              "level": 7
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "mortar",
+              "level": 5
+            },
+            {
+              "type": "gunTurret",
+              "level": 6
+            },
+            {
+              "type": "gunTurret",
+              "level": 5
+            }
+          ],
+          "coreHp": 6600
+        }
+      ]
+    },
+    {
+      "seed": 417,
+      "policy": "single",
+      "outcome": "defeat",
+      "wave": 7,
+      "seconds": 1510,
+      "kills": 208,
+      "built": 134,
+      "repairs": 6,
+      "upgrades": 74,
+      "maxStock": 535,
+      "capacity": 1100,
+      "componentsProduced": 0,
+      "waves": [
+        {
+          "wave": 1,
+          "time": 100,
+          "kills": 0,
+          "resources": {
+            "wood": 259,
+            "plate": 6,
+            "gear": 43,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 81,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 2,
+          "time": 331,
+          "kills": 14,
+          "resources": {
+            "wood": 280,
+            "plate": 8,
+            "gear": 81,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 87,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 3,
+          "time": 521,
+          "kills": 33,
+          "resources": {
+            "wood": 353,
+            "plate": 28,
+            "gear": 83,
+            "copper": 0,
+            "steel": 0,
+            "circuit": 0,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 93,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 4,
+          "time": 728,
+          "kills": 57,
+          "resources": {
+            "wood": 266,
+            "plate": 10,
+            "gear": 84,
+            "copper": 0,
+            "steel": 10,
+            "circuit": 6,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 97,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 1
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 5,
+          "time": 963,
+          "kills": 87,
+          "resources": {
+            "wood": 314,
+            "plate": 29,
+            "gear": 70,
+            "copper": 0,
+            "steel": 13,
+            "circuit": 16,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 103,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 2
+            }
+          ],
+          "coreHp": 2400
+        },
+        {
+          "wave": 6,
+          "time": 1182,
+          "kills": 123,
+          "resources": {
+            "wood": 391,
+            "plate": 7,
+            "gear": 63,
+            "copper": 0,
+            "steel": 10,
+            "circuit": 27,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 97,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 3
+            }
+          ],
+          "coreHp": 1895
+        },
+        {
+          "wave": 7,
+          "time": 1403,
+          "kills": 166,
+          "resources": {
+            "wood": 247,
+            "plate": 7,
+            "gear": 29,
+            "copper": 0,
+            "steel": 10,
+            "circuit": 48,
+            "module": 0,
+            "coal": 0
+          },
+          "buildings": 74,
+          "turrets": [
+            {
+              "type": "gunTurret",
+              "level": 3
+            }
+          ],
+          "coreHp": 2244
+        }
+      ]
+    }
+  ],
+  "combat": [
+    {
+      "wave": 1,
+      "unlockedGunLevel": 3,
+      "runnerHp": 40,
+      "gunDamage": 34,
+      "hits": 2
+    },
+    {
+      "wave": 5,
+      "unlockedGunLevel": 7,
+      "runnerHp": 71,
+      "gunDamage": 46,
+      "hits": 2
+    },
+    {
+      "wave": 9,
+      "unlockedGunLevel": 12,
+      "runnerHp": 112,
+      "gunDamage": 61,
+      "hits": 2
+    },
+    {
+      "wave": 15,
+      "unlockedGunLevel": 19,
+      "runnerHp": 194,
+      "gunDamage": 82,
+      "hits": 3
+    },
+    {
+      "wave": 20,
+      "unlockedGunLevel": 25,
+      "runnerHp": 285,
+      "gunDamage": 100,
+      "hits": 3
+    },
+    {
+      "wave": 25,
+      "unlockedGunLevel": 30,
+      "runnerHp": 398,
+      "gunDamage": 115,
+      "hits": 4
+    }
+  ],
+  "render": {
+    "scenarios": [
+      {
+        "zoom": 14,
+        "count": 80,
+        "invalid": 0
+      },
+      {
+        "zoom": 44,
+        "count": 80,
+        "invalid": 0
+      },
+      {
+        "zoom": 14,
+        "count": 160,
+        "invalid": 0
+      }
+    ],
+    "lamps": [
+      {
+        "count": 0,
+        "programs": 37,
+        "lightSlots": 8,
+        "frameMs": 7
+      },
+      {
+        "count": 1,
+        "programs": 37,
+        "lightSlots": 8,
+        "frameMs": 23
+      },
+      {
+        "count": 2,
+        "programs": 37,
+        "lightSlots": 8,
+        "frameMs": 21
+      },
+      {
+        "count": 8,
+        "programs": 37,
+        "lightSlots": 8,
+        "frameMs": 52
+      }
+    ],
+    "errors": []
+  }
+}

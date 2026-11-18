@@ -1,14 +1,16 @@
 {
   "name": "ironhaven",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "type": "module",
-  "description": "Windows x64 coastal factory survival for 1\u20134 players on LAN",
+  "description": "Windows x64 coastal factory survival for 1–4 players on LAN",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "test": "node --test",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "test:render": "node scripts/check-render-regression.mjs",
+    "test:campaign": "node scripts/play-campaign.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "esbuild": "0.25.11",
-    "happy-dom": "20.0.10"
+    "happy-dom": "20.0.10",
+    "playwright": "^1.62.1"
   }
 }

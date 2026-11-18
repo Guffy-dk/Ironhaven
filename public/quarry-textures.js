@@ -50,7 +50,7 @@ export function quarryTerrainMaterial(){
   shader.fragmentShader='uniform sampler2D quarryMoss;\nvarying float vQuarryGrowth;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
    vec4 quarryAlbedo = mix(texture2D(map,vMapUv),texture2D(quarryMoss,vMapUv),vQuarryGrowth);
-   diffuseColor *= quarryAlbedo;
+   diffuseColor.rgb *= mix(vec3(.43,.45,.38),quarryAlbedo.rgb,.72);
   `);
  };
  return material;
