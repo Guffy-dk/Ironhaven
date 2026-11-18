@@ -40,16 +40,16 @@ function world(){
   return s.buildings.at(-1);
  }};
 }
-test('standard swarm seven keeps its health while swarm eight survives a max-level mortar hit',()=>{
+test('swarm health scales smoothly and late runners survive a level-30 mortar hit',()=>{
  const normalEnemy=wave=>{
   const {s}=world();s.wave=wave-1;s.nextWave=0;
   step(s);
   return s.enemies.find(e=>e.kind==='runner'&&!e.coreHunter&&!e.mutation);
  };
  const seventh=normalEnemy(7),eighth=normalEnemy(8),last=normalEnemy(FINAL_WAVE);
- assert.equal(seventh.maxHp,74);
+ assert.equal(seventh.maxHp,90);
  assert.equal(seventh.damage,(1+.018*6)*.8);
- assert.ok(eighth.maxHp>turretStats({type:'mortar',level:MAX_UPGRADES+1}).damage);
+ assert.ok(last.maxHp>turretStats({type:'mortar',level:30}).damage);assert.ok(eighth.maxHp<seventh.maxHp*1.2);
  assert.ok(eighth.damage>seventh.damage);
  assert.ok(last.maxHp>3*eighth.maxHp);
  assert.ok(last.damage>eighth.damage);
@@ -90,7 +90,7 @@ test('sawmill output scales with trees and area clearing leaves buildings in pla
  const sawmill=build('sawmill',7,5),before=sawmillRate(s,sawmill);
  s.terrain.trees.push({x:9,z:5,h:1},{x:8,z:6,h:1});
  assert.ok(sawmillRate(s,sawmill)>before);
- s.resources.wood=0;
+ for(const r of Object.keys(s.resources))s.resources[r]=0;
  assert.equal(command(s,p.id,{type:'clearTrees',start:{x:7,z:5},end:{x:10,z:6}}),null);
  assert.equal(s.resources.wood,24);assert.equal(sawmillRate(s,sawmill),0);
  assert.ok(s.buildings.includes(sawmill)&&s.buildings.includes(belt));
@@ -112,31 +112,22 @@ test('dismantling returns 80% of total costs, including fractional belt refunds'
  assert.ok(starter.state.players[0].inventory.belt.length>0);
 });
 
-test('the first smelter upgrade gives three plates from two ore across a save and leaves copper yield alone',()=>{
+test('upgraded refining conserves ore across a save and copper has the same one-to-one yield',()=>{
  const {s,p,build}=world(),smelter=build('smelter',-1,0);
- const before={...s.resources};
  assert.equal(command(s,p.id,{type:'upgrade',x:-1,z:0}),null);
- assert.equal(before.wood-s.resources.wood,6);assert.equal(before.plate-s.resources.plate,6);
- smelter.input=['ore'];
- for(let i=0;i<26;i++)step(s);
- assert.equal(s.produced.plate,1);
+ for(const r of Object.keys(s.resources))s.resources[r]=0;
+ smelter.input=['ore'];for(let i=0;i<48;i++)step(s);assert.equal(s.produced.plate,1);
  const loaded=parseSave(JSON.stringify(packWorldSave(s,p.id))).state;
- const machine=loaded.buildings.find(b=>b.id===smelter.id);
- machine.input=['ore','copperOre','copperOre'];
- for(let i=0;i<96;i++)step(loaded);
- assert.equal(loaded.produced.plate,3);
- assert.equal(loaded.resources.copper,2);
- assert.equal(machine.input.length,0);
+ const machine=loaded.buildings.find(b=>b.id===smelter.id);machine.input=['ore','copperOre','copperOre'];
+ for(let i=0;i<160;i++)step(loaded);
+ assert.equal(loaded.produced.plate,2);assert.equal(loaded.resources.copper,2);assert.equal(machine.input.length,0);
 });
-
-test('a smelter waits for space for a whole upgraded batch before spending ore',()=>{
+test('a full machine buffer retains ore until space is available',()=>{
  const {s,p,build}=world(),smelter=build('smelter',5,5);
  assert.equal(command(s,p.id,{type:'upgrade',x:5,z:5}),null);
- smelter.plateCredit=2;smelter.item='plate';smelter.outputBuffer=['plate','plate','plate'];smelter.input=['ore'];
- for(let i=0;i<48;i++)step(s);
- assert.deepEqual(smelter.input,['ore']);assert.equal(smelter.plateCredit,2);
- smelter.outputBuffer.pop();
- for(let i=0;i<24;i++)step(s);
+ smelter.item='plate';smelter.outputBuffer=Array(4).fill('plate');smelter.input=['ore'];
+ for(let i=0;i<100;i++)step(s);assert.deepEqual(smelter.input,['ore']);
+ smelter.outputBuffer.pop();for(let i=0;i<48;i++)step(s);
  assert.equal(smelter.input.length,0);assert.equal(smelter.outputBuffer.length,4);
 });
 
@@ -174,25 +165,25 @@ test('stored power covers a shortage until drained, and wood can recover with an
  for(let i=0;i<900;i++)step(s);
  assert.ok(s.buildings.some(b=>b.type==='smelter'&&!b.active));
  s.terrain.trees.push({x:8,z:5,h:1});
- const mill=build('sawmill',7,5);
+ const mill=build('sawmill',7,5);for(const r of Object.keys(s.resources))s.resources[r]=0;
  assert.equal(mill.active,true);
  for(let i=0;i<160;i++)step(s);
  assert.ok(s.resources.wood>0);assert.ok(generator.active);assert.equal(s.power.total,36);
  assert.equal(command(s,p.id,{type:'demolish',x:8,z:5}),null);
 });
 
-test('sentries fire without consuming gears or power and cannot be upgraded',()=>{
+test('sentries fire without consuming gears or power and retain those benefits when upgraded',()=>{
  const {s,p,build}=world(),sentry=build('turret',4,4);
  s.resources.gear=0;s.resources.wood=0;
  s.enemies=[{id:900,x:5,z:4,hp:100,speed:0,cooldown:1}];
  step(s);assert.equal(s.resources.gear,0);assert.ok(s.enemies[0].hp<100);
- assert.match(command(s,p.id,{type:'upgrade',x:4,z:4}),/cannot be upgraded/);assert.equal(sentry.level,1);
+ s.resources.wood=100;s.resources.plate=100;assert.equal(command(s,p.id,{type:'upgrade',x:4,z:4}),null);assert.equal(sentry.level,2);
 });
 
 test('coal mines feed a coal generator through the core and fuel consumption appears in stock flow',()=>{
  const {s,build}=world();
  Object.assign(s.buildings.find(b=>b.type==='hq'),{x:11,z:10});
- build('coalMine',10,10);build('coalGenerator',13,10);
+ build('coalMine',10,10);build('coalGenerator',13,10);for(const r of Object.keys(s.resources))s.resources[r]=0;
  assert.equal(s.power.total,18);
  for(let i=0;i<100;i++)step(s);
  assert.ok(s.resources.coal>0);assert.ok(stockFlow(s).coal>0);
@@ -265,7 +256,7 @@ test('belt timing is based on when cargo entered the tile and rendering retains 
  motion.update(s,100);
  step(s);assert.equal(right.item,'gear');assert.equal(left.item,null);
  const rendered=b=>{const result=[];motion.drawBeltItems(b,(cargo,t)=>result.push([cargo.item,t]));return result;};
- motion.update(s,150);assert.deepEqual(rendered(left),[['gear',.875]]);assert.deepEqual(rendered(right),[]);
- motion.update(s,175);assert.deepEqual(rendered(left),[['gear',.9375]]);
+ motion.update(s,150);assert.deepEqual(rendered(left),[['gear',.75]]);assert.deepEqual(rendered(right),[]);
+ motion.update(s,175);assert.deepEqual(rendered(left),[['gear',.875]]);
  motion.update(s,200);assert.deepEqual(rendered(left),[]);assert.deepEqual(rendered(right),[['gear',0]]);
 });

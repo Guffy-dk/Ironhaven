@@ -18,8 +18,8 @@ test('new colonies keep starter buildings off deposits and have room to expand i
   assert.ok(state.terrain.trees.filter(t=>trees.has(key(t.x+1,t.z))&&trees.has(key(t.x,t.z+1))).length>50);
   assert.equal(state.resources.plate,180);
   for(let i=0;i<1200;i++)step(state);
-  assert.ok(state.produced.plate>=32);
-  assert.ok(state.produced.gear>=14);
+  assert.ok(state.produced.plate>=20);
+  assert.ok(state.produced.gear>=9);
  }
 });
 
@@ -46,10 +46,10 @@ test('hostiles route around tree tiles and take the direct route when a tree is 
 test('turret upgrades improve damage efficiency while keeping high-level range bounded',()=>{
  const base=turretStats({level:1}),third=turretStats({level:3}),max=turretStats({level:MAX_UPGRADES+1});
  assert.equal(base.range,10);
- assert.equal(third.range,11);
- assert.equal(max.range,13);
- assert.equal(third.damage,72);
- assert.equal(max.damage,168);
+ assert.equal(third.range,10.2);
+ assert.equal(max.range,11);
+ assert.equal(third.damage,34);
+ assert.equal(max.damage,58);
  assert.ok(third.damage/third.interval>base.damage/base.interval);
  assert.ok(max.damage/max.interval>third.damage/third.interval);
 });

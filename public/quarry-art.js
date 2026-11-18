@@ -20,7 +20,7 @@ function materialFor(name){
  if(!surfaceMaterials.has(name)){
   const map=quarryTexture(name),metal=name==='roof'||name==='metal';
   surfaceMaterials.set(name,new T.MeshStandardMaterial({
-   vertexColors:true,map,bumpMap:map,bumpScale:metal?.012:.028,roughness:metal?.58:.94,metalness:metal?.48:.02
+   vertexColors:true,map,bumpMap:map,bumpScale:metal?.008:.016,roughness:metal?.58:.94,metalness:metal?.48:.02
   }));
  }
  return surfaceMaterials.get(name);
@@ -202,28 +202,50 @@ export function makeQuarryModel(type,paint,level=1){
   cyl(rotor,iron,0,0,0,.22,.05,12);
   for(let i=0;i<3;i++)box(rotor,steel,0,.043,0,.36,.027,.048).rotation.y=i*Math.PI/3;
  }else if(['turret','gunTurret','mortar','pulseTurret'].includes(type)){
-  box(g,stone,0,.087,0,.84,.174,.84);
-  box(g,paint(sand),0,.21,0,.76,.11,.76);
-  cyl(g,iron,0,.295,0,.3,.1,10);
-  for(const x of [-.34,.34])for(const z of [-.29,0,.29])box(g,0x9d9279,x,.255,z,.146,.143,.25);
-  const head=new T.Group();head.name='head';head.position.y=.42;g.add(head);
-  if(type==='mortar'){
-   box(head,iron,0,-.03,0,.43,.12,.42);
-   const tube=cyl(head,steel,0,.14,.135,.087,.54,10);tube.rotation.x=.66;
-   const mouth=cyl(head,iron,0,.349,.298,.09,.046,10);mouth.rotation.x=.66;
-   box(head,paint(steel),0,-.01,-.1,.34,.17,.24);
-  }else{
-   const sentry=type==='turret',pulse=type==='pulseTurret';
-   const shield=paint(sentry?slate:pulse?0x777362:steel),width=sentry?.37:.53;
-   box(head,shield,0,.005,0,width,sentry?.17:.22,.36);
-   cyl(head,shield,0,.092,0,sentry?.145:.183,width,16).rotation.z=Math.PI/2;
-   box(head,iron,0,.028,.185,sentry?.22:.38,.13,.03);
-   for(const x of pulse?[-.115,.115]:[0]){
-    const barrel=cyl(head,iron,x,.045,.33,sentry?.035:.052,.45,12);barrel.rotation.x=Math.PI/2;
-    cyl(head,steel,x,.045,.531,sentry?.044:.067,.052,12).rotation.x=Math.PI/2;
+  const isMortar=type==='mortar',pulse=type==='pulseTurret',sentry=type==='turret';
+  const enamel=isMortar?0xb98065:pulse?0x8eafb5:sentry?0x718d8c:0xc4ccc8;
+  surface(g,'gravel',0xbdc5ba,0,.075,0,.89,.15,.89);
+  cyl(g,0x4b6268,0,.2,0,.37,.12,32);cyl(g,0xa6b6b4,0,.28,0,.29,.06,32);
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;cyl(g,0xd0c19a,Math.cos(a)*.32,.27,Math.sin(a)*.32,.018,.022,8);}
+  for(const x of [-.34,.34])for(const z of [-.28,.28])surface(g,'gravel',0xd1c7ac,x,.19,z,.19,.13,.25);
+  const head=new T.Group();head.name='head';head.position.y=.4;g.add(head);
+  if(isMortar){
+   cyl(head,0x4c5b60,0,-.015,0,.245,.11,32);
+   for(const x of [-.18,.18]){
+    const brace=box(head,enamel,x,.14,.03,.065,.31,.09);brace.rotation.x=.28;
+    cyl(head,0xd0c1a3,x,.19,.07,.052,.07,20).rotation.z=Math.PI/2;
    }
-   for(const x of [-.18,.18])box(head,mortar,x,.11,.173,.03,.03,.022);
+   const tube=cyl(head,0xb0bcb5,0,.3,.1,.108,.7,32);tube.rotation.x=.47;
+   const mouth=cyl(head,0x343f42,0,.595,.25,.11,.04,32);mouth.rotation.x=.47;
+   for(const y of [.13,.32,.5])cyl(head,enamel,0,y,.1+(y-.3)*.5,.119,.035,24).rotation.x=.47;
+   box(head,0x49606b,-.29,.05,-.17,.18,.15,.29);
+   for(let i=0;i<3;i++)cyl(head,0xb8aa73,-.29,.15,-.26+i*.08,.027,.17,12);
+  }else{
+   if(!sentry){
+    box(head,enamel,0,.1,-.025,.55,.26,.38);
+    cyl(head,enamel,0,.22,-.02,.18,.55,32).rotation.z=Math.PI/2;
+    for(const side of [-1,1]){
+     box(head,0x40545c,side*.285,.07,-.04,.045,.19,.24);
+     for(let i=0;i<5;i++)box(head,0xa5b6b7,side*.31,.03+i*.027,-.04,.015,.009,.2);
+    }
+   }else{
+    for(const x of [-.1,.1])box(head,0x50666b,x,.07,-.01,.045,.23,.1);
+    box(head,enamel,0,.13,.11,.36,.2,.045);
+    box(head,0x45535a,.18,.05,-.07,.16,.15,.2);
+   }
+   const barrels=pulse?[-.13,.13]:type==='gunTurret'&&level>=5?[-.085,.085]:[0];
+   for(const x of barrels){
+    cyl(head,0x333f44,x,.13,.37,sentry?.035:.047,.53,24).rotation.x=Math.PI/2;
+    for(const z of [.23,.33,.43])cyl(head,pulse?0x9fcbc9:0x91a4a4,x,.13,z,pulse?.073:.058,.032,20).rotation.x=Math.PI/2;
+    cyl(head,0xb5bfba,x,.13,.62,.061,.08,24).rotation.x=Math.PI/2;
+    if(pulse)cyl(head,0x8bdbd0,x,.13,.668,.04,.009,20,true).rotation.x=Math.PI/2;
+   }
+   box(head,0x4b6569,0,.34,-.12,.08,.06,.11);
+   box(head,0xe3c484,0,.34,-.055,.042,.026,.009,true);
   }
+  if(level>=10)for(const side of [-1,1])box(head,0x98aaa7,side*.3,.14,-.01,.055,.2,.32);
+  if(level>=20){cyl(head,0x536973,-.23,.43,-.22,.014,.38,12);box(head,0xc2cdbd,-.23,.62,-.22,.16,.07,.07);}
+  batchQuarryModel(head,'defense-head:'+type+':'+level);
  }else if(type==='inserter'){
   box(g,paint(stone),0,.088,0,.77,.175,.72);
   for(const x of [-.32,.32])for(const z of [-.26,.26])box(g,iron,x,.31,z,.076,.43,.07);

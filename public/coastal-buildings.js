@@ -1,3 +1,4 @@
+import {ROOF_HEIGHTS} from './building-levels.js';
 import * as T from './vendor/three.module.js';
 import buildings from './art/coastal-buildings.json' with {type:'json'};
 import {decodeMesh} from './authored-meshes.js';
@@ -15,9 +16,9 @@ function material(name){
  return materials.get(name);
 }
 export function modernizeModel(group,type,level){
- const n=Math.max(0,(level||1)-1);if(!n)return;
+ const n=Math.min(10,Math.max(0,(level||1)-1));if(!n||type==='belt')return;
  const work=['smelter','assembler','foundry','circuitLab','componentFactory','storage'].includes(type);
- const y=work?(type==='foundry'?1.08:1.01):type==='hq'?.22:type==='wall'?.35:type==='belt'?.12:.27;
+ const y=work?(ROOF_HEIGHTS[type]+.06):type==='hq'?.22:type==='wall'?.35:type==='belt'?.12:.27;
  for(let i=0;i<n;i++){
   const side=i%2?1:-1,z=(Math.floor(i/2)-2)*.115,x=side*(work?.33:.4);
   if(type==='wall'){
@@ -33,8 +34,8 @@ export function modernizeModel(group,type,level){
   box(group,0x283d42,.18,y+.09,-.047,.17,.05,.008);
  }
  if(work&&n>=9){
-  box(group,0x9daba9,-.1,y+.27,.22,.48,.1,.18);
-  for(let i=0;i<4;i++)box(group,0x394f55,-.26+i*.1,y+.335,.22,.067,.025,.14);
+  box(group,0x9daba9,-.1,y+.27,-.22,.48,.1,.18);
+  for(let i=0;i<4;i++)box(group,0x394f55,-.26+i*.1,y+.335,-.22,.067,.025,.14);
  }
  if(work&&n>=6){
   const panel=box(group,0x354d55,-.15,y+.18,-.08,.38,.025,.42);panel.rotation.x=.19;

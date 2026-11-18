@@ -26,7 +26,7 @@ def roof(width,depth,y,pitch=.36):
  rod('steel',(-width*.56,y-.044,-depth*.53),(width*.56,y-.044,-depth*.53),.012)
  box('steel',(0,y+depth*.09,0),(width+.1,.019,.032))
 def workshop(kind):
- g['CURRENT']='body';w=.84;d=.73;height=.67 if kind=='foundry' else .6
+ g['CURRENT']='body';w=.84;d=.73;height={'smelter':.52,'foundry':.94,'assembler':.46,'circuitLab':.62,'componentFactory':1.05,'storage':.46}[kind]
  box('concrete',(0,.07,0),(.96,.14,.9))
  box('brick',(0,.14+height*.5,0),(w,height,d),.006)
  # Bond lines on corners and reinforcing lintels break up the shell at normal zoom.
@@ -34,10 +34,18 @@ def workshop(kind):
   y=.18+row*height/8
   for side in [-1,1]:box('concrete',(side*w*.49,y,d*.5+.004),(.025,.009,.015),.001)
  box('concrete',(0,.17,0),(.87,.06,.77))
- roof(w,d,height+.22)
- # Factory clerestory is glazed on all four sides beneath a second metal roof.
- box('steel',(0,height+.27,0),(.67,.16,.23));roof(.68,.27,height+.4,.19)
- for x in [-.24,-.12,0,.12,.24]:window(x,height+.275,.125,.1,.105)
+ if kind=='storage':
+  roof(w,d,height+.22,.44)
+ elif kind=='assembler':
+  # Low sawtooth machine hall: three north-light roof bays.
+  for z in [-.25,0,.25]:
+   panel=box('roof',(0,height+.21,z),(.91,.025,.29));panel.rotation_euler.x=.35
+   box('glass',(0,height+.225,z+.125),(.78,.085,.014))
+ elif kind in ['circuitLab','componentFactory']:
+  box('roof',(0,height+.17,0),(.94,.045,.82))
+  for side in [-1,1]:box('concrete',(side*.44,height+.22,0),(.035,.1,.8))
+ else:
+  roof(w,d,height+.22,.2)
  # Large sliding loading door, runners and a recessed warm furnace opening.
  box('steel',(.07,.36,d/2+.013),(.34,.4,.025))
  box('warm',(.14,.34,d/2+.027),(.15,.25,.009))
@@ -64,13 +72,32 @@ def workshop(kind):
  for x in [.02,.42]:rod('steel',(x,.19,.61),(x,.62,.61),.012)
  # Chimneys distinguish furnace buildings from clean assembly workshops.
  if kind in ['smelter','foundry']:
-  for x,h in ([(-.24,1.3),(.23,1.12)] if kind=='foundry' else [(-.24,1.3)]):
+  for x,h in ([(-.27,1.75),(.27,1.6)] if kind=='foundry' else [(-.24,1.38)]):
    box('brick',(x,h*.5,-.17),(.13,h,.13));box('steel',(x,h,-.17),(.16,.034,.16))
    for y in [.95,1.11]:box('steel',(x,y,-.17),(.137,.012,.137),.001)
- elif kind!='storage':
-  box('steel',(.25,height+.43,-.16),(.18,.1,.15))
-  for x in [.19,.22,.25,.28,.31]:box('roof',(x,height+.487,-.16),(.009,.008,.12),.001)
+ elif kind=='assembler':
+  # Open steel gantry and overhead drive distinguish assembly from furnaces.
+  for x in [-.36,.36]:rod('steel',(x,.2,-.23),(x,1.02,-.23),.025)
+  box('steel',(0,1.02,-.23),(.79,.075,.08))
+  box('warm',(-.17,.9,-.23),(.16,.18,.12))
+  for x in [-.17,.05,.27]:
+   rod('steel',(x,.7,-.23),(x,.89,-.23),.055)
+ elif kind=='circuitLab':
+  # Pale instrument housings, ceramic insulators and a glazed control bay.
+  for x in [-.28,-.09,.1]:
+   box('concrete',(x,.92,-.16),(.14,.25,.23))
+   for z in [-.22,-.12]:rod('glass',(x,1.02,z),(x,1.12,z),.023)
+  box('glass',(.23,.94,-.1),(.2,.2,.27))
+ elif kind=='componentFactory':
+  # Tall hangar, rooftop crane and exposed exhaust manifold.
+  for x in [-.32,.32]:box('steel',(x,1.43,-.14),(.055,.45,.06))
+  box('warm',(0,1.64,-.14),(.78,.075,.1))
+  rod('steel',(.1,1.39,-.14),(.1,1.63,-.14),.012)
+  for z in [-.22,0,.22]:rod('steel',(-.39,.32,z),(-.39,1.43,z),.045)
  if kind=='storage':
+  for x in [-.28,0,.28]:
+   box('timber',(x,.34,.395),(.21,.35,.06))
+   for y in [.21,.29,.37,.45]:box('steel',(x,y,.432),(.2,.008,.008),.001)
   for x,z in [(-.27,.48),(.28,-.43)]:
    for i in range(3):box('timber',(x,.14+i*.025,z),(.18,.018,.14))
    box('timber',(x,.25,z),(.17,.14,.13))

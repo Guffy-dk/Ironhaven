@@ -44,11 +44,14 @@ export function coastalMaterial(){
    .replaceAll('texture2D( bumpMap, vBumpMapUv )','texture2D( bumpMap, coastalUv(vBumpMapUv) )');
   shader.fragmentShader=shader.fragmentShader.replace('#include <bumpmap_pars_fragment>',bump);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',
-   `if(vCoastalSurface>4.5){vec3 mapN=(vCoastalSurface<5.5?texture2D(crabnormal,vNormalMapUv):texture2D(horrornormal,vNormalMapUv)).xyz*2.-1.;normal=normalize(tbn*mapN);}`);
+   `if(vCoastalSurface>4.5){vec3 mapN=(vCoastalSurface<5.5?texture2D(crabnormal,vNormalMapUv):texture2D(horrornormal,vNormalMapUv)).xyz*2.-1.;vec3 mappedNormal=tbn*mapN;float normalLength=dot(mappedNormal,mappedNormal);if(normalLength>1e-8&&normalLength<1e8)normal=mappedNormal*inversesqrt(normalLength);}`);
+  // Downsampled/tangent-degenerate triangles must never feed NaNs to bloom.
+  shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',
+   'if(!(all(greaterThanEqual(outgoingLight,vec3(0.)))&&all(lessThan(outgoingLight,vec3(65000.)))))outgoingLight=diffuseColor.rgb*.5;\n#include <opaque_fragment>');
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
    'float roughnessFactor=vCoastalSurface>5.5?.63:vCoastalSurface>4.5?.46:vCoastalSurface>3.5?.15:vCoastalSurface>1.5&&vCoastalSurface<2.5?.87:vCoastalSurface<.5?.53:.43;');
   shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',
    '#include <emissivemap_fragment>\n if(vCoastalSurface>3.5&&vCoastalSurface<4.5)totalEmissiveRadiance+=vec3(.2,.16,.09);');
  };
- material.customProgramCacheKey=()=> 'coastal-pbr-uv-anatomy-v3';return material;
+ material.customProgramCacheKey=()=> 'coastal-pbr-safe-normals-v5';return material;
 }

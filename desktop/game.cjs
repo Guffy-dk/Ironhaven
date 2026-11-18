@@ -43,8 +43,8 @@ async function start() {
     title: 'Ironhaven', backgroundColor: '#101e21',
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: !smokeTest },
   });
-  if(smokeTest)gameWindow.webContents.on('console-message',(_event,details)=>{
-    if(/Shader Error|not compiled|VALIDATE_STATUS false|Uncaught/i.test(details.message||''))graphicsErrors.push(details.message);
+  if(smokeTest)gameWindow.webContents.on('console-message',(event,details,message)=>{
+    const text=event.message??details?.message??message??'';if(/Shader Error|not compiled|VALIDATE_STATUS false|Uncaught/i.test(text))graphicsErrors.push(text);
   });
   gameWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url === repositoryUrl) void shell.openExternal(repositoryUrl);
@@ -164,6 +164,24 @@ async function start() {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
   const settingsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-settings.png'),settingsCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async () => {
+    document.getElementById('menu-dialog').close();
+    for(let i=0;i<60;i++)document.getElementById('zoom-in').click();
+    for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
+    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const canvas=document.getElementById('world');let found=false;
+    for(let y=.36;y<.55&&!found;y+=.012)for(let x=.46;x<.55&&!found;x+=.012){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
+      found=document.getElementById('intel-title').textContent==='Dispatch hub';
+    }
+    if(!found)throw Error('Numbered Dispatch hub could not be selected');
+    document.getElementById('program-building').click();
+    if(!document.getElementById('program-dialog').open||!document.getElementById('program-ports').textContent.includes('4 OUT'))throw Error('Numbered port configuration failed');
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const portsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ports.png'),portsCapture.toPNG());
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
 }

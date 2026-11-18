@@ -38,7 +38,7 @@ test('a single smelter processes mixed ore delivered by an automatic dispatch fi
  const smelter=build('smelter',6,3,3);
  const output=build('belt',6,2,3);
  const grid=new Map(state.buildings.map(b=>[key(b.x,b.z),b]));
- assert.equal(command(state,player.id,{type:'configureLogistics',x:6,z:4,program:{...hub.program,forward:0}}),null);
+ assert.equal(command(state,player.id,{type:'configureLogistics',x:6,z:4,program:{...hub.program,forward:0,return:0}}),null);
 
  const ore=['copperOre','ore','copperOre','ore'];
  const produced=[];

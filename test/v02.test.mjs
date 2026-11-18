@@ -34,11 +34,11 @@ test('previously packed upgraded turrets retain state and are placed without raw
  s.resources=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0]));assert.equal(canBuild(s,'gunTurret',x,z,p.id),null);assert.equal(command(s,p.id,{type:'build',building:'gunTurret',x,z,dir:0}),null);
  const placed=s.buildings.find(v=>v.x===x&&v.z===z);assert.equal(placed.hp,417);assert.equal(placed.ammo,3);assert.equal(placed.level,2);assert.equal(inventoryCount(s,p.id,'gunTurret'),0);assert.deepEqual(s.resources,Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])));
 });
-test('turret upgrades affect range, damage and health and extend past Mk III and stop after ten upgrades',()=>{
+test('turret upgrades affect range, damage and health and extend past Mk III and stop at level 30',()=>{
  const{s,p}=make(),b=s.buildings.find(b=>b.type==='turret'&&b.x===6);b.type='gunTurret';s.buildings=s.buildings.filter(v=>v===b||v.type==='hq');b.ammo=3;
- s.enemies=[{id:999,x:b.x+10.25,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
- b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),500);assert.equal(b.hp,450);step(s);assert.equal(s.enemies[0].hp,152);
- s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),700);assert.equal(turretStats(b).range,11);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<=MAX_UPGRADES;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
+ s.enemies=[{id:999,x:b.x+10.05,z:b.z,hp:200,maxHp:200,speed:0,cooldown:0,brute:false}];step(s);assert.equal(s.enemies[0].hp,200);
+ b.hp-=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),405);assert.equal(b.hp,355);step(s);assert.equal(s.enemies[0].hp,169);
+ s.wave=25;s.resources.plate=100;s.resources.gear=50;assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.equal(maxHp(b),460);assert.equal(turretStats(b).range,10.2);for(const r of RESOURCE_KEYS)s.resources[r]=1000000;for(let i=3;i<30;i++)assert.equal(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),null);assert.match(command(s,p.id,{type:'upgrade',x:b.x,z:b.z}),/fully upgraded/);
  assert.equal(command(s,p.id,{type:'repair',x:b.x,z:b.z}),null);assert.equal(b.hp,maxHp(b));
 });
 test('0.1 saves migrate without losing production, resources or built buildings',()=>{

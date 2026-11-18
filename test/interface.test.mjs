@@ -46,7 +46,7 @@ test('building blueprints show turret stats and preview the active radius before
   assert.match(h.$('intel-stats').textContent,/Health.*Damage \/ shot.*Fire interval.*Splash radius/);
   assert.equal(h.dom.__view.preview.radius,buildingRadius({type:'mortar'}));
   assert.deepEqual({...h.dom.__view.preview.cell},{x:12,z:9});
-  h.key('q');assert.equal(h.dom.__view.preview.cell,null);
+  h.key('Escape');assert.equal(h.dom.__view.preview.cell,null);
   h.key('z');h.tool('sawmill');h.point('pointermove',10,9);
   assert.match(h.$('blueprint-site').textContent,/trees.*wood\/min/);
   assert.equal(h.dom.__view.preview.radius,buildingRadius({type:'sawmill'}));
@@ -98,25 +98,25 @@ test('WASD pans only the local camera and normalizes diagonal movement',async()=
 test('the inspector shows existing saved upgrade colors and updates the swatch immediately',async()=>{
  const saved=starterWorld(),belt=saved.state.buildings.find(b=>b.type==='belt');
  belt.level=2;
- const h=harness(saved);try{
+ saved.state.wave=25;const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',belt.x,belt.z);h.point('pointerup',belt.x,belt.z);
   const upgradeRow=()=>h.$('intel-stats').querySelector('.upgrade-swatch').parentElement;
-  assert.equal(upgradeRow().textContent,'1 / 10');
+  assert.equal(upgradeRow().textContent,'II · 2 / 21');
   assert.ok(upgradeRow().innerHTML.includes(upgradeColor(2)));
   h.key('u');
-  assert.equal(upgradeRow().textContent,'2 / 10');
+  assert.equal(upgradeRow().textContent,'III · 3 / 21');
   assert.ok(upgradeRow().innerHTML.includes(upgradeColor(3)));
  }finally{await h.close();}
 });
 test('English UI and menu expose current and historical patch notes',async()=>{
  const h=harness();try{assert.equal(h.dom.document.documentElement.lang,'en');assert.equal(h.$('loading').hidden,true);assert.match(h.$('version-label').textContent,new RegExp(displayVersion(CURRENT_VERSION)));h.$('start-patch-notes').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.equal(h.$('patch-history').querySelectorAll('article').length,RELEASES.length);assert.match(h.$('patch-history').textContent,/First light/);h.$('patch-dialog').close();h.$('start-solo').click();h.$('menu').click();h.dom.document.querySelector('#menu-dialog [data-patch-notes]').click();assert.ok(h.$('patch-dialog').hasAttribute('open'));assert.ok(!h.$('menu-dialog').hasAttribute('open'));}finally{await h.close();}
 });
-test('Shift-click constructs a continuous turning route; Q and Esc cancel building; R rotates in place',async()=>{
+test('Shift-click constructs a continuous turning route; Esc cancels building; R rotates in place',async()=>{
  const h=harness();try{
   h.$('start-solo').click();h.tool('belt');h.point('pointerdown',3,4);h.point('pointerup',3,4);
   h.point('pointerdown',6,6,true);assert.ok(h.dom.__view.route.length>=6);h.point('pointerup',6,6,true);
   let s=h.save();for(const[x,z]of[[3,4],[4,4],[5,4],[6,4],[6,5],[6,6]])assert.ok(s.buildings.some(b=>b.type==='belt'&&b.x===x&&b.z===z));
-  const corner=s.buildings.find(b=>b.x===6&&b.z===4);assert.equal(corner.dir,1);h.key('q');assert.equal(h.$('tool-hint').hidden,true);assert.equal(h.dom.__view.tool,null);
+  const corner=s.buildings.find(b=>b.x===6&&b.z===4);assert.equal(corner.dir,1);h.key('Escape');assert.equal(h.$('tool-hint').hidden,true);assert.equal(h.dom.__view.tool,null);
   h.point('pointermove',6,4);h.key('r');const rotated=h.save().buildings.find(b=>b.id===corner.id);assert.equal(rotated.dir,2);assert.equal(rotated.hp,corner.hp);
   h.tool('wall');h.point('pointerdown',2,8,true);h.point('pointermove',5,8,true);h.key('Escape');h.point('pointerup',5,8,true);s=h.save();assert.ok(!s.buildings.some(b=>b.type==='wall'&&b.x===2&&b.z===8));
  }finally{await h.close();}
@@ -125,7 +125,7 @@ test('hotbar inventory starter inventory counts survive dismantle and fall on fr
  const saved=starterWorld();saved.state.buildings.find(b=>b.type==='turret').type='gunTurret';saved.state.players[0].inventory.belt=[{hp:65,level:1}];const h=harness(saved);try{
   h.$('resume').click();const initial=h.save(),belt=initial.buildings.find(b=>b.type==='belt');h.tool('demolish');h.point('pointerdown',belt.x,belt.z);h.frame(1000);
   assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'1');const resources={...h.save().resources};h.tool('belt');h.point('pointerdown',4,7);h.point('pointerup',4,7);h.frame(1400);const placed=h.save();assert.deepEqual(placed.resources,resources);assert.equal(h.dom.document.querySelector('[data-type="belt"] .inventory-count').textContent,'0');
-  h.key('q');const turret=placed.buildings.find(b=>b.type==='gunTurret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
+  h.key('Escape');const turret=placed.buildings.find(b=>b.type==='gunTurret');h.point('pointerdown',turret.x,turret.z);assert.equal(h.$('upgrade-turret').hidden,false);h.$('upgrade-turret').click();assert.equal(h.save().buildings.find(b=>b.id===turret.id).level,2);
  }finally{await h.close();}
 });
 test('R rotates the active blueprint without turning a conveyor under the cursor',async()=>{
@@ -278,15 +278,15 @@ test('production report and bottleneck overlay work, and pre-swarm checkpoints c
 });
 test('logistics units expose editable quotas, presets, filter and wait behavior',async()=>{
  const h=harness();try{
-  h.$('start-solo').click();h.tool('splitter');h.point('pointerdown',3,4);h.key('q');h.point('pointerdown',3,4);h.point('pointerup',3,4);assert.equal(h.$('program-building').hidden,false);h.key('e');assert.ok(h.$('program-dialog').open);assert.equal(h.$('quota-machine').value,'1');assert.equal(h.$('quota-forward').value,'1');assert.equal(h.$('quota-return').value,'0');
+  h.$('start-solo').click();h.tool('splitter');h.point('pointerdown',3,4);h.key('Escape');h.point('pointerdown',3,4);h.point('pointerup',3,4);assert.equal(h.$('program-building').hidden,false);h.key('e');assert.ok(h.$('program-dialog').open);assert.equal(h.$('quota-machine').value,'1');assert.equal(h.$('quota-forward').value,'1');assert.equal(h.$('quota-return').value,'1');
   h.$('quota-machine').value='2';h.$('quota-forward').value='3';h.$('quota-return').value='1';h.$('program-wait').checked=true;h.$('program-filter').value='ore';assert.equal(h.$('program-buffer').value,'2','buffer select must retain its value');h.$('apply-program').click();const b=h.save().buildings.find(b=>b.x===3&&b.z===4);assert.deepEqual(b.program,{machine:2,forward:3,return:1,bypass:false,filter:'ore',buffer:2});
  }finally{await h.close();}
 });
-test('the inspector explains the purple Return port for logistics buildings',async()=>{
+test('the inspector explains numbered hub ports',async()=>{
  const h=harness();try{
   h.$('start-solo').click();assert.ok(h.$('port-key').hidden);
-  h.tool('inserter');assert.ok(!h.$('port-key').hidden);
-  assert.match(h.$('port-key').textContent,/RET.*separate return conveyor/);
+  h.tool('splitter');assert.ok(!h.$('port-key').hidden);
+  assert.match(h.$('port-key').textContent,/1 IN.*2 ahead.*3 left.*4 right/);
   h.tool('smelter');assert.ok(h.$('port-key').hidden);
  }finally{await h.close();}
 });
@@ -296,12 +296,12 @@ test('field training advances through actual movement, placement and deliveries'
   let frameTime=1000,dir=0;
   const ticks=(n=1)=>{for(let i=0;i<n;i++)h.ticks[0]();h.frame(frameTime+=300);};
   const build=tile=>{
-   h.key('q');h.tool(tile.type);
+   if(h.dom.__view.tool)h.key('Escape');h.tool(tile.type);
    while(tile.dir!==undefined&&dir!==tile.dir){h.key('r');dir=(dir+1)%4;}
    h.point('pointerdown',tile.x,tile.z);h.point('pointerup',tile.x,tile.z);
   };
   const connect=({x,z})=>{
-   h.key('q');h.tool('belt');h.point('pointerdown',x,z,true);const core=h.save().buildings.find(b=>b.type==='hq');h.point('pointermove',core.x,core.z,true);h.point('pointerup',core.x,core.z,true);
+   h.key('Escape');h.tool('belt');h.point('pointerdown',x,z,true);const core=h.save().buildings.find(b=>b.type==='hq');h.point('pointermove',core.x,core.z,true);h.point('pointerup',core.x,core.z,true);
   };
   ticks(5);assert.equal(h.save().tutorialStep,0);
   h.key('d');h.frame(frameTime+=300);ticks(8);ticks(8);h.release('d');h.frame(frameTime+=300);
@@ -379,7 +379,7 @@ test('Power category builds a paid local lamp with coverage and fixed-level insp
   h.point('pointermove',6,-2);assert.equal(h.dom.__view.preview.radius,6);
   const before=h.save().resources;h.point('pointerdown',6,-2);h.point('pointerup',6,-2);
   const s=h.save(),lamp=s.buildings.find(b=>b.type==='lamp');assert.ok(lamp);assert.equal(lamp.hp,75);assert.equal(s.resources.plate,before.plate-35);
-  h.key('q');h.point('pointerdown',6,-2);assert.equal(h.$('intel-title').textContent,'Harbor lamp');assert.equal(h.$('upgrade-turret').hidden,true);assert.match(h.$('intel-desc').textContent,/Enemies target lamps/);
+  h.key('Escape');h.point('pointerdown',6,-2);assert.equal(h.$('intel-title').textContent,'Harbor lamp');assert.equal(h.$('upgrade-turret').hidden,true);assert.match(h.$('intel-desc').textContent,/Enemies target lamps/);
  }finally{await h.close();}
 });
 
@@ -419,12 +419,19 @@ test('master volume scales actual sound gain and the mute controls stay in sync'
  }finally{await h.close();}
 });
 
-test('players can toggle mineral names and upgrade counts without altering the colony',async()=>{
+test('mineral names stay removed and Roman level badges can be toggled',async()=>{
  const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');machine.level=4;machine.hp=maxHp(machine);
  const h=harness(saved);try{
-  h.$('resume').click();h.frame(1000);assert.match(h.$('building-'+machine.id).textContent,/3/);assert.ok(h.$('mineral-labels').children.length>0);
+  h.$('resume').click();h.frame(1000);assert.match(h.$('building-'+machine.id).textContent,/IV/);assert.equal(h.$('mineral-labels').hidden,true);
   const before=h.save();h.$('show-levels').checked=false;h.$('show-levels').dispatchEvent(new h.dom.Event('change'));h.$('show-minerals').checked=false;h.$('show-minerals').dispatchEvent(new h.dom.Event('change'));h.frame(1300);
   assert.equal(h.$('building-'+machine.id),null);assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
   const prefs=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(prefs.interface.buildingLevels,false);assert.equal(prefs.interface.mineralLabels,false);
+ }finally{await h.close();}
+});
+
+test('Q deletes single and drag-selected structures while Escape cancels tools',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.tool('belt');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('Escape');h.point('pointerdown',3,4);h.point('pointerup',3,4);h.key('q');assert.ok(!h.save().buildings.some(b=>b.x===3&&b.z===4));
+  h.tool('belt');for(const x of [3,4,5]){h.point('pointerdown',x,6);h.point('pointerup',x,6);}h.key('Escape');h.point('pointerdown',1,4);h.point('pointermove',8,9);h.point('pointerup',8,9);assert.ok(h.dom.__view.area.length>=3);h.key('q');assert.ok(!h.save().buildings.some(b=>b.z===6&&b.x>=3&&b.x<=5));assert.ok(h.save().buildings.some(b=>b.type==='hq'));h.tool('drill');assert.match(h.$('intel-tip').textContent,/Bright tile borders/);assert.doesNotMatch(h.$('intel-tip').textContent,/Q or Esc/);
  }finally{await h.close();}
 });
