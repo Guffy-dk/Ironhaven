@@ -37,3 +37,7 @@ test('fractional conveyor upgrades carry unspent time across tile boundaries ins
  const transit=level=>{const{s,build}=fixture();for(let x=3;x<23;x++){const b=build('belt',x,5);b.level=level;}const end=build('storage',23,5);empty(s);const first=s.buildings.find(b=>b.type==='belt');first.item='plate';first.itemTick=0;first.itemProgress=0;for(let tick=1;tick<100;tick++){step(s);if(s.resources.plate)return tick;}throw Error('Cargo never arrived');};
  const slow=transit(11),next=transit(12),faster=transit(13),max=transit(21);assert.ok(next<slow);assert.ok(faster<next);assert.equal(max,20);assert.equal(slow,40);
 });
+
+test('old placed and packed turret health keeps its damage ratio when level stats change, without repeat conversion',()=>{
+ const{s,p,build}=fixture(),gun=build('gunTurret',5,5);gun.level=11;gun.hp=1070;s.version=10;p.inventory.mortar=[{level:3,hp:332.5}];migrateGame(s);assert.equal(gun.hp,Math.round(maxHp(gun)*.5));assert.equal(p.inventory.mortar[0].hp,Math.round(maxHp({type:'mortar',level:3})*.5));const health=gun.hp;migrateGame(s);assert.equal(gun.hp,health);
+});

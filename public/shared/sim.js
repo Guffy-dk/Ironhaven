@@ -226,6 +226,12 @@ export function planGroupUpgrade(s,ids){
 }
 function applyUpgrade(b){const missing=maxHp(b)-b.hp;b.level=(b.level||1)+1;b.hp=maxHp(b)-missing;}
 export const inventoryCount = (s,id,type) => s.players.find(p=>p.id===id)?.inventory?.[type]?.length||0;
+function migrateTurretHealth(b,type=b.type){
+ if(!TURRETS.includes(type))return;
+ const level=b.level||1,oldNormal=level===1?350:level===2?500:700+(level-3)*180;
+ const oldMax=type==='turret'?350:oldNormal+TYPES[type].hp-350;
+ b.hp=Math.round(maxHp({...b,type})*Math.max(0,Math.min(1,b.hp/oldMax)));
+}
 function migrateCopperSmelterHealth(b){
  const scale=1+((b.level||1)-1)*.25;
  b.hp=Math.max(1,b.hp-(Math.round(260*scale)-Math.round(TYPES.smelter.hp*scale)));
@@ -284,9 +290,10 @@ export function migrateGame(s){
  }
  if(previous<9)openDeposits(s.terrain);
  delete s.evacuation;
- for(const b of s.buildings){if(b.type==='inserter')b.type='splitter';b.level||=1;if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b);}if(b.type==='belt')normalizeConveyor(b);}
+ for(const b of s.buildings){if(b.type==='inserter')b.type='splitter';b.level||=1;if(previous<11)migrateTurretHealth(b);if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b);}if(b.type==='belt')normalizeConveyor(b);}
  for(const p of s.players){
   for(const [type,items] of Object.entries(p.inventory))if(Array.isArray(items))for(const b of items)if(b){
+   if(previous<11)migrateTurretHealth(b,type);
    if(hasOutputBuffer(type))normalizeOutput(b);
    if(type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b,true);}
   }
