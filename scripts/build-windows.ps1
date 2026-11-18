@@ -53,13 +53,14 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Windows renderer fixture failed.' }
   $smokeLog = Join-Path $packageRoot 'startup-test.log'
   $smoke = Start-Process -FilePath $executable -ArgumentList '--smoke-test' -RedirectStandardError $smokeLog -WindowStyle Hidden -PassThru
-  if (!$smoke.WaitForExit(180000)) {
+  # Software-rendered CI captures can take nearly three minutes after cold shader setup.
+  if (!$smoke.WaitForExit(300000)) {
     Stop-Process -Id $smoke.Id
     Get-Content -LiteralPath $smokeLog -Tail 80 -ErrorAction SilentlyContinue
     throw 'Desktop smoke test timed out.'
   }
+  Get-Content -LiteralPath $smokeLog
   if ($smoke.ExitCode -ne 0) {
-    Get-Content -LiteralPath $smokeLog
     throw "Desktop startup smoke test failed ($($smoke.ExitCode))."
   }
 

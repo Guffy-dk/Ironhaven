@@ -9,7 +9,7 @@ export const RELEASES = [
   changes:[
    'Reduce authored creature and workshop mesh data by 41% without removing vertices, changing their positions, losing UV detail or simplifying triangles. Use compact normal, color and index buffers.',
    'Batch repeated static workshop parts into spatial groups to reduce rendering overhead in large factories. Preserve individual selection, level plates, outlines, shadows and building movement.',
-   'Reuse static shadows during distant swarms and lighthouse tracking. Close creature views retain animated shadows; distant creatures retain contact shadows. Warm repeated-workshop rendering alongside lamps during loading.',
+   'Reuse static shadows during distant swarms and lighthouse tracking. Close creature views retain animated shadows; distant creatures retain contact shadows. Render lamps and repeated workshops during loading and drain pending GPU work before play. Consolidate lamp fittings without removing detail or light sources.',
    'Reuse building, woodland and sawmill spatial indexes in the simulation. Query nearby industrial targets in large colonies while preserving targeting order, movement, physical transport and save compatibility.',
    'Give pulse turrets faster bursts, a wider close-range blast and stronger damage. Mortars retain longer reach and a larger blast; pulse defense requires more power and a steady ammunition supply.',
    'Expand repeatable campaign playtests across map seeds, difficulty settings and defense compositions, including a single-gun control. Keep late turret component costs and the reduced drill and smelter upgrade gains.'

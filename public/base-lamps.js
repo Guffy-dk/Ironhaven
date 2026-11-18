@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {box,cyl} from './render-primitives.js';
 import {quarryTexture} from './quarry-textures.js';
 import {LAMP_RADIUS} from './shared/lamps.js';
@@ -21,6 +22,9 @@ export function makeLampModel(style='quarry'){
  cyl(g,0x69786c,0,1.375,0,.023,.05,16);
  const cable=new T.CatmullRomCurve3([new T.Vector3(.04,.22,0),new T.Vector3(.07,.6,.01),new T.Vector3(.04,.98,0)]);
  g.add(new T.Mesh(new T.TubeGeometry(cable,12,.009,6,false),new T.MeshStandardMaterial({color:0x202b27,roughness:.9})));
+ // Merge repeated fixed fittings without changing their materials, UVs or detail.
+ const fittings=new Map();for(const part of g.children)if(part.isMesh&&!part.name){if(!fittings.has(part.material))fittings.set(part.material,[]);fittings.get(part.material).push(part);}
+ for(const [material,parts]of fittings)if(parts.length>1){const geometries=parts.map(part=>{part.updateMatrix();return (part.geometry.index?part.geometry.toNonIndexed():part.geometry.clone()).applyMatrix4(part.matrix);}),merged=mergeGeometries(geometries);geometries.forEach(geometry=>geometry.dispose());if(merged){g.remove(...parts);g.add(new T.Mesh(merged,material));}}
  g.traverse(o=>{if(o.isMesh){o.castShadow=o!==lens;o.receiveShadow=true;}});
  prototype=g.clone(true);if(style!=='quarry')g.scale.y=.82;
  return g;
@@ -39,6 +43,7 @@ export class BaseLampLights{
   this.halos.count=near.length;
   near.forEach((b,i)=>{this.pose.position.set(b.x,.025,b.z);this.pose.updateMatrix();this.halos.setMatrixAt(i,this.pose.matrix);});if(near.length)this.halos.instanceMatrix.needsUpdate=true;
   near.sort((a,b)=>(a.x-center.x)**2+(a.z-center.z)**2-(b.x-center.x)**2-(b.z-center.z)**2);
-  this.lights.forEach((light,i)=>{const lamp=near[i];light.intensity=lamp&&i<(low?4:8)?16:0;if(lamp)light.position.set(lamp.x,1.13,lamp.z);});
+  const lightBudget=low?4:8;
+  this.lights.forEach((light,i)=>{const lamp=near[i];light.intensity=lamp&&i<lightBudget?16:0;if(lamp)light.position.set(lamp.x,1.13,lamp.z);});
  }
 }

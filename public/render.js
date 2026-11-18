@@ -309,7 +309,7 @@ export class View{
  pickHostile(x,y){this.mouse.set(x/innerWidth*2-1,-y/innerHeight*2+1);this.ray.setFromCamera(this.mouse,this.camera);return this.coastalHostiles.pick(this.ray);}
  warmLamps(){
   if(this.lampsWarmed)return;
-  const lamps=Array.from({length:8},()=>makeLampModel('quarry')),halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrices=Array.from({length:8},(_,i)=>{const matrix=new T.Matrix4();halos.getMatrixAt(i,matrix);return matrix;});
+  const lamps=[makeLampModel('quarry')],halos=this.baseLampLights.halos,oldCount=halos.count,oldMatrices=Array.from({length:8},(_,i)=>{const matrix=new T.Matrix4();halos.getMatrixAt(i,matrix);return matrix;});
   const intensities=this.baseLampLights.lights.map(l=>l.intensity),positions=this.baseLampLights.lights.map(l=>l.position.clone());
   lamps.forEach((lamp,i)=>{lamp.position.set(this.center.x+(i%4-1.5)*1.5,0,this.center.z+(Math.floor(i/4)-.5)*1.5);this.scene.add(lamp);});
   halos.count=Math.max(8,oldCount);
@@ -317,7 +317,8 @@ export class View{
   // Driver pipelines, shadow variants and halo upload need an actual first draw,
   // not just WebGL program linking. Finish this work while the loading screen is up.
   const warm=makeModel('storage',0,[0],3,'quarry'),warm2=warm.clone(true);warm.position.set(this.center.x,0,this.center.z);warm2.position.copy(warm.position);this.structureInstances.sync(new Map([...this.buildings,['_warm1',warm],['_warm2',warm2]]));
-  this.renderer.shadowMap.needsUpdate=true;this.draw();this.renderer.getContext().finish();this.structureInstances.sync(this.buildings);
+  this.renderer.shadowMap.needsUpdate=true;this.draw();// Readback drains Chromium's GPU queue before the loading screen closes.
+  const gl=this.renderer.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));this.structureInstances.sync(this.buildings);
   lamps.forEach(lamp=>this.scene.remove(lamp));halos.count=oldCount;oldMatrices.forEach((matrix,i)=>halos.setMatrixAt(i,matrix));halos.instanceMatrix.needsUpdate=true;
   this.baseLampLights.lights.forEach((l,i)=>{l.intensity=intensities[i];l.position.copy(positions[i]);});this.renderer.shadowMap.needsUpdate=true;this.lampsWarmed=true;
  }

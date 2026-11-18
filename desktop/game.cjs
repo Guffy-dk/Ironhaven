@@ -10,7 +10,7 @@ const repositoryUrl = 'https://github.com/Guffy-dk/Ironhaven';
 const smokeTest = process.argv.includes('--smoke-test');
 let gameWindow;
 const graphicsErrors=[];
-function smokePhase(label){if(smokeTest)console.error('[smoke] '+label);}
+function smokePhase(label){if(smokeTest)console.error('[smoke] '+new Date().toISOString()+' '+label);}
 
 app.setName('Ironhaven');
 if (smokeTest) {
