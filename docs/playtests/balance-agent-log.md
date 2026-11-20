@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-20 kl. 09.27 dansk tid
+
+- Kørsel `2026-11-20T09:27:27+01:00`, baseline `5b52363`, måleværktøj `c4176e2`, spilversion `0.20.1`. Intet nyt internt build-id.
+- 35/35 gennemspilninger, heraf 16 matchede par og tre enkeltkontroller. 11 kontrolscenarier reproducerede tidligere statistik. Holdout-seeds 3511 og 9419.
+- Strømstyring gav 5 bedre og 4 dårligere resultater målt ved kampagnesejr og sidste swarm. Det længste forløb nåede swarm 32 efter 6961 simulerede sekunder.
+- [Statistik, metode og beslutninger](balance-2026-11-20-092727.md) · [maskinlæsbare resultater](balance-2026-11-20-092727.json).
+
 ### 2026-11-20 kl. 06.27 dansk tid
 
 - Kørsel `2026-11-20T06:27:27+01:00`, baseline `f0063c6`, måleværktøj `676ef5e`, spilversion `0.20.1`. Intet nyt internt build-id.
