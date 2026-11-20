@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-20 kl. 12.27 dansk tid
+
+- Kørsel `2026-11-20T12:27:27+01:00`, baseline `0242bf6`, måleværktøj `d096d45`, spilversion `0.20.1`. Intet nyt internt build-id.
+- 46/46 spilforløb, heraf 35 scenarier og 11 gentest af reservevarianten. 11 grupper med kontrol, afkobling og strømreserve. 17 reproduktioner fra forrige kørsel. Nye holdouts 1967 og 8161.
+- Reserve mod kontrol gav 3 bedre, 1 dårligere, 7 lige resultater. Længste udholdenhed 7049 simulerede sekunder. Næste isolerede test undersøger brændselsreserve under genopbygning.
+- [Statistik, beslutninger og metode](balance-2026-11-20-122727.md) · [Maskinlæsbare resultater](balance-2026-11-20-122727.json).
+
 ### 2026-11-20 kl. 09.27 dansk tid
 
 - Kørsel `2026-11-20T09:27:27+01:00`, baseline `5b52363`, måleværktøj `c4176e2`, spilversion `0.20.1`. Intet nyt internt build-id.
