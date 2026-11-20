@@ -3,15 +3,17 @@
 import {writeFile,mkdir,rename} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
 import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';
-const {createExpedition,command,step,STEP,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
+const {createExpedition,command,step,STEP,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,buildingPower,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
 await mkdir('work',{recursive:true});
 const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',difficulty=process.argv[4]||'standard';
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
+const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics'];
 if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Error('Unknown difficulty or campaign policy');
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
+const outputStem=stem+(shedLoad?'-shed-load':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -49,6 +51,29 @@ function send(cmd){return command(s,host,cmd);}
 function at(x,z){return s.buildings.find(b=>b.x===x&&b.z===z);}
 function exportAt(x,z,item){const b=at(x,z);if(b?.type==='storage'&&b.exportItem!==item)send({type:'configureWarehouse',id:b.id,x,z,item});}
 function covered(x,z){return s.buildings.some(b=>TURRETS.includes(b.type)&&b.hp>0&&Math.hypot(b.x-x,b.z-z)<turretStats(b).range);}
+const optionalProduction=['componentFactory','circuitLab','foundry','copperDrill'];
+const suspended=new Set();
+let productionPauses=0;
+function manageCombatPower(){
+ if(!s.enemies.length){
+  for(const b of s.buildings){
+   if(suspended.has(b.id)&&b.disabled)send({type:'toggleProduction',id:b.id,x:b.x,z:b.z});
+  }
+  suspended.clear();
+  return;
+ }
+ if(s.power.used<=s.power.total)return;
+ for(const type of optionalProduction){
+  for(const b of s.buildings){
+   if(s.power.used<=s.power.total)return;
+   if(b.type!==type||buildingPower(b)===0)continue;
+   if(!send({type:'toggleProduction',id:b.id,x:b.x,z:b.z})){
+    suspended.add(b.id);
+    productionPauses++;
+   }
+  }
+ }
+}
 function act(){
  const stalled=s.enemies.length&&s.time-lastKillTime>120;
  for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
@@ -57,6 +82,7 @@ function act(){
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
   const error=send({type:'build',building:p.type,x:p.x,z:p.z,dir:p.dir});if(!error)built++;
  }
+ if(shedLoad)manageCombatPower();
  const hub=at(1,3);if(hub){
   const ammoReserve=Math.max(30,s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret').length*5);
   const program={machine:s.resources.steel<(policy==='logistics'?160:100)?3:0,forward:s.resources.gear<ammoReserve+(policy==='logistics'?90:50)?4:0,return:s.resources.circuit<100?2:0,bypass:true,filter:'any',buffer:2};
@@ -83,11 +109,11 @@ function act(){
  }
 }
 const began=performance.now();
-let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,ammoStarvedSamples=0;
+let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,ammoStarvedSamples=0,unpoweredTurretSamples=0,combatSamples=0,unpoweredCombatSamples=0;
 function sample(){
- return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,
+ return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,
   resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
-  produced:{...s.stats.totals},stockFlow:{...s.stats.stockFlow},power:{...s.power},
+  produced:{...s.stats.totals},stockFlow:{...s.stats.stockFlow},power:{...s.power,reserve:s.resources.power},
   storage:{used:storageUsed(s),capacity:storageCapacity(s)},buildings:s.buildings.length,
   turrets:s.buildings.filter(b=>TURRETS.includes(b.type)).map(b=>({type:b.type,level:b.level})),
   coreHp:Math.round(s.buildings.find(b=>b.type==='hq')?.hp??0)};
@@ -98,6 +124,10 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  step(s);
  losses+=structures-s.buildings.length;
  if(s.enemies.length&&ticks%20===0){
+  combatSamples++;
+  const unpowered=s.buildings.filter(b=>TURRETS.includes(b.type)&&!b.active).length;
+  unpoweredTurretSamples+=unpowered;
+  if(unpowered)unpoweredCombatSamples++;
   ammoStarvedSamples+=s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret'&&b.active&&b.ammo<=0&&s.resources.gear<1).length;
  }
  for(const shot of s.shots)if(shot.time===s.time&&!shot.hostile)shots++;
@@ -106,24 +136,24 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  if(s.wave!==previousWave){
   rows.push(sample());
   if(saveCheckpoints&&([5,9,13,17,21,25].includes(s.wave)||s.wave>25&&s.wave%10===0)){
-   await writeJson(`${stem}-wave-${s.wave}.json`,{state:s,playerId:host});
+   await writeJson(`${outputStem}-wave-${s.wave}.json`,{state:s,playerId:host});
   }
   previousWave=s.wave;
  }
  if(s.status==='victory'){
   victorySeconds=Math.round(s.time);
   if(endless){
-   if(saveCheckpoints)await writeJson(`${stem}-victory.json`,{state:s,playerId:host});
+   if(saveCheckpoints)await writeJson(`${outputStem}-victory.json`,{state:s,playerId:host});
    const error=send({type:'continueAfterVictory'});
    if(error)throw Error(error);
   }
  }
 }
 const final=sample();
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,victorySeconds,
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
  final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
-if(saveCheckpoints)await writeJson(`${stem}-save.json`,{state:s,playerId:host});
-await writeJson(`${stem}.json`,report);
+if(saveCheckpoints)await writeJson(`${outputStem}-save.json`,{state:s,playerId:host});
+await writeJson(`${outputStem}.json`,report);
 console.log(JSON.stringify({...report,waves:undefined,final:undefined},null,2));

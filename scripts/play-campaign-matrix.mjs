@@ -2,20 +2,44 @@
 import {spawn} from 'node:child_process';
 import {mkdir,open,readFile,writeFile} from 'node:fs/promises';
 
-const dir='work/campaign-matrix';
+const powerTrial=process.env.CAMPAIGN_MATRIX==='combat-power';
+const dir=powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
 await mkdir(dir,{recursive:true});
 const jobs=[];
-function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline'){
- jobs.push({seed,policy,difficulty,horizon,endless,group});
+function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false){
+ jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad});
 }
-for(const seed of [417,2026,7]){
- for(const difficulty of ['relaxed','standard','veteran'])add(seed,'industry',difficulty);
- for(const policy of ['single','pulse','no_artillery','early_defense','mortars','logistics'])add(seed,policy,'standard');
+if(powerTrial){
+ function pair(seed,policy,difficulty,horizon=9000,endless=false,group='comparison'){
+  for(const shedLoad of [false,true])add(seed,policy,difficulty,horizon,endless,group,shedLoad);
+ }
+ for(const seed of [417,2026,7]){
+  pair(seed,'industry','standard');
+  pair(seed,'logistics','standard');
+ }
+ pair(417,'pulse','standard');
+ pair(2026,'mortars','standard');
+ pair(7,'early_defense','standard');
+ pair(417,'industry','veteran');
+ pair(417,'industry','relaxed',72000,true);
+ pair(2801,'industry','standard',72000,true);
+ pair(3511,'industry','standard',9000,false,'holdout');
+ pair(3511,'pulse','standard',9000,false,'holdout');
+ pair(9419,'industry','relaxed',72000,true,'holdout');
+ pair(9419,'logistics','veteran',9000,false,'holdout');
+ add(3511,'single','standard',9000,false,'holdout');
+ add(9419,'no_artillery','standard',9000,false,'holdout');
+ add(2026,'early_defense','veteran');
+}else{
+ for(const seed of [417,2026,7]){
+  for(const difficulty of ['relaxed','standard','veteran'])add(seed,'industry',difficulty);
+  for(const policy of ['single','pulse','no_artillery','early_defense','mortars','logistics'])add(seed,policy,'standard');
+ }
+ for(const policy of ['industry','pulse','early_defense','mortars','logistics'])add(2801,policy,'standard',9000,false,'holdout');
+ add(417,'industry','relaxed',72000,true);
+ add(2026,'logistics','standard',72000,true);
+ add(6823,'industry','veteran',72000,true,'holdout');
 }
-for(const policy of ['industry','pulse','early_defense','mortars','logistics'])add(2801,policy,'standard',9000,false,'holdout');
-add(417,'industry','relaxed',72000,true);
-add(2026,'logistics','standard',72000,true);
-add(6823,'industry','veteran',72000,true,'holdout');
 
 const workers=Number(process.env.CAMPAIGN_WORKERS||2);
 const resume=process.env.CAMPAIGN_RESUME==='1';
@@ -23,14 +47,15 @@ if(!Number.isInteger(workers)||workers<1||workers>8)throw Error('CAMPAIGN_WORKER
 let next=0;
 const reports=[];
 async function run(job){
- const {seed,policy,difficulty,horizon,endless,group}=job;
- const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}`;
+ const {seed,policy,difficulty,horizon,endless,group,shedLoad}=job;
+ const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}`;
  const reportPath=`work/${stem}.json`;
  async function readReport(){
   const report=JSON.parse(await readFile(reportPath,'utf8'));
   for(const key of ['seed','policy','difficulty','horizon','endless']){
    if(report[key]!==job[key])throw Error(`Checkpoint mismatch for ${stem}: ${key}`);
   }
+  if((report.shedLoad??false)!==shedLoad)throw Error(`Power policy mismatch for ${stem}`);
   return {...report,group};
  }
  if(resume){
@@ -40,7 +65,7 @@ async function run(job){
  const log=await open(`${dir}/${stem}.log`,'w');
  try{
   await new Promise((resolve,reject)=>{
-   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{stdio:['ignore',log.fd,log.fd]});
+   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0'},stdio:['ignore',log.fd,log.fd]});
    child.on('error',reject);
    child.on('exit',(code,signal)=>code===0?resolve():reject(Error(`${stem} exited ${signal??code}`)));
   });
@@ -52,7 +77,7 @@ async function worker(){
   const index=next++;
   const report=await run(jobs[index]);
   reports[index]=report;
-  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
+  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon} ${report.shedLoad?'shed':'control'}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
  }
 }
 await Promise.all(Array.from({length:workers},worker));
