@@ -8,12 +8,13 @@ await mkdir('work',{recursive:true});
 const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',difficulty=process.argv[4]||'standard';
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
+const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
 const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics'];
 if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Error('Unknown difficulty or campaign policy');
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
-const outputStem=stem+(shedLoad?'-shed-load':'');
+const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -53,7 +54,19 @@ function exportAt(x,z,item){const b=at(x,z);if(b?.type==='storage'&&b.exportItem
 function covered(x,z){return s.buildings.some(b=>TURRETS.includes(b.type)&&b.hp>0&&Math.hypot(b.x-x,b.z-z)<turretStats(b).range);}
 const optionalProduction=['componentFactory','circuitLab','foundry','copperDrill'];
 const suspended=new Set();
-let productionPauses=0;
+let productionPauses=0,reserveBuilds=0;
+const reserveSites=[[4,-2],[4,-3]];
+function addReservePower(){
+ if(s.enemies.length||s.wave<7||s.resources.wood<85||s.resources.plate<70)return;
+ const site=reserveSites.find(([x,z])=>!reserved.has(key(x,z))&&!at(x,z));
+ if(!site)return;
+ const [x,z]=site;
+ if(s.terrain.trees.some(t=>t.x===x&&t.z===z)||s.terrain.rocks.some(t=>t.x===x&&t.z===z))send({type:'demolish',x,z});
+ if(!send({type:'build',building:'generator',x,z})){
+  built++;
+  reserveBuilds++;
+ }
+}
 function manageCombatPower(){
  if(!s.enemies.length){
   for(const b of s.buildings){
@@ -82,6 +95,7 @@ function act(){
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
   const error=send({type:'build',building:p.type,x:p.x,z:p.z,dir:p.dir});if(!error)built++;
  }
+ if(powerReserve)addReservePower();
  if(shedLoad)manageCombatPower();
  const hub=at(1,3);if(hub){
   const ammoReserve=Math.max(30,s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret').length*5);
@@ -101,8 +115,10 @@ function act(){
   if(stalled&&b.type!=='hq'&&!TURRETS.includes(b.type)&&!covered(b.x,b.z))continue;
   if((policy!=='single'||b.type==='hq'||TURRETS.includes(b.type))&&b.hp<maxHp(b)*.65&&s.resources.plate>=4){if(!send({type:'repair',x:b.x,z:b.z}))repairs++;}
  }
- const targets=s.buildings.filter(b=>['hq','drill','smelter','assembler','copperDrill','coalMine','foundry','circuitLab','componentFactory','generator','coalGenerator','storage','sawmill',...TURRETS].includes(b.type)).sort((a,b)=>(a.level||1)-(b.level||1)||a.id-b.id);
- for(const b of targets){if(['generator','coalGenerator'].includes(b.type)&&s.power.total>s.power.used*1.2)continue;if(b.type==='storage'&&storageUsed(s)<storageCapacity(s)*.75)continue;if(b.type==='coalMine'&&s.resources.coal>100)continue;if(['copperDrill','circuitLab'].includes(b.type)&&s.resources.circuit>80)continue;if(b.type==='sawmill'&&s.resources.wood>150)continue;const cost=upgradeCost(b);if(!cost||upgradeLocked(s,b))continue;
+ const preparingReserve=powerReserve&&!s.enemies.length&&s.wave>=7;
+ const generator=b=>b.type==='generator'||b.type==='coalGenerator';
+ const targets=s.buildings.filter(b=>['hq','drill','smelter','assembler','copperDrill','coalMine','foundry','circuitLab','componentFactory','generator','coalGenerator','storage','sawmill',...TURRETS].includes(b.type)).sort((a,b)=>(preparingReserve?Number(generator(b))-Number(generator(a)):0)||(a.level||1)-(b.level||1)||a.id-b.id);
+ for(const b of targets){if(generator(b)&&s.power.total>s.power.used*1.2+(preparingReserve?18:0))continue;if(b.type==='storage'&&storageUsed(s)<storageCapacity(s)*.75)continue;if(b.type==='coalMine'&&s.resources.coal>100)continue;if(['copperDrill','circuitLab'].includes(b.type)&&s.resources.circuit>80)continue;if(b.type==='sawmill'&&s.resources.wood>150)continue;const cost=upgradeCost(b);if(!cost||upgradeLocked(s,b))continue;
   const buffer={wood:20,plate:35,gear:b.type==='turret'?8:Math.max(20,s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret').length*3),steel:10,circuit:10,module:0};
   if(Object.entries(cost).some(([r,n])=>s.resources[r]-n<(buffer[r]??0)))continue;
   if(!send({type:'upgrade',x:b.x,z:b.z})){upgrades++;upgradeMilestones[b.type]??=Math.round(s.time);}
@@ -110,8 +126,9 @@ function act(){
 }
 const began=performance.now();
 let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,ammoStarvedSamples=0,unpoweredTurretSamples=0,combatSamples=0,unpoweredCombatSamples=0;
+const outages={};
 function sample(){
- return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,
+ return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,reserveBuilds,outages:structuredClone(outages),
   resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
   produced:{...s.stats.totals},stockFlow:{...s.stats.stockFlow},power:{...s.power,reserve:s.resources.power},
   storage:{used:storageUsed(s),capacity:storageCapacity(s)},buildings:s.buildings.length,
@@ -125,6 +142,11 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  losses+=structures-s.buildings.length;
  if(s.enemies.length&&ticks%20===0){
   combatSamples++;
+  for(const b of s.buildings){
+   if(b.active||buildingPower(b)===0)continue;
+   const outage=outages[b.type]??={firstWave:s.wave,firstSecond:Math.round(s.time),buildingSeconds:0};
+   outage.buildingSeconds++;
+  }
   const unpowered=s.buildings.filter(b=>TURRETS.includes(b.type)&&!b.active).length;
   unpoweredTurretSamples+=unpowered;
   if(unpowered)unpoweredCombatSamples++;
@@ -150,7 +172,7 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  }
 }
 const final=sample();
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,victorySeconds,
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
  final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};

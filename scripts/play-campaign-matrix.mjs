@@ -3,13 +3,33 @@ import {spawn} from 'node:child_process';
 import {mkdir,open,readFile,writeFile} from 'node:fs/promises';
 
 const powerTrial=process.env.CAMPAIGN_MATRIX==='combat-power';
-const dir=powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
+const reserveTrial=process.env.CAMPAIGN_MATRIX==='power-reserve';
+const dir=reserveTrial?'work/campaign-matrix-power-reserve':powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
 await mkdir(dir,{recursive:true});
 const jobs=[];
-function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false){
- jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad});
+function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false,powerReserve=false){
+ jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve});
 }
-if(powerTrial){
+if(reserveTrial){
+ function triple(seed,policy,difficulty,horizon=9000,endless=false,group='comparison'){
+  add(seed,policy,difficulty,horizon,endless,group);
+  add(seed,policy,difficulty,horizon,endless,group,true);
+  add(seed,policy,difficulty,horizon,endless,group,false,true);
+ }
+ triple(417,'industry','standard');
+ triple(2026,'industry','standard');
+ triple(7,'logistics','standard');
+ triple(417,'pulse','standard');
+ triple(2026,'mortars','standard');
+ triple(7,'early_defense','standard');
+ triple(417,'industry','relaxed',72000,true);
+ triple(2801,'industry','standard',72000,true);
+ triple(1967,'industry','standard',9000,false,'holdout');
+ triple(8161,'logistics','veteran',9000,false,'holdout');
+ triple(8161,'industry','relaxed',72000,true,'holdout');
+ add(1967,'single','standard',9000,false,'holdout');
+ add(9419,'no_artillery','standard');
+}else if(powerTrial){
  function pair(seed,policy,difficulty,horizon=9000,endless=false,group='comparison'){
   for(const shedLoad of [false,true])add(seed,policy,difficulty,horizon,endless,group,shedLoad);
  }
@@ -47,15 +67,15 @@ if(!Number.isInteger(workers)||workers<1||workers>8)throw Error('CAMPAIGN_WORKER
 let next=0;
 const reports=[];
 async function run(job){
- const {seed,policy,difficulty,horizon,endless,group,shedLoad}=job;
- const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}`;
+ const {seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve}=job;
+ const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}${powerReserve?'-reserve':''}`;
  const reportPath=`work/${stem}.json`;
  async function readReport(){
   const report=JSON.parse(await readFile(reportPath,'utf8'));
   for(const key of ['seed','policy','difficulty','horizon','endless']){
    if(report[key]!==job[key])throw Error(`Checkpoint mismatch for ${stem}: ${key}`);
   }
-  if((report.shedLoad??false)!==shedLoad)throw Error(`Power policy mismatch for ${stem}`);
+  if((report.shedLoad??false)!==shedLoad||(report.powerReserve??false)!==powerReserve)throw Error(`Power policy mismatch for ${stem}`);
   return {...report,group};
  }
  if(resume){
@@ -65,7 +85,7 @@ async function run(job){
  const log=await open(`${dir}/${stem}.log`,'w');
  try{
   await new Promise((resolve,reject)=>{
-   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0'},stdio:['ignore',log.fd,log.fd]});
+   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0',CAMPAIGN_POWER_RESERVE:powerReserve?'1':'0'},stdio:['ignore',log.fd,log.fd]});
    child.on('error',reject);
    child.on('exit',(code,signal)=>code===0?resolve():reject(Error(`${stem} exited ${signal??code}`)));
   });
@@ -77,7 +97,7 @@ async function worker(){
   const index=next++;
   const report=await run(jobs[index]);
   reports[index]=report;
-  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon} ${report.shedLoad?'shed':'control'}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
+  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon} ${report.powerReserve?'reserve':report.shedLoad?'shed':'control'}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
  }
 }
 await Promise.all(Array.from({length:workers},worker));
