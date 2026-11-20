@@ -1,11 +1,59 @@
 // Full campaigns use only ordinary player commands. Independent runs share no state.
-import {spawn} from 'node:child_process';import {mkdir,open,readFile,writeFile} from 'node:fs/promises';
-await mkdir('work/campaign-matrix',{recursive:true});
-const jobs=[...[417,2026,7].flatMap(seed=>['standard','relaxed','veteran'].map(d=>[seed,'industry',d])),...[417,2026,7].map(seed=>[seed,'pulse','standard']),[99,'industry','standard'],[417,'single','standard'],[417,'no_artillery','standard']];
-const resumeAt=Number(process.env.CAMPAIGN_START_AT||0);if(!Number.isInteger(resumeAt)||resumeAt<0||resumeAt>jobs.length)throw Error('Invalid CAMPAIGN_START_AT');
-let next=resumeAt;const reports=[];
-async function reportFor([seed,policy,difficulty]){return JSON.parse(await readFile(`work/campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}.json`,'utf8'));}
-for(const job of jobs.slice(0,resumeAt)){const report=await reportFor(job);if(!['victory','defeat'].includes(report.outcome))throw Error('Cannot resume past an unfinished campaign');reports.push(report);}
-async function worker(){while(next<jobs.length){const [seed,policy,difficulty]=jobs[next++],log=await open(`work/campaign-matrix/${seed}-${policy}-${difficulty}.log`,'w');try{await new Promise((resolve,reject)=>{const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty],{stdio:['ignore',log.fd,log.fd]});child.on('error',reject);child.on('exit',code=>code===0?resolve():reject(Error(`Campaign ${seed}/${policy}/${difficulty} exited ${code}`)));});}finally{await log.close();}const report=await reportFor([seed,policy,difficulty]);reports.push(report);console.log(`${difficulty} ${policy} ${seed}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);}}
-const workers=Number(process.env.CAMPAIGN_WORKERS||2);if(!Number.isInteger(workers)||workers<1||workers>8)throw Error('CAMPAIGN_WORKERS must be from 1 to 8');
-await Promise.all(Array.from({length:workers},()=>worker()));reports.sort((a,b)=>a.difficulty.localeCompare(b.difficulty)||a.policy.localeCompare(b.policy)||a.seed-b.seed);await writeFile('work/campaign-matrix/results.json',JSON.stringify(reports,null,2));
+import {spawn} from 'node:child_process';
+import {mkdir,open,readFile,writeFile} from 'node:fs/promises';
+
+const dir='work/campaign-matrix';
+await mkdir(dir,{recursive:true});
+const jobs=[];
+function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline'){
+ jobs.push({seed,policy,difficulty,horizon,endless,group});
+}
+for(const seed of [417,2026,7]){
+ for(const difficulty of ['relaxed','standard','veteran'])add(seed,'industry',difficulty);
+ for(const policy of ['single','pulse','no_artillery','early_defense','mortars','logistics'])add(seed,policy,'standard');
+}
+for(const policy of ['industry','pulse','early_defense','mortars','logistics'])add(2801,policy,'standard',9000,false,'holdout');
+add(417,'industry','relaxed',72000,true);
+add(2026,'logistics','standard',72000,true);
+add(6823,'industry','veteran',72000,true,'holdout');
+
+const workers=Number(process.env.CAMPAIGN_WORKERS||2);
+const resume=process.env.CAMPAIGN_RESUME==='1';
+if(!Number.isInteger(workers)||workers<1||workers>8)throw Error('CAMPAIGN_WORKERS must be from 1 to 8');
+let next=0;
+const reports=[];
+async function run(job){
+ const {seed,policy,difficulty,horizon,endless,group}=job;
+ const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}`;
+ const reportPath=`work/${stem}.json`;
+ async function readReport(){
+  const report=JSON.parse(await readFile(reportPath,'utf8'));
+  for(const key of ['seed','policy','difficulty','horizon','endless']){
+   if(report[key]!==job[key])throw Error(`Checkpoint mismatch for ${stem}: ${key}`);
+  }
+  return {...report,group};
+ }
+ if(resume){
+  try{return await readReport();}
+  catch(error){if(error.code!=='ENOENT')throw error;}
+ }
+ const log=await open(`${dir}/${stem}.log`,'w');
+ try{
+  await new Promise((resolve,reject)=>{
+   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{stdio:['ignore',log.fd,log.fd]});
+   child.on('error',reject);
+   child.on('exit',(code,signal)=>code===0?resolve():reject(Error(`${stem} exited ${signal??code}`)));
+  });
+ }finally{await log.close();}
+ return readReport();
+}
+async function worker(){
+ while(next<jobs.length){
+  const index=next++;
+  const report=await run(jobs[index]);
+  reports[index]=report;
+  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
+ }
+}
+await Promise.all(Array.from({length:workers},worker));
+await writeFile(`${dir}/results.json`,JSON.stringify(reports,null,2));
