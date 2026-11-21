@@ -1,5 +1,7 @@
 # Ironhaven — Lighthouse in the fog
 
+**Contributors and agents:** read [the shared project brain](SHARED_CONTEXT.md) for current decisions, technical context, known issues and handoffs. Codex and Claude Code both maintain it through GitHub.
+
 Windows x64 factory survival for 1–4 players on a local network.
 
 **[Download the Windows patcher](https://github.com/Guffy-dk/Ironhaven/releases/latest)**

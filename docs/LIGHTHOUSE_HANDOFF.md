@@ -1,5 +1,7 @@
 # Lighthouse in the fog
 
+> Historical lighthouse handoff. Read [the shared project brain](../SHARED_CONTEXT.md) first for current decisions, implementation status and release restrictions.
+
 The `lighthouse-preview` draft has been integrated with the latest main branch for the Windows 0.14.0 release.
 
 ## Implemented

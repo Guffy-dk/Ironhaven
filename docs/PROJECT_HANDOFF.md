@@ -1,5 +1,7 @@
 # Ironhaven — project handoff
 
+> Historical handoff. Read [the shared project brain](../SHARED_CONTEXT.md) first for current decisions, release restrictions and implementation status. Browser distribution, version rules and features described below may be superseded. Preserve this file as historical context, not current authority.
+
 This note transfers the development context to another ChatGPT/Codex conversation or a local checkout. It is a summary, not an export or merger of chat history. The code repository is https://github.com/Guffy-dk/Ironhaven.
 
 ## Product direction agreed with the user
