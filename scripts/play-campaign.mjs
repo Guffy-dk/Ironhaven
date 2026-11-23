@@ -53,8 +53,12 @@ if(policy==='refining'){
  for(const [type,x,z]of [['finery',8,5],['orePress',7,5],['drill',6,5],['storage',9,5]]){
   if(reserved.has(key(x,z)))throw Error('Refining layout conflicts with existing plan');add(type,x,z);
  }
- const cells=path({x:-12,z:13},{x:8,z:6});
- cells.forEach((p,i)=>{const next=cells[i+1],dir=next?DIRS.findIndex(([dx,dz])=>p.x+dx===next.x&&p.z+dz===next.z):3;add('belt',p.x,p.z,dir);});
+ const cells=path({x:-12,z:13},{x:8,z:4});
+ cells.forEach((p,i)=>{
+  if(reserved.has(key(p.x,p.z)))throw Error('Refining coal route conflicts with existing plan');
+  const next=cells[i+1],dir=next?DIRS.findIndex(([dx,dz])=>p.x+dx===next.x&&p.z+dz===next.z):1;
+  add('belt',p.x,p.z,dir);
+ });
  for(const p of plans.slice(start))refiningPlan.add(key(p.x,p.z));
 }
 if(policy==='single'){plans.unshift({type:'gunTurret',x:3,z:0,dir:0});reserved.add(key(3,0));}
