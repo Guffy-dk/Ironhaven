@@ -1,0 +1,21 @@
+2026-11-23T19:22:39.8306232Z Built embedded Windows resource release/Ironhaven.html (55644 KiB). No CDN, external assets or install required.
+2026-11-23T19:22:44.5772475Z Patcher tests passed.
+2026-11-23T19:24:15.5299374Z [smoke] 2026-11-23T19:22:45.404Z Reading embedded game
+2026-11-23T19:24:15.5303137Z [smoke] 2026-11-23T19:22:45.611Z Loading game and warming renderer
+2026-11-23T19:24:15.5304174Z [smoke] 2026-11-23T19:22:49.825Z Game document loaded
+2026-11-23T19:24:15.5307054Z [smoke] 2026-11-23T19:22:51.725Z Initial graphics verified
+2026-11-23T19:24:15.5309513Z [smoke] 2026-11-23T19:22:53.768Z Lighthouse controls verified
+2026-11-23T19:24:15.5310314Z [smoke] 2026-11-23T19:22:54.329Z Lamp placement verified; loading capture fixture
+2026-11-23T19:24:15.5310990Z [smoke] 2026-11-23T19:22:57.953Z Fixture rendered; capturing colony
+2026-11-23T19:24:15.5312819Z [smoke] 2026-11-23T19:23:03.478Z Colony captured; inspecting creature
+2026-11-23T19:24:15.5313572Z [smoke] 2026-11-23T19:23:06.261Z Creature selected; capturing close view
+2026-11-23T19:24:15.5314103Z [smoke] 2026-11-23T19:23:26.365Z Capturing island
+2026-11-23T19:24:15.5314630Z [smoke] 2026-11-23T19:23:56.709Z Settings verified; capturing controls
+2026-11-23T19:24:15.5315114Z [smoke] 2026-11-23T19:24:08.026Z Numbered ports verified; capturing hub
+2026-11-23T19:24:15.5315519Z [smoke] 2026-11-23T19:24:12.931Z Captures complete
+2026-11-23T19:24:30.0927410Z [smoke] 2026-11-23T19:24:15.657Z Reading embedded game
+2026-11-23T19:24:30.0929003Z [smoke] 2026-11-23T19:24:15.898Z Loading game and warming renderer
+2026-11-23T19:24:30.0929373Z [smoke] 2026-11-23T19:24:19.280Z Game document loaded
+2026-11-23T19:24:30.0929728Z [smoke] 2026-11-23T19:24:21.384Z Initial graphics verified
+2026-11-23T19:24:30.0930285Z [smoke] 2026-11-23T19:24:28.142Z Enabled folder mod, placement and signed save verified
+2026-11-23T19:24:42.3227765Z Built D:\a\Ironhaven\Ironhaven\release\Ironhaven-Windows-x64.zip and D:\a\Ironhaven\Ironhaven\release\Ironhaven-Patcher.exe

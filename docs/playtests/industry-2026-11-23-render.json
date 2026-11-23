@@ -1,0 +1,121 @@
+{
+  "platform": "Linux Chromium SwiftShader; completed-frame readPixels; precommit iteration checkpoint, not native Windows FPS",
+  "scenarios": [
+    {
+      "zoom": 14,
+      "count": 80,
+      "invalid": 0
+    },
+    {
+      "zoom": 44,
+      "count": 80,
+      "invalid": 0
+    },
+    {
+      "zoom": 14,
+      "count": 160,
+      "invalid": 0
+    },
+    {
+      "zoom": 44,
+      "count": 420,
+      "invalid": 0
+    }
+  ],
+  "workshops": [
+    {
+      "count": 0,
+      "frameMs": 1552
+    },
+    {
+      "count": 2,
+      "frameMs": 2154
+    },
+    {
+      "count": 3,
+      "frameMs": 1942
+    }
+  ],
+  "lamps": [
+    {
+      "count": 0,
+      "activeLights": 0,
+      "syncMs": 1,
+      "drawMs": 10,
+      "finishMs": 1998,
+      "shadow": true,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 2009
+    },
+    {
+      "count": 1,
+      "activeLights": 1,
+      "syncMs": 2,
+      "drawMs": 15,
+      "finishMs": 2270,
+      "shadow": true,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 2286
+    },
+    {
+      "count": 2,
+      "activeLights": 2,
+      "syncMs": 15,
+      "drawMs": 97,
+      "finishMs": 2595,
+      "shadow": true,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 2707
+    },
+    {
+      "count": 8,
+      "activeLights": 8,
+      "syncMs": 2,
+      "drawMs": 11,
+      "finishMs": 2672,
+      "shadow": true,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 2685
+    },
+    {
+      "count": 8,
+      "activeLights": 8,
+      "syncMs": 1,
+      "drawMs": 12,
+      "finishMs": 2054,
+      "shadow": false,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 2067
+    }
+  ],
+  "nearLamps": [
+    {
+      "count": 8,
+      "activeLights": 8,
+      "syncMs": 1,
+      "drawMs": 12,
+      "finishMs": 1751,
+      "shadow": false,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 1764
+    },
+    {
+      "count": 8,
+      "activeLights": 8,
+      "syncMs": 1,
+      "drawMs": 9,
+      "finishMs": 1635,
+      "shadow": false,
+      "programs": 45,
+      "lightSlots": 8,
+      "frameMs": 1645
+    }
+  ],
+  "errors": []
+}

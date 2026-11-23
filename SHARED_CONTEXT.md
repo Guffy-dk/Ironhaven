@@ -2,7 +2,7 @@
 
 **Read this first. Keep it current.** This is the common durable memory for the owner, Codex, Claude Code and future contributors. It records decisions, verified implementation, unresolved problems and handoffs. It is not an automatically synchronized chat transcript.
 
-Last reconciled: **23 November 2026**, Europe/Copenhagen. Implementation baseline: **`27a6062`**, followed by the internal content/modding work on **`feature/lua-modding-industry`** described below. Candidate package version **0.20.2**, separate internal build **0.20.2.2**. Latest public release rechecked through GitHub: **[v0.20.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.20.1)**. The candidate has not been released to the patcher.
+Last reconciled: **23 November 2026**, Europe/Copenhagen. Implementation baseline: **`27a6062`**, followed by the content/modding work merged to `main` via **PR #27 / `6cc6863`**. Final tested code/workflow source: **`3b2fff5`**; six source-pinned gameplay runs used **`4596cc3`**, before UI-only polish. Candidate package version **0.20.2**, separate internal build **0.20.2.3**. Latest public release rechecked through GitHub: **[v0.20.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.20.1)**. The candidate has not been released to the patcher.
 
 Repository: **[Guffy-dk/Ironhaven](https://github.com/Guffy-dk/Ironhaven)**. Owner: Guffy. Stealth is the owner's experienced factory-game playtester; his usability and balance reports are important player evidence. The owner generally communicates in Danish. The game's player-facing language is English.
 
@@ -232,7 +232,7 @@ Save keys: `ironhaven.save.v1`, `ironhaven.checkpoints.v1`, `ironhaven.windows.v
 
 ## 10. Modding request and saved content ideas
 
-**Owner request, first implementation in internal candidate 0.20.2.2:** support community mods in a Factorio-familiar style and add suitable original industry content. The pause expired before implementation. See [the modding guide](docs/MODDING.md) for the exact API and Windows installation flow. This is a data-stage foundation, not full Factorio mod compatibility or a finished mod platform.
+**Owner request, first implementation in internal candidate 0.20.2.3:** support community mods in a Factorio-familiar style and add suitable original industry content. The pause expired before implementation. See [the modding guide](docs/MODDING.md) for the exact API and Windows installation flow. This is a data-stage foundation, not full Factorio mod compatibility or a finished mod platform.
 
 Implemented candidate content: ore press (2 ore →1 concentrate /4s, 5 power), coal finery (1 concentrate +1 coal →3 plates /5s, 7 power), precision workshop (2 steel +1 copper →1 bearing /6s, 6 power), marine generator (54 power, 1 coal /16s; construction consumes bearings and components). The regular smelter route remains available. These are original implementations inspired by processing/intermediate/logistics patterns; no third-party mod code or art is included. All inputs/outputs use existing physical transport, local warehouse stock and shared affordability. Batch output waits for enough space before consuming inputs.
 
@@ -270,10 +270,10 @@ Useful candidates: purposeful expansion, larger industrial construction projects
 
 ## 12. Automation and environment state
 
-State inspected 21 November 2026; this is a snapshot, not a scheduler configuration file:
+State reconciled 23 November 2026; this is a snapshot, not a scheduler configuration file:
 
 - **Ironhaven balanceagent:** recurring six-hour schedule exists, currently **paused**. Do not claim it is running or reactivate it without an applicable instruction. Repository reports show completed past work even though one automation history response had no run details; null task history is not evidence that repository tests never happened.
-- **Ironhaven indhold og mods:** enabled one-time task scheduled for **23 November 2026 at 19:45:15 Europe/Copenhagen**. It contains the research and deferred implementation handoff. Later owner steering takes precedence. Do not create competing workers/releases when it resumes.
+- **Ironhaven indhold og mods:** one-time task triggered on **23 November 2026 at 19:45:15 Europe/Copenhagen**; its implementation is recorded in the November 23 work log below. This was not a reactivation of the recurring balance agent. Service-side completion bookkeeping occurs after the automation turn; later owner steering still takes precedence.
 - These schedules are service-side automations, not cron jobs in the repository. Reading or editing this file does not itself reschedule them.
 - Cloud workspaces are separate checkouts/machines and may be ephemeral. Current conversation has used `/workspace/ironhaven`; another environment must discover its actual checkout. A local client MCP connection does not imply cloud access.
 - The owner has instructions for a reusable Codex Cloud environment: Node 22, npm dependencies, Git/GitHub CLI, Playwright Chromium/system dependencies; Linux simulation/render checks and Windows CI. A published reusable environment and its selection must be verified, not assumed from a chat promise.
@@ -296,6 +296,15 @@ State inspected 21 November 2026; this is a snapshot, not a scheduler configurat
 | Shared Markdown brain | Owner, current request | Both agents maintain this file through GitHub |
 
 ## 14. Shared work and decision log
+
+### 2026-11-23 20:25 Europe/Copenhagen — Codex — industrial/modding implementation merged
+
+- [PR #27](https://github.com/Guffy-dk/Ironhaven/pull/27) merged to main at `6cc6863`. Implementation `4596cc3` / internal 0.20.2.2; compact-cost/native-capture polish `4c8fced` / final internal **0.20.2.3**; internal CI artifact retention `3b2fff5`. No simulation/catalog/compiler/campaign changes between the pinned gameplay tests and final UI build.
+- [Final CI](https://github.com/Guffy-dk/Ironhaven/actions/runs/45248228613) passed Linux tests/build and native Windows packaging, ordinary smoke/captures and the enabled-example-mod placement/signed-save smoke. Full suite: **203 passed**. The renderer had no page errors/non-finite values at tested zoom/counts through 420 enemies; absolute SwiftShader timings are not hardware FPS.
+- **Six final source-pinned earned-resource campaigns**, two parallel workers: 3 victories/3 defeats. Refining produced concentrate in both cases (9 on Relaxed seed 417, 57 on Standard seed 2026); matched outcomes remained victory at 25 and defeat at 24 respectively. Ten earlier exploratory runs included invalid pilot layouts and are not pooled into that final sample. No claim of broad or complete balance. Bearing/marine-power chains have physical accounting tests, not a separately tuned earned-resource campaign policy yet.
+- [Detailed report](docs/playtests/industry-2026-11-23.md), [raw six-run results](docs/playtests/industry-2026-11-23-results.json), [Windows log excerpt](docs/playtests/industry-2026-11-23-windows.log), [native industry capture](docs/playtests/images/0.20.2.3-industry-windows.png), [native enabled-mod capture](docs/playtests/images/0.20.2.3-modding-windows.png).
+- [Internal Windows ZIP/manifest](https://github.com/Guffy-dk/Ironhaven/actions/runs/45248228613/artifacts/14853689568) retained 14 days; it includes the Modding guide/example. Manual install only; the patcher still points to public **v0.20.1**, rechecked after merge. No release tag/promotion. The recurring balance agent remains paused; this work was the scheduled one-time resumption after the waiting period.
+- Next priorities: more holdouts/fuel/power/commissioning evidence and an earned bearing/power policy; then deliberately scoped runtime/mod-management/custom-asset API extensions. Texture redesign, technologies, recycling and harbor expansion remain unfinished/proposed. No claim that the full visual quality gap or end-game depth is solved.
 
 ### 2026-11-23 19:46 Europe/Copenhagen — Codex — content/modding work resumed
 
