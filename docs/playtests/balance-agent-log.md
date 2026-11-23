@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-23 kl. 22.23 dansk tid
+
+- Kørsel `2026-11-23T22:23:24+01:00`, baseline `6cbfb84`, måleværktøj `d4020cc`, eksisterende kandidat `0.20.2.3`.
+- 35/35 endelige spilforløb, plus 12 tidligere raffineringspiloter og to afbrudte piloter, heraf i den endelige serie 10 grupper med industri, raffinering og højere kulreserve. Nye holdouts 8813 og 4297.
+- Højere kulreserve gav 0 bedre, 0 dårligere og 10 lige udfald. Længste forløb 6921 simulerede sekunder, swarm 33. Næste test skal idriftsætte lejer og marinegeneratorer i en optjent koloni.
+- [Rapport](balance-2026-11-23-industry-fuel.md) · [Rådata](balance-2026-11-23-industry-fuel.json).
+
 ### 2026-11-20 kl. 12.27 dansk tid
 
 - Kørsel `2026-11-20T12:27:27+01:00`, baseline `0242bf6`, måleværktøj `d096d45`, spilversion `0.20.1`. Intet nyt internt build-id.

@@ -272,7 +272,7 @@ Useful candidates: purposeful expansion, larger industrial construction projects
 
 State reconciled 23 November 2026; this is a snapshot, not a scheduler configuration file:
 
-- **Ironhaven balanceagent:** recurring six-hour schedule exists, currently **paused**. Do not claim it is running or reactivate it without an applicable instruction. Repository reports show completed past work even though one automation history response had no run details; null task history is not evidence that repository tests never happened.
+- **Ironhaven balanceagent:** the scheduler reported the recurring three-hour task active on 23 November 2026 at 22:23 Europe/Copenhagen. An earlier snapshot recorded a pause. The repository does not control the scheduler.
 - **Ironhaven indhold og mods:** one-time task triggered on **23 November 2026 at 19:45:15 Europe/Copenhagen**; its implementation is recorded in the November 23 work log below. This was not a reactivation of the recurring balance agent. Service-side completion bookkeeping occurs after the automation turn; later owner steering still takes precedence.
 - These schedules are service-side automations, not cron jobs in the repository. Reading or editing this file does not itself reschedule them.
 - Cloud workspaces are separate checkouts/machines and may be ephemeral. Current conversation has used `/workspace/ironhaven`; another environment must discover its actual checkout. A local client MCP connection does not imply cloud access.
@@ -296,6 +296,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 | Shared Markdown brain | Owner, current request | Both agents maintain this file through GitHub |
 
 ## 14. Shared work and decision log
+
+### 2026-11-23 22:23 Europe/Copenhagen — Codex — industrial fuel comparison
+
+- Current source baseline `6cbfb84`, measurement commit `d4020cc`. 35 ordinary-command campaigns on two workers. Higher coal reserve against the same refining layout yielded 0 bedre, 0 dårligere og 10 lige. Repaired a coal-belt overlap with a planned sawmill in the test layout and reran affected cases. No game code or public release changes.
+- Next: commission the complete bearings-to-marine-generator chain using earned materials, record the ongoing trade-off between fuel, bearings and defense, and compare against the matched baselines before tuning recipes. [Balance report](docs/playtests/balance-2026-11-23-industry-fuel.md).
 
 ### 2026-11-23 20:25 Europe/Copenhagen — Codex — industrial/modding implementation merged
 
