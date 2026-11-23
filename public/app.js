@@ -62,8 +62,8 @@ function setCategory(category){
 }
 const SHORTCUT=['1','2','3','4','5','6','7','8','9','0'];
 function costText(type,cost=TYPES[type].cost){
- const abbreviations={wood:'W',plate:'P',gear:'⚙',copper:'Cu',steel:'S',circuit:'Cir',module:'Comp',coal:'Coal'};
- return Object.entries(cost).map(([r,n])=>`${n}${abbreviations[r]||RESOURCE_NAMES[r]||r}`).join(' · ')||'FREE';
+ const abbreviations={wood:'W',plate:'P',gear:'⚙',copper:'Cu',steel:'S',circuit:'Cir',module:'Comp',coal:'Coal',concentrate:'Conc',bearing:'Brg'};
+ return Object.entries(cost).map(([r,n])=>`${n}${abbreviations[r]||(RESOURCE_NAMES[r]||r).slice(0,4)}`).join(' · ')||'FREE';
 }
 function initHotbar(){
  $('hotbar').innerHTML=TOOL_LIST.map((t)=>`<button class="build-btn" data-type="${t}" style="--building-accent:${BUILDING_IDENTITIES[t]?.accent||'#edc38f'}" title="${escape(TYPES[t].name)} (${shortcutFor(t)})"><span class="key">${shortcutFor(t)}</span><span class="build-symbol">${icon(BUILDING_IDENTITIES[t]?.icon||t)}</span>${!['repair','demolish'].includes(t)?'<span class="inventory-count" title="Buildings in your inventory">0</span>':''}<span class="build-name">${escape(TYPES[t].name)}</span><span class="build-cost">${costText(t)}</span></button>`).join('');

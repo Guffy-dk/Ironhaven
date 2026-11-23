@@ -111,6 +111,13 @@ async function start() {
       return {placed:saved.state.buildings.some(b=>b.type==='fitting-shop'),signed:saved.state.contentSignature.includes('harbor-machining@1.0.0'),item:saved.state.resources['bronze-fitting']===0,listed:document.getElementById('mod-status').textContent.includes('harbor-machining')};
     })()`);
     if(Object.values(result).some(v=>!v))throw Error('Windows enabled-mod integration failed: '+JSON.stringify(result));
+    await gameWindow.webContents.executeJavaScript(`(async()=>{
+      window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+      const canvas=document.getElementById('world');
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    })()`);
     await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-modding.png'),(await gameWindow.webContents.capturePage()).toPNG());
     if(graphicsErrors.length)throw Error('Modded renderer errors: '+graphicsErrors.join('\n'));
     smokePhase('Enabled folder mod, placement and signed save verified');app.exit(0);return;

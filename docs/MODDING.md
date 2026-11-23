@@ -1,6 +1,6 @@
 # Ironhaven modding API 1.0
 
-Internal preview 0.20.2.2. Windows x64 remains the player platform. Mods use real Lua through the MIT-licensed Fengari 0.1.5 VM (Lua 5.3 semantics). Factorio uses its own modified Lua/API: this is a **familiar data-stage workflow, not compatibility with Factorio mods**. No Factorio code or assets ship with the SDK.
+Internal preview 0.20.2.3. Windows x64 remains the player platform. Mods use real Lua through the MIT-licensed Fengari 0.1.5 VM (Lua 5.3 semantics). Factorio uses its own modified Lua/API: this is a **familiar data-stage workflow, not compatibility with Factorio mods**. No Factorio code or assets ship with the SDK.
 
 ## Install and enable a folder mod
 
