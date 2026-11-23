@@ -2,9 +2,21 @@ import * as T from './vendor/three.module.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {box,cyl} from './render-primitives.js';
 import {quarryTexture} from './quarry-textures.js';
-import {LAMP_RADIUS} from './shared/lamps.js';
+import {LAMP_RADIUS,lampRadius} from './shared/lamps.js';
 let prototype;
-export function makeLampModel(style='quarry'){
+export function makeLampModel(style='quarry',type='lamp'){
+ if(type==='signalMast'){
+  const group=makeLampModel(style);
+  group.scale.y*=1.55;
+  const steel=0x637c80;
+  for(const side of [-1,1]){
+   const support=box(group,steel,side*.12,.48,0,.067,.94,.07);
+   support.rotation.z=side*.15;
+  }
+  box(group,steel,0,.89,0,.5,.06,.14);
+  box(group,0xc0b69f,0,.12,0,.6,.14,.58);
+  return group;
+ }
  if(prototype){const clone=prototype.clone(true);clone.getObjectByName('bulb').material=prototype.getObjectByName('bulb').material.clone();if(style!=='quarry')clone.scale.y=.82;return clone;}
  const g=new T.Group();g.userData.type='lamp';
  const metal=new T.MeshStandardMaterial({color:0x69736f,map:quarryTexture('metal'),roughness:.68,metalness:.55});
@@ -38,12 +50,12 @@ export class BaseLampLights{
   this.halos=new T.InstancedMesh(this.geometry,this.material,8);this.halos.count=0;this.halos.frustumCulled=false;scene.add(this.halos);this.pose=new T.Object3D();
  }
  sync(buildings,center,zoom,low){
-  const active=buildings.filter(b=>b.type==='lamp'&&b.hp>0&&b.active),near=active.filter(b=>Math.abs(b.x-center.x)<zoom*1.8+LAMP_RADIUS&&Math.abs(b.z-center.z)<zoom*1.6+LAMP_RADIUS);
+  const active=buildings.filter(b=>lampRadius(b.type)&&b.hp>0&&b.active),near=active.filter(b=>Math.abs(b.x-center.x)<zoom*1.8+lampRadius(b.type)&&Math.abs(b.z-center.z)<zoom*1.6+lampRadius(b.type));
   if(near.length>this.halos.instanceMatrix.count){this.scene.remove(this.halos);this.halos.dispose();this.halos=new T.InstancedMesh(this.geometry,this.material,Math.max(near.length,this.halos.instanceMatrix.count*2));this.halos.frustumCulled=false;this.scene.add(this.halos);}
   this.halos.count=near.length;
-  near.forEach((b,i)=>{this.pose.position.set(b.x,.025,b.z);this.pose.updateMatrix();this.halos.setMatrixAt(i,this.pose.matrix);});if(near.length)this.halos.instanceMatrix.needsUpdate=true;
+  near.forEach((b,i)=>{this.pose.position.set(b.x,.025,b.z);this.pose.scale.setScalar(lampRadius(b.type)/LAMP_RADIUS);this.pose.updateMatrix();this.halos.setMatrixAt(i,this.pose.matrix);});if(near.length)this.halos.instanceMatrix.needsUpdate=true;
   near.sort((a,b)=>(a.x-center.x)**2+(a.z-center.z)**2-(b.x-center.x)**2-(b.z-center.z)**2);
   const lightBudget=low?4:8;
-  this.lights.forEach((light,i)=>{const lamp=near[i];light.intensity=lamp&&i<lightBudget?16:0;if(lamp)light.position.set(lamp.x,1.13,lamp.z);});
+  this.lights.forEach((light,i)=>{const lamp=near[i];light.intensity=lamp&&i<lightBudget?16:0;if(lamp){light.distance=lampRadius(lamp.type)+1;light.position.set(lamp.x,lamp.type==='signalMast'?1.75:1.13,lamp.z);}});
  }
 }

@@ -297,6 +297,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — harbor production and endgame
+
+- Owner requests at least fourteen new structures, more materials and balance tests with a purpose in endgame.
+- Branch `feature/harbor-endgame`, baseline `021b2b6`. Scope is eleven connected production buildings, three support/defense buildings, and repeatable industrial demand through lighthouse harbor projects. In progress.
+
 ### 2026-11-23 22:23 Europe/Copenhagen — Codex — industrial fuel comparison
 
 - Current source baseline `6cbfb84`, measurement commit `d4020cc`. 35 ordinary-command campaigns on two workers. Higher coal reserve against the same refining layout yielded 0 bedre, 0 dårligere og 10 lige. Repaired a coal-belt overlap with a planned sawmill in the test layout and reran affected cases. No game code or public release changes.

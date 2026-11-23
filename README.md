@@ -2,7 +2,7 @@
 
 **Contributors and agents:** read [the shared project brain](SHARED_CONTEXT.md) for current decisions, technical context, known issues and handoffs. Codex and Claude Code both maintain it through GitHub.
 
-**Internal preview 0.20.2.3:** [Lua modding guide and example](docs/MODDING.md). The public patcher is unchanged until an explicitly authorized release.
+**Internal preview 0.20.3.1:** [Lua modding guide and example](docs/MODDING.md). The public patcher is unchanged until an explicitly authorized release.
 
 Windows x64 factory survival for 1–4 players on a local network.
 

@@ -315,3 +315,8 @@ body.at-start #building-labels,body.inspecting-creature #building-labels{display
 /* Modded factories remain selectable without compressing a long catalog into tiny cards. */
 .hotbar{overflow-x:auto;grid-template-columns:repeat(var(--tool-columns,9),minmax(78px,1fr))}
 .resources{overflow-x:auto}.resource{flex-shrink:0}.industrial-guide{margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:12px}
+
+.harbor-project{display:grid;gap:5px;border-top:1px solid var(--line);padding:10px 0}
+.harbor-project small{line-height:1.35;color:var(--muted)}
+.harbor-project button{margin:0}
+.resources,.hotbar{scrollbar-width:thin;scrollbar-color:#466470 #162b34}

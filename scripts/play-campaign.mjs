@@ -10,7 +10,7 @@ const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
 const coalReserve=process.env.CAMPAIGN_COAL_RESERVE==='1';
-const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics','refining'];
+const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics','refining','harbor'];
 if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Error('Unknown difficulty or campaign policy');
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
@@ -47,10 +47,11 @@ if(policy==='early_defense'||policy==='mortars'){
  const rank=({type})=>priority.includes(type)?priority.indexOf(type):priority.length;
  plans.sort((a,b)=>rank(a)-rank(b));
 }
-if(policy==='refining'){
+if(['refining','harbor'].includes(policy)){
  // Keep working smelters. Commission an additional complete line only after earning its materials.
  const start=plans.length;
- for(const [type,x,z]of [['finery',8,5],['orePress',7,5],['drill',6,5],['storage',9,5]]){
+ const [processor,preparation]=policy==='refining'?['finery','orePress']:['firebrickKiln','aggregateCrusher'];
+ for(const [type,x,z]of [[processor,8,5],[preparation,7,5],['drill',6,5],['storage',9,5]]){
   if(reserved.has(key(x,z)))throw Error('Refining layout conflicts with existing plan');add(type,x,z);
  }
  const cells=path({x:-12,z:13},{x:8,z:4});
@@ -105,6 +106,7 @@ function manageCombatPower(){
 function act(){
  const stalled=s.enemies.length&&s.time-lastKillTime>120;
  if(policy==='refining'&&s.resources.module>=2&&s.resources.steel>=20&&s.resources.gear>=30&&s.resources.plate>=115&&s.resources.wood>=60)refineryCommissioned=true;
+ if(policy==='harbor'&&s.wave>=8&&s.resources.plate>=95&&s.resources.gear>=24&&s.resources.wood>=70&&s.power.total>=s.power.used+10)refineryCommissioned=true;
  for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
   if(refiningPlan.has(key(p.x,p.z))&&!refineryCommissioned)continue;
   if(policy!=='single'&&p.type==='gunTurret'&&(!at(0,3)||s.resources.plate<60))continue;
@@ -122,7 +124,7 @@ function act(){
  }
  for(const mill of s.buildings.filter(b=>b.type==='sawmill'))if(s.resources.wood>400&&!mill.disabled||s.resources.wood<160&&mill.disabled)send({type:'toggleProduction',id:mill.id,x:mill.x,z:mill.z});
  exportAt(2,3,s.resources.plate>Math.min(400,100+s.wave*12)||s.resources.gear<20||s.resources.steel<12?'plate':null);exportAt(2,5,'plate');exportAt(2,7,'plate');exportAt(-11,-7,'plate');exportAt(-11,-5,'plate');exportAt(-11,-9,'plate');exportAt(-9,-9,s.resources.steel>60&&s.resources.module<40&&at(-3,0)?'steel':null);
- if(policy==='refining'&&refineryCommissioned)exportAt(-13,13,s.resources.coal>(coalReserve?40:10)?'coal':null);
+ if(refineryCommissioned&&['refining','harbor'].includes(policy))exportAt(-13,13,s.resources.coal>(policy==='harbor'?30:coalReserve?40:10)?'coal':null);
  // Retain ammunition before feeding components. All withdrawals are local.
  exportAt(-1,3,s.resources.gear>Math.max(24,s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret').length*4)&&s.resources.module<40&&at(-3,0)?'gear':null);
  exportAt(1,1,s.resources.circuit>10&&s.resources.module<40&&at(-3,0)?'circuit':null);

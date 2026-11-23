@@ -1,10 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'internal';
-export const CURRENT_VERSION = '0.20.2';
+export const CURRENT_VERSION = '0.20.3';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
-export const INTERNAL_BUILD = '0.20.2.3';
+export const INTERNAL_BUILD = '0.20.3.1';
 export const RELEASES = [
+ {
+  version:'0.20.3',date:'2026-11-24',title:'Harbor supply and industry',
+  changes:[
+   'Build eleven production machines and process eleven new materials, from mineral aggregate and coke through marine alloy, switchgear and Harbor Equipment.',
+   'Deliver Harbor Equipment to shared storage. Commission grid and depot projects at the lighthouse, then order repeat coal and copper shipments.',
+   'Build reinforced breakwaters, coastal signal masts and long-range coast watch turrets using the new materials.',
+   'Find the new chains under Industry and Fabrication. Open the production report to see stock and throughput for every material.'
+  ]
+ },
  {
   version:'0.20.2',date:'2026-11-23',title:'Coastal industry and Lua modding — internal preview',
   changes:[

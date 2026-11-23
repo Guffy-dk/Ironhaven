@@ -1,5 +1,6 @@
 import {StructureInstances} from './structure-instances.js';
 import {CONTENT} from './shared/content.js';
+import {harborEquipment} from './harbor-equipment.js';
 import * as T from './vendor/three.module.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -12,6 +13,7 @@ import {coastalHeight,coastalLand} from './shared/coast.js';
 import {BaseLampLights,makeLampModel} from './base-lamps.js';
 import {CoastalWater} from './coastal-water.js';
 import {LighthouseLight} from './lighthouse-light.js';
+import {isBarrier} from './shared/sim.js';
 import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
@@ -78,10 +80,22 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
    for(const x of[-.28,.28]){cyl(equipment,steel,x,1.02,.18,.12,.76,20);cyl(equipment,color,x,1.42,.18,.15,.07,20);}
    box(equipment,color,0,.78,-.26,.72,.18,.18);
   }
-  equipment.rotation.y=-dir*Math.PI/2;model.add(equipment);model.userData.contentType=type;
+  if(harborEquipment(equipment,prototype.variant,color))outlineBuilding(equipment);
+  if(prototype.recipe)model.rotation.y=-dir*Math.PI/2;
+  model.add(equipment);model.userData.contentType=type;
   return model;
  }
- if(type==='lamp')return makeLampModel(style);
+ if(type==='lamp'||type==='signalMast')return makeLampModel(style,type);
+ if(type==='coastWatch'){
+  const model=makeModel('gunTurret',dir,inputs,level,style,true);
+  const head=model.getObjectByName('head');
+  if(head){
+   box(head,0x708e96,0,.14,.64,.24,.17,.62);
+   cyl(head,0xa0babd,0,.14,.93,.081,.13,20).rotation.x=Math.PI/2;
+   box(head,0x859988,.25,.24,.09,.16,.21,.22);
+  }
+  return model;
+ }
  const quarry=style==='quarry';
  const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;
  const painted=base=>!quarry&&level>1?upgradeColor(level):base;
@@ -117,7 +131,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
   const offset=quarry?.17:.14;
   a.position.set(DIRS[dir][0]*offset,quarry?.208:.19,DIRS[dir][1]*offset);g.add(a);if(quarry){modernizeModel(g,'belt',level);if(level>1)levelPlaque(g,'belt',level,dir);}return g;
  }
- if(quarry&&type!=='wall'){
+ if(quarry&&!isBarrier(type)){
   const model=makeQuarryModel(originalType,painted,level);
   if(!model.userData.authored)modernizeModel(model,originalType,level);
   if(type==='storage')warehousePorts(model,inputs);
@@ -142,7 +156,8 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
   const dial=cyl(g,0x91d8d0,0,.43,0,.23,.055,3,true);dial.name='dispatchDial';
   port(g,2,'IN',cyan);port(g,0,'FWD',C.gold);port(g,3,'M',0x99ddb8);port(g,1,'RET',0xb9a2e5);g.rotation.y=-dir*Math.PI/2;return g;
  }
- if(type==='wall'){
+ if(isBarrier(type)){
+  const reinforced=type==='basaltBreakwater';
   const connected=side=>inputs.includes(side)? .505:.34;
   const horizontal=inputs.includes(0)||inputs.includes(2)||!inputs.length&&dir%2===0;
   const vertical=inputs.includes(1)||inputs.includes(3)||!inputs.length&&dir%2===1;
@@ -152,12 +167,13 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
     box(g,0x606b6c,x,.096,z,w,.192,d).userData.surface='gravel';
     box(g,0xb9b8a5,x,.24,z,w,.112,d);
     const alongX=w>=d,length=alongX?w:d,blocks=Math.max(1,Math.round(length/.24));
-    for(let row=0;row<2;row++)for(let i=0;i<blocks;i++){
+    for(let row=0;row<(reinforced?4:2);row++)for(let i=0;i<blocks;i++){
      const span=length/blocks,offset=(i+.5)*span-length/2;
-     const shade=[0xc6c7b4,0xaab6af,0xd5d1ba][(i+row)%3],width=span*.96;
+     const shade=(reinforced?[0x85939d,0x9aa4a9,0xabb9b9]:[0xc6c7b4,0xaab6af,0xd5d1ba])[(i+row)%3],width=span*.96;
      box(g,shade,x+(alongX?offset:0),.37+row*.13,z+(alongX?0:offset),
       alongX?width:w*.87,.128,alongX?d*.83:width);
     }
+    if(reinforced)box(g,0x90aab5,x,.87,z,w,.075,d);
     return;
    }
    box(g,C.dark,x,.11,z,w,.22,d);
@@ -172,7 +188,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
     if(inputs.includes(1))section(-.33,.33,.327,connected(1));
    }
   }
-  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`wall:${dir}:${inputs.join(':')}:${level}`);levelPlaque(g,'wall',level);outlineBuilding(g);}
+  if(quarry){modernizeModel(g,'wall',level);batchQuarryModel(g,`${type}:${dir}:${inputs.join(':')}:${level}`);levelPlaque(g,'wall',level);outlineBuilding(g);}
   return g;
  }
  plate(g);
@@ -233,7 +249,7 @@ function warehousePorts(group,outputs){
  }
 }
 const portMaterials=new Map();
-function barricadeNeighbors(cell,grid){return DIRS.flatMap(([x,z],d)=>grid.get(key(cell.x+x,cell.z+z))?.type==='wall'?[d]:[]);}
+function barricadeNeighbors(cell,grid){return DIRS.flatMap(([x,z],d)=>isBarrier(grid.get(key(cell.x+x,cell.z+z))?.type)?[d]:[]);}
 const portBadges=new WeakMap();
 function portBadgeMaterial(text,color){
  const key=`${text}:${color}`;
@@ -409,7 +425,7 @@ export class View{
   const color=valid?C.mint:0xf5816d;
   this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(color);
   if(radius){this.previewRange.scale.setScalar(radius/10);this.previewRange.position.set(cell.x,.04,cell.z);this.previewRange.material.color.set(color);}
-  if(tool==='wall'){const neighbors=barricadeNeighbors(cell,this.cellGrid);if(neighbors.join(':')!==this.wallPreview)this.setTool(tool,this.ghostDir,neighbors);}
+  if(isBarrier(tool)){const neighbors=barricadeNeighbors(cell,this.cellGrid);if(neighbors.join(':')!==this.wallPreview)this.setTool(tool,this.ghostDir,neighbors);}
   if(this.ghost){this.ghost.visible=true;this.ghost.position.set(cell.x,0,cell.z);this.ghostMaterial.color.set(valid?C.mint:0xf5816d);}}
  select(b){
   if(this.selected!==b?.id){
@@ -550,7 +566,7 @@ export class View{
   }
   let cargoCount=0;
   this.dummy.rotation.set(0,0,0);this.dummy.scale.setScalar(1);
-  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):b.type==='wall'?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
+  for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):isBarrier(b.type)?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
     g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;
     for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern','bulb']){

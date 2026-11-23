@@ -101,7 +101,7 @@ async function start() {
   if(modSmokeTest){
     const result=await gameWindow.webContents.executeJavaScript(`(async()=>{
       document.getElementById('skip-tutorial').checked=true;document.getElementById('start-solo').click();document.getElementById('pause').click();
-      document.querySelector('[data-tab="industry"]').click();document.querySelector('[data-type="fitting-shop"]').click();
+      document.querySelector('[data-tab="mods"]').click();document.querySelector('[data-type="fitting-shop"]').click();
       const canvas=document.getElementById('world');
       canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
       window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
@@ -236,6 +236,21 @@ async function start() {
   })()`);
   smokePhase('Numbered ports verified; capturing hub');
   const portsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ports.png'),portsCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async()=>{
+    document.getElementById('resume').click();
+    document.getElementById('pause').click();
+    const canvas=document.getElementById('minimap'),r=canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-9/257),bubbles:true}));
+    document.querySelector('[data-tab="fabrication"]').click();
+    if(document.querySelector('[data-type="harborWorks"]').hidden)throw Error('Fabrication toolbar is unavailable');
+    document.getElementById('save').click();
+    const buildings=JSON.parse(localStorage.getItem('ironhaven.save.v1')).state.buildings;
+    const expected=['aggregateCrusher','firebrickKiln','cokeOven','alloyFurnace','resinKettle','cableWorks','hullYard','hydraulicWorks','switchgearShop','freightWorks','harborWorks','basaltBreakwater','signalMast','coastWatch'];
+    if(expected.some(type=>!buildings.some(b=>b.type===type)))throw Error('Harbor fixture did not load');
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const harborCapture=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-harbor.png'),harborCapture.toPNG());
   smokePhase('Captures complete');
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);

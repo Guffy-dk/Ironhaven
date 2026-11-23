@@ -14,4 +14,8 @@ export const BUILDING_IDENTITIES={
  generator:{label:'POWER',icon:'power',accent:'#f2d992',height:1.1},
  coalGenerator:{label:'COAL POWER',icon:'power',accent:'#f2d992',height:1.1}
 };
-Object.assign(BUILDING_IDENTITIES,CONTENT.identities);
+Object.assign(BUILDING_IDENTITIES,CONTENT.identities,{
+ basaltBreakwater:{label:'BREAKWATER',icon:'wall',accent:'#adc6d2',height:1.2},
+ signalMast:{label:'SIGNAL MAST',icon:'lamp',accent:'#ebce94',height:2.45},
+ coastWatch:{label:'COAST WATCH',icon:'turret',accent:'#9dbbc5',height:1.15}
+});
