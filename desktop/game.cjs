@@ -1,13 +1,15 @@
 const { app, BrowserWindow, dialog, Menu, protocol, session, shell } = require('electron');
 const { createHash } = require('node:crypto');
-const { readFile, writeFile } = require('node:fs/promises');
+const { readFile, writeFile, mkdir, cp } = require('node:fs/promises');
 const { mkdtempSync } = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
+const {loadModSources,compileInWorker,injectModData}=require('./mod-loader.cjs');
 
 const gameUrl = 'ironhaven://game/index.html';
 const repositoryUrl = 'https://github.com/Guffy-dk/Ironhaven';
-const smokeTest = process.argv.includes('--smoke-test');
+const modSmokeTest=process.argv.includes('--mod-smoke-test');
+const smokeTest = process.argv.includes('--smoke-test')||modSmokeTest;
 let gameWindow;
 const graphicsErrors=[];
 function smokePhase(label){if(smokeTest)console.error('[smoke] '+new Date().toISOString()+' '+label);}
@@ -23,7 +25,19 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'ironhaven', privileges: { stand
 
 async function start() {
   smokePhase('Reading embedded game');
-  const html = await readFile(path.join(__dirname, 'Ironhaven.html'), 'utf8');
+  let html = await readFile(path.join(__dirname, 'Ironhaven.html'), 'utf8');
+  const modDirectory=path.join(app.getPath('userData'),'mods');
+  if(modSmokeTest){
+    await mkdir(modDirectory,{recursive:true});
+    await cp(path.join(__dirname,'../../Modding/mods/harbor-machining'),path.join(modDirectory,'harbor-machining'),{recursive:true});
+    await writeFile(path.join(modDirectory,'mod-list.json'),JSON.stringify({mods:[{name:'harbor-machining',enabled:true}]}));
+  }
+  const packs=await loadModSources(modDirectory);
+  if(packs.length){
+    const seed=JSON.parse(await readFile(path.join(__dirname,'mod-base.json'),'utf8'));
+    const compiled=await compileInWorker(seed,packs,path.join(__dirname,'mod-worker.cjs'));
+    html=injectModData(html,compiled);
+  }
   const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
   if (!script) throw Error('The game bundle is missing its script. Reinstall this version with the patcher.');
   const hash = createHash('sha256').update(script.replace(/\r\n?/g, '\n')).digest('base64');
@@ -84,6 +98,23 @@ async function start() {
     throw Error('Desktop graphics did not initialize: ' + JSON.stringify(graphics));
   }
   smokePhase('Initial graphics verified');
+  if(modSmokeTest){
+    const result=await gameWindow.webContents.executeJavaScript(`(async()=>{
+      document.getElementById('skip-tutorial').checked=true;document.getElementById('start-solo').click();document.getElementById('pause').click();
+      document.querySelector('[data-tab="industry"]').click();document.querySelector('[data-type="fitting-shop"]').click();
+      const canvas=document.getElementById('world');
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.65,clientY:innerHeight*.38,bubbles:true}));
+      document.getElementById('save').click();
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+      return {placed:saved.state.buildings.some(b=>b.type==='fitting-shop'),signed:saved.state.contentSignature.includes('harbor-machining@1.0.0'),item:saved.state.resources['bronze-fitting']===0,listed:document.getElementById('mod-status').textContent.includes('harbor-machining')};
+    })()`);
+    if(Object.values(result).some(v=>!v))throw Error('Windows enabled-mod integration failed: '+JSON.stringify(result));
+    await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-modding.png'),(await gameWindow.webContents.capturePage()).toPNG());
+    if(graphicsErrors.length)throw Error('Modded renderer errors: '+graphicsErrors.join('\n'));
+    smokePhase('Enabled folder mod, placement and signed save verified');app.exit(0);return;
+  }
   const interaction=await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('skip-tutorial').checked=true;
     document.getElementById('start-solo').click();

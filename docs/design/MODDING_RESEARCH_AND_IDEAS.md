@@ -1,5 +1,7 @@
 # Ironhaven: saved content and modding research
 
+> Work resumed after the deadline on 23 November 2026. A first industrial slice and Lua data-stage API are now implemented on `feature/lua-modding-industry`; see [the modding guide](../MODDING.md) and [current shared context](../../SHARED_CONTEXT.md) for actual verification and remaining limitations. The research/pause snapshot below is historical.
+
 Status: research and ideas only. No game code, mod loader, dependencies, version or release changed for this task. The user requested a pause of 2 days and 19 hours. The scheduled resumption is **23 November 2026 at 19:45 Europe/Copenhagen** (18:45 UTC). Do not begin implementation before that time unless the user explicitly changes the instruction. Documentation and preserving ideas are allowed during the pause.
 
 ## Direction and constraints

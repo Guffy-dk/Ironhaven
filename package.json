@@ -1,6 +1,6 @@
 {
   "name": "ironhaven",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "private": true,
   "type": "module",
   "description": "Windows x64 coastal factory survival for 1\u20134 players on LAN",
@@ -16,6 +16,7 @@
     "node": ">=22"
   },
   "dependencies": {
+    "fengari": "0.1.5",
     "three": "0.180.0",
     "ws": "8.18.3"
   },

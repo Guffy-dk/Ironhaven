@@ -9,7 +9,7 @@ const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',diffi
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
-const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics'];
+const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics','refining'];
 if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Error('Unknown difficulty or campaign policy');
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
@@ -21,7 +21,7 @@ async function writeJson(file,value){
  await rename(file+'.tmp',file);
 }
 const {state:s,playerId:host}=createExpedition('Campaign pilot',{skipTutorial:true,swarmSeed:seed,difficulty});
-const plans=[],reserved=new Set(),rows=[];let built=0,repairs=0,upgrades=0,lastKills=0,lastKillTime=0;
+const plans=[],reserved=new Set(),rows=[],refiningPlan=new Set();let built=0,repairs=0,upgrades=0,lastKills=0,lastKillTime=0,refineryCommissioned=false;
 const add=(type,x,z,dir=0)=>{plans.push({type,x,z,dir});reserved.add(key(x,z));};
 // One physical receiving warehouse and numbered hub supply the three recipes.
 for(const t of [['drill',4,3,2],['smelter',3,3,2],['storage',2,3,2],['splitter',1,3,2],['assembler',0,3,2],['storage',-1,3,2],['sawmill',7,6,0],['sawmill',8,6,0],['sawmill',8,7,0],['generator',3,-2,0],['generator',3,-3,0],['generator',3,-4,0]])add(...t);
@@ -45,6 +45,16 @@ if(policy==='early_defense'||policy==='mortars'){
  const priority=policy==='early_defense'?['turret','gunTurret']:['mortar','turret'];
  const rank=({type})=>priority.includes(type)?priority.indexOf(type):priority.length;
  plans.sort((a,b)=>rank(a)-rank(b));
+}
+if(policy==='refining'){
+ // Keep working smelters. Commission an additional complete line only after earning its materials.
+ const start=plans.length;
+ for(const [type,x,z]of [['finery',8,5],['orePress',7,5],['drill',6,5],['storage',9,5]]){
+  if(reserved.has(key(x,z)))throw Error('Refining layout conflicts with existing plan');add(type,x,z);
+ }
+ const cells=path({x:-12,z:13},{x:8,z:6});
+ cells.forEach((p,i)=>{const next=cells[i+1],dir=next?DIRS.findIndex(([dx,dz])=>p.x+dx===next.x&&p.z+dz===next.z):3;add('belt',p.x,p.z,dir);});
+ for(const p of plans.slice(start))refiningPlan.add(key(p.x,p.z));
 }
 if(policy==='single'){plans.unshift({type:'gunTurret',x:3,z:0,dir:0});reserved.add(key(3,0));}
 const initialPlans=plans.length,upgradeMilestones={};
@@ -89,7 +99,9 @@ function manageCombatPower(){
 }
 function act(){
  const stalled=s.enemies.length&&s.time-lastKillTime>120;
+ if(policy==='refining'&&s.resources.module>=2&&s.resources.steel>=20&&s.resources.gear>=30&&s.resources.plate>=115&&s.resources.wood>=60)refineryCommissioned=true;
  for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
+  if(refiningPlan.has(key(p.x,p.z))&&!refineryCommissioned)continue;
   if(policy!=='single'&&p.type==='gunTurret'&&(!at(0,3)||s.resources.plate<60))continue;
   if(policy==='single'&&TURRETS.includes(p.type)&&!(p.x===3&&p.z===0))continue;
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
@@ -105,6 +117,7 @@ function act(){
  }
  for(const mill of s.buildings.filter(b=>b.type==='sawmill'))if(s.resources.wood>400&&!mill.disabled||s.resources.wood<160&&mill.disabled)send({type:'toggleProduction',id:mill.id,x:mill.x,z:mill.z});
  exportAt(2,3,s.resources.plate>Math.min(400,100+s.wave*12)||s.resources.gear<20||s.resources.steel<12?'plate':null);exportAt(2,5,'plate');exportAt(2,7,'plate');exportAt(-11,-7,'plate');exportAt(-11,-5,'plate');exportAt(-11,-9,'plate');exportAt(-9,-9,s.resources.steel>60&&s.resources.module<40&&at(-3,0)?'steel':null);
+ if(policy==='refining'&&refineryCommissioned)exportAt(-13,13,s.resources.coal>10?'coal':null);
  // Retain ammunition before feeding components. All withdrawals are local.
  exportAt(-1,3,s.resources.gear>Math.max(24,s.buildings.filter(b=>TURRETS.includes(b.type)&&b.type!=='turret').length*4)&&s.resources.module<40&&at(-3,0)?'gear':null);
  exportAt(1,1,s.resources.circuit>10&&s.resources.module<40&&at(-3,0)?'circuit':null);
@@ -129,7 +142,7 @@ let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,
 const outages={};
 function sample(){
  return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,reserveBuilds,outages:structuredClone(outages),
-  resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
+  refineryCommissioned,resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
   produced:{...s.stats.totals},stockFlow:{...s.stats.stockFlow},power:{...s.power,reserve:s.resources.power},
   storage:{used:storageUsed(s),capacity:storageCapacity(s)},buildings:s.buildings.length,
   turrets:s.buildings.filter(b=>TURRETS.includes(b.type)).map(b=>({type:b.type,level:b.level})),

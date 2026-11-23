@@ -2,7 +2,7 @@
 
 **Read this first. Keep it current.** This is the common durable memory for the owner, Codex, Claude Code and future contributors. It records decisions, verified implementation, unresolved problems and handoffs. It is not an automatically synchronized chat transcript.
 
-Last reconciled: **21 November 2026**, Europe/Copenhagen. Code baseline inspected: **`2b9d151` on `origin/main`**, plus the documentation added with this file. Latest public release verified through GitHub: **[v0.20.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.20.1)**, published 18 November 2026. The main branch has newer test-driver/report work, not a newer released game.
+Last reconciled: **23 November 2026**, Europe/Copenhagen. Implementation baseline: **`27a6062`**, followed by the internal content/modding work on **`feature/lua-modding-industry`** described below. Candidate package version **0.20.2**, separate internal build **0.20.2.2**. Latest public release rechecked through GitHub: **[v0.20.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.20.1)**. The candidate has not been released to the patcher.
 
 Repository: **[Guffy-dk/Ironhaven](https://github.com/Guffy-dk/Ironhaven)**. Owner: Guffy. Stealth is the owner's experienced factory-game playtester; his usability and balance reports are important player evidence. The owner generally communicates in Danish. The game's player-facing language is English.
 
@@ -24,7 +24,7 @@ Newest owner instructions take precedence over this document; this document reco
 
 ## 2. Current stop conditions and release authority
 
-- **Implementation pause:** the owner requested a wait of 2 days and 19 hours before changes to game/content/modding. The recorded deadline is **23 November 2026, 19:45 Europe/Copenhagen (18:45 UTC)**. Do not start gameplay, art, modding or dependency changes before then unless the owner explicitly supersedes the pause. This documentation/shared-memory work is explicitly requested and allowed now. Check the actual time before resuming; passage of a turn is not passage of the waiting period.
+- **Implementation pause expired:** the requested deadline was **23 November 2026, 19:45 Europe/Copenhagen (18:45 UTC)**. The clock was checked at 18:46 UTC before work resumed. A later owner pause would still override this authorization.
 - **No patcher release without an explicit release request.** Earlier broad release permission was superseded in the current balance-agent mandate. No public `v*` tags, published game release, latest-release promotion or public patcher-manifest changes under standing internal-development authorization. Updating documentation in GitHub is authorized and is not a game release.
 - **Versions stay in the 0.20 series.** Use a separate, increasing fourth internal build identifier for balance/internal iterations, e.g. `0.20.1.1`, `0.20.1.2` or `0.20.2.1`. Do not put an invalid four-component SemVer into tools that require SemVer; use separate metadata and preserve the full internal ID in reports/artifacts. A new patch number is for substantive functional changes. Do not jump to 0.21 or 1.x.
 - Outside the pause, the owner has authorized autonomous routine improvements to storage, resource flow, light slow, movement, scaling, upgrades, progression and map size; previous numeric choices are not permanently locked. Validate changes and preserve compatibility. Do not repeatedly request permission for choices already authorized.
@@ -94,12 +94,12 @@ These facts describe the inspected baseline, not immutable balance requirements.
 | World | 257×257 coastal island, lighthouse core, landings from eight directions; forests constrain enemy paths |
 | Difficulties | Relaxed, Standard, Veteran |
 | Campaign | 25 swarms, victory stop, normal host `continueAfterVictory` command for voluntary endless |
-| Resources | Wood, iron plates, gears, copper, steel, circuits, components (`module` internally), coal; ore/copper ore also exist in transport |
-| Production | Iron/copper/coal mining, wood, smelting, gears, steel, circuits, components, wood/coal power |
+| Resources | Original eight stored resources plus iron concentrate and precision bearings in the internal candidate; ore/copper ore also exist in transport |
+| Production | Existing industry plus optional ore pressing/coal fining, precision bearing machining and marine power in the internal candidate |
 | Logistics | Physical belts, buffers, warehouse local outputs and programmable Dispatch hub |
 | Defense | Sentry, gun, mortar, pulse, walls, repairs and harbor lamps |
 | Levels | 30 turret levels; belts have 20 upgrades / 21 total levels; other ordinary buildings generally ten upgrades; lamps fixed level |
-| Save schema | 11, with migrations for older supported worlds |
+| Save schema | 11, with supported legacy migration; candidate adds a content signature to bind saves to built-in content/mod files |
 
 Production baseline: one plate per ore; drill/smelter upgrades add 25% of base speed, other ordinary production adds 10%. Steel uses three plates; circuits two copper and one plate; components two steel, two circuits and one gear. Late turret upgrades use components and progression gates. Do not assume components should remain primarily a weapon resource; more industrial uses are a current content idea.
 
@@ -155,7 +155,7 @@ Follow-up settings include rebinding, edge/middle-button camera movement, audio 
 
 The owner requested about **35 genuinely different automated playthroughs per scheduled iteration**, running independent simulations in parallel rather than serially, with strategies/seeds/difficulties varied. Never inject resources, HP, levels or kills and call that normal play. Synthetic stress/render fixtures are useful but must be labeled separately.
 
-**Main already has the expanded driver.** Do not rely on older chat statements saying it only has 15 cases. Current seven policies: `industry`, `single`, `pulse`, `no_artillery`, `early_defense`, `mortars`, `logistics`. Default matrix has 35 scenarios, including three endurance scenarios. Special matrices compare combat load shedding and generation reserve. Default workers=2, supported range 1–8; adjust to actual resources. Policies still share much scripted layout, so results are not representative of every human strategy.
+**Main already has the expanded driver.** Do not rely on older chat statements saying it only has 15 cases. Existing policies: `industry`, `single`, `pulse`, `no_artillery`, `early_defense`, `mortars`, `logistics`; the candidate adds an explicit `refining` policy. Default matrix remains 35 scenarios, including three endurance scenarios. Special matrices compare combat load shedding and generation reserve. Default workers=2, supported range 1–8; adjust to actual resources. Policies still share much scripted layout, so results are not representative of every human strategy.
 
 Tests record seed, strategy, horizon, difficulty, milestones, resources, losses, repairs, upgrades and power/ammunition-related telemetry. Resume reports only with matching scenario **and verified matching source**; metadata matching alone does not establish code identity. Save raw results and detailed reports in the established locations. Treat bot recovery logic as a possible confounder.
 
@@ -232,7 +232,17 @@ Save keys: `ironhaven.save.v1`, `ironhaven.checkpoints.v1`, `ironhaven.windows.v
 
 ## 10. Modding request and saved content ideas
 
-**Owner request, not implemented:** support community mods with an authoring style familiar to Factorio modders, research popular content mods and add suitable original content to Ironhaven's base game. No loader, Lua dependency or new content was implemented before the pause. Most items/recipes/building types are still hardcoded in `public/shared/sim.js`; UI/render integration is also required.
+**Owner request, first implementation in internal candidate 0.20.2.2:** support community mods in a Factorio-familiar style and add suitable original industry content. The pause expired before implementation. See [the modding guide](docs/MODDING.md) for the exact API and Windows installation flow. This is a data-stage foundation, not full Factorio mod compatibility or a finished mod platform.
+
+Implemented candidate content: ore press (2 ore →1 concentrate /4s, 5 power), coal finery (1 concentrate +1 coal →3 plates /5s, 7 power), precision workshop (2 steel +1 copper →1 bearing /6s, 6 power), marine generator (54 power, 1 coal /16s; construction consumes bearings and components). The regular smelter route remains available. These are original implementations inspired by processing/intermediate/logistics patterns; no third-party mod code or art is included. All inputs/outputs use existing physical transport, local warehouse stock and shared affordability. Batch output waits for enough space before consuming inputs.
+
+Implementation paths: original Lua at `content/industry/data.lua`, generated checked-in `public/shared/industry-catalog.json`, shared content/validation in `public/shared/content.js` and `mod-catalog.js`, Lua compiler `sdk/lua-mods.mjs`, shipped-base snapshot adapter `sdk/catalog-seed.mjs`, bounded compiler worker `sdk/mod-worker.mjs`, Windows folder loader `desktop/mod-loader.cjs`. Fengari 0.1.5 (MIT, Lua 5.3 semantics) is bundled with dependency notices. Do not edit the generated catalog by hand; rebuild from Lua.
+
+The Windows app loads only explicitly enabled ordinary folders from its user-data `mods` directory using `mod-list.json`. Three dependency-ordered Lua data stages, local cached `require`, `table.deepcopy`, `data:extend` and `data.raw` are available for validated items, fixed-recipe machines and fuel generators. The worker has instruction/time/heap budgets; no Node/Electron/system API is provided to Lua. Invalid content aborts startup rather than partially modifying the base game. The example `examples/mods/harbor-machining` adds bronze fittings and an alternative bearing chain. `node scripts/check-mods.mjs MODS_DIRECTORY` validates against the actual bundled worker after building.
+
+Save signatures include a generated built-in catalog hash and enabled mod IDs, versions and source/manifest hashes; LAN codes reject different content. Legacy unmodded worlds can migrate with zero new resources. Loading with missing/changed mods is rejected before building migration. Custom machines appear under Industry (N), in resource/production reports and the inspector; field guide/tutorial explain the built-in routes. Models reuse authored workshop templates with distinct equipment silhouettes; this is **not** the deferred comprehensive texture overhaul.
+
+Explicitly not implemented: runtime `control.lua` events/state, settings stages, locale files, migrations, arbitrary graphics/audio imports, fluids, multiple recipe results, selectable machine recipes, ZIP loading, in-game mod management, automatic downloads or Steam Workshop. Unsupported entry points/prototype fields are rejected. Documentation must not imply these capabilities exist.
 
 Saved research: [Modding research and ideas](docs/design/MODDING_RESEARCH_AND_IDEAS.md).
 
@@ -240,7 +250,7 @@ Primary references: [Factorio mod structure](https://lua-api.factorio.com/latest
 
 Factorio's familiar pattern is `info.json`, dependency-aware loading, Lua prototypes via `data:extend`/`data.raw`, `data.lua` → `data-updates.lua` → `data-final-fixes.lua`, separate `control.lua` runtime and settings stages. Ironhaven should aim for a recognizable workflow, with clear supported API documentation and a working example. **Do not promise binary/API compatibility or unmodified Factorio mods.** JSON renamed to Lua is not Lua support.
 
-Design questions: suitable Lua runtime/license/sandbox/budgets; transactional registry validation; deterministic dependencies; settings/locales; actual Windows mod directory and management; save/mod IDs+versions+fingerprints; co-op mismatch detection; runtime state/events/migrations; asset import and ZIP support. Explicitly reject unsupported capabilities rather than silently ignoring them. Do not weaken Electron isolation or expose arbitrary system access.
+Remaining design work: runtime events/state and save migrations, localized content, custom assets, mod management/distribution and broader prototype coverage. Validate new capabilities explicitly and preserve deterministic host authority. Do not weaken Electron isolation or expose arbitrary system access.
 
 Proposals requiring evaluation after the pause:
 
@@ -250,7 +260,7 @@ Proposals requiring evaluation after the pause:
 - Coastal outposts, harbor restoration and remote resource logistics as long-term industrial goals.
 - Clear production bottlenecks, demand/throughput feedback and useful automation tools.
 
-These are ideas, not an approved detailed scope or delivered systems. Use original code/art. Angel's Refining lists CC BY-NC-ND 4.0; Space Exploration lists Limited Distribution Only Licence. Popularity and available source do not grant commercial reuse rights. Inspect provenance for any actual third-party reuse.
+Ore preparation and an industrial component sink now have a bounded first implementation, not a finished end-game overhaul. Recycling, technologies, coastal outposts/harbors and broader progression remain proposals. Use original code/art. Angel's Refining lists CC BY-NC-ND 4.0; Space Exploration and AAI Containers list Limited Distribution Only Licence; Bob's Metals lists redistribution/no editing. Popularity and available source do not grant commercial reuse rights. Inspect provenance for any actual third-party reuse.
 
 ## 11. Roadmap discussion status
 
@@ -281,11 +291,25 @@ State inspected 21 November 2026; this is a snapshot, not a scheduler configurat
 | 25-swarm victory, voluntary endless | Latest recorded agent mandate | Do not skip victory or force continued play |
 | Autonomous internal tuning | Owner mandate | Numeric balance is adjustable with evidence |
 | Internal 0.20 builds, explicit release gate | Latest recorded agent mandate | No routine patcher publication |
-| Factorio-style mod authoring | Owner request; not implemented | Familiar Lua/data workflow, not full API compatibility |
-| Wait before implementation | Owner; deadline in section 2 | Save ideas/documentation now; defer game changes |
+| Factorio-style mod authoring | Owner request; internal data-stage implementation | Familiar Lua/data workflow, not full API compatibility |
+| Wait before implementation | Owner; expired before clock-verified resumption | Later owner pauses still take precedence |
 | Shared Markdown brain | Owner, current request | Both agents maintain this file through GitHub |
 
 ## 14. Shared work and decision log
+
+### 2026-11-23 19:46 Europe/Copenhagen — Codex — content/modding work resumed
+
+- The waiting deadline has passed (clock checked: 18:46 UTC). Fetched `origin/main`; baseline remains `27a6062`, with no later Claude changes or local edits observed.
+- Branch: `feature/lua-modding-industry`. Scope: a documented Lua data-stage mod API, deterministic content registry, original industrial processing content, installed-Windows loading, save/co-op compatibility checks and integration tests.
+- Research refreshed against Factorio's primary documentation and Bob's Metals/Chemicals/Intermediates, Angel's Refining and AAI Containers pages. No third-party mod code/assets will be transplanted.
+- Status: in progress, no implementation/results claimed yet. Public patcher unchanged; the six-hour agent remains paused.
+
+#### Implementation checkpoint — internal build 0.20.2.2
+
+- Implemented four original industrial machines/two stored intermediates, Lua data stages, example mod, installed folder/worker loading, signature checks for saves and LAN, documentation and integration tests. Details/limitations in section 10 and [validation report](docs/playtests/industry-2026-11-23.md).
+- Local checks: full suite 203/203 passed; focused SDK/industry tests retested after validator hardening (10/10); build and packaged-worker example check passed. Render regression: no page errors/non-finite output across 80/160/420 enemies and zoom 14/44; lamp-placement bounds passed using completed frames. These are Linux/SwiftShader checks, not native Windows evidence.
+- Exploratory pilots exposed premature replacement of a working chain and a test-layout collision with a sentry. Corrected the pilot to commission an extra line after earning all required materials and explicitly reject plan collisions. Do not interpret invalid pilots as balance evidence. Final source-pinned playthroughs and native Windows CI are pending at this checkpoint and will be recorded separately.
+- No patcher release, public tag, latest promotion or restart of the paused recurring agent.
 
 Add new entries above old ones. Suggested entry fields: date/time/timezone, contributor/tool, branch/commit, request/decision and reason, scope/files, validation actually run, remaining issues/blockers, next step. Link detailed data elsewhere. State whether pushed/merged and distinguish internal build from public version.
 

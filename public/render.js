@@ -1,4 +1,5 @@
 import {StructureInstances} from './structure-instances.js';
+import {CONTENT} from './shared/content.js';
 import * as T from './vendor/three.module.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -25,6 +26,7 @@ const beltArrow=(()=>{
 })();
 const cyan=0x79d8d0;
 const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
+for(const [item,definition]of Object.entries(CONTENT.items))if(!Object.hasOwn(itemColors,item))itemColors[item]=Number.parseInt(definition.color.slice(1),16);
 import {mat,geometry,box,cyl} from './render-primitives.js';
 import {modernizeModel} from './coastal-buildings.js';
 import {batchQuarryModel,makeQuarryModel} from './quarry-art.js';
@@ -56,7 +58,29 @@ function quarryStoneSurface(){
  return quarryStone;
 }
 function plate(p){cyl(p,C.dark,0,.08,0,.53,.16,12);box(p,C.steel,0,.18,0,.8,.09,.8);}
-export function makeModel(type,dir=0,inputs=[],level=1,style='classic'){
+export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateOnly=false){
+ const prototype=CONTENT.buildings[type];
+ if(prototype&&!templateOnly){
+  const model=makeModel(prototype.template,dir,inputs,level,style,true),equipment=new T.Group();
+  const color=CONTENT.identities[type].accent,steel=0x7e9197,dark=0x25383d;
+  equipment.name='industrial-equipment';
+  if(prototype.variant==='press'){
+   for(const x of[-.32,.32]){box(equipment,steel,x,1.28,0,.09,1,.12);cyl(equipment,color,x,1.62,0,.095,.36,16);}
+   box(equipment,color,0,1.87,0,.79,.13,.3);box(equipment,steel,0,1.38,0,.5,.1,.42);
+  }else if(prototype.variant==='finery'){
+   for(const x of[-.3,.3]){cyl(equipment,dark,x,1.68,-.24,.105,1,16);cyl(equipment,steel,x,2.2,-.24,.14,.08,16);}
+   box(equipment,color,0,.56,.44,.68,.34,.23);
+  }else if(prototype.variant==='lathe'){
+   box(equipment,color,0,1.32,0,.75,.18,.55);
+   const drum=cyl(equipment,steel,0,1.55,0,.18,.57,20);drum.rotation.z=Math.PI/2;
+   for(const x of[-.33,.33])box(equipment,dark,x,1.5,0,.12,.36,.4);
+  }else if(prototype.variant==='turbine'){
+   for(const x of[-.28,.28]){cyl(equipment,steel,x,1.02,.18,.12,.76,20);cyl(equipment,color,x,1.42,.18,.15,.07,20);}
+   box(equipment,color,0,.78,-.26,.72,.18,.18);
+  }
+  equipment.rotation.y=-dir*Math.PI/2;model.add(equipment);model.userData.contentType=type;
+  return model;
+ }
  if(type==='lamp')return makeLampModel(style);
  const quarry=style==='quarry';
  const originalType=type;type=({copperDrill:'drill',coalMine:'drill',coalGenerator:'generator',gunTurret:'turret',mortar:'turret',pulseTurret:'turret',foundry:'smelter',circuitLab:'assembler',componentFactory:'assembler'})[type]||type;

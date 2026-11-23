@@ -34,7 +34,12 @@ try {
   if (Test-Path -LiteralPath $defaultApp) { Remove-Item -LiteralPath $defaultApp }
   $game = Join-Path $resources 'app'
   New-Item -ItemType Directory -Force -Path $game | Out-Null
-  Copy-Item -LiteralPath 'desktop/game.cjs', 'release/Ironhaven.html' -Destination $game -Force
+  Copy-Item -LiteralPath 'desktop/game.cjs', 'desktop/mod-loader.cjs', 'release/Ironhaven.html', 'release/mod-base.json', 'release/mod-worker.cjs' -Destination $game -Force
+  Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt' -Destination $gameFolder -Force
+  $modding = Join-Path $gameFolder 'Modding'
+  New-Item -ItemType Directory -Force -Path $modding | Out-Null
+  Copy-Item -LiteralPath 'docs/MODDING.md' -Destination $modding -Force
+  Copy-Item -LiteralPath 'examples/mods' -Destination $modding -Recurse -Force
   @{ name = 'ironhaven'; productName = 'Ironhaven'; version = $gameVersion; main = 'game.cjs' } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $game 'package.json') -Encoding ascii
 
@@ -63,6 +68,16 @@ try {
   if ($smoke.ExitCode -ne 0) {
     throw "Desktop startup smoke test failed ($($smoke.ExitCode))."
   }
+
+  $modLog = Join-Path $packageRoot 'mod-startup-test.log'
+  $modSmoke = Start-Process -FilePath $executable -ArgumentList '--mod-smoke-test' -RedirectStandardError $modLog -WindowStyle Hidden -PassThru
+  if (!$modSmoke.WaitForExit(180000)) {
+    Stop-Process -Id $modSmoke.Id
+    Get-Content -LiteralPath $modLog -Tail 80 -ErrorAction SilentlyContinue
+    throw 'Enabled-mod desktop smoke test timed out.'
+  }
+  Get-Content -LiteralPath $modLog
+  if ($modSmoke.ExitCode -ne 0) { throw 'Enabled-mod desktop smoke test failed.' }
 
   Remove-Item -LiteralPath (Join-Path $game 'smoke-world.json')
   tar.exe -a -cf $zip -C $packageRoot Ironhaven

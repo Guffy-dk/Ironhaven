@@ -1,9 +1,19 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
-export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.20.1';
+export const RELEASE_STAGE = 'internal';
+export const CURRENT_VERSION = '0.20.2';
 export const displayVersion = v => v.endsWith('.0') ? v.slice(0,-2) : v;
+export const INTERNAL_BUILD = '0.20.2.2';
 export const RELEASES = [
+ {
+  version:'0.20.2',date:'2026-11-23',title:'Coastal industry and Lua modding — internal preview',
+  changes:[
+   'Add optional ore pressing and coal fining, precision bearings and marine generators, with physical transport, shared storage and new industrial uses for components.',
+   'Add a versioned Lua data-stage mod API with manifests, dependency order, prototype validation and a working machining example. This is a Factorio-style workflow, not compatibility with Factorio mods.',
+   'Load enabled folder mods at Windows startup in a bounded compiler worker. Saves and LAN invitations require matching content. Runtime scripts and custom graphics imports are not supported in this API version.',
+   'Internal build 0.20.2.2 only. The public patcher remains on its previously published version.'
+  ]
+ },
  {
   version:'0.20.1',date:'2026-11-18',title:'Readable level numbers',
   changes:[

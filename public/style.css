@@ -311,3 +311,7 @@ body.at-start #building-labels,body.inspecting-creature #building-labels{display
 @media(max-width:1000px) and (max-height:760px){
  #right-dock>.intel{min-height:0}#right-dock>.minimap{padding:8px}#right-dock>.minimap canvas{height:64px}
 }
+
+/* Modded factories remain selectable without compressing a long catalog into tiny cards. */
+.hotbar{overflow-x:auto;grid-template-columns:repeat(var(--tool-columns,9),minmax(78px,1fr))}
+.resources{overflow-x:auto}.resource{flex-shrink:0}.industrial-guide{margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:12px}
