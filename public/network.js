@@ -1,11 +1,13 @@
 import { CURRENT_VERSION } from './shared/releases.js';
+import {CONTENT_SIGNATURE} from './shared/content.js';
 const CHUNK=16000,MAX_STATE=1500000,PART='IH:part:',END='IH:end:';
 // Direct LAN data channels. Signalling is exchanged by the players, not a service.
-export function encodeCode(description){return'IH2.'+btoa(JSON.stringify({type:description.type,sdp:description.sdp,version:CURRENT_VERSION}));}
+export function encodeCode(description){return'IH2.'+btoa(JSON.stringify({type:description.type,sdp:description.sdp,version:CURRENT_VERSION,content:CONTENT_SIGNATURE}));}
 export function decodeCode(code,expected){
  const input=String(code).trim();if(input.length>32768||!input.startsWith('IH2.'))throw Error('This is not an Ironhaven code for version '+CURRENT_VERSION+'. Use the same game version and copy the entire code.');
  let data;try{data=JSON.parse(atob(input.slice(4)));}catch{throw Error('The code is damaged. Copy the entire code again.');}
  if(data.version!==CURRENT_VERSION)throw Error('Game versions do not match. Everyone must use version '+CURRENT_VERSION+'.');
+ if(data.content!==CONTENT_SIGNATURE)throw Error('World content does not match. Everyone needs identical enabled mods, versions and files.');
  if(data.type!==expected||typeof data.sdp!=='string'||data.sdp.length>24000)throw Error(expected==='answer'?'Paste your friend’s answer code, not the invitation.':'Paste the host’s invitation, not an answer code.');
  return{type:data.type,sdp:data.sdp};
 }

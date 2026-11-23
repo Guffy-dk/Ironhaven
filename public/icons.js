@@ -1,3 +1,4 @@
+import {CONTENT} from './shared/content.js';
 const paths={
  play:'M8 4 20 12 8 20V4Z',
  pause:'M8 4v16M16 4v16',
@@ -36,3 +37,6 @@ const paths={
 };
 export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({gunTurret:'turret',coalMine:'drill',coalGenerator:'generator',copperDrill:'drill',foundry:'steel',circuitLab:'circuit',componentFactory:'module'})[name]]||paths.hq}"/></svg>`;}
 export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',coal:'COAL',power:'POWER'};
+for(const [name,item]of Object.entries(CONTENT.items))if(!Object.hasOwn(RESOURCE_NAMES,name)){
+ RESOURCE_NAMES[name]=item.name.toUpperCase();paths[name]=paths[item.icon]||paths.module;
+}

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Window} from 'happy-dom';
 import {build} from 'esbuild';
-import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE,SWARM_DIRECTIONS,buildingRadius,command} from '../public/shared/sim.js';
+import {createGame,addPlayer,maxHp,step,waveForecast,FINAL_WAVE,SWARM_DIRECTIONS,buildingRadius,command,RESOURCE_KEYS} from '../public/shared/sim.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 import {upgradeColor} from '../public/upgrade-colors.js';
 import {CURRENT_VERSION,displayVersion,RELEASES} from '../public/shared/releases.js';
@@ -83,6 +83,16 @@ test('category keys swap the hotbar and number keys select a building in that ca
   h.key('x');h.key('1');assert.equal(h.dom.__view.tool,'turret');assert.ok(!visible().includes('smelter'));
   h.key('v');h.key('1');assert.equal(h.dom.__view.tool,'belt');
   h.key('c');h.key('2');assert.equal(h.dom.__view.tool,'coalGenerator');
+ }finally{await h.close();}
+});
+
+test('Industry opens the new machines and the inspector explains physical multi-item recipes',async()=>{
+ const h=harness();try{
+  h.$('start-solo').click();h.key('n');h.key('1');assert.equal(h.dom.__view.tool,'orePress');
+  assert.match(h.$('intel-desc').textContent,/concentrate/i);
+  assert.match(h.$('recipe').textContent,/2.*ORE.*1.*CONCENTRATE/i);
+  h.release('1');h.key('2');assert.equal(h.dom.__view.tool,'finery');assert.match(h.$('recipe').textContent,/3.*IRON PLATES/);
+  assert.match(h.$('mod-status').textContent,/No community mods/);
  }finally{await h.close();}
 });
 test('WASD pans only the local camera and normalizes diagonal movement',async()=>{
@@ -271,7 +281,7 @@ test('panels can be moved, minimized, closed and restored without changing the w
 });
 test('production report and bottleneck overlay work, and pre-swarm checkpoints can be retried',async()=>{
  const h=harness(starterWorld());try{
-  h.$('resume').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,8);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
+  h.$('resume').click();h.key('i');assert.ok(h.$('production-dialog').open);assert.equal(h.$('production-rows').children.length,RESOURCE_KEYS.length);h.$('production-dialog').close();h.key('b');h.frame(1000);assert.match(h.$('building-labels').textContent,/Running|Waiting for inputs/);
   for(let attempt=0;attempt<5;attempt++){h.$('early-wave').click();for(let i=0;i<62;i++)h.ticks[0]();h.$('retry-checkpoint').click();const saved=h.save();assert.equal(saved.wave,0);assert.equal(saved.enemies.length,0);assert.ok(saved.nextWave-saved.time>=19.9);}
   const checkpoints=JSON.parse(h.dom.localStorage.getItem('ironhaven.checkpoints.v1'));assert.ok(checkpoints.length<=3);assert.match(checkpoints[0].label,/Before swarm/);
  }finally{await h.close();}

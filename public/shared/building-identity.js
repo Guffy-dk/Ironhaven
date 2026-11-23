@@ -1,3 +1,4 @@
+import {CONTENT} from './content.js';
 // A building's trade keeps the same accent and symbol on the map and in the HUD.
 export const BUILDING_IDENTITIES={
  drill:{label:'IRON DRILL',icon:'drill',accent:'#90cce5',paint:'#84b9cf',height:1.5},
@@ -13,3 +14,4 @@ export const BUILDING_IDENTITIES={
  generator:{label:'POWER',icon:'power',accent:'#f2d992',height:1.1},
  coalGenerator:{label:'COAL POWER',icon:'power',accent:'#f2d992',height:1.1}
 };
+Object.assign(BUILDING_IDENTITIES,CONTENT.identities);

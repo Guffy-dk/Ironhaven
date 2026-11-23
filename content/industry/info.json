@@ -1,0 +1,8 @@
+{
+  "name": "coastal-industry",
+  "version": "1.0.0",
+  "title": "Coastal Industry",
+  "ironhaven_version": "0.20",
+  "mod_api": "1.0",
+  "dependencies": ["base >= 0.20.1"]
+}

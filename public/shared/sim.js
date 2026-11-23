@@ -1,5 +1,7 @@
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
 import {LAMP_RADIUS,lampField} from './lamps.js';
+import {CONTENT,ACTIVE_MODS,CONTENT_SIGNATURE,requireWorldContent} from './content.js';
+export {ACTIVE_MODS,CONTENT_SIGNATURE};
 import {coastalLand,establishIsland,islandLanding} from './coast.js';
 import {TUTORIAL_STEPS,advanceTutorial} from './tutorial.js';
 import {BUILD_EDGE,MAP_SIZE,SWARM_SPAWN_EDGE,woodland,walkAroundTrees} from './woodland.js';
@@ -95,6 +97,17 @@ export function productionRecipe(b){
  return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
 }
 export const DIRECTIONAL = ['splitter','belt','storage','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
+// All data-stage content enters the same authoritative production/storage paths.
+for(const [item,definition]of Object.entries(CONTENT.items)){
+ if(!ITEM_KEYS.includes(item))ITEM_KEYS.push(item);
+ if(definition.stored&&!RESOURCE_KEYS.includes(item))RESOURCE_KEYS.push(item);
+}
+for(const [name,definition]of Object.entries(CONTENT.buildings)){
+ if(Object.hasOwn(TYPES,name)&&!Object.hasOwn(RECIPES,name)&&!['generator','coalGenerator'].includes(name))throw Error('Unsupported building override: '+name);
+ TYPES[name]=definition;
+ if(definition.recipe)RECIPES[name]=CONTENT.recipes[definition.recipe];
+ if(definition.recipe&&!DIRECTIONAL.includes(name))DIRECTIONAL.push(name);
+}
 export const TURRET_LEVELS=Array.from({length:30},(_,n)=>({
  name:'Mk '+(n+1),hp:350+n*55,damage:28+n*3,range:10+n*.1,interval:.38/(1+n*.025),
  cost:n?{plate:12+n*7,gear:2+n*2}:null
@@ -103,7 +116,7 @@ export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
 export const SAWMILL_RADIUS=5;
 export const buildingRadius=b=>b?.type==='lamp'?LAMP_RADIUS:b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0;
 export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
-export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16}};
+export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16},...CONTENT.generators};
 export function turretStats(b){
  const normal=TURRET_LEVELS[Math.max(0,Math.min(TURRET_LEVELS.length-1,(b.level||1)-1))];
  if(b.type==='turret'){const n=Math.max(0,(b.level||1)-1);return {name:normal.name,hp:Math.round(TYPES.turret.hp*(1+n*.14)),damage:14*(1+n*.065),range:7.5+n*.1,interval:.64/(1+n*.02)};}
@@ -262,6 +275,7 @@ function validBeltProgress(progress){return Number.isFinite(progress)&&progress>
 export function migrateGame(s){
  spatialCaches.delete(s);
  if(!s||![1,2,3,4,5,6,7,8,9,10,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
+ s.contentSignature=requireWorldContent(s);
  const previous=s.version,old=previous<SAVE_SCHEMA;
  for(const p of s.players)if(p.inventory?.inserter){(p.inventory.splitter??=[]).push(...p.inventory.inserter);delete p.inventory.inserter;}
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];
@@ -371,6 +385,8 @@ function building(s,type,x,z,dir=0){const b={id:s.nextId++,type,x,z,dir,hp:TYPES
 export function createGame(seed=2026,{difficulty='standard'}={}){
  if(!Object.hasOwn(DIFFICULTIES,difficulty))difficulty='standard';
  const s={version:SAVE_SCHEMA,difficulty,stats:{totals:{},history:[{time:0,totals:{}}]},seed,time:0,tick:0,nextId:1,resources:{wood:165,plate:180,gear:20,copper:0,steel:0,circuit:0,module:0,coal:0,power:0},buildings:[],players:[],enemies:[],shots:[],wave:0,nextWave:DIFFICULTIES[difficulty].prep,totalKills:0,produced:{plate:0,gear:0},power:{used:0,total:18},status:'playing',paused:false,speed:1,terrain:makeTerrain(seed),events:[]};
+ s.contentSignature=CONTENT_SIGNATURE;
+ for(const item of RESOURCE_KEYS)s.resources[item]??=0;
  building(s,'hq',0,0);
  if(difficulty==='relaxed')Object.assign(s.resources,{wood:195,plate:210,gear:28});
  // Two working starter chains: ore → plate → shared storage / gears.
@@ -913,7 +929,7 @@ export function step(s,dt=STEP){
    const seconds=recipe?.seconds??(b.type==='drill'?1.6:b.type==='coalMine'?2.8:2);
    const item=extract||recipe.output;
    const yieldUnits=4;
-   const batch=Math.floor(yieldUnits/4);
+   const batch=recipe?.count??1;
    if(outputCount(b)+batch>OUTPUT_CAPACITY)continue;
    b.progress+=dt*productionSpeed(b,bonus,s.difficulty);
    if(b.progress+1e-9>=seconds){

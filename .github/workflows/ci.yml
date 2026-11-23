@@ -32,3 +32,12 @@ jobs:
         with:
           name: Ironhaven-Windows-preview
           path: release/Ironhaven-*.png
+
+      - name: Keep the verified Windows build for internal playtesting
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ironhaven-Windows-internal-build
+          retention-days: 14
+          path: |
+            release/Ironhaven-Windows-x64.zip
+            release/Ironhaven-Windows-manifest.json

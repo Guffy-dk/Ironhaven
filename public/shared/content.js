@@ -1,0 +1,10 @@
+import baseRaw from './industry-catalog.json' with {type:'json'};
+import {validateCatalog,contentSignature,checkContent} from './mod-catalog.js';
+const payload=typeof document!=='undefined'?document.getElementById('ironhaven-mod-data')?.textContent:null;
+const injected=payload?JSON.parse(payload):null;
+export const CONTENT_RAW=injected?.raw??baseRaw.raw;
+export const CONTENT=validateCatalog(CONTENT_RAW);
+export const ACTIVE_MODS=injected?.mods??[];
+export const CONTENT_SIGNATURE=contentSignature(ACTIVE_MODS,baseRaw.hash);
+export const requireWorldContent=state=>checkContent(state,ACTIVE_MODS,baseRaw.hash);
+export const MOD_BUILDINGS=Object.keys(CONTENT.buildings);
