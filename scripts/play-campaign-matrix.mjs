@@ -8,15 +8,28 @@ const industryTrial=process.env.CAMPAIGN_MATRIX==='industry-fuel';
 const marineMatrix=process.env.CAMPAIGN_MATRIX==='marine-power';
 const coalPowerMatrix=process.env.CAMPAIGN_MATRIX==='coal-versus-marine';
 const fallbackMatrix=process.env.CAMPAIGN_MATRIX==='sentry-fallback';
+const recoveryMatrix=process.env.CAMPAIGN_MATRIX==='power-recovery';
 const outageMatrix=process.env.CAMPAIGN_MATRIX==='outage-reserve';
 const repairMatrix=process.env.CAMPAIGN_MATRIX==='repair-reserve';
-const dir=outageMatrix?'work/campaign-matrix-outage-reserve':repairMatrix?'work/campaign-matrix-repair-reserve':fallbackMatrix?'work/campaign-matrix-sentry-fallback':coalPowerMatrix?'work/campaign-matrix-coal-versus-marine':marineMatrix?'work/campaign-matrix-marine-power':industryTrial?'work/campaign-matrix-industry-fuel':reserveTrial?'work/campaign-matrix-power-reserve':powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
+const dir=recoveryMatrix?'work/campaign-matrix-power-recovery':outageMatrix?'work/campaign-matrix-outage-reserve':repairMatrix?'work/campaign-matrix-repair-reserve':fallbackMatrix?'work/campaign-matrix-sentry-fallback':coalPowerMatrix?'work/campaign-matrix-coal-versus-marine':marineMatrix?'work/campaign-matrix-marine-power':industryTrial?'work/campaign-matrix-industry-fuel':reserveTrial?'work/campaign-matrix-power-reserve':powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
 await mkdir(dir,{recursive:true});
 const jobs=[];
 function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false,powerReserve=false,coalReserve=false,marineTrial=false,coalPowerTrial=false,sentryFallback=false,repairReserve=false){
  jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve});
 }
-if(repairMatrix||outageMatrix){
+if(recoveryMatrix){
+ function campaign(seed,policy,difficulty,group='comparison'){
+  add(seed,policy,difficulty,9000,false,group);
+ }
+ for(const seed of [417,2026,7001]){
+  for(const difficulty of ['relaxed','standard','veteran'])campaign(seed,'industry',difficulty);
+  for(const policy of ['early_defense','pulse','mortars','logistics','no_artillery','single'])campaign(seed,policy,'standard');
+ }
+ for(const policy of ['industry','pulse','mortars','logistics','harbor'])campaign(2603,policy,'standard','holdout');
+ add(417,'industry','relaxed',12000,true,'comparison');
+ add(6197,'industry','relaxed',12000,true,'prior-stall',false,false,false,true);
+ add(9067,'industry','relaxed',12000,true,'holdout');
+}else if(repairMatrix||outageMatrix){
  function pair(seed,policy,difficulty,horizon=9000,endless=false,group='comparison',marine=false){
   for(const reserve of [false,true])add(seed,policy,difficulty,horizon,endless,group,false,false,false,marine,false,false,reserve);
  }
@@ -167,14 +180,14 @@ const reports=[];
 async function run(job){
  const {seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve}=job;
  const outageReserve=outageMatrix&&repairReserve;
- const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}${powerReserve?'-reserve':''}${coalReserve?'-fuel':''}${marineTrial?'-marine':''}${coalPowerTrial?'-coal-power':''}${sentryFallback?'-fallback':''}${outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':''}`;
+ const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}${powerReserve?'-reserve':''}${coalReserve?'-fuel':''}${marineTrial?'-marine':''}${coalPowerTrial?'-coal-power':''}${sentryFallback?'-fallback':''}${outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':''}${recoveryMatrix?'-power-recovery':''}`;
  const reportPath=`work/${stem}.json`;
  async function readReport(){
   const report=JSON.parse(await readFile(reportPath,'utf8'));
   for(const key of ['seed','policy','difficulty','horizon','endless']){
    if(report[key]!==job[key])throw Error(`Checkpoint mismatch for ${stem}: ${key}`);
   }
-  if((report.shedLoad??false)!==shedLoad||(report.powerReserve??false)!==powerReserve||(report.coalReserve??false)!==coalReserve||(report.marineTrial??false)!==marineTrial||(report.coalPowerTrial??false)!==coalPowerTrial||(report.sentryFallback??false)!==sentryFallback||(report.repairReserve??false)!==repairReserve||(report.outageReserve??false)!==outageReserve)throw Error(`Power policy mismatch for ${stem}`);
+  if((report.shedLoad??false)!==shedLoad||(report.powerReserve??false)!==powerReserve||(report.coalReserve??false)!==coalReserve||(report.marineTrial??false)!==marineTrial||(report.coalPowerTrial??false)!==coalPowerTrial||(report.sentryFallback??false)!==sentryFallback||(report.repairReserve??false)!==repairReserve||(report.outageReserve??false)!==outageReserve||(report.recoveryTelemetry??false)!==recoveryMatrix)throw Error(`Power policy mismatch for ${stem}`);
   return {...report,group};
  }
  if(resume){
@@ -184,7 +197,7 @@ async function run(job){
  const log=await open(`${dir}/${stem}.log`,'w');
  try{
   await new Promise((resolve,reject)=>{
-   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0',CAMPAIGN_POWER_RESERVE:powerReserve?'1':'0',CAMPAIGN_COAL_RESERVE:coalReserve?'1':'0',CAMPAIGN_MARINE:marineTrial?'1':'0',CAMPAIGN_COAL_POWER:coalPowerTrial?'1':'0',CAMPAIGN_SENTRY_FALLBACK:sentryFallback?'1':'0',CAMPAIGN_REPAIR_RESERVE:outageReserve?'outage':repairReserve?'1':'0'},stdio:['ignore',log.fd,log.fd]});
+   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0',CAMPAIGN_POWER_RESERVE:powerReserve?'1':'0',CAMPAIGN_COAL_RESERVE:coalReserve?'1':'0',CAMPAIGN_MARINE:marineTrial?'1':'0',CAMPAIGN_COAL_POWER:coalPowerTrial?'1':'0',CAMPAIGN_SENTRY_FALLBACK:sentryFallback?'1':'0',CAMPAIGN_REPAIR_RESERVE:outageReserve?'outage':repairReserve?'1':'0',CAMPAIGN_POWER_RECOVERY:recoveryMatrix?'1':'0'},stdio:['ignore',log.fd,log.fd]});
    child.on('error',reject);
    child.on('exit',(code,signal)=>code===0?resolve():reject(Error(`${stem} exited ${signal??code}`)));
   });

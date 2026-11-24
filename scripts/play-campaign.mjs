@@ -3,13 +3,14 @@
 import {writeFile,mkdir,rename} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
 import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';
-const {createExpedition,canBuild,command,step,powerOutput,STEP,TYPES,repairCost,roundBonus,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,buildingPower,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
+const {createExpedition,canBuild,command,step,powerOutput,STEP,GENERATORS,TYPES,repairCost,roundBonus,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,buildingPower,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
 await mkdir('work',{recursive:true});
 const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',difficulty=process.argv[4]||'standard';
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
 const outageReserve=process.env.CAMPAIGN_REPAIR_RESERVE==='outage';
+const recoveryTelemetry=process.env.CAMPAIGN_POWER_RECOVERY==='1';
 const repairReserve=outageReserve||process.env.CAMPAIGN_REPAIR_RESERVE==='1';
 const sentryFallback=process.env.CAMPAIGN_SENTRY_FALLBACK==='1';
 const coalPowerTrial=process.env.CAMPAIGN_COAL_POWER==='1';
@@ -20,7 +21,7 @@ if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Err
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
-const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'')+(sentryFallback?'-fallback':'')+(outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':'');
+const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'')+(sentryFallback?'-fallback':'')+(outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':'')+(recoveryTelemetry?'-power-recovery':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -158,6 +159,38 @@ function placeFallbackSentry(){
 }
 let defenseOutageSince=null;
 let outageReserveActivations=0,outageReserveActive=false;
+const formerGeneratorSites=new Map();
+const recoveryEpisodes=[];
+let powerEpisode=null,healthySamples=0;
+function recordPowerRecovery(second){
+ const underpowered=s.power.used>s.power.total&&s.buildings.some(b=>TURRETS.includes(b.type)&&!b.active&&buildingPower(b)>0);
+ if(!underpowered){
+  if(powerEpisode&&++healthySamples===5){
+   powerEpisode.recoveredSecond=second-4;
+   powerEpisode=null;
+  }
+  return;
+ }
+ healthySamples=0;
+ if(!powerEpisode){
+  if(!s.enemies.length)return;
+  powerEpisode={wave:s.wave,startSecond:second,recoveredSecond:null,affectedSeconds:0,fuelOnlySeconds:0,materialsOnlySeconds:0,bothSeconds:0,neitherSeconds:0};
+  recoveryEpisodes.push(powerEpisode);
+ }
+ const fuelMissing=s.buildings.some(b=>GENERATORS[b.type]&&s.resources[GENERATORS[b.type].fuel]<1);
+ let materialsMissing=false;
+ for(const {type,x,z} of formerGeneratorSites.values()){
+  if(!at(x,z)&&canBuild(s,type,x,z,host)==='Not enough materials'){
+   materialsMissing=true;
+   break;
+  }
+ }
+ powerEpisode.affectedSeconds++;
+ if(fuelMissing&&materialsMissing)powerEpisode.bothSeconds++;
+ else if(fuelMissing)powerEpisode.fuelOnlySeconds++;
+ else if(materialsMissing)powerEpisode.materialsOnlySeconds++;
+ else powerEpisode.neitherSeconds++;
+}
 function act(){
  const threatenedOutage=s.enemies.length>0&&s.power.used>s.power.total&&
   s.buildings.some(b=>TURRETS.includes(b.type)&&!b.active&&buildingPower(b)>0);
@@ -180,6 +213,7 @@ function act(){
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
   const error=send({type:'build',building:p.type,x:p.x,z:p.z,dir:p.dir});if(!error){
    built++;
+   if(recoveryTelemetry&&GENERATORS[p.type])formerGeneratorSites.set(key(p.x,p.z),p);
    if(coalPowerSite){coalPowerBuilds++;firstCoalPowerSecond??=Math.round(s.time);}
    if(p.type==='marineGenerator'){marineBuilds++;firstMarineSecond??=Math.round(s.time);}
   }
@@ -265,6 +299,7 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  step(s);
  if(fueled&&engine.progress<progress)fuelWindow.coalBurned++;
  losses+=structures-s.buildings.length;
+ if(recoveryTelemetry&&ticks%20===0)recordPowerRecovery(Math.round(s.time));
  if(coalPowerTrial&&ticks%20===0&&s.resources.coal>0){
   const engine=at(4,-2);
   if(engine?.type==='coalGenerator'){
@@ -308,10 +343,10 @@ const final=sample();
 const generatorWindow={startSecond:fuelWindow.startTick===null?null:fuelWindow.startTick*STEP,
  seconds:fuelWindow.ticks*STEP,fueledSeconds:fuelWindow.fueledTicks*STEP,
  availablePowerSeconds:Number((fuelWindow.availablePowerTicks*STEP).toFixed(2)),coalBurned:fuelWindow.coalBurned};
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve,outageReserve,victorySeconds,
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve,outageReserve,recoveryTelemetry,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
- generatorWindow,fallbackPlacements,final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
+ generatorWindow,fallbackPlacements,recoveryEpisodes,final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
 if(saveCheckpoints)await writeJson(`${outputStem}-save.json`,{state:s,playerId:host});
 await writeJson(`${outputStem}.json`,report);
 console.log(JSON.stringify({...report,waves:undefined,final:undefined},null,2));
