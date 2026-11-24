@@ -320,3 +320,51 @@ body.at-start #building-labels,body.inspecting-creature #building-labels{display
 .harbor-project small{line-height:1.35;color:var(--muted)}
 .harbor-project button{margin:0}
 .resources,.hotbar{scrollbar-width:thin;scrollbar-color:#466470 #162b34}
+
+/* Keep the expedition in view. Details open beside the relevant action. */
+.left-panel .wave-panel,
+body[data-visual-style="quarry"] .left-panel .wave-panel {
+ padding: 6px 0;
+ background: transparent;
+ border: 0;
+}
+.left-panel .wave-label { display: none; }
+#colony-details { font-size: 12px; }
+#colony-details .round-bonuses {
+ position: static;
+ display: grid;
+ text-align: left;
+ padding: 5px 0;
+ background: transparent;
+ border: 0;
+}
+#right-dock > .intel:not(.has-selection):not(.inspector-pinned) { display: none; }
+#right-dock > .intel { padding: 12px; }
+#right-dock > .intel .intel-icon { display: none; }
+.intel h2 { font-size: 17px; margin: 3px 0 5px; }
+.intel .panel-heading { margin: 0; }
+.intel .intel-summary { font-size: 12px; color: var(--mint); }
+.intel .intel-summary:empty { display: none; }
+.intel .recipe { font-size: 11px; line-height: 1.4; }
+.intel .inspector-actions { gap: 5px; }
+#building-details, #harbor-project-details { margin-top: 8px; }
+#building-details > summary, #harbor-project-details > summary, #colony-details > summary {
+ cursor: pointer;
+ padding: 6px 0;
+ color: #b7cbd0;
+ font-size: 12px;
+}
+#right-dock > .minimap {
+ margin-top: auto;
+ align-self: end;
+ width: min(100%, 155px);
+ padding: 7px;
+}
+#right-dock > .minimap canvas { height: 75px; }
+#right-dock > .minimap .map-key { display: none; }
+.resources .resource .stock-rate { display: none; }
+.bottom-ui > .controls { display: none; }
+@media (max-width: 1000px) {
+ #right-dock > .intel.has-selection p { display: block; }
+ #right-dock > .minimap { width: min(100%, 126px); }
+}

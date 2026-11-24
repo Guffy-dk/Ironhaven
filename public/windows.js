@@ -15,6 +15,11 @@ export function initWindows(){
  window.addEventListener('resize',()=>{for(const el of document.querySelectorAll('.floating-window,dialog'))if(stored[el.id]){if(stored[el.id].width)el.style.width=stored[el.id].width+'px';position(el,stored[el.id].x,stored[el.id].y);}});
  for(const btn of document.querySelectorAll('[data-window-close]'))btn.onclick=()=>{document.getElementById(btn.dataset.windowClose).hidden=true;};
  for(const btn of document.querySelectorAll('[data-window-minimize]'))btn.onclick=()=>document.getElementById(btn.dataset.windowMinimize).classList.toggle('window-minimized');
- for(const btn of document.querySelectorAll('[data-window-toggle]'))btn.onclick=()=>{const el=document.getElementById(btn.dataset.windowToggle);el.hidden=!el.hidden;};
- document.getElementById('reset-windows').onclick=()=>{stored={};persist();for(const el of document.querySelectorAll('.floating-window,dialog')){for(const key of['position','margin','left','right','top','bottom','zIndex','width','height'])el.style[key]='';el.classList.remove('window-minimized');if(el.classList.contains('floating-window'))el.hidden=false;}};
+ for(const btn of document.querySelectorAll('[data-window-toggle]'))btn.onclick=()=>{const el=document.getElementById(btn.dataset.windowToggle);
+ if(el.id==='intel'&&!el.classList.contains('has-selection')){
+  const visible=!el.hidden&&el.classList.contains('inspector-pinned');
+  el.hidden=visible;
+  el.classList.toggle('inspector-pinned',!visible);
+ }else el.hidden=!el.hidden;};
+ document.getElementById('reset-windows').onclick=()=>{stored={};persist();for(const el of document.querySelectorAll('.floating-window,dialog')){for(const key of['position','margin','left','right','top','bottom','zIndex','width','height'])el.style[key]='';el.classList.remove('window-minimized','inspector-pinned');if(el.classList.contains('floating-window'))el.hidden=false;}};
 }
