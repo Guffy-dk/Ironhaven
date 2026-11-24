@@ -1,10 +1,20 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.21.2';
+export const CURRENT_VERSION = '0.21.3';
 export const displayVersion = v => /^\d+\.\d+\.0$/.test(v) ? v.slice(0,-2) : v;
 export const INTERNAL_BUILD = '0.21.2.3';
 export const RELEASES = [
+ {
+  version:'0.21.3',date:'2026-11-24',title:'Faster dispatch and timber logistics',
+  changes:[
+   'Dispatch hubs can send one item and receive the next in the same tick, keeping pace with a full conveyor when the output is clear.',
+   'Select a Component factory to enable recipe feed on an adjacent Warehouse facing it.',
+   'Circuit assemblers and Component factories gain 20% of base production speed per upgrade.',
+   'Sawmills can send timber through a rotatable outlet to belts and nearby receivers. Connect the outlet to feed a Resin kettle.',
+   'Use Find turret in an ammunition warning to select and locate the affected turret.'
+  ]
+ },
  {
   version:'0.21.2',date:'2026-11-24',title:'Loeth Studios and clearer building costs',
   changes:[

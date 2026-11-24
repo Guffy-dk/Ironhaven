@@ -24,6 +24,7 @@ jobs:
           $existingPatchers = @{
             'v0.21.1' = 'v0.20.1'
             'v0.21.2' = 'v0.21.1'
+            'v0.21.3' = 'v0.21.2'
           }
           $patcherTag = $existingPatchers[$env:RELEASE_TAG]
           if ($patcherTag) {

@@ -304,6 +304,10 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — 0.21.3 patcher release
+
+- The owner authorized a patcher release of the verified logistics and electronics changes. Public version `0.21.3` includes faster Dispatch hubs, Component factory warehouse feed, electronics upgrade gains, physical timber output and Find turret in ammunition warnings. The release uses the existing `0.21.2` patcher binary and verifies the exact published Windows installation before latest promotion.
+
 ### 2026-11-24 — Codex — electronics upgrades and timber transport
 
 - Stealth requested stronger upgrade gains for circuits and components and reported that wood never reached the Resin kettle on belts. Internal candidate `0.21.2.3` adds 20% of base speed per upgrade to Circuit assembler and Component factory. This gives 2× base speed at level 6 and 3× at level 11. Mines and smelters gain 25% per upgrade and ordinary workshops gain 10%.
