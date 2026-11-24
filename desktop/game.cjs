@@ -77,7 +77,6 @@ async function presentStudio() {
   if (smokeTest && (result.reason !== 'ended' || result.duration < 2.8 || result.duration > 3.2 || result.played < 2.8)) {
     throw Error('Studio intro did not play to completion: ' + JSON.stringify(result));
   }
-  if (smokeTest) gameWindow.hide();
 }
 
 async function start() {

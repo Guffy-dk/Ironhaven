@@ -143,11 +143,13 @@ Do not disable Electron sandbox/context isolation to make a feature convenient. 
 
 ## 6. Settings, Steam and multiplayer future
 
+The owner plans to distribute Ironhaven on Steam and asked whether it needs an engine rewrite. The current Electron and Three.js Windows package can use a Windows Steam launch option targeting `Ironhaven.exe`. SteamPipe can install and update the game files in a Windows depot. A Steam depot, app configuration and distribution test are still pending. [Valve's SteamPipe and launch option guide](https://partner.steamgames.com/doc/sdk/uploading).
+
 Implemented settings: pan and zoom speed (25–250%), master volume/mute and test sound, Standard/Performance graphics, interface labels/levels/types, panel/layout options and remembered training/confirmation preferences. Only expose controls that work. Sounds are currently synthesized; separate music/ambience buses are not established content.
 
 Portable preferences use a versioned schema and storage adapter. Keep device-specific graphics/display/window layout separate from account-portable controls/audio/interface preferences. Future Steam Cloud should sync dedicated account-scoped settings/save files with migration, backups and conflict handling; **not the entire Chromium profile**. Cloud preferences must not overwrite the host world.
 
-Steam identity, lobbies, invitations, relay/NAT traversal and friend co-op are future platform work. Current LAN invitations are not Steam co-op. Preserve host authority, command ownership, version negotiation and local guest settings. Test distinct machines/networks; a local networking test is not proof of internet multiplayer.
+Steam identity, lobbies, invitations, relay/NAT traversal and friend co-op are future platform work. The current game uses LAN invitations. Preserve host authority, command ownership, version negotiation and local guest settings. Validate internet co-op across separate accounts and networks. [Valve's Cloud guide](https://partner.steamgames.com/doc/features/cloud) · [Valve's multiplayer guide](https://partner.steamgames.com/doc/features/multiplayer).
 
 Follow-up settings include rebinding, edge/middle-button camera movement, audio buses when available, display modes/render scale/FPS cap/VSync, individual graphical effects, UI scale/accessibility and autosave options. See [Settings and Steam](docs/SETTINGS_AND_STEAM.md).
 
@@ -306,6 +308,8 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Owner requested a short startup film and reusable Loeth Studios branding with detailed reflections, shadow and animation. The internal Windows build `0.21.1.1104` starts with a three-second studio animation. It uses indigo glass, pearl lettering and a moving light strip. Escape skips the animation.
 - The Windows shell shows the studio screen while it reads the packaged game and loads enabled mod prototypes. All video and poster data are embedded locally. The original branding and animation sources are in [studio/loeth-studios](studio/loeth-studios/README.md).
+- The studio mark is designed for reuse across games. The PSD has four named raster layers, and the SVG contains editable outlines. The Blender project packs its lettering and includes a separate edit timeline. The standalone MP4 is 960 × 540 at 24 fps. Local checks verified the media duration, complete playback, Escape skip and the editable files. [PR #30](https://github.com/Guffy-dk/Ironhaven/pull/30).
+- The owner authorized a patcher release with the intro. Public version `0.21.2` combines the intro, compact HUD and material art. The release reuses the `0.21.1` patcher executable and verifies installation of the exact published package before making it the latest version.
 
 ### 2026-11-24 — Codex — material icon and build price preview
 

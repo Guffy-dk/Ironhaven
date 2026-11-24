@@ -21,11 +21,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          if ($env:RELEASE_TAG -eq 'v0.21.1') {
-            gh release download v0.20.1 --pattern Ironhaven-Patcher.exe --dir release --clobber
+          $existingPatchers = @{
+            'v0.21.1' = 'v0.20.1'
+            'v0.21.2' = 'v0.21.1'
+          }
+          $patcherTag = $existingPatchers[$env:RELEASE_TAG]
+          if ($patcherTag) {
+            gh release download $patcherTag --pattern Ironhaven-Patcher.exe --dir release --clobber
             if ($LASTEXITCODE -ne 0) { throw 'Could not retrieve the existing patcher.' }
           }
-          gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json release/Ironhaven-ingame.png release/Ironhaven-creatures.png release/Ironhaven-island.png release/Ironhaven-settings.png release/Ironhaven-menu.png release/Ironhaven-ports.png release/Ironhaven-harbor.png --latest=false --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
+          $captures = Get-ChildItem -Path release -Filter 'Ironhaven-*.png' | ForEach-Object { $_.FullName }
+          gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json @captures --latest=false --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
 
       - name: Verify published installation and promote patcher update
         env:
