@@ -308,6 +308,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Stealth requested stronger upgrade gains for circuits and components and reported that wood never reached the Resin kettle on belts. Internal candidate `0.21.2.3` adds 20% of base speed per upgrade to Circuit assembler and Component factory. This gives 2× base speed at level 6 and 3× at level 11. Mines and smelters gain 25% per upgrade and ordinary workshops gain 10%.
 - The Sawmill now has a rotatable gold outlet. A compatible attachment receives buffered timber. Without a connected receiver or room in the output buffer for a batch, new wood enters shared stock. Existing unconnected sawmills can still fuel generators. A regression test rotates a Sawmill and proves timber travels over a real belt into a Resin kettle with physical coal input and shared resin output.
+- With full ingredient supply for 60 simulated seconds, level-11 Circuit assembler deliveries increased from 29 to 44 and Component factory deliveries from 23 to 35. All 215 automated tests, renderer checks and the Windows startup checks passed. The change is on main via [PR #33](https://github.com/Guffy-dk/Ironhaven/pull/33). [Internal Windows build 0.21.2.3](https://github.com/Guffy-dk/Ironhaven/actions/runs/45439218381/artifacts/14942483667) · [Windows captures](https://github.com/Guffy-dk/Ironhaven/actions/runs/45439218381/artifacts/14943625204).
 
 ### 2026-11-24 — Codex — Dispatch throughput and component warehouse feed
 
