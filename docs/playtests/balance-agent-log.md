@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 07.27 dansk tid
+
+- Kørsel `2026-11-24T07:27:27+01:00`, baseline `fbe2f6f`, måleværktøj `528632e`, pakke `0.21.2`, eksisterende metadata-id `0.21.1.1104`.
+- 35/35 forløb, heraf 15 matchede par og fem ekstra kontroller. Nye holdout-seeds 1913 og 6197. Kul mod marine gav 5 bedre, 2 dårligere og 8 lige.
+- Én forsøgsserie dækker to ens kørselsbeskeder. Ét udholdenhedsforløb ramte 72.000 simulerede sekunder med én fjende tilbage ved swarm 30. Næste forsøg måler brændsel og genopbygning i samme observationsvindue.
+- [Rapport](balance-2026-11-24-coal-vs-marine.md) · [Rådata](balance-2026-11-24-coal-vs-marine.json).
+
 ### 2026-11-24 kl. 01.23 dansk tid
 
 - Kørsel `2026-11-24T01:23:50+01:00`, baseline `021b2b6`, måleværktøj `3d7e854`, eksisterende internt build `0.20.2.3`.

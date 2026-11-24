@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 07:27 Europe/Copenhagen — Codex — coal versus marine
+
+- On released source `fbe2f6f` (0.21.2), 35 earned-resource campaigns compared the physical bearing line to ordinary coal power. Coal versus marine campaign rank: 5 bedre, 2 dårligere og 8 lige. The two options differ in build and upgrade availability. Game balance and release metadata kept as checked out.
+- Next compare matched fuel, replacement spending and delivered power over a fixed window. [Report](docs/playtests/balance-2026-11-24-coal-vs-marine.md).
+
 ### 2026-11-24 — Codex — Loeth Studios launch intro
 
 - Owner requested a short startup film and reusable Loeth Studios branding with detailed reflections, shadow and animation. The internal Windows build `0.21.1.1104` starts with a three-second studio animation. It uses indigo glass, pearl lettering and a moving light strip. Escape skips the animation.
