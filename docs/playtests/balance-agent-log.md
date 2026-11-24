@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 16.27 dansk tid
+
+- Kørsel `2026-11-24T16:27:27+01:00`, simulation `3a54467`, testdriver `0505827`, eksisterende build `0.21.2.1`.
+- 35/35 forløb, 15 matchede par og fem ekstra kontroller. Nye holdouts 2477 og 5347. Reserve gav 3 bedre, 7 dårligere og 5 lige.
+- Spillets omkostninger beholdes. Næste forsøg kan afgrænse reserven til vedvarende strømsvigt.
+- [Rapport](balance-2026-11-24-repair-reserve.md) · [Rådata](balance-2026-11-24-repair-reserve.json).
+
 ### 2026-11-24 kl. 13.27 dansk tid
 
 - Kørsel `2026-11-24T13:27:27+01:00`, simulation `7dfc892`, UI-kandidat `3354fd0`, internt build `0.21.2.1`.

@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 16:27 Europe/Copenhagen — Codex — repair reserve experiment
+
+- Simulation `3a54467`, measuring driver `0505827`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs during combat to leave the cost of one sentry, while other construction remained possible. Paired outcome: 3 bedre, 7 dårligere og 5 lige.
+- No balance numbers or release metadata changed. Next isolate persistent power failure and recovery. [Report](docs/playtests/balance-2026-11-24-repair-reserve.md).
+
 ### 2026-11-24 13:27 Europe/Copenhagen — Codex — ammo warning navigation
 
 - UI commit `3354fd0`, merged in [PR #31](https://github.com/Guffy-dk/Ironhaven/pull/31) at `2818265`. Internal build `0.21.2.1`. Find turret in the existing ammunition alert focuses and selects the affected turret through the building inspector. The simulation stays at `7dfc892`. 35 earned-resource scenarios on two workers. [Report](docs/playtests/balance-2026-11-24-ammo-shortcut.md).
