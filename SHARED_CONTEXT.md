@@ -178,6 +178,11 @@ Performance invariants and known traps:
 - [0.19 measurements](docs/playtests/0.19.md): geometry buffers 18.75→11.10 MB, large-fixture draw calls 12,219→1,124, median CPU tick 4.743→1.882 ms with equal full-state hash. Completed software-renderer frames were still seconds, not playable-hardware FPS promises.
 - Preserve mesh positions/UV/topology and editable sources; normalized attribute packing, static workshop chunk instancing and distant shadow reuse improve cost. WeakMap simulation/spatial caches must remain transient, deterministic and invalidated by edits/loading.
 
+### 2026-11-24 — Codex — earned marine-power baseline
+
+- Source `021b2b6`, measuring driver `3d7e854`. 35 earned-resource simulations on two workers, including 15 paired tests of a physical bearing line and marine generator. 14 trials powered the generator. Campaign rank versus the controls: 4 bedre, 3 dårligere og 8 lige.
+- Harbor PR #28 is separate. These measurements preserve the base gameplay and public patcher. Next compare marine investment with an equally costly coal-power expansion before tuning recipes. [Report](docs/playtests/balance-2026-11-24-marine.md).
+
 ## 8. Commands and validation
 
 From repository root, with Node.js >=22:

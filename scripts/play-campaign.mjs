@@ -9,13 +9,14 @@ const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',diffi
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
+const marineTrial=process.env.CAMPAIGN_MARINE==='1';
 const coalReserve=process.env.CAMPAIGN_COAL_RESERVE==='1';
 const policies=['industry','single','pulse','no_artillery','early_defense','mortars','logistics','refining','harbor'];
 if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Error('Unknown difficulty or campaign policy');
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
-const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'');
+const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -62,6 +63,25 @@ if(['refining','harbor'].includes(policy)){
  });
  for(const p of plans.slice(start))refiningPlan.add(key(p.x,p.z));
 }
+const marinePlan=new Set();
+if(marineTrial){
+ const addMarine=(type,x,z,dir)=>{
+  const tile=key(x,z);
+  if(reserved.has(tile))throw Error(`Marine plan collides at ${tile}`);
+  add(type,x,z,dir);
+  marinePlan.add(tile);
+ };
+ for(const tile of [['copperDrill',15,-12,2],['smelter',14,-12,2],['drill',-14,-8,0],['smelter',-13,-8,0],['foundry',-12,-8,0],['precisionWorkshop',-10,-10,0],['storage',-9,-10,0],['marineGenerator',4,-2,0]])addMarine(...tile);
+ for(const [start,goal,final]of [[{x:13,z:-12},{x:-10,z:-11},1],[{x:-11,z:-8},{x:-11,z:-10},0]]){
+  const cells=path(start,goal);
+  cells.forEach(({x,z},i)=>{
+   const next=cells[i+1];
+   const dir=next?DIRS.findIndex(([dx,dz])=>x+dx===next.x&&z+dz===next.z):final;
+   addMarine('belt',x,z,dir);
+  });
+ }
+}
+let marineCommissioned=false,marineBuilds=0,marinePoweredSeconds=0,firstMarineSecond=null;
 if(policy==='single'){plans.unshift({type:'gunTurret',x:3,z:0,dir:0});reserved.add(key(3,0));}
 const initialPlans=plans.length,upgradeMilestones={};
 function send(cmd){return command(s,host,cmd);}
@@ -104,15 +124,20 @@ function manageCombatPower(){
  }
 }
 function act(){
+ if(marineTrial&&!s.enemies.length&&s.resources.module>=5&&s.resources.circuit>=12&&s.resources.plate>=130&&s.resources.wood>=90&&s.power.total>=s.power.used+20)marineCommissioned=true;
  const stalled=s.enemies.length&&s.time-lastKillTime>120;
  if(policy==='refining'&&s.resources.module>=2&&s.resources.steel>=20&&s.resources.gear>=30&&s.resources.plate>=115&&s.resources.wood>=60)refineryCommissioned=true;
  if(policy==='harbor'&&s.wave>=8&&s.resources.plate>=95&&s.resources.gear>=24&&s.resources.wood>=70&&s.power.total>=s.power.used+10)refineryCommissioned=true;
  for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
+  if(marinePlan.has(key(p.x,p.z))&&!marineCommissioned)continue;
   if(refiningPlan.has(key(p.x,p.z))&&!refineryCommissioned)continue;
   if(policy!=='single'&&p.type==='gunTurret'&&(!at(0,3)||s.resources.plate<60))continue;
   if(policy==='single'&&TURRETS.includes(p.type)&&!(p.x===3&&p.z===0))continue;
   const blocked=s.terrain.trees.some(t=>t.x===p.x&&t.z===p.z)||s.terrain.rocks.some(t=>t.x===p.x&&t.z===p.z);if(blocked)send({type:'demolish',x:p.x,z:p.z});
-  const error=send({type:'build',building:p.type,x:p.x,z:p.z,dir:p.dir});if(!error)built++;
+  const error=send({type:'build',building:p.type,x:p.x,z:p.z,dir:p.dir});if(!error){
+   built++;
+   if(p.type==='marineGenerator'){marineBuilds++;firstMarineSecond??=Math.round(s.time);}
+  }
  }
  if(powerReserve)addReservePower();
  if(shedLoad)manageCombatPower();
@@ -148,7 +173,7 @@ const began=performance.now();
 let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,ammoStarvedSamples=0,unpoweredTurretSamples=0,combatSamples=0,unpoweredCombatSamples=0;
 const outages={};
 function sample(){
- return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,reserveBuilds,outages:structuredClone(outages),
+ return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,reserveBuilds,marineBuilds,marinePoweredSeconds,firstMarineSecond,outages:structuredClone(outages),
   refineryCommissioned,resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
   produced:{...s.stats.totals},stockFlow:{...s.stats.stockFlow},power:{...s.power,reserve:s.resources.power},
   storage:{used:storageUsed(s),capacity:storageCapacity(s)},buildings:s.buildings.length,
@@ -160,6 +185,7 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  const structures=s.buildings.length;
  step(s);
  losses+=structures-s.buildings.length;
+ if(marineTrial&&ticks%20===0&&s.resources.coal>0&&at(4,-2)?.type==='marineGenerator')marinePoweredSeconds++;
  if(s.enemies.length&&ticks%20===0){
   combatSamples++;
   for(const b of s.buildings){
@@ -192,7 +218,7 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  }
 }
 const final=sample();
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,victorySeconds,
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
  final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
