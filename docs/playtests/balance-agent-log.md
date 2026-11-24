@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 01.23 dansk tid
+
+- Kørsel `2026-11-24T01:23:50+01:00`, baseline `021b2b6`, måleværktøj `3d7e854`, eksisterende internt build `0.20.2.3`.
+- 35/35 spilforløb, 15 matchede marineforsøg og fem ekstra kontroller. Nye holdouts 1807 og 6113.
+- Marinegeneratorer blev bragt i drift i 14 af 15 forsøg. Resultat mod kontrol: 4 bedre, 3 dårligere og 8 lige. Længste forløb 7234 simulerede sekunder ved swarm 34.
+- [Rapport](balance-2026-11-24-marine.md) · [Rådata](balance-2026-11-24-marine.json).
+
 ### 2026-11-23 kl. 22.23 dansk tid
 
 - Kørsel `2026-11-23T22:23:24+01:00`, baseline `6cbfb84`, måleværktøj `d4020cc`, eksisterende kandidat `0.20.2.3`.
