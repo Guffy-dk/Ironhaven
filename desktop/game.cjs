@@ -353,6 +353,31 @@ async function start() {
   })()`);
   const pricesCapture=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-build-costs.png'),pricesCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async()=> {
+    const world=JSON.parse(${JSON.stringify(fixture)});
+    world.state.resources.gear=0;
+    const mortar=world.state.buildings.find(building=>building.type==='mortar');
+    for(const building of world.state.buildings){
+      if(['gunTurret','coastWatch'].includes(building.type))building.ammo=8;
+    }
+    mortar.ammo=0;
+    localStorage.setItem('ironhaven.save.v1',JSON.stringify(world));
+    document.getElementById('resume').click();
+    document.getElementById('pause').click();
+    const alert=document.getElementById('ammo-alert');
+    const find=document.getElementById('find-ammo-turret');
+    if(alert.hidden||!find.checkVisibility())throw Error('Windows ammo shortcut is not visible');
+    const bounds=find.getBoundingClientRect();
+    if(document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2)!==find)throw Error('Windows ammo shortcut cannot receive pointer input');
+    find.click();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    if(!document.getElementById('intel-title').textContent.includes('Mortar'))throw Error('Windows ammo shortcut did not select the empty mortar');
+    const marker=document.getElementById('building-'+mortar.id);
+    if(!marker||Math.abs(parseFloat(marker.style.left)-innerWidth/2)>30)throw Error('Windows ammo shortcut did not center the affected mortar');
+  })()`);
+  const ammoCapture=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ammo-shortcut.png'),ammoCapture.toPNG());
+  smokePhase('Ammo warning focus and capture verified');
   smokePhase('Captures complete');
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);
