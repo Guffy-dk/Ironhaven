@@ -375,6 +375,26 @@ function updateRoundBonuses(){
  if(nextLine.textContent!==nextText)nextLine.textContent=nextText;
  nextLine.hidden=!nextText;
 }
+function ammoTurrets(){
+ return state.buildings.filter(b=>usesAmmo(b.type)&&b.hp>0);
+}
+$('find-ammo-turret').onclick=()=>{
+ if(!started||$('ammo-alert').hidden)return;
+ const turrets=ammoTurrets();
+ const empty=turrets.filter(b=>b.ammo===0);
+ const candidates=empty.length?empty:turrets;
+ const enemies=state.enemies.filter(enemy=>!enemy.training&&enemy.hp>0);
+ let target=null,bestDistance=Infinity;
+ for(const turret of candidates){
+  const distance=enemies.length?enemies.reduce((closest,enemy)=>Math.min(closest,Math.hypot(enemy.x-turret.x,enemy.z-turret.z)),Infinity):Math.hypot(view.center.x-turret.x,view.center.z-turret.z);
+  if(distance<bestDistance){target=turret;bestDistance=distance;}
+ }
+ if(!target)return;
+ setTool(null);clearArea();motion.reset();
+ selected=target.id;areaIds=[target.id];
+ view.center.set(target.x,0,target.z);view.select(target);
+ $('intel').hidden=false;updateAreaTools();updateInspector();
+};
 function updateUi(){
  const beacon=state.buildings.find(b=>b.type==='hq');$('auto-light').hidden=!beacon?.islandBeacon;$('auto-light').textContent=beacon?.lighthouseAuto?'Auto light: ON':'Resume auto light';
  const flow=stockFlow(state);
@@ -383,8 +403,8 @@ function updateUi(){
  $('resources').innerHTML=hudResources.map(r=>`<div title="${r==='power'?state.power.total+' generated/s · '+state.power.used+' needed/s · '+Math.floor(state.resources.power)+' / '+POWER_CAPACITY+' reserve':`${Math.floor(state.resources[r])} available · shared storage ${storageUsed(state)} / ${storageCapacity(state)} items · ${flow[r].toFixed(1)} net/min`} " class="resource ${r==='power'?'power':''} ${r==='power'&&state.power.used>state.power.total?'low':''}">${r==='power'?icon('power',23):itemIcon(r)}<strong>${r==='power'?`${state.power.total}<span class="resource-limit">/${state.power.used}</span>`:`${Math.floor(state.resources[r])}`}</strong><small>${r==='power'?'POWER · GEN / LOAD':RESOURCE_NAMES[r]}</small></div>`).join('')+`<div class="resource shared-storage" title="One capacity shared by all materials"><strong>${storageUsed(state)}<span class="resource-limit">/${storageCapacity(state)}</span></strong><small>STORAGE · ALL ITEMS</small></div>`;
  const incoming=state.enemies.some(e=>!e.training),time=Math.max(0,state.nextWave-state.time);$('wave-label').textContent=state.paused?'GAME PAUSED':incoming?'PERIMETER CONTACT':'PREPARE YOUR COLONY';$('wave-title').textContent=state.paused?'Paused':incoming?'Swarm attacking':'Next swarm';$('countdown').textContent=incoming?String(state.enemies.length):`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;
  $('wave-fill').style.width=incoming?'100%':Math.min(100,(1-time/(state.wave===0?100:95))*100)+'%';$('wave-fill').style.background=incoming?'var(--red)':'var(--gold)';$('wave-detail').textContent=isPostVictory(state)?`SWARM ${state.wave+(incoming?0:1)} · ENDLESS`:`SWARM ${Math.min(FINAL_WAVE,state.wave+(incoming?0:1))} OF ${FINAL_WAVE}`;$('early-wave').disabled=incoming||!canSpawnSwarm(state)||mode==='client'||!started;$('day').textContent='DAY '+String(1+Math.floor(state.time/180)).padStart(2,'0');$('wave-panel').classList.toggle('imminent',started&&!incoming&&time<=20&&canSpawnSwarm(state));
- const turrets=state.buildings.filter(b=>usesAmmo(b.type)),dry=turrets.filter(b=>b.ammo===0).length,low=turrets.filter(b=>b.ammo<=3).length,warning=dry>0||state.resources.gear<=2&&turrets.length>0||low>0&&state.resources.gear===0;
- $('ammo-alert').hidden=!warning;$('ammo-alert').textContent=dry?`AMMO EMPTY · ${dry} turret${dry===1?'':'s'} need gears`:`LOW AMMO RESERVE · ${Math.floor(state.resources.gear)} gears`;
+ const turrets=ammoTurrets(),dry=turrets.filter(b=>b.ammo===0).length,low=turrets.filter(b=>b.ammo<=3).length,warning=dry>0||state.resources.gear<=2&&turrets.length>0||low>0&&state.resources.gear===0;
+ $('ammo-alert').hidden=!started||!warning;const ammoMessage=$('ammo-message'),ammoText=dry?`AMMO EMPTY · ${dry} turret${dry===1?'':'s'} need gears`:`LOW AMMO RESERVE · ${Math.floor(state.resources.gear)} gears`;if(ammoMessage.textContent!==ammoText)ammoMessage.textContent=ammoText;
  $('ammo-alert').classList.toggle('empty',dry>0);$('wood-alert').hidden=!started||state.resources.wood>0||!state.buildings.some(b=>b.type==='generator');updateSwarmWarning(incoming,time);updateRoundBonuses();updateTutorial();
  const checkpoints=readCheckpoints(),cp=checkpoints[0],choice=$('checkpoint-choice'),signature=checkpoints.map(c=>c.label+':'+c.time).join(';');if(choice.dataset.history!==signature){choice.dataset.history=signature;choice.innerHTML=checkpoints.length?checkpoints.map((c,i)=>`<option value="${i}">${escape(c.label)} · ${Math.floor(c.time/60)}m ${Math.floor(c.time%60)}s</option>`).join(''):'<option value="0">No checkpoint yet</option>';}$('retry-checkpoint').disabled=mode==='client'||!cp;$('end-retry').disabled=mode==='client'||!cp;$('retry-checkpoint').textContent=cp?'Retry selected checkpoint':'No checkpoint yet';if($('production-dialog').open)renderProduction();
  const goals=[{text:'An industry that works',sub:state.produced.plate+' / 10 iron plates delivered',done:state.produced.plate>=10},{text:'Machines of resistance',sub:state.produced.gear+' / 5 gears delivered',done:state.produced.gear>=5},{text:'Survive the swarms',sub:Math.min(FINAL_WAVE,state.wave)+' / '+FINAL_WAVE+' swarms · '+state.totalKills+' hostiles stopped',done:isPostVictory(state)}];

@@ -177,6 +177,25 @@ test('damage bars hide at full health; empty ammo and the final 20-second warnin
   h.tool('repair');h.point('pointerdown',0,0);h.point('pointerdown',0,0);h.frame(1400);assert.equal(h.save().buildings[0].hp,maxHp(core));assert.equal(h.$('building-'+core.id),null);
  }finally{await h.close();}
 });
+test('find turret selects the empty gun closest to the active swarm without changing the colony',async()=>{
+ const saved=starterWorld(),{state}=saved;
+ state.resources.gear=0;state.paused=true;
+ const [far,near,loaded]=state.buildings.filter(b=>b.type==='turret');
+ for(const turret of [far,near,loaded]){turret.type='gunTurret';turret.ammo=0;}
+ loaded.ammo=5;
+ state.enemies=[{id:9500,kind:'spitter',x:near.x+1,z:near.z,hp:100,maxHp:100,speed:0,cooldown:0}];
+ const h=harness(saved);try{
+  h.$('resume').click();
+  h.tool('repair');
+  const before=h.save(),view=h.dom.__view;
+  h.$('find-ammo-turret').click();
+  assert.deepEqual({x:view.center.x,z:view.center.z},{x:near.x,z:near.z});
+  assert.equal(view.selected.id,near.id);
+  assert.equal(view.tool,null);
+  assert.equal(h.$('intel').hidden,false);
+  assert.deepEqual(h.save(),before);
+ }finally{await h.close();}
+});
 test('copy and paste previews a replacement layout and U upgrades a same-type selection',async()=>{
  const saved=starterWorld();saved.state.terrain.trees=[];saved.state.terrain.rocks=[];
  const h=harness(saved);try{
