@@ -45,3 +45,12 @@ test('old placed and packed turret health keeps its damage ratio when level stat
 test('pulse emplacements trade artillery range and power for substantially higher close-range area damage',()=>{
  for(const level of [1,10,20,30]){const pulse=turretStats({type:'pulseTurret',level}),mortar=turretStats({type:'mortar',level});assert.ok(pulse.damage/pulse.interval>1.8*mortar.damage/mortar.interval);assert.ok(pulse.range<mortar.range);assert.ok(pulse.radius<mortar.radius);assert.ok(pulse.damage<398,'final-wave runners survive a direct pulse hit');assert.equal(pulse.ammoDivisor,2);}
 });
+
+test('circuit and component upgrades add 20 percent of base production per level',()=>{
+ for(const type of ['circuitLab','componentFactory']){
+  assert.equal(productionSpeed({type,level:1}),1);
+  assert.equal(productionSpeed({type,level:6}),2);
+  assert.equal(productionSpeed({type,level:11}),3);
+ }
+ assert.equal(productionSpeed({type:'foundry',level:11}),2);
+});

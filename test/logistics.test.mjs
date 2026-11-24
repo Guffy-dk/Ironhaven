@@ -133,3 +133,24 @@ test('program and partial batch persist through relocation and save migration',(
 test('filtered cargo reports a blocked forward path rather than claiming it can bypass',()=>{
  const f=splitterFixture({filter:'copper'});f.b.item='plate';const grid=new Map(f.s.buildings.map(b=>[key(b.x,b.z),b]));assert.equal(logisticsStatus(f.s,f.b,grid),'bypass');f.forward.item='plate';assert.equal(logisticsStatus(f.s,f.b,grid),'output');
 });
+
+test('a rotated sawmill feeds real timber over a belt to the Resin kettle',()=>{
+ const {s,p,build}=fixture();
+ s.terrain.trees=Array.from({length:6},(_,i)=>({x:3+i,z:3,h:1}));
+ const sawmill=build('sawmill',5,5,1),belt=build('belt',6,5);
+ build('resinKettle',7,5);
+ const output=build('storage',8,5),fuel=build('storage',7,6,3);
+ assert.equal(command(s,p.id,{type:'rotate',x:sawmill.x,z:sawmill.z,dir:0}),null);
+ assert.equal(setWarehouse(s,p,fuel,'coal'),null);
+ for(const item of RESOURCE_KEYS)s.resources[item]=0;
+ fuel.stock={coal:10};s.resources.coal=10;
+ let sawWoodOnBelt=false;
+ for(let tick=0;tick<360;tick++){
+  step(s);
+  sawWoodOnBelt||=belt.item==='wood';
+ }
+ assert.ok(sawWoodOnBelt);
+ assert.ok(output.stock.resin>=6);
+ assert.equal(s.resources.resin,output.stock.resin);
+ assert.equal(s.resources.wood,0);
+});

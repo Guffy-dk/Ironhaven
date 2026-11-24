@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — electronics upgrades and timber transport
+
+- Stealth requested stronger upgrade gains for circuits and components and reported that wood never reached the Resin kettle on belts. Internal candidate `0.21.2.3` adds 20% of base speed per upgrade to Circuit assembler and Component factory. This gives 2× base speed at level 6 and 3× at level 11. Mines and smelters gain 25% per upgrade and ordinary workshops gain 10%.
+- The Sawmill now has a rotatable gold outlet. A compatible attachment receives buffered timber. Without a connected receiver or room in the output buffer for a batch, new wood enters shared stock. Existing unconnected sawmills can still fuel generators. A regression test rotates a Sawmill and proves timber travels over a real belt into a Resin kettle with physical coal input and shared resin output.
+
 ### 2026-11-24 — Codex — Dispatch throughput and component warehouse feed
 
 - Stealth reported slow Dispatch hubs and difficult three-material routing into Component factories. An otherwise open level-one or level-21 belt delivered 20 items per simulated second. One hub or a chain of eight reduced that to 4. Internal candidate `0.21.2.2` uses a two-item FIFO and forwards one existing item per tick. A chain of eight reaches 20 items per second in either building iteration order. Quotas and blocked-output behavior are exercised by the logistics tests, including reopening a save with a blocked hub.
