@@ -237,6 +237,7 @@ async function start() {
   smokePhase('Numbered ports verified; capturing hub');
   const portsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ports.png'),portsCapture.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async()=>{
+    document.getElementById('program-dialog').close();
     document.getElementById('resume').click();
     document.getElementById('pause').click();
     const canvas=document.getElementById('minimap'),r=canvas.getBoundingClientRect();
@@ -247,6 +248,7 @@ async function start() {
     const buildings=JSON.parse(localStorage.getItem('ironhaven.save.v1')).state.buildings;
     const expected=['aggregateCrusher','firebrickKiln','cokeOven','alloyFurnace','resinKettle','cableWorks','hullYard','hydraulicWorks','switchgearShop','freightWorks','harborWorks','basaltBreakwater','signalMast','coastWatch'];
     if(expected.some(type=>!buildings.some(b=>b.type===type)))throw Error('Harbor fixture did not load');
+    if(document.querySelector('dialog[open]'))throw Error('Harbor capture is obscured by a dialog');
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
   const harborCapture=await gameWindow.webContents.capturePage();

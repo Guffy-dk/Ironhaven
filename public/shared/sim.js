@@ -62,8 +62,8 @@ Object.assign(TYPES, {
   desc:'A masonry barrier tied together with marine hull panels. More durable than a timber barricade. Drag to build a continuous line.'},
  signalMast: {name:'Coastal signal mast',hp:125,power:7,fixedLevel:true,cost:{cable:4,switchgear:3,alloy:3},
   desc:'Lights a ten-tile radius and exposes armor while powered. Enemies can target it. Use it at outposts where the lighthouse cannot cover the approach.'},
- coastWatch: {name:'Coast watch turret',hp:300,power:7,cost:{alloy:8,hull:4,switchgear:4,bearing:2},
-  desc:'A long-range single-target defense. Deals consistent damage to armored enemies in darkness and uses gears for ammunition. Needs seven power at level one.'}
+ coastWatch: {name:'Coast watch turret',hp:300,power:5,cost:{alloy:8,hull:4,switchgear:4,bearing:2},
+  desc:'A long-range single-target defense. Deals consistent damage to armored enemies in darkness and uses gears for ammunition. Needs five power at level one.'}
 });
 export const isBarrier=type=>type==='wall'||type==='basaltBreakwater';
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
@@ -173,7 +173,7 @@ export function productionSpeed(b,bonus,difficulty){
  const upgrade=(1+((b.level||1)-1)*(['drill','copperDrill','coalMine','smelter'].includes(b.type)?.25:.1))*(DIFFICULTIES[difficulty]?.production??1);
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
-export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
+export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)&&b.type!=='coastWatch'?.2:.1)));
 // resources is the shared total; warehouse.stock records where its stored subset sits.
 const stockLedgers=new WeakMap();
 function stockLedger(s){
