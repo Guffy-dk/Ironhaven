@@ -307,7 +307,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 ### 2026-11-24 07:27 Europe/Copenhagen — Codex — coal versus marine
 
 - On released source `fbe2f6f` (0.21.2), 35 earned-resource campaigns compared the physical bearing line to ordinary coal power. Coal versus marine campaign rank: 5 bedre, 2 dårligere og 8 lige. The two options differ in build and upgrade availability. Game balance and release metadata kept as checked out.
-- Next compare matched fuel, replacement spending and delivered power over a fixed window. [Report](docs/playtests/balance-2026-11-24-coal-vs-marine.md).
+- Seed 6197 stalled with one spitter and no turret ammo. A normally built sentry cleared the enemy in 22.8 simulated seconds from the saved endpoint. Next test local fallback defense and compare matched fuel, replacement spending and delivered power over a fixed window. [Report](docs/playtests/balance-2026-11-24-coal-vs-marine.md).
 
 ### 2026-11-24 — Codex — Loeth Studios launch intro
 
