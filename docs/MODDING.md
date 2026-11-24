@@ -1,6 +1,6 @@
 # Ironhaven modding API 1.0
 
-Ironhaven 0.20.3. Windows x64 remains the player platform. Mods use real Lua through the MIT-licensed Fengari 0.1.5 VM (Lua 5.3 semantics). Factorio uses its own modified Lua/API: this is a **familiar data-stage workflow, not compatibility with Factorio mods**. No Factorio code or assets ship with the SDK.
+Ironhaven 0.21.1. Windows x64 remains the player platform. Mods use real Lua through the MIT-licensed Fengari 0.1.5 VM (Lua 5.3 semantics). Factorio uses its own modified Lua/API: this is a **familiar data-stage workflow, not compatibility with Factorio mods**. No Factorio code or assets ship with the SDK.
 
 ## Install and enable a folder mod
 
@@ -33,13 +33,13 @@ Manifest fields:
   "version":"1.0.0",
   "title":"Harbor Machining",
   "author":"Your name",
-  "ironhaven_version":"0.20",
+  "ironhaven_version":"0.21",
   "mod_api":"1.0",
-  "dependencies":["base >= 0.20.2"]
+  "dependencies":["base >= 0.21.1"]
 }
 ```
 
-Names are case-sensitive ASCII letters/digits/`-`/`_`; use a unique prefix for your prototypes. Versions have three numeric components. `base` represents the shipped game. Dependencies support required names, `? optional-name`, `! conflicting-name` and `=`, `<`, `<=`, `>`, `>=` version comparisons. Missing required dependencies, duplicates, conflicts, cycles and unsupported API/game series are errors. Dependencies load first; unrelated names sort lexically. This differs from some Factorio ordering details.
+Names are case-sensitive ASCII letters/digits/`-`/`_`; use a unique prefix for your prototypes. Versions have three numeric components. Existing API 1.0 manifests targeting 0.20 are accepted with their original fingerprints. `base` represents the shipped game. Dependencies support required names, `? optional-name`, `! conflicting-name` and `=`, `<`, `<=`, `>`, `>=` version comparisons. Missing required dependencies, duplicates, conflicts, cycles and unsupported API/game series are errors. Dependencies load first; unrelated names sort lexically. This differs from some Factorio ordering details.
 
 All enabled mods run `data.lua` in dependency order, then all run `data-updates.lua`, then all run `data-final-fixes.lua`, in one data-stage state. `data.raw[type][name]` exposes the shipped items, recipe machines and generators plus new registrations. `data:extend({...})` adds prototypes; duplicate registration fails. Change a supported existing recipe/machine prototype through `data.raw`, or use `table.deepcopy` to make a new one. Existing core item display labels/icons/colors retain their engine presentation; new item prototypes use the supplied presentation fields. The smelter's automatic copper route remains engine-defined; `data.raw.recipe.smelter` describes its iron route. Removing shipped prototypes is unsupported.
 

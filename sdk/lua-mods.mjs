@@ -9,7 +9,7 @@ export function orderMods(packs){
  if(!Array.isArray(packs)||packs.length>32)throw Error('At most 32 mods are supported');
  const map=new Map();let bytes=0;
  for(const pack of packs){const p=pack.info;
-  if(!p||!/^[-a-zA-Z0-9_]+$/.test(p.name)||p.name==='base'||!/^\d+\.\d+\.\d+$/.test(p.version)||p.ironhaven_version!=='0.20'||p.mod_api!==MOD_API)throw Error('Invalid/incompatible info.json');
+  if(!p||!/^[-a-zA-Z0-9_]+$/.test(p.name)||p.name==='base'||!/^\d+\.\d+\.\d+$/.test(p.version)||!['0.20','0.21'].includes(p.ironhaven_version)||p.mod_api!==MOD_API)throw Error('Invalid/incompatible info.json');
   if(map.has(p.name))throw Error('Duplicate mod '+p.name);
   if(!Array.isArray(p.dependencies??[]))throw Error('Invalid dependencies');
   for(const [path,source]of Object.entries(pack.files??{})){
