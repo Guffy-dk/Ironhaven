@@ -162,7 +162,7 @@ async function start() {
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     if(saved.state.enemies.length!==5||!saved.state.paused)throw Error('Windows capture scene did not load');
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();
-    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
+    map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   smokePhase('Fixture rendered; capturing colony');
@@ -186,7 +186,7 @@ async function start() {
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('creature-back').click();document.getElementById('auto-light').click();
     for(let i=0;i<50;i++)document.getElementById('zoom-out').click();
-    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
+    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   smokePhase('Capturing island');
@@ -221,7 +221,7 @@ async function start() {
     document.getElementById('menu-dialog').close();
     for(let i=0;i<60;i++)document.getElementById('zoom-in').click();
     for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
-    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
+    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const canvas=document.getElementById('world');let found=false;
     for(let y=.36;y<.55&&!found;y+=.012)for(let x=.46;x<.55&&!found;x+=.012){
@@ -241,7 +241,7 @@ async function start() {
     document.getElementById('resume').click();
     document.getElementById('pause').click();
     const canvas=document.getElementById('minimap'),r=canvas.getBoundingClientRect();
-    canvas.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-9/257),bubbles:true}));
+    canvas.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-9/257),bubbles:true}));
     document.querySelector('[data-tab="fabrication"]').click();
     if(document.querySelector('[data-type="harborWorks"]').hidden)throw Error('Fabrication toolbar is unavailable');
     document.getElementById('save').click();
@@ -249,6 +249,22 @@ async function start() {
     const expected=['aggregateCrusher','firebrickKiln','cokeOven','alloyFurnace','resinKettle','cableWorks','hullYard','hydraulicWorks','switchgearShop','freightWorks','harborWorks','basaltBreakwater','signalMast','coastWatch'];
     if(expected.some(type=>!buildings.some(b=>b.type===type)))throw Error('Harbor fixture did not load');
     if(document.querySelector('dialog[open]'))throw Error('Harbor capture is obscured by a dialog');
+    const inspector=document.getElementById('intel');
+    const colony=document.getElementById('colony-details');
+    const summary=colony.querySelector('summary');
+    if(inspector.checkVisibility()||colony.open)throw Error('Default HUD shows expanded details');
+    const bounds=summary.getBoundingClientRect();
+    if(!summary.contains(document.elementFromPoint(bounds.left+bounds.width/2,bounds.top+bounds.height/2)))throw Error('Colony details cannot receive clicks');
+    summary.click();
+    if(!document.getElementById('objectives').checkVisibility())throw Error('Colony details did not reveal objectives');
+    summary.click();
+    document.querySelector('[data-type="harborWorks"]').click();
+    const details=document.getElementById('building-details');
+    const description=document.getElementById('intel-desc');
+    if(!inspector.checkVisibility()||description.checkVisibility())throw Error('Blueprint inspector is not compact');
+    details.querySelector('summary').click();
+    if(!description.checkVisibility())throw Error('Blueprint details cannot be opened');
+    document.querySelector('[data-type="harborWorks"]').click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
   const harborCapture=await gameWindow.webContents.capturePage();

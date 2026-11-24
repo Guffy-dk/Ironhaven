@@ -329,7 +329,7 @@ body[data-visual-style="quarry"] .left-panel .wave-panel {
  border: 0;
 }
 .left-panel .wave-label { display: none; }
-#colony-details { font-size: 12px; }
+#colony-details { font-size: 12px; pointer-events: auto; }
 #colony-details .round-bonuses {
  position: static;
  display: grid;

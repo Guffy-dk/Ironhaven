@@ -565,7 +565,7 @@ function buildingLabels(){
   if(!identity&&!damaged&&!ammoLow&&!status&&!upgrades)continue;
   const pos=view.project(b.x,b.z,b.type==='hq'?2.8:BUILDING_IDENTITIES[b.type]?.height??1.65);if(!pos.visible)continue;
   const id='building-'+b.id;wanted.add(id);let el=$(id);if(!el){el=document.createElement('div');el.className='building-label';el.id=id;root.append(el);}
-  let lift=0,compact=view.zoom>=16&&selected!==b.id;
+  let lift=0,compact=selected!==b.id&&(hover?.x!==b.x||hover?.z!==b.z);
   if(identity){
    const width=compact?(upgrades?50:26):(30+identity.label.length*5.6+(upgrades?26:0)),height=24+(damaged?10:0)+(ammoLow?18:0)+(status?22:0);
    for(const offset of [0,26,52,78]){lift=offset;const rect={left:pos.x-width/2,right:pos.x+width/2,top:pos.y-offset-height,bottom:pos.y-offset};const cells=[];for(let x=Math.floor((rect.left-3)/64);x<=Math.floor((rect.right+3)/64);x++)for(let y=Math.floor((rect.top-3)/64);y<=Math.floor((rect.bottom+3)/64);y++)cells.push(x+','+y);if(!cells.some(cell=>(occupied.get(cell)||[]).some(r=>rect.left<r.right+3&&rect.right>r.left-3&&rect.top<r.bottom+3&&rect.bottom>r.top-3))){for(const cell of cells){if(!occupied.has(cell))occupied.set(cell,[]);occupied.get(cell).push(rect);}break;}if(offset===78)compact=true;}
