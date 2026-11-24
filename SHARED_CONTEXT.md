@@ -307,6 +307,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 ### 2026-11-24 — Codex — 0.21.3 patcher release
 
 - The owner authorized a patcher release of the verified logistics and electronics changes. Public version `0.21.3` includes faster Dispatch hubs, Component factory warehouse feed, electronics upgrade gains, physical timber output and Find turret in ammunition warnings. The release uses the existing `0.21.2` patcher binary and verifies the exact published Windows installation before latest promotion.
+- [Release run 45440539360](https://github.com/Guffy-dk/Ironhaven/actions/runs/45440539360) passed automated tests, Windows startup and installation of the published ZIP, then promoted [v0.21.3](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.21.3) to latest. Source `4542f55`. The Windows ZIP is 198,738,876 bytes with SHA-256 `8828edbf039afa4d03ab6f84ff6ae4cf080229893d49c921daad097c2e452d64`. The downloaded patcher matched `v0.21.2` byte for byte.
 
 ### 2026-11-24 — Codex — electronics upgrades and timber transport
 
