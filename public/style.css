@@ -350,6 +350,7 @@ body[data-visual-style="quarry"] .left-panel .wave-panel {
 .intel .intel-summary { font-size: 12px; color: var(--mint); }
 .intel .intel-summary:empty { display: none; }
 .intel .recipe { font-size: 11px; line-height: 1.4; }
+#component-supply small { display: block; margin: 6px 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .intel .inspector-actions { gap: 5px; }
 #building-details, #harbor-project-details { margin-top: 8px; }
 #building-details > summary, #harbor-project-details > summary, #colony-details > summary {

@@ -307,6 +307,32 @@ async function start() {
   const portsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-ports.png'),portsCapture.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async()=>{
     document.getElementById('program-dialog').close();
+    const {state}=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+    const factory=state.buildings.find(b=>b.type==='componentFactory');
+    const marker=document.getElementById('building-'+factory.id);
+    if(!marker)throw Error('Component factory marker is outside the capture scene');
+    const canvas=document.getElementById('world');
+    const x=parseFloat(marker.style.left);
+    const top=parseFloat(marker.style.top)+parseFloat(marker.style.getPropertyValue('--label-lift'));
+    const feed=document.getElementById('component-warehouse');
+    for(let y=top;y<Math.min(innerHeight,top+200)&&!feed.checkVisibility();y+=4){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:x,clientY:y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:x,clientY:y,bubbles:true}));
+    }
+    if(!feed.checkVisibility())throw Error('Component factory feed button is unavailable');
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const supplyCapture=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-component-feed.png'),supplyCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(()=>{
+    document.getElementById('component-warehouse').click();
+    document.getElementById('save').click();
+    const {state}=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+    const warehouse=state.buildings.find(b=>b.type==='storage'&&b.x===3&&b.z===-3);
+    if(warehouse.exportItem!=='recipe')throw Error('The attached Warehouse did not switch to recipe feed');
+  })()`);
+  await gameWindow.webContents.executeJavaScript(`(async()=>{
+    document.getElementById('program-dialog').close();
     document.getElementById('resume').click();
     document.getElementById('pause').click();
     const canvas=document.getElementById('minimap'),r=canvas.getBoundingClientRect();

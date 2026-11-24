@@ -304,6 +304,12 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — Dispatch throughput and component warehouse feed
+
+- Stealth reported slow Dispatch hubs and difficult three-material routing into Component factories. An otherwise open level-one or level-21 belt delivered 20 items per simulated second. One hub or a chain of eight reduced that to 4. Internal candidate `0.21.2.2` uses a two-item FIFO and forwards one existing item per tick. A chain of eight reaches 20 items per second in either building iteration order. Quotas and blocked-output behavior are exercised by the logistics tests, including reopening a save with a blocked hub.
+- Matched one-minute steel fixture (seed 417, 16 level-three drills and smelters, eight hubs, 16 foundries and warehouses, 306 supply for 208 load) delivered 68 steel in `0.21.2` and 261 with the candidate. Eight warehouses received steel before and all sixteen after. The fixture uses prepared power and an exact repeated factory layout.
+- At a Component factory, point an adjacent Warehouse outlet at the machine and use **Enable warehouse recipe feed**. Feed the Warehouse steel, circuits and gears on up to three separate belts. It supplies the recipe from its physical stock and package reserve. The existing `2 steel + 2 circuits + 1 gear` recipe and direct recipe input rules apply. A test verifies physical delivery on three belts and exact local stock accounting. This is an internal playtest candidate.
+
 ### 2026-11-24 — Codex — Stealth's steel warehouse report
 
 - The owner clarified that Stealth's report concerns shared steel availability. The screenshot shows a multi-foundry steel line feeding warehouses. The top stock counter is outside the crop.

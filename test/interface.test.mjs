@@ -75,6 +75,21 @@ test('Space toggles pause and F selects the dismantle tool from any category',as
   assert.ok(!h.save().buildings.some(b=>b.id===belt.id));
  }finally{await h.close();}
 });
+test('a Component factory can set the adjacent warehouse to supply its recipe',async()=>{
+ const saved=starterWorld(),{state,playerId}=saved;
+ state.terrain.trees=state.terrain.rocks=[];
+ Object.assign(state.resources,{steel:20,circuit:20});
+ assert.equal(command(state,playerId,{type:'build',building:'storage',x:10,z:2,dir:0}),null);
+ assert.equal(command(state,playerId,{type:'build',building:'componentFactory',x:11,z:2,dir:0}),null);
+ const h=harness(saved);try{
+  h.$('resume').click();h.point('pointerdown',11,2);h.point('pointerup',11,2);
+  const enable=h.$('component-warehouse');assert.equal(enable.hidden,false);
+  enable.click();
+  assert.equal(h.save().buildings.find(b=>b.x===10&&b.z===2).exportItem,'recipe');
+  assert.equal(enable.hidden,true);
+  assert.equal(h.$('component-supply-hint').textContent,'Warehouse recipe feed enabled.');
+ }finally{await h.close();}
+});
 test('category keys swap the hotbar and number keys select a building in that category',async()=>{
  const h=harness();try{
   h.$('start-solo').click();
