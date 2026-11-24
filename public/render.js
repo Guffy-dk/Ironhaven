@@ -27,7 +27,7 @@ const beltArrow=(()=>{
  return new T.ShapeGeometry(arrow);
 })();
 const cyan=0x79d8d0;
-const itemColors={ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
+const itemColors={wood:C.wood,ore:0x98bbc2,copperOre:0xc88c58,plate:C.light,gear:C.gold,copper:0xe3aa72,steel:0x8ca6b8,circuit:0x67d6bd,module:0xb6a4dc,coal:0x464456};
 for(const [item,definition]of Object.entries(CONTENT.items))if(!Object.hasOwn(itemColors,item))itemColors[item]=Number.parseInt(definition.color.slice(1),16);
 import {mat,geometry,box,cyl} from './render-primitives.js';
 import {modernizeModel} from './coastal-buildings.js';
