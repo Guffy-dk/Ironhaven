@@ -236,10 +236,16 @@ async function start() {
     for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const fixture=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+    const hub=fixture.state.buildings.find(building=>building.type==='splitter');
+    const marker=document.getElementById('building-'+hub.id);
+    if(!marker)throw Error('Dispatch hub marker is outside the capture scene');
+    const x=parseFloat(marker.style.left);
+    const top=parseFloat(marker.style.top)+parseFloat(marker.style.getPropertyValue('--label-lift'));
     const canvas=document.getElementById('world');let found=false;
-    for(let y=.36;y<.55&&!found;y+=.012)for(let x=.46;x<.55&&!found;x+=.012){
-      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
-      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
+    for(let y=top;y<Math.min(innerHeight,top+200)&&!found;y+=4){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:x,clientY:y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:x,clientY:y,bubbles:true}));
       found=document.getElementById('intel-title').textContent==='Dispatch hub';
     }
     if(!found)throw Error('Numbered Dispatch hub could not be selected');
