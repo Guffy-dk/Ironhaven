@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,addPlayer,command,step,RESOURCE_KEYS,DEFAULT_PROGRAM,programFor,logisticsPorts,inventoryCount,SAVE_SCHEMA,migrateGame,key,logisticsStatus,conveyorCount,conveyorProgress,BELT_CAPACITY,copySetup} from '../public/shared/sim.js';
+import {createGame,addPlayer,command,step,RESOURCE_KEYS,DEFAULT_PROGRAM,programFor,logisticsPorts,inventoryCount,SAVE_SCHEMA,migrateGame,key,logisticsStatus,conveyorCount,conveyorProgress,BELT_CAPACITY,copySetup,spendResource} from '../public/shared/sim.js';
 const rich=s=>{for(const r of RESOURCE_KEYS)s.resources[r]=100000;};
 function fixture(){const s=createGame(),p=addPlayer(s);s.nextWave=99999;s.buildings=s.buildings.filter(b=>b.type==='hq');s.terrain.trees=[];s.terrain.rocks=[];rich(s);const build=(type,x,z,dir=0)=>{assert.equal(command(s,p.id,{type:'build',building:type,x,z,dir}),null);return s.buildings.find(b=>b.x===x&&b.z===z);};return{s,p,build};}
 function setProgram(s,p,b,values={}){return command(s,p.id,{type:'configureLogistics',x:b.x,z:b.z,id:b.id,program:{...DEFAULT_PROGRAM,...values}});}
@@ -33,7 +33,8 @@ test('blocked conveyors fill evenly and drain without losing their saved cargo',
 });
 test('a warehouse feeds the adjacent component recipe using only its own belt deliveries',()=>{
  const {s,p,build}=fixture(),warehouse=build('storage',5,3),factory=build('componentFactory',6,3);
- const source=build('belt',4,3),other=build('storage',5,5);
+ const sources={steel:build('belt',4,3),circuit:build('belt',5,2,1),gear:build('belt',5,4,3)};
+ const other=build('storage',5,5);
  for(const r of RESOURCE_KEYS)s.resources[r]=0;other.stock={steel:2,circuit:2,gear:1};Object.assign(s.resources,other.stock);
  assert.equal(setWarehouse(s,p,warehouse,'power'),'Invalid warehouse material');
  assert.equal(setWarehouse(s,p,warehouse,'recipe'),null);
@@ -43,6 +44,7 @@ test('a warehouse feeds the adjacent component recipe using only its own belt de
  assert.equal(factory.item,null);
  assert.deepEqual(factory.input,[]);
  for(const item of ['steel','circuit','steel','circuit','gear']){
+  const source=sources[item];
   source.item=item;source.itemTick=s.tick;
   for(let i=0;i<8;i++)step(s);
  }
@@ -79,6 +81,50 @@ test('item filter passes unrelated cargo without spending the active batch',()=>
 test('program validation is atomic, including empty, fractional and over-limit quotas',()=>{
  const f=splitterFixture({}),before=JSON.stringify(f.s);
  for(const patch of[{machine:0,forward:0,return:0},{machine:-1},{forward:101},{return:1.2},{filter:'invalid'},{buffer:99},{bypass:'false'}]){assert.ok(setProgram(f.s,f.p,f.b,patch));assert.equal(JSON.stringify(f.s),before);}
+});
+test('a loaded belt supplies a chain of eight hubs at one item per tick in either building order',()=>{
+ for(const reverse of [false,true]){
+  const {s,p,build}=fixture(),source=build('belt',3,5),hubs=[];
+  for(let x=4;x<12;x++)hubs.push(build('splitter',x,5));
+  const storage=build('storage',12,5);
+  for(const hub of hubs)assert.equal(setProgram(s,p,hub,{machine:0,forward:1,return:0,bypass:false}),null);
+  if(reverse)s.buildings.reverse();
+  for(const resource of RESOURCE_KEYS)s.resources[resource]=0;
+  const feed=()=>{
+   const cargo={item:'plate',itemTick:s.tick,itemSide:2,itemProgress:0};
+   if(!source.item)Object.assign(source,cargo);
+   else if(conveyorCount(source)<BELT_CAPACITY&&conveyorProgress(source,source.beltQueue?.at(-1)??source,s.tick)>=1/BELT_CAPACITY){
+    (source.beltQueue??=[]).push(cargo);
+   }
+   step(s);
+  };
+  for(let i=0;i<36;i++)feed();
+  const before=storage.stock.plate;
+  for(let i=0;i<100;i++)feed();
+  assert.equal(storage.stock.plate-before,100);
+  assert.equal(s.resources.plate,storage.stock.plate);
+ }
+});
+test('a blocked hub saves queued cargo and releases it in order when its output clears',()=>{
+ const {s,p,build}=fixture(),source=build('belt',3,5),hub=build('splitter',4,5),storage=build('storage',5,5);
+ assert.equal(setProgram(s,p,hub,{machine:0,forward:1,return:0,bypass:false}),null);
+ for(const resource of RESOURCE_KEYS)s.resources[resource]=0;
+ storage.stock={steel:200};s.resources.steel=200;
+ for(const item of ['plate','copper','gear']){
+  Object.assign(source,{item,itemTick:s.tick,itemSide:2,itemProgress:0});
+  for(let i=0;i<5;i++)step(s);
+ }
+ assert.equal(hub.item,'plate');
+ assert.deepEqual(hub.beltQueue.map(cargo=>cargo.item),['copper']);
+ assert.equal(source.item,'gear');
+ const loaded=migrateGame(JSON.parse(JSON.stringify(s)));
+ const output=loaded.buildings.find(b=>b.id===storage.id);
+ assert.equal(spendResource(loaded,'steel',200,output),true);
+ for(const item of ['plate','copper','gear']){
+  step(loaded);
+  assert.equal(output.stock[item],1);
+ }
+ assert.deepEqual(output.stock,{plate:1,copper:1,gear:1});
 });
 test('program and partial batch persist through relocation and save migration',()=>{
  const f=splitterFixture({machine:2,forward:3,return:1,bypass:false});f.b.item='plate';for(let t=0;t<8;t++)step(f.s);assert.equal(f.b.remaining,1);assert.equal(command(f.s,f.p.id,{type:'moveArea',ids:[f.b.id],dx:2,dz:3}),null);const b=f.s.buildings.find(v=>v.x===8&&v.z===7);assert.equal(b.remaining,1);assert.equal(b.program.return,1);assert.equal(b.shipments.machine,1);const loaded=migrateGame(JSON.parse(JSON.stringify(f.s)));assert.equal(loaded.version,SAVE_SCHEMA);assert.equal(loaded.buildings.find(v=>v.id===b.id).remaining,1);

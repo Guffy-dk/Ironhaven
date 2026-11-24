@@ -19,6 +19,7 @@ export function smokeWorld({harbor=false}={}){
  build('assembler',-2,2,3);build('belt',-2,1,0);build('belt',-1,1,0);
  build('splitter',-1,-3);build('storage',-2,-3);build('belt',0,-3);build('belt',-1,-4,3);build('belt',-1,-2,1);
  build('storage',-3,-1);build('foundry',-2,-2);build('circuitLab',2,-2);build('componentFactory',3,-2);
+ build('storage',3,-3,1);
  build('generator',-4,2);build('coalGenerator',-4,1);build('sawmill',5,-1);
  build('orePress',-4,-5);build('finery',-2,-5);build('precisionWorkshop',2,-5);build('marineGenerator',4,-5);
  build('lamp',-5,1);build('lamp',5,3);

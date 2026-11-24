@@ -165,6 +165,7 @@ export function shotsPerGear(bonus){return bonus?.shotsPerGear??16;}
 export const turretReload=(b,bonus)=>Math.floor(shotsPerGear(bonus)/(turretStats(b).ammoDivisor||1));
 export const beltTravelTicks=b=>4*2**(-((b.level||1)-1)/10);
 export const BELT_CAPACITY=4;
+const DISPATCH_CAPACITY=2;
 const BELT_SPACING=1/BELT_CAPACITY;
 export const conveyorProgress=(belt,cargo,tick)=>cargo.itemProgress??Math.max(0,Math.min(1,(tick-(cargo.itemTick??0))/beltTravelTicks(belt)));
 export const conveyorCount=b=>(b.item?1:0)+(b.beltQueue?.length??0);
@@ -281,11 +282,11 @@ function normalizeWarehouse(b){
   return Number.isSafeInteger(n)&&n>0?[[item,n]]:[];
  }));
 }
-function normalizeConveyor(b){
+function normalizeConveyor(b,capacity=BELT_CAPACITY){
  if(!ITEM_KEYS.includes(b.item)){emptyConveyor(b);return;}
  if(b.itemProgress!==undefined&&!validBeltProgress(b.itemProgress))delete b.itemProgress;
  if(!Array.isArray(b.beltQueue)){delete b.beltQueue;return;}
- b.beltQueue=b.beltQueue.slice(0,BELT_CAPACITY-1).filter(cargo=>cargo&&ITEM_KEYS.includes(cargo.item)&&
+ b.beltQueue=b.beltQueue.slice(0,capacity-1).filter(cargo=>cargo&&ITEM_KEYS.includes(cargo.item)&&
   Number.isInteger(cargo.itemTick)&&validBeltProgress(cargo.itemProgress));
 }
 function validBeltProgress(progress){return Number.isFinite(progress)&&progress>=0&&progress<=1;}
@@ -321,11 +322,12 @@ export function migrateGame(s){
  }
  if(previous<9)openDeposits(s.terrain);
  delete s.evacuation;
- for(const b of s.buildings){if(b.type==='inserter')b.type='splitter';b.level||=1;if(previous<11)migrateTurretHealth(b);if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b);}if(b.type==='belt')normalizeConveyor(b);}
+ for(const b of s.buildings){if(b.type==='inserter')b.type='splitter';b.level||=1;if(previous<11)migrateTurretHealth(b);if(b.type==='copperSmelter'){migrateCopperSmelterHealth(b);b.type='smelter';}if(LOGISTICS_TYPES.includes(b.type)){b.program||={...DEFAULT_PROGRAM};programRole(b);normalizeConveyor(b,DISPATCH_CAPACITY);}if(hasOutputBuffer(b.type))normalizeOutput(b);if(b.type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b);}if(b.type==='belt')normalizeConveyor(b);}
  for(const p of s.players){
   for(const [type,items] of Object.entries(p.inventory))if(Array.isArray(items))for(const b of items)if(b){
    if(previous<11)migrateTurretHealth(b,type);
    if(hasOutputBuffer(type))normalizeOutput(b);
+   if(LOGISTICS_TYPES.includes(type))normalizeConveyor(b,DISPATCH_CAPACITY);
    if(type==='storage'){normalizeWarehouse(b);if(previous<10)mergeWarehouseStock(s,b,true);}
   }
   const packed=p.inventory.copperSmelter;
@@ -815,7 +817,7 @@ export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
  if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
  if(b.type==='hq'||b.type==='storage')return from?.type!=='storage'&&RESOURCE_KEYS.includes(item)&&!storageFull(s,b,item);
- if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return !b.item&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
+ if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return conveyorCount(b)<DISPATCH_CAPACITY&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
  if(b.type==='belt'){
   const last=b.beltQueue?.at(-1)??b;
   return !b.item||conveyorCount(b)<BELT_CAPACITY&&conveyorProgress(b,last,s.tick)>=BELT_SPACING;
@@ -832,13 +834,13 @@ function accept(s,b,item,from,cycles=4,carryTime=0){
  }
  if(b.type==='belt'||b.type==='splitter'){
   const itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;
-  const cargo={item,itemSide,itemTick:s.tick};
+  const cargo={item,itemSide,itemTick:s.tick,itemProgress:0};
   if(b.type==='belt'){
    const tail=b.beltQueue?.at(-1)??b;
    cargo.itemProgress=Math.max(0,Math.min(1,carryTime/beltTravelTicks(b),b.item?conveyorProgress(b,tail,s.tick)-BELT_SPACING:1));
-   if(b.item)(b.beltQueue??=[]).push(cargo);
-   else Object.assign(b,cargo);
-  }else Object.assign(b,cargo);
+  }
+  if(b.item)(b.beltQueue??=[]).push(cargo);
+  else Object.assign(b,cargo);
   return true;
  }
  b.input.push(item);return true;
@@ -860,11 +862,11 @@ function shiftConveyor(b){
  if(next)Object.assign(b,next);
  else emptyConveyor(b);
 }
-function dispatch(s,b,item,grid,busy){
+function dispatch(s,b,item,grid){
  const role=programRole(b),p=programFor(b),matches=programMatches(b,item,grid),planned=matches?role:'forward';
  const options=[planned];if(matches&&p.bypass)for(const fallback of ['forward','machine','return'])if(!options.includes(fallback)&&p[fallback]>0)options.push(fallback);
- for(const output of options){const target=programTarget(b,output,grid);if(!target||busy.has(target.id))continue;
-  if(accept(s,target,item,b,output==='machine'?p.buffer:4)){b.item=null;logTransfer(b,output,item,s,!matches||output!==role);return true;}
+ for(const output of options){const target=programTarget(b,output,grid);
+  if(accept(s,target,item,b,output==='machine'?p.buffer:4)){shiftConveyor(b);logTransfer(b,output,item,s,!matches||output!==role);return true;}
  }return false;
 }
 export function logisticsStatus(s,b,grid){
@@ -940,17 +942,17 @@ export function step(s,dt=STEP){
  const bonus=roundBonus(s.wave),wasAttacking=s.enemies.length>0;
  const spatial=spatialIndex(s),grid=spatial.grid;
  // Snapshot transport first: a newly received item cannot travel multiple tiles in one tick.
- const moving=[],busy=new Set();
+ const moving=[];
  for(const b of s.buildings){
   if(!b.item)continue;
   if(b.type==='belt'){const carryTime=advanceConveyor(b,s.tick);if(conveyorProgress(b,b,s.tick)>=1-1e-9)moving.push({b,item:b.item,itemTick:b.itemTick,carryTime});}
-  else if(b.type==='splitter'){busy.add(b.id);if(conveyorProgress(b,b,s.tick)>=1)moving.push({b,item:b.item,itemTick:b.itemTick});}
+  else if(b.type==='splitter')moving.push({b,item:b.item,itemTick:b.itemTick});
  }
  for(const{b,item,itemTick,carryTime=0}of moving){
   if(b.item!==item||b.itemTick!==itemTick)continue;
-  if(b.type==='splitter'){dispatch(s,b,item,grid,busy);continue;}
+  if(b.type==='splitter'){dispatch(s,b,item,grid);continue;}
   const[dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
-  if(target&&!busy.has(target.id)&&accept(s,target,item,b,4,carryTime))shiftConveyor(b);
+  if(accept(s,target,item,b,4,carryTime))shiftConveyor(b);
  }
  // Advance only output that was already queued before this pass, one machine per tick.
  for(const b of s.buildings.filter(b=>b.active&&b.item&&hasOutputBuffer(b.type))){

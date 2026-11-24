@@ -244,9 +244,29 @@ $('harbor-projects').onclick=e=>{
  }
 };
 let inspectedKey;
+function componentWarehouse(factory,grid){
+ let candidate;
+ for(const [dir,[dx,dz]] of DIRS.entries()){
+  const warehouse=grid.get(key(factory.x-dx,factory.z-dz));
+  if(warehouse?.type!=='storage'||warehouse.dir!==dir)continue;
+  if(warehouse.exportItem==='recipe')return warehouse;
+  candidate??=warehouse;
+ }
+ return candidate;
+}
+$('component-warehouse').onclick=()=>{
+ const factory=state.buildings.find(building=>building.id===selected);
+ if(factory?.type!=='componentFactory')return;
+ const warehouse=componentWarehouse(factory,new Map(state.buildings.map(b=>[key(b.x,b.z),b])));
+ if(warehouse&&warehouse.exportItem!=='recipe'){
+  execute({type:'configureWarehouse',id:warehouse.id,x:warehouse.x,z:warehouse.z,item:'recipe'});
+  updateInspector();
+ }
+};
 function updateInspector(){
  $('harbor-projects').hidden=true;
  $('harbor-project-details').hidden=true;
+ $('component-supply').hidden=true;
  const nextKey=tool||selectedEnemyId||selected;
  if(inspectedKey!==nextKey){
   $('building-details').open=false;
@@ -274,7 +294,16 @@ function updateInspector(){
  if(b){const cost=upgradeCost(b),btn=$('upgrade-turret');btn.textContent=cost?`Upgrade to ${(b.level||1)+1} / ${maxUpgrades(b.type)+1} (U) · ${Object.entries(cost).map(([r,n])=>n+' '+RESOURCE_NAMES[r].toLowerCase()).join(' + ')}`:`Fully upgraded · Level ${maxUpgrades(b.type)+1}`;btn.disabled=!cost||!!upgradeLocked(state,b)||Object.entries(cost).some(([r,n])=>state.resources[r]<n);}
 
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(BUILDING_IDENTITIES[type]?.icon||type,28);$('intel').style.setProperty('--building-accent',BUILDING_IDENTITIES[type]?.accent||'#edc38f');$('intel-title').textContent=def.name;$('intel-desc').textContent=def.desc;
- const status=b?STATUS_LABELS[factoryStatus(state,b,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))]:null;
+ const grid=b?new Map(state.buildings.map(v=>[key(v.x,v.z),v])):null;
+ const status=b?STATUS_LABELS[factoryStatus(state,b,grid)]:null;
+ if(type==='componentFactory'){
+  const warehouse=b&&!tool?componentWarehouse(b,grid):null;
+  const connected=warehouse?.exportItem==='recipe';
+  $('component-supply').hidden=false;
+  $('component-warehouse').hidden=!warehouse||connected;
+  $('component-warehouse').title=warehouse?`Set Warehouse ${warehouse.x}, ${warehouse.z} to Adjacent machine recipe`:'';
+  $('component-supply-hint').textContent=connected?'Warehouse recipe feed enabled.':warehouse?'Supplies all three ingredients from local stock.':'Point a Warehouse at this factory to feed all three ingredients.';
+ }
  const summary=$('intel-summary'),packed=tool?inventoryCount(state,playerId,type):0;
  if(tool&&!packed){
   showBuildPrice(summary,tool==='repair'?repairCost(roundBonus(state.wave)):def.cost);
