@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 10.27 dansk tid
+
+- Kørsel `2026-11-24T10:27:27+01:00`, simulation `96fe517`, driver `90f2033`, spil `0.21.2`, eksisterende metadata-id `0.21.1.1104`.
+- 35/35 forløb og 15 matchede par. Sentry-fallback blev anvendt i 1 par. Resultat efter sidste swarm og sejr: 1 bedre, 0 dårligere og 14 lige. Nye holdouts 6619 og 2731.
+- 4 matchede fulde målevinduer for brændsel og effekt. Næste fokus er at forbinde den eksisterende ammunitionsadvarsel med den berørte flanke.
+- [Rapport](balance-2026-11-24-sentry-fallback.md) · [Rådata](balance-2026-11-24-sentry-fallback.json).
+
 ### 2026-11-24 kl. 07.27 dansk tid
 
 - Kørsel `2026-11-24T07:27:27+01:00`, baseline `fbe2f6f`, måleværktøj `528632e`, pakke `0.21.2`, eksisterende metadata-id `0.21.1.1104`.

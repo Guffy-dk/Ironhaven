@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 10:27 Europe/Copenhagen — Codex — sentry fallback and fuel window
+
+- Baseline `96fe517`, driver `90f2033`. 35 ordinary-command runs on two workers. The optional sentry fallback was exercised in 1 of 15 pairs. Generator comparison reports the first 600 seconds of operation where both measurements covered the window.
+- No gameplay or release metadata changes. Next assess whether the existing player-facing ammo warning can point to the affected flank and keep the fallback as a separate test strategy. [Report](docs/playtests/balance-2026-11-24-sentry-fallback.md).
+
 ### 2026-11-24 07:27 Europe/Copenhagen — Codex — coal versus marine
 
 - On released source `fbe2f6f` (0.21.2), 35 earned-resource campaigns compared the physical bearing line to ordinary coal power. Coal versus marine campaign rank: 5 bedre, 2 dårligere og 8 lige. The two options differ in build and upgrade availability. Game balance and release metadata kept as checked out.
