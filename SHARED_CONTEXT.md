@@ -2,7 +2,7 @@
 
 **Read this first. Keep it current.** This is the common durable memory for the owner, Codex, Claude Code and future contributors. It records decisions, verified implementation, unresolved problems and handoffs. It is not an automatically synchronized chat transcript.
 
-Last reconciled: **24 November 2026**, Europe/Copenhagen. Harbor expansion and Lua modding are on `main` via [PR #28](https://github.com/Guffy-dk/Ironhaven/pull/28). Final gameplay tuning was checked at `ad4e6cb`. The owner chose **0.21.1** and authorized its patcher release, using the unchanged three-part patcher format. The public release [v0.21.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.21.1) is latest and its source is `26d3340`. See the November 24 entry for verification.
+Last reconciled: **24 November 2026**, Europe/Copenhagen. Harbor expansion and Lua modding are on `main` via [PR #28](https://github.com/Guffy-dk/Ironhaven/pull/28). Final gameplay tuning was checked at `ad4e6cb`. The owner chose **0.21.1** and authorized its patcher release, using the unchanged three-part patcher format. The latest public release is [v0.21.3](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.21.3) from `4542f55`. See the November 24 entry for verification.
 
 Repository: **[Guffy-dk/Ironhaven](https://github.com/Guffy-dk/Ironhaven)**. Owner: Guffy. Stealth is the owner's experienced factory-game playtester; his usability and balance reports are important player evidence. The owner generally communicates in Danish. The game's player-facing language is English.
 
@@ -303,6 +303,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 | Shared Markdown brain | Owner, current request | Both agents maintain this file through GitHub |
 
 ## 14. Shared work and decision log
+
+### 2026-11-24 19:27 Europe/Copenhagen — Codex — outage-scoped repair reserve
+
+- Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
+- No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
 ### 2026-11-24 — Codex — 0.21.3 patcher release
 
