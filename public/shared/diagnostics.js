@@ -1,4 +1,4 @@
-import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,turretReload,storageCapacity,storageUsed,storageFull,turretStats,sawmillTrees,TURRETS,usesAmmo,GENERATORS,LOGISTICS_TYPES,logisticsStatus,canAcceptItem,canShareOutput,hasOutputBuffer,outputCount,OUTPUT_CAPACITY} from './sim.js';
+import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,turretReload,storageCapacity,storageUsed,storageFull,turretStats,sawmillTrees,sawmillOutlet,TURRETS,usesAmmo,GENERATORS,LOGISTICS_TYPES,logisticsStatus,canAcceptItem,canShareOutput,hasOutputBuffer,outputCount,OUTPUT_CAPACITY} from './sim.js';
 export const STATUS_LABELS={paused:'Production paused',running:'Running',trees:'No trees in range',input:'Waiting for inputs',output:'Output blocked',buffering:'Buffering output',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
 export function factoryStatus(s,b,grid){
  if(b.disabled)return 'paused';
@@ -6,7 +6,13 @@ export function factoryStatus(s,b,grid){
  if(GENERATORS[b.type])return s.resources[GENERATORS[b.type].fuel]>0?'running':'fuel';
  if(!b.active)return 'power';
  if(TURRETS.includes(b.type))return !usesAmmo(b.type)||b.ammo||s.resources.gear?'running':'ammo';
- if(b.type==='sawmill')return !sawmillTrees(s.terrain,b)?'trees':storageUsed(s)>=storageCapacity(s)?'storage':'running';
+ if(b.type==='sawmill'){
+  const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
+  if(!sawmillTrees(s.terrain,b)&&!b.item)return 'trees';
+  if(!sawmillOutlet(b,out))return storageUsed(s)>=storageCapacity(s)?'storage':'running';
+  if(!b.item||canAcceptItem(s,out,b.item,b)||canShareOutput(b,out))return 'running';
+  return outputCount(b)+3<=OUTPUT_CAPACITY?'buffering':'output';
+ }
  if(b.item){const[dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));if(canAcceptItem(s,out,b.item,b)||hasOutputBuffer(b.type)&&canShareOutput(b,out))return 'running';if(hasOutputBuffer(b.type)&&outputCount(b)<OUTPUT_CAPACITY)return 'buffering';if(storageFull(s,out,b.item))return 'storage';return 'output';}
  if(RECIPES[b.type])return productionRecipe(b)?'running':'input';
  return hasOutputBuffer(b.type)?'running':'idle';

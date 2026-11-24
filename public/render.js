@@ -137,9 +137,9 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
   if(type==='storage')warehousePorts(model,inputs);
   if(type==='inserter'){port(model,2,'IN',cyan);port(model,0,'M',0x99ddb8);port(model,1,'RET',0xb9a2e5);}
   if(type==='splitter'){port(model,2,'1',cyan);port(model,0,'2',C.gold);port(model,3,'3',C.gold);port(model,1,'4',C.gold);}
-  if(['drill','smelter','assembler'].includes(type)){
+  if(['drill','smelter','assembler','sawmill'].includes(type)){
    port(model,0,'OUT',C.gold);
-   if(type!=='drill')for(const side of [1,2,3])port(model,side,'IN',cyan);
+   if(type!=='drill'&&type!=='sawmill')for(const side of [1,2,3])port(model,side,'IN',cyan);
   }
   if(DIRECTIONAL.includes(originalType))model.rotation.y=-dir*Math.PI/2;
   batchQuarryModel(model,`${originalType}:${level}`);levelPlaque(model,originalType,level);outlineBuilding(model);
@@ -226,8 +226,8 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
   const rotor=new T.Group();rotor.name='rotor';rotor.position.set(0,.72,0);rotor.rotation.z=Math.PI/2;g.add(rotor);const saw=cyl(rotor,C.light,0,0,0,.3,.05,12);for(let i=0;i<8;i++){const a=i*Math.PI/4;box(rotor,C.steel,Math.cos(a)*.28,0,Math.sin(a)*.28,.12,.07,.12);}
   box(g,C.gold,-.35,.6,0,.1,.25,.66);
  }
- if(['drill','smelter','assembler'].includes(type)){
-  port(g,0,'OUT',C.gold);if(type!=='drill')for(const side of [1,2,3])port(g,side,'IN',cyan);
+ if(['drill','smelter','assembler','sawmill'].includes(type)){
+  port(g,0,'OUT',C.gold);if(type!=='drill'&&type!=='sawmill')for(const side of [1,2,3])port(g,side,'IN',cyan);
   if(type==='smelter'){cyl(g,C.steel,.2,.53,.18,.2,.5,12);cyl(g,C.gold,.2,.8,.18,.21,.05,12);}
  }
  if(originalType==='coalMine')cyl(g,0x484655,0,.87,.26,.16,.15,12);
@@ -235,7 +235,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
  if(originalType==='foundry')for(const x of[-.23,.23])cyl(g,0x91aeb7,x,.8,0,.15,.5,12);
  if(originalType==='circuitLab')box(g,0x69d5c6,0,.77,-.25,.55,.06,.22,true);
  if(originalType==='componentFactory')for(const x of[-.24,.24])cyl(g,0xb2a1cc,x,.9,.2,.12,.35,8);
- if(type!=='hq'&&type!=='turret'&&type!=='generator'&&type!=='sawmill')g.rotation.y=-dir*Math.PI/2;
+ if(type!=='hq'&&type!=='turret'&&type!=='generator')g.rotation.y=-dir*Math.PI/2;
  return g;
 }
 

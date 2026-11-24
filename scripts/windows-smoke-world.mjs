@@ -21,6 +21,7 @@ export function smokeWorld({harbor=false}={}){
  build('storage',-3,-1);build('foundry',-2,-2);build('circuitLab',2,-2);build('componentFactory',3,-2);
  build('storage',3,-3,1);
  build('generator',-4,2);build('coalGenerator',-4,1);build('sawmill',5,-1);
+ build('belt',6,-1,3);
  build('orePress',-4,-5);build('finery',-2,-5);build('precisionWorkshop',2,-5);build('marineGenerator',4,-5);
  build('lamp',-5,1);build('lamp',5,3);
  build('gunTurret',-1,3);build('turret',4,1);build('mortar',-3,3);

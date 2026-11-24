@@ -36,7 +36,7 @@ export const TYPES = {
  drill:{name:'Iron drill',hp:200,power:3,cost:{wood:15,plate:10},desc:"Mines iron ore from an iron deposit. Connect the output to a smelter."},
  smelter:{name:'Smelter',hp:250,power:3,cost:{wood:12,plate:12},desc:"Smelts iron ore into plates and copper ore into copper. Feed ore into a cyan input and collect it from the gold output."},
  assembler:{name:'Assembler',hp:220,power:4,cost:{wood:15,plate:25},desc:"Makes one gear from two iron plates. Connect its output to storage or another machine."},
- sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:"Produces wood from trees within five tiles. More trees mean faster production. Needs no power."},
+ sawmill:{name:'Sawmill',hp:180,power:0,cost:{plate:12},desc:"Cuts nearby timber. Connect a belt or a receiver to the gold outlet. Loose wood goes to shared storage. Needs no power."},
  generator:{name:'Generator',hp:300,power:0,cost:{wood:25,plate:20},desc:"Burns one wood every 12 seconds to supply 18 power. Takes fuel from shared storage."},
  lamp:{name:'Harbor lamp',hp:75,power:3,fixedLevel:true,cost:{wood:12,plate:35,gear:3},desc:"Lights a six-tile radius while powered. Helps defenses target enemies and exposes armor. Enemies target lamps, so protect them. Uses 3 power, has 75 HP and cannot be upgraded."},
  turret:{name:'Sentry turret',hp:350,power:0,cost:{wood:12,plate:16},desc:"A basic sentry with unlimited ammunition and no power use. Upgrades improve its protection, damage and range up to level 30. Lit enemies can be targeted 20% farther away."},
@@ -106,7 +106,7 @@ export function productionRecipe(b){
  const recipe=b.type==='smelter'&&b.input[0]==='copperOre'?COPPER_RECIPE:RECIPES[b.type];
  return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
 }
-export const DIRECTIONAL = ['splitter','belt','storage','drill','copperDrill','coalMine',...Object.keys(RECIPES)];
+export const DIRECTIONAL = ['splitter','belt','storage','drill','copperDrill','coalMine','sawmill',...Object.keys(RECIPES)];
 // All data-stage content enters the same authoritative production/storage paths.
 for(const [item,definition]of Object.entries(CONTENT.items)){
  if(!ITEM_KEYS.includes(item))ITEM_KEYS.push(item);
@@ -142,7 +142,7 @@ export const maxHp = b => TURRETS.includes(b.type) ? turretStats(b).hp : Math.ro
 const EXTRACTORS=['drill','copperDrill','coalMine'];
 const PRODUCERS=[...EXTRACTORS,'sawmill',...Object.keys(RECIPES)];
 export const OUTPUT_CAPACITY=5;
-export const hasOutputBuffer=type=>EXTRACTORS.includes(type)||Object.hasOwn(RECIPES,type);
+export const hasOutputBuffer=type=>type==='sawmill'||EXTRACTORS.includes(type)||Object.hasOwn(RECIPES,type);
 export const outputCount=b=>(b.item?1:0)+(b.outputBuffer?.length??0);
 export function canShareOutput(source,target){
  return target?.type===source.type&&target.dir===source.dir&&source.sendOutput===true&&target.receiveOutput===true&&outputCount(target)<OUTPUT_CAPACITY;
@@ -171,7 +171,9 @@ export const conveyorProgress=(belt,cargo,tick)=>cargo.itemProgress??Math.max(0,
 export const conveyorCount=b=>(b.item?1:0)+(b.beltQueue?.length??0);
 export function repairCost(bonus){return {...TYPES.repair.cost,plate:bonus?.repairPlates??TYPES.repair.cost.plate};}
 export function productionSpeed(b,bonus,difficulty){
- const upgrade=(1+((b.level||1)-1)*(['drill','copperDrill','coalMine','smelter'].includes(b.type)?.25:.1))*(DIFFICULTIES[difficulty]?.production??1);
+ const speedGain=EXTRACTORS.includes(b.type)||b.type==='smelter'?.25:
+  b.type==='circuitLab'||b.type==='componentFactory'?.20:.10;
+ const upgrade=(1+((b.level||1)-1)*speedGain)*(DIFFICULTIES[difficulty]?.production??1);
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
 export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)&&b.type!=='coastWatch'?.2:.1)));
@@ -813,6 +815,12 @@ export function storageFull(s,b,item){
  return (b?.type==='storage'&&warehouseUsed(b)>=warehouseCapacity(b))||((b?.type==='storage'||b?.type==='hq')&&storageUsed(s)>=storageCapacity(s));
 }
 function hasOutputSide(b){return b.type==='belt'||Object.hasOwn(RECIPES,b.type);}
+export function sawmillOutlet(b,target){
+ if(!target)return false;
+ if(hasOutputSide(target)&&target.dir===(b.dir+2)%4)return false;
+ if(target.type==='splitter')return target.dir===b.dir;
+ return target.type==='belt'||target.type==='storage'||target.type==='hq'||recipeInput(target,'wood')>0||canShareOutput(b,target);
+}
 export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
  if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
@@ -957,7 +965,11 @@ export function step(s,dt=STEP){
  // Advance only output that was already queued before this pass, one machine per tick.
  for(const b of s.buildings.filter(b=>b.active&&b.item&&hasOutputBuffer(b.type))){
   const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
-  if(canShareOutput(b,out))enqueueOutput(out,b.item);
+  if(b.type==='sawmill'&&!sawmillOutlet(b,out)){
+   if(storageUsed(s)>=storageCapacity(s))continue;
+   s.resources.wood++;
+   recordStockFlow(s,'wood',1);
+  }else if(canShareOutput(b,out))enqueueOutput(out,b.item);
   else if(!accept(s,out,b.item,b))continue;
   b.item=b.outputBuffer?.shift()??null;
  }
@@ -994,7 +1006,20 @@ export function step(s,dt=STEP){
   }
   if(b.type==='sawmill'){
    b.progress+=dt*sawmillRate(s,b);
-   if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-storageUsed(s));const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}
+   if(b.progress+1e-9>=3){
+    b.progress=Math.max(0,b.progress-3);
+    const [dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
+    let made;
+    if(outputCount(b)+3<=OUTPUT_CAPACITY&&sawmillOutlet(b,target)){
+     made=3;
+     for(let i=0;i<made;i++)enqueueOutput(b,'wood');
+    }else{
+     made=Math.min(3,Math.max(0,storageCapacity(s)-storageUsed(s)));
+     s.resources.wood+=made;
+     recordStockFlow(s,'wood',made);
+    }
+    s.stats.totals.wood=(s.stats.totals.wood||0)+made;
+   }
   }
   if(TURRETS.includes(b.type)){
    const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>=1){spendResource(s,'gear',1);recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
