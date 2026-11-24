@@ -2,7 +2,7 @@
 
 **Read this first. Keep it current.** This is the common durable memory for the owner, Codex, Claude Code and future contributors. It records decisions, verified implementation, unresolved problems and handoffs. It is not an automatically synchronized chat transcript.
 
-Last reconciled: **23 November 2026**, Europe/Copenhagen. Implementation baseline: **`27a6062`**, followed by the content/modding work merged to `main` via **PR #27 / `6cc6863`**. Final tested code/workflow source: **`3b2fff5`**; six source-pinned gameplay runs used **`4596cc3`**, before UI-only polish. Candidate package version **0.20.2**, separate internal build **0.20.2.3**. Latest public release rechecked through GitHub: **[v0.20.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.20.1)**. The candidate has not been released to the patcher.
+Last reconciled: **24 November 2026**, Europe/Copenhagen. Harbor expansion and Lua modding are on `main` via [PR #28](https://github.com/Guffy-dk/Ironhaven/pull/28). Final gameplay tuning was checked at `ad4e6cb`. The owner chose **0.21.1** and authorized its patcher release, using the unchanged three-part patcher format. The public release [v0.21.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.21.1) is latest and its source is `26d3340`. See the November 24 entry for verification.
 
 Repository: **[Guffy-dk/Ironhaven](https://github.com/Guffy-dk/Ironhaven)**. Owner: Guffy. Stealth is the owner's experienced factory-game playtester; his usability and balance reports are important player evidence. The owner generally communicates in Danish. The game's player-facing language is English.
 
@@ -25,8 +25,8 @@ Newest owner instructions take precedence over this document; this document reco
 ## 2. Current stop conditions and release authority
 
 - **Implementation pause expired:** the requested deadline was **23 November 2026, 19:45 Europe/Copenhagen (18:45 UTC)**. The clock was checked at 18:46 UTC before work resumed. A later owner pause would still override this authorization.
-- **No patcher release without an explicit release request.** Earlier broad release permission was superseded in the current balance-agent mandate. No public `v*` tags, published game release, latest-release promotion or public patcher-manifest changes under standing internal-development authorization. Updating documentation in GitHub is authorized and is not a game release.
-- **Versions stay in the 0.20 series.** Use a separate, increasing fourth internal build identifier for balance/internal iterations, e.g. `0.20.1.1`, `0.20.1.2` or `0.20.2.1`. Do not put an invalid four-component SemVer into tools that require SemVer; use separate metadata and preserve the full internal ID in reports/artifacts. A new patch number is for substantive functional changes. Do not jump to 0.21 or 1.x.
+- **No patcher release without an explicit release request.** Earlier broad release permission was superseded in the current balance-agent mandate. The owner authorized the 0.21.1 release specifically. Subsequent public tags, published releases, latest promotion and public patcher-manifest changes still require an explicit owner request. Updating documentation in GitHub is authorized and is not a game release.
+- **Version policy.** The owner chose public 0.21.1, superseding the earlier 0.20 ceiling, and kept the existing patcher. Public versions and npm versions have three components. Internal iteration IDs may be recorded separately in reports and artifacts. Follow the latest owner instruction for subsequent version changes.
 - Outside the pause, the owner has authorized autonomous routine improvements to storage, resource flow, light slow, movement, scaling, upgrades, progression and map size; previous numeric choices are not permanently locked. Validate changes and preserve compatibility. Do not repeatedly request permission for choices already authorized.
 - Paid external generation is separate: do not spend on provider jobs without an authorized invocation and budget. Never ask for a secret in chat.
 
@@ -231,7 +231,7 @@ When, and only when, the owner explicitly requests publication:
 3. Windows build uploads ZIP, patcher EXE, SHA manifest and genuine native screenshots, initially with `--latest=false`.
 4. Published exact-version installation must pass before promotion to latest; a build alone does not authorize promotion.
 
-Latest public version checked: v0.20.1. Recent balance-driver/report commits did not publish a gameplay release. Verify live GitHub state rather than assuming this statement remains current.
+Latest public version checked: v0.21.1. The current patcher installs it through Install latest. Verify live GitHub state rather than assuming this statement remains current.
 
 Save keys: `ironhaven.save.v1`, `ironhaven.checkpoints.v1`, `ironhaven.windows.v1`, `ironhaven.skipTutorial`; preferences `ironhaven.preferences.v1`. In the Windows app these are in the app's Chromium storage. JSON export/import supports backups. No Steam Cloud sync exists yet. Preserve old terrain/deposits and stock accounting during migration; reject damaged/unsupported saves clearly.
 
@@ -295,7 +295,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 | Global affordability, local warehouse exports | Owner direction; implemented schema 11 | Preserve physical ownership/conservation |
 | 25-swarm victory, voluntary endless | Latest recorded agent mandate | Do not skip victory or force continued play |
 | Autonomous internal tuning | Owner mandate | Numeric balance is adjustable with evidence |
-| Internal 0.20 builds, explicit release gate | Latest recorded agent mandate | No routine patcher publication |
+| Public 0.21.1 with existing patcher | Owner, 24 November 2026 | Three-part public version. New releases still require explicit permission. |
 | Factorio-style mod authoring | Owner request; internal data-stage implementation | Familiar Lua/data workflow, not full API compatibility |
 | Wait before implementation | Owner; expired before clock-verified resumption | Later owner pauses still take precedence |
 | Shared Markdown brain | Owner, current request | Both agents maintain this file through GitHub |
@@ -308,6 +308,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Materials run through Industry (N) and Fabrication (J) to Harbor Equipment. The host commissions two grid/depot tiers and repeat coal/copper shipments at the lighthouse. Export reserves protect local warehouse stock needed to fund projects. Existing 0.20.2 saves with the same mods migrate to the additive catalog.
 - Owner asked whether calling a swarm early should award a bonus. The current proposed design keeps the shorter wait as the benefit, with preparation time as the tradeoff. The 0.21.1 rules add no early-call reward.
 - The owner explicitly authorized patcher release of this build once verified. This authorization applies to 0.21.1. The owner briefly proposed 0.21.1.1101, then explicitly chose 0.21.1 so the existing patcher can install it. The earlier 0.20 version ceiling is superseded for this release. Use the existing tag, published-installation and latest-promotion workflow.
+- [Release job](https://github.com/Guffy-dk/Ironhaven/actions/runs/45300955207) completed and promoted [v0.21.1](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.21.1) after installing the exact public ZIP on Windows. The patcher binary is byte-identical to v0.20.1. SHA-256 `698b7654bf7c82259f78293c476bee93d67b45a6e0e935fcad76c20c54fcf385`. Windows smoke and 209 automated tests passed. [Native harbor QA capture](https://github.com/Guffy-dk/Ironhaven/releases/download/v0.21.1/Ironhaven-harbor.png).
 - The full factory connected every new recipe using belts and finite fixture raw materials. With reserves it delivered 170 kits and completed eight commissions within 950 simulated seconds. Low power blocked the chain. The repeatable late-wave pair prompted the Coast Watch power tune, reducing demand from 721 to 601 on a 642 supply. Both variants stayed operational through the horizon with 227 kills in swarm 26.
 - The existing 35-case campaign matrix ran with three independent workers, plus two new earned-resource cases. The earned crusher/kiln branch delivered 204 and 207 firebricks without changing the matched campaign outcomes. The entire harbor chain was tested in the prepared factory, while earned progression coverage was limited to the crusher/kiln branch. [Balance report](docs/playtests/harbor-endgame-0.21.1.md).
 
