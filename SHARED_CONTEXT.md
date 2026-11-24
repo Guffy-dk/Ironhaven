@@ -304,6 +304,12 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — Stealth's steel warehouse report
+
+- The owner clarified that Stealth's report concerns shared steel availability. The screenshot shows a multi-foundry steel line feeding warehouses. The top stock counter is outside the crop.
+- Reproduced direct Steel foundry delivery using the `0.21.2` simulation. Six foundries sent 18 steel to three warehouses. Each held six, and the shared counter showed 18. A distant Mortar turret consumed those 18 through an ordinary build command. An empty fourth warehouse could not send any of that shared steel to its adjacent conveyor. All 17 targeted storage and logistics tests passed.
+- For physical export in `0.21.2`, open **Details & settings** → **Warehouse output**. Select a material such as **Steel** for a belt. **Adjacent machine recipe** serves a directly connected recipe machine. The outlet uses the warehouse's local stock above its configured reserve.
+
 ### 2026-11-24 16:27 Europe/Copenhagen — Codex — repair reserve experiment
 
 - Simulation `3a54467`, measuring driver `0505827`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs during combat to leave the cost of one sentry, while other construction remained possible. Paired outcome: 3 bedre, 7 dårligere og 5 lige.
