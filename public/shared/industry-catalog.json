@@ -1,5 +1,5 @@
 {
-  "hash": "c286c95165328ebb33f5700d94a37b771fa2f586e7da914a3e140ec088a2e324",
+  "hash": "959a6051660f26ab1f3a483216e4d0e36ea522f09770adc6b0b6a47d0c9a53a4",
   "raw": {
     "item": {
       "ore": {
@@ -85,6 +85,83 @@
         "localised_name": "Precision bearings",
         "icon": "gear",
         "color": "#e2cd91"
+      },
+      "aggregate": {
+        "type": "item",
+        "name": "aggregate",
+        "localised_name": "Mineral aggregate",
+        "icon": "ore",
+        "color": "#aca89a"
+      },
+      "firebrick": {
+        "type": "item",
+        "name": "firebrick",
+        "localised_name": "Firebrick",
+        "icon": "plate",
+        "color": "#c38970"
+      },
+      "coke": {
+        "type": "item",
+        "name": "coke",
+        "localised_name": "Foundry coke",
+        "icon": "coal",
+        "color": "#8a8792"
+      },
+      "alloy": {
+        "type": "item",
+        "name": "alloy",
+        "localised_name": "Marine alloy",
+        "icon": "steel",
+        "color": "#a3bdc9"
+      },
+      "resin": {
+        "type": "item",
+        "name": "resin",
+        "localised_name": "Sealant resin",
+        "icon": "wood",
+        "color": "#d9b07a"
+      },
+      "cable": {
+        "type": "item",
+        "name": "cable",
+        "localised_name": "Insulated cable",
+        "icon": "circuit",
+        "color": "#d8a373"
+      },
+      "hull": {
+        "type": "item",
+        "name": "hull",
+        "localised_name": "Hull panels",
+        "icon": "steel",
+        "color": "#829dbc"
+      },
+      "hydraulics": {
+        "type": "item",
+        "name": "hydraulics",
+        "localised_name": "Hydraulic drives",
+        "icon": "gear",
+        "color": "#adcac5"
+      },
+      "switchgear": {
+        "type": "item",
+        "name": "switchgear",
+        "localised_name": "Switchgear",
+        "icon": "circuit",
+        "color": "#a5c08f"
+      },
+      "freightFrame": {
+        "type": "item",
+        "name": "freightFrame",
+        "localised_name": "Freight frames",
+        "icon": "storage",
+        "color": "#c6b58d"
+      },
+      "harborKit": {
+        "type": "item",
+        "name": "harborKit",
+        "localised_name": "Harbor equipment",
+        "icon": "module",
+        "color": "#ddc287"
       }
     },
     "recipe": {
@@ -132,6 +209,129 @@
         ],
         "result": "bearing",
         "energy_required": 6
+      },
+      "harbor-aggregateCrusher": {
+        "type": "recipe",
+        "name": "harbor-aggregateCrusher",
+        "ingredients": {
+          "ore": 1
+        },
+        "result": "aggregate",
+        "result_count": 2,
+        "energy_required": 3
+      },
+      "harbor-firebrickKiln": {
+        "type": "recipe",
+        "name": "harbor-firebrickKiln",
+        "ingredients": {
+          "aggregate": 2,
+          "coal": 1
+        },
+        "result": "firebrick",
+        "result_count": 3,
+        "energy_required": 4
+      },
+      "harbor-cokeOven": {
+        "type": "recipe",
+        "name": "harbor-cokeOven",
+        "ingredients": {
+          "coal": 2
+        },
+        "result": "coke",
+        "result_count": 2,
+        "energy_required": 4
+      },
+      "harbor-alloyFurnace": {
+        "type": "recipe",
+        "name": "harbor-alloyFurnace",
+        "ingredients": {
+          "concentrate": 1,
+          "coke": 1,
+          "copper": 1
+        },
+        "result": "alloy",
+        "result_count": 2,
+        "energy_required": 6
+      },
+      "harbor-resinKettle": {
+        "type": "recipe",
+        "name": "harbor-resinKettle",
+        "ingredients": {
+          "wood": 3,
+          "coal": 1
+        },
+        "result": "resin",
+        "result_count": 3,
+        "energy_required": 4
+      },
+      "harbor-cableWorks": {
+        "type": "recipe",
+        "name": "harbor-cableWorks",
+        "ingredients": {
+          "copper": 2,
+          "resin": 1
+        },
+        "result": "cable",
+        "result_count": 2,
+        "energy_required": 5
+      },
+      "harbor-hullYard": {
+        "type": "recipe",
+        "name": "harbor-hullYard",
+        "ingredients": {
+          "alloy": 2,
+          "resin": 1
+        },
+        "result": "hull",
+        "result_count": 2,
+        "energy_required": 5
+      },
+      "harbor-hydraulicWorks": {
+        "type": "recipe",
+        "name": "harbor-hydraulicWorks",
+        "ingredients": {
+          "bearing": 1,
+          "hull": 1,
+          "gear": 1
+        },
+        "result": "hydraulics",
+        "result_count": 2,
+        "energy_required": 6
+      },
+      "harbor-switchgearShop": {
+        "type": "recipe",
+        "name": "harbor-switchgearShop",
+        "ingredients": {
+          "cable": 2,
+          "firebrick": 1,
+          "circuit": 1
+        },
+        "result": "switchgear",
+        "result_count": 2,
+        "energy_required": 6
+      },
+      "harbor-freightWorks": {
+        "type": "recipe",
+        "name": "harbor-freightWorks",
+        "ingredients": {
+          "hydraulics": 1,
+          "plate": 3
+        },
+        "result": "freightFrame",
+        "result_count": 2,
+        "energy_required": 8
+      },
+      "harbor-harborWorks": {
+        "type": "recipe",
+        "name": "harbor-harborWorks",
+        "ingredients": {
+          "freightFrame": 1,
+          "switchgear": 1,
+          "module": 1
+        },
+        "result": "harborKit",
+        "result_count": 2,
+        "energy_required": 10
       }
     },
     "assembling-machine": {
@@ -224,6 +424,232 @@
           "color": "#96c7b3"
         },
         "description": "Machines two steel and one copper into a precision bearing in six seconds. Bearings and components build marine generators; this chain supports industrial power rather than ammunition."
+      },
+      "aggregateCrusher": {
+        "type": "assembling-machine",
+        "name": "aggregateCrusher",
+        "localised_name": "Aggregate crusher",
+        "map_label": "CRUSHER",
+        "icon": "ore",
+        "max_health": 300,
+        "energy_usage": 3,
+        "ingredients": {
+          "plate": 18,
+          "gear": 4
+        },
+        "recipe": "harbor-aggregateCrusher",
+        "graphics": {
+          "template": "assembler",
+          "variant": "crusher",
+          "color": "#abb8b7"
+        },
+        "description": "Crushes raw iron ore into construction aggregate. Turn a separate drill toward the crusher to supply a brick kiln."
+      },
+      "firebrickKiln": {
+        "type": "assembling-machine",
+        "name": "firebrickKiln",
+        "localised_name": "Firebrick kiln",
+        "map_label": "BRICK KILN",
+        "icon": "smelter",
+        "max_health": 300,
+        "energy_usage": 3,
+        "ingredients": {
+          "plate": 20,
+          "gear": 4
+        },
+        "recipe": "harbor-firebrickKiln",
+        "graphics": {
+          "template": "smelter",
+          "variant": "kiln",
+          "color": "#c3886e"
+        },
+        "description": "Fires aggregate into heat-resistant bricks. Supply switchgear shops, harbor resupply shipments and breakwaters."
+      },
+      "cokeOven": {
+        "type": "assembling-machine",
+        "name": "cokeOven",
+        "localised_name": "Coke oven",
+        "map_label": "COKE OVEN",
+        "icon": "coal",
+        "max_health": 300,
+        "energy_usage": 3,
+        "ingredients": {
+          "plate": 20,
+          "steel": 4
+        },
+        "recipe": "harbor-cokeOven",
+        "graphics": {
+          "template": "foundry",
+          "variant": "coke",
+          "color": "#9f9ca7"
+        },
+        "description": "Prepares foundry coke from coal. Leave enough coal on the fuel line for your generators."
+      },
+      "alloyFurnace": {
+        "type": "assembling-machine",
+        "name": "alloyFurnace",
+        "localised_name": "Alloy furnace",
+        "map_label": "ALLOY",
+        "icon": "steel",
+        "max_health": 300,
+        "energy_usage": 5,
+        "ingredients": {
+          "plate": 24,
+          "steel": 7,
+          "gear": 6
+        },
+        "recipe": "harbor-alloyFurnace",
+        "graphics": {
+          "template": "foundry",
+          "variant": "alloy",
+          "color": "#a2b8cd"
+        },
+        "description": "Uses iron concentrate, coke and copper to make marine alloy. This gives the ore press a second outlet beyond iron plates."
+      },
+      "resinKettle": {
+        "type": "assembling-machine",
+        "name": "resinKettle",
+        "localised_name": "Resin kettle",
+        "map_label": "RESIN",
+        "icon": "wood",
+        "max_health": 300,
+        "energy_usage": 3,
+        "ingredients": {
+          "plate": 20,
+          "gear": 4
+        },
+        "recipe": "harbor-resinKettle",
+        "graphics": {
+          "template": "smelter",
+          "variant": "kettle",
+          "color": "#c8a474"
+        },
+        "description": "Cooks timber and coal into sealant. Deliver timber through a warehouse output and split the sealant between cable and hull production."
+      },
+      "cableWorks": {
+        "type": "assembling-machine",
+        "name": "cableWorks",
+        "localised_name": "Cable works",
+        "map_label": "CABLE",
+        "icon": "gear",
+        "max_health": 300,
+        "energy_usage": 4,
+        "ingredients": {
+          "plate": 24,
+          "gear": 6
+        },
+        "recipe": "harbor-cableWorks",
+        "graphics": {
+          "template": "assembler",
+          "variant": "cable",
+          "color": "#d19974"
+        },
+        "description": "Insulates copper cable for switchgear and coastal lamps."
+      },
+      "hullYard": {
+        "type": "assembling-machine",
+        "name": "hullYard",
+        "localised_name": "Hull yard",
+        "map_label": "HULL PANELS",
+        "icon": "steel",
+        "max_health": 300,
+        "energy_usage": 4,
+        "ingredients": {
+          "plate": 24,
+          "steel": 6,
+          "gear": 6
+        },
+        "recipe": "harbor-hullYard",
+        "graphics": {
+          "template": "assembler",
+          "variant": "hull",
+          "color": "#8da4c4"
+        },
+        "description": "Seals sheets of marine alloy into hull panels. Panels reinforce breakwaters, dock storage and freight frames."
+      },
+      "hydraulicWorks": {
+        "type": "assembling-machine",
+        "name": "hydraulicWorks",
+        "localised_name": "Hydraulic works",
+        "map_label": "HYDRAULICS",
+        "icon": "gear",
+        "max_health": 300,
+        "energy_usage": 5,
+        "ingredients": {
+          "plate": 28,
+          "steel": 8,
+          "circuit": 4
+        },
+        "recipe": "harbor-hydraulicWorks",
+        "graphics": {
+          "template": "componentFactory",
+          "variant": "hydraulic",
+          "color": "#a9c7bd"
+        },
+        "description": "Assembles bearing-mounted hydraulic drives for freight frames. Supply bearings from a precision workshop."
+      },
+      "switchgearShop": {
+        "type": "assembling-machine",
+        "name": "switchgearShop",
+        "localised_name": "Switchgear shop",
+        "map_label": "SWITCHGEAR",
+        "icon": "circuit",
+        "max_health": 300,
+        "energy_usage": 5,
+        "ingredients": {
+          "plate": 28,
+          "steel": 8,
+          "circuit": 4
+        },
+        "recipe": "harbor-switchgearShop",
+        "graphics": {
+          "template": "circuitLab",
+          "variant": "switchgear",
+          "color": "#aac195"
+        },
+        "description": "Builds insulated switchgear for harbor equipment, grid projects and coastal lamps."
+      },
+      "freightWorks": {
+        "type": "assembling-machine",
+        "name": "freightWorks",
+        "localised_name": "Freight works",
+        "map_label": "FREIGHT FRAMES",
+        "icon": "storage",
+        "max_health": 300,
+        "energy_usage": 6,
+        "ingredients": {
+          "plate": 30,
+          "steel": 10,
+          "module": 2
+        },
+        "recipe": "harbor-freightWorks",
+        "graphics": {
+          "template": "assembler",
+          "variant": "freight",
+          "color": "#c2af87"
+        },
+        "description": "Joins iron plates and hydraulic drives into freight frames for the Harbor Works."
+      },
+      "harborWorks": {
+        "type": "assembling-machine",
+        "name": "harborWorks",
+        "localised_name": "Harbor Works",
+        "map_label": "HARBOR WORKS",
+        "icon": "module",
+        "max_health": 300,
+        "energy_usage": 7,
+        "ingredients": {
+          "plate": 36,
+          "steel": 12,
+          "module": 3
+        },
+        "recipe": "harbor-harborWorks",
+        "graphics": {
+          "template": "componentFactory",
+          "variant": "harbor",
+          "color": "#dbbf8b"
+        },
+        "description": "Builds Harbor Equipment. Deliver it to shared storage, then select the lighthouse to expand power and storage or order repeat resupply shipments."
       }
     },
     "generator": {

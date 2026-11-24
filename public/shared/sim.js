@@ -1,5 +1,6 @@
 // Deterministic simulation shared by Windows hosts, LAN guests and automated tests.
-import {LAMP_RADIUS,lampField} from './lamps.js';
+import {lampRadius,lampField} from './lamps.js';
+import {HARBOR_PROJECTS,projectLevel,projectCost,projectStatus,normalizeHarbor} from './harbor-projects.js';
 import {CONTENT,ACTIVE_MODS,CONTENT_SIGNATURE,requireWorldContent} from './content.js';
 export {ACTIVE_MODS,CONTENT_SIGNATURE};
 import {coastalLand,establishIsland,islandLanding} from './coast.js';
@@ -56,6 +57,15 @@ Object.assign(TYPES,{
  mortar:{name:'Mortar turret',hp:315,power:6,cost:{plate:40,steel:18,circuit:6,gear:8},desc:"Fires shells that damage groups of enemies. One gear supplies four base shells. Needs power; upgrades improve its damage and range."},
  pulseTurret:{name:'Pulse turret',hp:360,power:9,cost:{plate:45,steel:20,circuit:15,module:4},desc:"Fires rapid short-range bursts into packed groups. Trades range and heavy power use for sustained area damage. One gear supplies eight base bursts."}
 });
+Object.assign(TYPES, {
+ basaltBreakwater: {name:'Reinforced breakwater',hp:1150,power:0,cost:{firebrick:5,hull:3,resin:2},
+  desc:'A masonry barrier tied together with marine hull panels. More durable than a timber barricade. Drag to build a continuous line.'},
+ signalMast: {name:'Coastal signal mast',hp:125,power:7,fixedLevel:true,cost:{cable:4,switchgear:3,alloy:3},
+  desc:'Lights a ten-tile radius and exposes armor while powered. Enemies can target it. Use it at outposts where the lighthouse cannot cover the approach.'},
+ coastWatch: {name:'Coast watch turret',hp:300,power:5,cost:{alloy:8,hull:4,switchgear:4,bearing:2},
+  desc:'A long-range single-target defense. Deals consistent damage to armored enemies in darkness and uses gears for ammunition. Needs five power at level one.'}
+});
+export const isBarrier=type=>type==='wall'||type==='basaltBreakwater';
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
 export const MAX_UPGRADES=10;
@@ -112,9 +122,9 @@ export const TURRET_LEVELS=Array.from({length:30},(_,n)=>({
  name:'Mk '+(n+1),hp:350+n*55,damage:28+n*3,range:10+n*.1,interval:.38/(1+n*.025),
  cost:n?{plate:12+n*7,gear:2+n*2}:null
 }));
-export const TURRETS=['turret','gunTurret','mortar','pulseTurret'];
+export const TURRETS=['turret','gunTurret','mortar','pulseTurret','coastWatch'];
 export const SAWMILL_RADIUS=5;
-export const buildingRadius=b=>b?.type==='lamp'?LAMP_RADIUS:b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0;
+export const buildingRadius=b=>lampRadius(b?.type)||(b?.type==='sawmill'?SAWMILL_RADIUS:TURRETS.includes(b?.type)?turretStats(b).range:0);
 export const usesAmmo=type=>TURRETS.includes(type)&&type!=='turret';
 export const GENERATORS={generator:{fuel:'wood',power:18,seconds:12},coalGenerator:{fuel:'coal',power:36,seconds:16},...CONTENT.generators};
 export function turretStats(b){
@@ -122,6 +132,10 @@ export function turretStats(b){
  if(b.type==='turret'){const n=Math.max(0,(b.level||1)-1);return {name:normal.name,hp:Math.round(TYPES.turret.hp*(1+n*.14)),damage:14*(1+n*.065),range:7.5+n*.1,interval:.64/(1+n*.02)};}
  if(b.type==='mortar')return {...normal,hp:TYPES.mortar.hp+normal.hp-350,damage:normal.damage*1.6,range:normal.range+2,interval:normal.interval*3,radius:2.25,ammoDivisor:4};
  if(b.type==='pulseTurret')return {...normal,hp:TYPES.pulseTurret.hp+normal.hp-350,damage:normal.damage*1.1,range:normal.range-3,interval:normal.interval*1.05,radius:1.6,ammoDivisor:2};
+ if(b.type==='coastWatch'){
+  const level=(b.level||1)-1;
+  return {...normal,hp:TYPES.coastWatch.hp+level*36,damage:48+level*3.2,range:14+level*.06,interval:.9/(1+level*.016),ammoDivisor:2,piercing:true};
+ }
  return normal;
 }
 export const maxHp = b => TURRETS.includes(b.type) ? turretStats(b).hp : Math.round(TYPES[b.type].hp*(1+((b.level||1)-1)*.25));
@@ -159,7 +173,7 @@ export function productionSpeed(b,bonus,difficulty){
  const upgrade=(1+((b.level||1)-1)*(['drill','copperDrill','coalMine','smelter'].includes(b.type)?.25:.1))*(DIFFICULTIES[difficulty]?.production??1);
  return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
 }
-export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)?.2:.1)));
+export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)&&b.type!=='coastWatch'?.2:.1)));
 // resources is the shared total; warehouse.stock records where its stored subset sits.
 const stockLedgers=new WeakMap();
 function stockLedger(s){
@@ -167,7 +181,7 @@ function stockLedger(s){
  if(!ledger||ledger.buildings!==s.buildings||ledger.count!==s.buildings.length){
   const warehouses=s.buildings.filter(b=>b.type==='storage'&&b.hp>0),totals={};
   for(const b of warehouses)for(const [item,n]of Object.entries(b.stock??{}))totals[item]=(totals[item]??0)+n;
-  ledger={buildings:s.buildings,count:s.buildings.length,warehouses,totals,capacity:500+((s.buildings.find(b=>b.type==='hq')?.level??1)-1)*30+warehouses.reduce((n,b)=>n+warehouseCapacity(b),0)};stockLedgers.set(s,ledger);
+  ledger={buildings:s.buildings,count:s.buildings.length,warehouses,totals,capacity:500+projectLevel(s,'depot')*300+((s.buildings.find(b=>b.type==='hq')?.level??1)-1)*30+warehouses.reduce((n,b)=>n+warehouseCapacity(b),0)};stockLedgers.set(s,ledger);
  }
  return ledger;
 }
@@ -187,6 +201,8 @@ export function spendResource(s,item,amount,preferred=null){
  }
  s.resources[item]-=amount;return true;
 }
+const warehouseCanExport=(b,item)=>warehouseStock(b,item)>(b.exportReserve??0);
+const validExportReserve=value=>Number.isInteger(value)&&value>=0&&value<=199;
 const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
 export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
 // Refining conserves material: upgrades improve throughput, never multiply ore.
@@ -259,6 +275,7 @@ function mergeWarehouseStock(s,b,packed=false){
 }
 function normalizeWarehouse(b){
  if(!warehouseExportValid(b.exportItem))delete b.exportItem;
+ if(!validExportReserve(b.exportReserve))delete b.exportReserve;
  if(b.stock!==undefined)b.stock=Object.fromEntries(RESOURCE_KEYS.flatMap(item=>{
   const n=b.stock?.[item];
   return Number.isSafeInteger(n)&&n>0?[[item,n]]:[];
@@ -276,6 +293,7 @@ export function migrateGame(s){
  spatialCaches.delete(s);
  if(!s||![1,2,3,4,5,6,7,8,9,10,SAVE_SCHEMA].includes(s.version)||!Array.isArray(s.buildings)||!s.terrain||!Array.isArray(s.players))throw Error('Unsupported or damaged save file.');
  s.contentSignature=requireWorldContent(s);
+ normalizeHarbor(s);
  const previous=s.version,old=previous<SAVE_SCHEMA;
  for(const p of s.players)if(p.inventory?.inserter){(p.inventory.splitter??=[]).push(...p.inventory.inserter);delete p.inventory.inserter;}
  s.version=SAVE_SCHEMA;if(!Object.hasOwn(DIFFICULTIES,s.difficulty))s.difficulty='standard';s.stats||={totals:{},history:[{time:s.time,totals:{}}]};s.stats.totals||={};s.stats.history||=[{time:s.time,totals:{}}];
@@ -521,7 +539,7 @@ export function planBeltDrag(s,points,dir){
 }
 // An orthogonal A* route with turn penalties; avoids obstacles and fills every tile.
 export function planRoute(s,type,start,end,dir=0){
- if(!['belt','wall'].includes(type))return{error:'Rows are available for conveyors and barricades',cells:[]};
+ if(type!=='belt'&&!isBarrier(type))return{error:'Rows are available for conveyors and barricades',cells:[]};
  if(!start||!end||![start.x,start.z,end.x,end.z].every(Number.isInteger)||Math.abs(start.x)>BUILD_EDGE||Math.abs(start.z)>BUILD_EDGE||Math.abs(end.x)>BUILD_EDGE||Math.abs(end.z)>BUILD_EDGE)return{error:'Route is outside the construction zone',cells:[]};
  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(v=>key(v.x,v.z)));
  const first=grid.get(key(start.x,start.z)),last=grid.get(key(end.x,end.z));
@@ -530,7 +548,7 @@ export function planRoute(s,type,start,end,dir=0){
   if(Math.abs(x)>BUILD_EDGE||Math.abs(z)>BUILD_EDGE||!coastalLand(s.terrain,x,z)||blocked.has(key(x,z)))return false;
   const b=grid.get(key(x,z));
   if(!b)return true;
-  if(type==='wall')return b.type==='wall';
+  if(isBarrier(type))return b.type===type;
   return b===first&&DIRECTIONAL.includes(b.type)||b===last&&(['belt','hq','storage','launchpad','splitter'].includes(b.type)||Object.hasOwn(RECIPES,b.type));
  };
  if(!allowed(start.x,start.z)||!allowed(end.x,end.z))return{error:'Route endpoint is blocked',cells:[]};
@@ -574,7 +592,7 @@ export function copySetup(s,ids){
  const left=Math.min(...selected.map(b=>b.x)),top=Math.min(...selected.map(b=>b.z));
  return selected.map(b=>({type:b.type,x:b.x-left,z:b.z-top,dir:b.dir,
   ...(LOGISTICS_TYPES.includes(b.type)?{program:{...programFor(b)}}:{}),
-  ...(b.type==='storage'?{exportItem:b.exportItem??null}:{}),
+  ...(b.type==='storage'?{exportItem:b.exportItem??null,...(b.exportReserve?{exportReserve:b.exportReserve}:{})}:{}),
   ...(hasOutputBuffer(b.type)?{sendOutput:b.sendOutput===true,receiveOutput:b.receiveOutput===true}:{})}));
 }
 export function planPaste(s,layout,anchor,playerId){
@@ -584,13 +602,13 @@ export function planPaste(s,layout,anchor,playerId){
  for(const tile of layout){
   if(!tile||!Number.isInteger(tile.x)||!Number.isInteger(tile.z)||tile.x<0||tile.z<0||tile.x>BUILD_EDGE*2||tile.z>BUILD_EDGE*2||
      !Number.isInteger(tile.dir)||tile.dir<0||tile.dir>3||LOGISTICS_TYPES.includes(tile.type)&&programError(tile.program)||
-     tile.type==='storage'&&!warehouseExportValid(tile.exportItem??null))
+     tile.type==='storage'&&(!warehouseExportValid(tile.exportItem??null)||!validExportReserve(tile.exportReserve??0)))
    return {cells:[],error:'Invalid building in copied setup'};
   const x=anchor.x+tile.x,z=anchor.z+tile.z,k=key(x,z);
   if(occupied.has(k))return {cells:[],error:'Copied setup contains overlapping buildings'};
   occupied.add(k);
   const reason=placementError(s,tile.type,x,z);
-  cells.push({type:tile.type,x,z,dir:tile.dir,program:tile.program,reason,sendOutput:tile.sendOutput===true,receiveOutput:tile.receiveOutput===true,exportItem:tile.exportItem});
+  cells.push({type:tile.type,x,z,dir:tile.dir,program:tile.program,reason,sendOutput:tile.sendOutput===true,receiveOutput:tile.receiveOutput===true,exportItem:tile.exportItem,exportReserve:tile.exportReserve});
   if(!reason)needed.set(tile.type,(needed.get(tile.type)||0)+1);
  }
  if(cells.some(tile=>tile.reason))return {cells,error:cells.find(tile=>tile.reason).reason};
@@ -612,6 +630,32 @@ export function command(s,playerId,cmd){
   s.status='playing';s.paused=false;s.nextWave=s.time+DIFFICULTIES[s.difficulty].prep;return null;
  }
  if(s.status!=='playing')return 'The expedition has ended';
+ if(cmd.type==='harborProject'){
+  if(p!==s.players[0])return 'Only the host can commission harbor projects';
+  const core=s.buildings.find(b=>b.type==='hq'&&b.hp>0);
+  if(!core)return 'The lighthouse has fallen';
+  const id=cmd.project;
+  if(typeof id!=='string'||!Object.hasOwn(HARBOR_PROJECTS,id))return 'Unknown harbor project';
+  const error=projectStatus(s,id,storageCapacity(s)-storageUsed(s));
+  if(error)return error;
+  for(const [item,amount] of Object.entries(projectCost(s,id))){
+   spendResource(s,item,amount);
+   recordStockFlow(s,item,-amount);
+  }
+  const project=HARBOR_PROJECTS[id];
+  const harbor=s.harbor??={grid:0,depot:0,shipments:0,nextShipment:0};
+  if(project.reward){
+   for(const [item,amount] of Object.entries(project.reward)){
+    s.resources[item]+=amount;
+    recordStockFlow(s,item,amount);
+   }
+   harbor.shipments++;
+   harbor.nextShipment=s.time+project.interval;
+  }else harbor[id]++;
+  updatePower(s);
+  event(s,project.name+(project.limit?' tier '+harbor[id]+' complete':' delivered'));
+  return null;
+ }
  if(cmd.type==='autoLighthouse'){
   const core=s.buildings.find(b=>b.type==='hq');if(!core?.islandBeacon)return 'Automatic light requires an island beacon';
   core.lighthouseAuto=true;return null;
@@ -674,7 +718,10 @@ export function command(s,playerId,cmd){
    const b=place(s,p,tile.type,tile.x,tile.z,tile.dir);
    if(LOGISTICS_TYPES.includes(tile.type))setProgram(b,tile.program);
    if(hasOutputBuffer(tile.type)){b.sendOutput=tile.sendOutput;b.receiveOutput=tile.receiveOutput;}
-   if(tile.type==='storage')b.exportItem=tile.exportItem??null;
+   if(tile.type==='storage'){
+    b.exportItem=tile.exportItem??null;
+    b.exportReserve=tile.exportReserve??0;
+   }
   }
   updatePower(s);return null;
  }
@@ -697,7 +744,10 @@ export function command(s,playerId,cmd){
  if(cmd.type==='configureWarehouse'){
   if(b?.type!=='storage'||cmd.id!==b.id)return 'Select a warehouse';
   if(!warehouseExportValid(cmd.item))return 'Invalid warehouse material';
-  b.exportItem=cmd.item;return null;
+  if(cmd.reserve!==undefined&&!validExportReserve(cmd.reserve))return 'Reserve must be between 0 and 199 items';
+  b.exportItem=cmd.item;
+  if(cmd.reserve!==undefined)b.exportReserve=cmd.reserve;
+  return null;
  }
  if(cmd.type==='configureOutput'){
   if(!b||cmd.id!==b.id||!hasOutputBuffer(b.type))return 'Select an item-producing machine';
@@ -743,7 +793,7 @@ export function updatePower(s,dt=0){
  const generatorPower=s.buildings.reduce((power,b)=>{
   const generator=GENERATORS[b.type];return power+(generator&&s.resources[generator.fuel]>0?powerOutput(b):0);
  },0);
- const used=s.buildings.reduce((n,b)=>n+buildingPower(b),0),total=Math.round(base+generatorPower)+(roundBonus(s.wave)?.power??0);
+ const used=s.buildings.reduce((n,b)=>n+buildingPower(b),0),total=Math.round(base+generatorPower+projectLevel(s,'grid')*24)+(roundBonus(s.wave)?.power??0);
  const reserved=s.resources.power??0;
  let available=total+(dt?reserved/dt:reserved>0?used:0),delivered=0;
  for(const b of s.buildings){
@@ -858,11 +908,11 @@ function spatialIndex(s){
  const grid=new Map(),industry=[],buckets=new Map(),lamps=new Map(),blockers=[];
  s.buildings.forEach((b,order)=>{
   grid.set(key(b.x,b.z),b);
-  if(!['hq','belt','splitter','wall','lamp'].includes(b.type))blockers.push(b);
-  if(hasOutputBuffer(b.type)||b.type==='sawmill'||b.type==='lamp'||Object.hasOwn(GENERATORS,b.type)){
+  if(!['hq','belt','splitter'].includes(b.type)&&!isBarrier(b.type)&&!lampRadius(b.type))blockers.push(b);
+  if(hasOutputBuffer(b.type)||b.type==='sawmill'||lampRadius(b.type)||Object.hasOwn(GENERATORS,b.type)){
    industry.push(b);const cell=key(Math.floor(b.x/INDUSTRY_CELL),Math.floor(b.z/INDUSTRY_CELL)),entry={b,order};
    if(!buckets.has(cell))buckets.set(cell,[]);buckets.get(cell).push(entry);
-   if(b.type==='lamp'){if(!lamps.has(cell))lamps.set(cell,[]);lamps.get(cell).push(entry);}
+   if(lampRadius(b.type)){if(!lamps.has(cell))lamps.set(cell,[]);lamps.get(cell).push(entry);}
   }
  });
  cached={count:s.buildings.length,terrain:s.terrain,trees:s.terrain.trees,treeCount:s.terrain.trees.length,grid,industry,buckets,lamps,blockers};spatialCaches.set(s,cached);return cached;
@@ -870,7 +920,7 @@ function spatialIndex(s){
 function hunterForest(s){const index=spatialIndex(s);return index.forest??=woodland({trees:[...s.terrain.trees,...index.blockers]});}
 function industryTarget(index,e,hq){
  let target=hq,closest=INDUSTRY_CELL**2,order=Infinity;
- const consider=(b,at)=>{if(b.hp<=0||e.coreHunter&&b.type!=='lamp')return;const d=(e.x-b.x)**2+(e.z-b.z)**2;if(d<closest||target!==hq&&d===closest&&at<order){target=b;closest=d;order=at;}};
+ const consider=(b,at)=>{if(b.hp<=0||e.coreHunter&&!lampRadius(b.type))return;const d=(e.x-b.x)**2+(e.z-b.z)**2;if(d<closest||target!==hq&&d===closest&&at<order){target=b;closest=d;order=at;}};
  if(index.industry.length<=64){index.industry.forEach(consider);return target;}
  const buckets=e.coreHunter?index.lamps:index.buckets,x=Math.floor(e.x/INDUSTRY_CELL),z=Math.floor(e.z/INDUSTRY_CELL);
  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)for(const {b,order}of buckets.get(key(x+dx,z+dz))??[])consider(b,order);
@@ -913,8 +963,8 @@ export function step(s,dt=STEP){
   if(b.type==='storage'&&b.exportItem&&s.tick%8===b.id%8){
    const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
    const item=b.exportItem==='recipe'?
-    Object.keys(RECIPES[out?.type]?.input??{}).find(item=>warehouseStock(b,item)>0&&canAcceptItem(s,out,item,b,1)):b.exportItem;
-   if(item&&warehouseStock(b,item)>0&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
+    Object.keys(RECIPES[out?.type]?.input??{}).find(item=>warehouseCanExport(b,item)&&canAcceptItem(s,out,item,b,1)):b.exportItem;
+   if(item&&warehouseCanExport(b,item)&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
     spendResource(s,item,1,b);recordStockFlow(s,item,-1);
    }
   }
@@ -945,7 +995,7 @@ export function step(s,dt=STEP){
    if(b.progress+1e-9>=3){b.progress=Math.max(0,b.progress-3);const room=Math.max(0,storageCapacity(s)-storageUsed(s));const made=Math.min(3,room);s.resources.wood+=made;recordStockFlow(s,'wood',made);s.stats.totals.wood=(s.stats.totals.wood||0)+made;}
   }
   if(TURRETS.includes(b.type)){
-   const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>0){spendResource(s,'gear',1);recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
+   const stats=turretStats(b);b.cooldown-=dt;const consumesAmmo=usesAmmo(b.type);if(consumesAmmo&&b.ammo<=0&&s.resources.gear>=1){spendResource(s,'gear',1);recordStockFlow(s,'gear',-1);b.ammo=turretReload(b,bonus);}
    if(b.cooldown<=0&&(!consumesAmmo||b.ammo>0)){
     let target=null,closest=(stats.range*LIT_RANGE_MULTIPLIER)**2;
     for(const e of s.enemies){
@@ -955,7 +1005,7 @@ export function step(s,dt=STEP){
      if(e.hp>0&&e.training!=='exposure'&&d<closest&&d<reach**2){closest=d;target=e;}
     }
     if(target){
-     target.hp-=hostileDamage(target,stats.damage);target.lastHit=s.time;
+     target.hp-=stats.piercing?stats.damage:hostileDamage(target,stats.damage);target.lastHit=s.time;
      if(stats.radius)for(const e of s.enemies)if(e!==target&&e.hp>0&&dist(e,target)<=stats.radius)e.hp-=hostileDamage(e,stats.damage*.65);
      if(consumesAmmo)b.ammo--;b.cooldown=stats.interval;b.aim=Math.atan2(target.x-b.x,target.z-b.z);
      s.shots.push({x:b.x,z:b.z,tx:target.x,tz:target.z,radius:stats.radius,time:s.time});
@@ -980,8 +1030,8 @@ export function step(s,dt=STEP){
   let obstacle=grid.get(key(Math.round(nx),Math.round(nz)));if(['belt','inserter','splitter'].includes(obstacle?.type))obstacle=null;
   if(obstacle||d<attackRange){
    const victim=obstacle||target;
-   if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||victim.type==='wall'||victim.type==='lamp')){
-    const armor=victim.type==='wall'?(bonus?.wallDamage??1):1;
+   if(e.cooldown<=0&&(!e.coreHunter||victim.type==='hq'||isBarrier(victim.type)||lampRadius(victim.type))){
+    const armor=isBarrier(victim.type)?(bonus?.wallDamage??1):1;
     victim.hp-=(e.coreHunter?28:e.brute?24:10)*(e.damage||1)*armor;victim.lastHit=s.time;e.cooldown=.8;
    }
   }

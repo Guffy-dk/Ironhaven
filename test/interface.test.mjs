@@ -451,3 +451,25 @@ test('building trades share readable map names, construction symbols and a persi
  }finally{await h.close();}
  const reopened=harness(saved,{preferences:stored});try{assert.equal(reopened.$('show-building-types').checked,false);}finally{await reopened.close();}
 });
+
+test('Fabrication exposes Harbor Works and the lighthouse commissions stored project materials',async()=>{
+ const saved=starterWorld();
+ saved.state.resources.harborKit=10;
+ saved.state.resources.switchgear=8;
+ const h=harness(saved);
+ try{
+  h.$('resume').click();
+  h.key('j');
+  h.key('6');
+  assert.equal(h.dom.__view.tool,'harborWorks');
+  assert.match(h.$('recipe').textContent,/HARBOR EQUIPMENT/);
+  h.key('Escape');
+  h.point('pointerdown',0,0);
+  const grid=h.$('harbor-projects').querySelector('[data-project=grid]');
+  assert.ok(!grid.disabled);
+  grid.click();
+  const state=h.save();
+  assert.equal(state.harbor.grid,1);
+  assert.equal(state.resources.harborKit,0);
+ }finally{await h.close();}
+});

@@ -302,6 +302,15 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — harbor industry 0.21.1
+
+- Owner requested at least 14 buildings with new materials, endgame uses and balance tests. The update adds 11 recipe machines, 11 materials, reinforced breakwaters, signal masts and Coast Watch turrets. [PR #28](https://github.com/Guffy-dk/Ironhaven/pull/28).
+- Materials run through Industry (N) and Fabrication (J) to Harbor Equipment. The host commissions two grid/depot tiers and repeat coal/copper shipments at the lighthouse. Export reserves protect local warehouse stock needed to fund projects. Existing 0.20.2 saves with the same mods migrate to the additive catalog.
+- Owner asked whether calling a swarm early should award a bonus. The current proposed design keeps the shorter wait as the benefit, with preparation time as the tradeoff. The 0.21.1 rules add no early-call reward.
+- The owner explicitly authorized patcher release of this build once verified. This authorization applies to 0.21.1. The owner briefly proposed 0.21.1.1101, then explicitly chose 0.21.1 so the existing patcher can install it. The earlier 0.20 version ceiling is superseded for this release. Use the existing tag, published-installation and latest-promotion workflow.
+- The full factory connected every new recipe using belts and finite fixture raw materials. With reserves it delivered 170 kits and completed eight commissions within 950 simulated seconds. Low power blocked the chain. The repeatable late-wave pair prompted the Coast Watch power tune, reducing demand from 721 to 601 on a 642 supply. Both variants stayed operational through the horizon with 227 kills in swarm 26.
+- The existing 35-case campaign matrix ran with three independent workers, plus two new earned-resource cases. The earned crusher/kiln branch delivered 204 and 207 firebricks without changing the matched campaign outcomes. The entire harbor chain was tested in the prepared factory, while earned progression coverage was limited to the crusher/kiln branch. [Balance report](docs/playtests/harbor-endgame-0.21.1.md).
+
 ### 2026-11-23 22:23 Europe/Copenhagen — Codex — industrial fuel comparison
 
 - Current source baseline `6cbfb84`, measurement commit `d4020cc`. 35 ordinary-command campaigns on two workers. Higher coal reserve against the same refining layout yielded 0 bedre, 0 dårligere og 10 lige. Repaired a coal-belt overlap with a planned sawmill in the test layout and reran affected cases. No game code or public release changes.

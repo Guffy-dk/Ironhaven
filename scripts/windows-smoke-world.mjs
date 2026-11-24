@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {writeFile} from 'node:fs/promises';
 import {createGame,addPlayer,command,step,RESOURCE_KEYS} from '../public/shared/sim.js';
 // A reproducible in-engine playtest colony for Windows renderer/startup validation.
-export function smokeWorld(){
+export function smokeWorld({harbor=false}={}){
  const state=createGame(417),p=addPlayer(state,'Keeper');
  state.buildings=state.buildings.filter(b=>b.type==='hq');
  establishIsland(state);
@@ -24,6 +24,12 @@ export function smokeWorld(){
  build('lamp',-5,1);build('lamp',5,3);
  build('gunTurret',-1,3);build('turret',4,1);build('mortar',-3,3);
  for(const tile of [[-2,4],[-1,4],[0,4],[1,4]])build('wall',...tile);
+ if(harbor){
+  const types=['aggregateCrusher','firebrickKiln','cokeOven','alloyFurnace','resinKettle','cableWorks','hullYard','hydraulicWorks','switchgearShop','freightWorks','harborWorks','basaltBreakwater','signalMast','coastWatch'];
+  const tiles=types.map((type,i)=>({type,x:(i%5-2)*3,z:-8-Math.floor(i/5)*3}));
+  for(const field of ['trees','rocks'])state.terrain[field]=state.terrain[field].filter(tile=>!tiles.some(b=>tile.x===b.x&&tile.z===b.z));
+  for(const {type,x,z} of tiles)build(type,x,z);
+ }
  state.wave=25;
  for(const [x,z,levels] of [[2,3,4],[-2,-2,7],[3,-2,9],[-4,1,4],[-1,3,29],[-3,3,14]])for(let i=0;i<levels;i++){const error=command(state,p.id,{type:'upgrade',x,z});if(error)throw Error(error);}
 
@@ -35,4 +41,4 @@ export function smokeWorld(){
  for(const b of state.buildings)if(['turret','gunTurret','mortar','pulseTurret'].includes(b.type))b.cooldown=1000;
  step(state);state.paused=true;return {state,playerId:p.id};
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href&&process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld()));
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href&&process.argv[2])await writeFile(process.argv[2],JSON.stringify(smokeWorld({harbor:true})));
