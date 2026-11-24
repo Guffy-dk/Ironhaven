@@ -195,7 +195,10 @@ test('selected factory shows materials, buffered output and independent sharing 
  const saved=starterWorld(),smelter=saved.state.buildings.find(b=>b.type==='smelter');smelter.item='plate';smelter.outputBuffer=['copper'];
  const h=harness(saved);try{
   h.$('resume').click();h.point('pointerdown',smelter.x,smelter.z);h.point('pointerup',smelter.x,smelter.z);h.frame(1000);
-  assert.match(h.$('machine-io').textContent,/Iron ore.*iron plates/i);assert.match(h.$('machine-io').textContent,/Copper ore.*copper/i);
+  assert.match(h.$('recipe').textContent,/Iron ore.*iron plate.*Copper ore.*Copper/i);
+  assert.equal(h.$('machine-io').hidden,true);
+  assert.equal(h.$('building-details').open,false);
+  h.$('building-details').open=true;
   assert.equal(h.$('output-stock').textContent,'Output buffer 2 / 5');
   assert.equal(h.$('output-options').hidden,false);h.$('send-output').click();
   const selected=h.save().buildings.find(b=>b.id===smelter.id);
@@ -248,7 +251,7 @@ test('the playfield warning announces its forecast and attack independently of t
   assert.equal(active.$('swarm-warning-text').textContent,'Swarm attacking from '+SWARM_DIRECTIONS[s.waveSide]);
  }finally{await active.close();}
 });
-test('the round HUD forecasts the next bonus and announces activation once',async()=>{
+test('colony details show the active and upcoming bonus without a duplicate alert',async()=>{
  const h=harness();try{
   assert.ok(h.$('round-bonuses').hidden);
   h.$('start-solo').click();
@@ -260,8 +263,10 @@ test('the round HUD forecasts the next bonus and announces activation once',asyn
   assert.equal(h.$('round-bonus-active').textContent,'Active · +15% mining speed');
   assert.equal(h.$('round-bonus-next').textContent,'Next · +25% smelting speed');
   const announcements=[...h.$('toasts').children].filter(node=>node.textContent.includes('Bonus activated'));
-  assert.equal(announcements.length,1);
-  assert.match(announcements[0].textContent,/\+15% mining speed/);
+  assert.equal(announcements.length,0);
+  assert.equal(h.$('colony-details').open,false);
+  h.$('colony-details').open=true;
+  assert.equal(h.$('round-bonuses').closest('details'),h.$('colony-details'));
  }finally{await h.close();}
 });
 test('drag-selection moves an area and Shift override asks once before packing invalid drills',async()=>{
@@ -357,7 +362,7 @@ test('skipping training gives the full kit and restoring a training save keeps i
 test('L and Aim light send bearings; Escape and right click cancel without constructing buildings',async()=>{
  const h=harness(starterWorld());try{
   h.$('resume').click();const before=h.save(),count=before.buildings.length;
-  h.key('l');assert.match(h.$('tool-hint').textContent,/AIM LIGHT/);
+  h.key('l');assert.match(h.$('tool-hint').textContent,/Aim light/i);
   h.point('pointerdown',20,6);let saved=h.save();
   assert.equal(saved.buildings.length,count);assert.equal(saved.buildings.find(b=>b.type==='hq').lighthouseAim,Math.atan2(20,6));
   h.$('aim-light').click();h.key('Escape');h.point('pointerdown',-20,0);
@@ -454,6 +459,9 @@ test('building trades share readable map names, construction symbols and a persi
 
 test('Fabrication exposes Harbor Works and the lighthouse commissions stored project materials',async()=>{
  const saved=starterWorld();
+ saved.state.resources.plate=35;
+ saved.state.resources.steel=12;
+ saved.state.resources.module=3;
  saved.state.resources.harborKit=10;
  saved.state.resources.switchgear=8;
  const h=harness(saved);
@@ -462,6 +470,13 @@ test('Fabrication exposes Harbor Works and the lighthouse commissions stored pro
   h.key('j');
   h.key('6');
   assert.equal(h.dom.__view.tool,'harborWorks');
+  const card=h.$('hotbar').querySelector('[data-type="harborWorks"]');
+  const prices=[...card.querySelectorAll('.material-price')];
+  assert.deepEqual(prices.map(price=>price.dataset.material),['plate','steel','module']);
+  assert.deepEqual(prices.map(price=>price.textContent.trim()),['36 iron plates','12 steel','3 components']);
+  assert.equal(prices[0].title,'Iron plates · 35 available');
+  assert.deepEqual(prices.map(price=>price.classList.contains('missing')),[true,false,false]);
+  assert.equal(h.$('intel-summary').innerHTML,card.querySelector('.build-cost').innerHTML);
   assert.match(h.$('recipe').textContent,/HARBOR EQUIPMENT/);
   h.key('Escape');
   h.point('pointerdown',0,0);

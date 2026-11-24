@@ -162,7 +162,7 @@ async function start() {
     const saved=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     if(saved.state.enemies.length!==5||!saved.state.paused)throw Error('Windows capture scene did not load');
     const map=document.getElementById('minimap'),r=map.getBoundingClientRect();
-    map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
+    map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-1/260),bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   smokePhase('Fixture rendered; capturing colony');
@@ -171,10 +171,23 @@ async function start() {
   smokePhase('Colony captured; inspecting creature');
   const inspected=await gameWindow.webContents.executeJavaScript(`(async () => {
     const canvas=document.getElementById('world');
-    for(let y=.64;y<.81;y+=.008){
-      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
-      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
+    const health=document.getElementById('enemy-health');
+    const {width,height}=health;
+    const {data}=health.getContext('2d').getImageData(0,0,width,height);
+    const bars=[];
+    // Five hostiles of known types are lined up west to east in the fixture.
+    for(let y=1;y<height-1;y++)for(let x=1;x<width-24;x++){
+      const i=(y*width+x)*4;
+      const fill=(data[i]===237&&data[i+1]===205&&data[i+2]===145)||(data[i]===216&&data[i+1]===137&&data[i+2]===118);
+      if(fill&&data[i-4]!==data[i]&&data[i-width*4]!==data[i]&&data[i+8*4]===data[i])bars.push({x:x+12,y});
+    }
+    if(bars.length!==5)throw Error('Expected five hostile health bars, found '+bars.length);
+    const guard=bars.sort((a,b)=>a.x-b.x)[2];
+    for(let y=guard.y;y<guard.y+60;y+=3){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:guard.x,clientY:y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:guard.x,clientY:y,bubbles:true}));
       if(document.getElementById('intel-title').textContent==='Shell guard')break;
+      if(!document.getElementById('creature-back').hidden)document.getElementById('creature-back').click();
     }
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     return document.getElementById('intel-title').textContent;
@@ -186,7 +199,7 @@ async function start() {
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('creature-back').click();document.getElementById('auto-light').click();
     for(let i=0;i<50;i++)document.getElementById('zoom-out').click();
-    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
+    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true}));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   })()`);
   smokePhase('Capturing island');
@@ -219,17 +232,28 @@ async function start() {
   const settingsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-settings.png'),settingsCapture.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('menu-dialog').close();
+    document.getElementById('resume').click();
+    document.getElementById('pause').click();
     for(let i=0;i<60;i++)document.getElementById('zoom-in').click();
     for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
-    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const diagnostics=document.getElementById('toggle-diagnostics');
+    diagnostics.click();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const fixture=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
+    const hub=fixture.state.buildings.find(building=>building.type==='splitter');
+    const marker=document.getElementById('building-'+hub.id);
+    if(!marker)throw Error('Dispatch hub marker is outside the capture scene');
+    const x=parseFloat(marker.style.left);
+    const top=parseFloat(marker.style.top)+parseFloat(marker.style.getPropertyValue('--label-lift'));
     const canvas=document.getElementById('world');let found=false;
-    for(let y=.36;y<.55&&!found;y+=.012)for(let x=.46;x<.55&&!found;x+=.012){
-      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
-      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*x,clientY:innerHeight*y,bubbles:true}));
+    for(let y=top;y<Math.min(innerHeight,top+200)&&!found;y+=4){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:x,clientY:y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:x,clientY:y,bubbles:true}));
       found=document.getElementById('intel-title').textContent==='Dispatch hub';
     }
     if(!found)throw Error('Numbered Dispatch hub could not be selected');
+    diagnostics.click();
+    document.getElementById('toasts').replaceChildren();
     document.getElementById('program-building').click();
     if(!document.getElementById('program-dialog').open||!document.getElementById('program-ports').textContent.includes('4 OUT'))throw Error('Numbered port configuration failed');
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -241,7 +265,7 @@ async function start() {
     document.getElementById('resume').click();
     document.getElementById('pause').click();
     const canvas=document.getElementById('minimap'),r=canvas.getBoundingClientRect();
-    canvas.dispatchEvent(new MouseEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-9/257),bubbles:true}));
+    canvas.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width/2,clientY:r.top+r.height*(.5-9/257),bubbles:true}));
     document.querySelector('[data-tab="fabrication"]').click();
     if(document.querySelector('[data-type="harborWorks"]').hidden)throw Error('Fabrication toolbar is unavailable');
     document.getElementById('save').click();
@@ -249,10 +273,41 @@ async function start() {
     const expected=['aggregateCrusher','firebrickKiln','cokeOven','alloyFurnace','resinKettle','cableWorks','hullYard','hydraulicWorks','switchgearShop','freightWorks','harborWorks','basaltBreakwater','signalMast','coastWatch'];
     if(expected.some(type=>!buildings.some(b=>b.type===type)))throw Error('Harbor fixture did not load');
     if(document.querySelector('dialog[open]'))throw Error('Harbor capture is obscured by a dialog');
+    const inspector=document.getElementById('intel');
+    const colony=document.getElementById('colony-details');
+    const summary=colony.querySelector('summary');
+    if(inspector.checkVisibility()||colony.open)throw Error('Default HUD shows expanded details');
+    const bounds=summary.getBoundingClientRect();
+    if(!summary.contains(document.elementFromPoint(bounds.left+bounds.width/2,bounds.top+bounds.height/2)))throw Error('Colony details cannot receive clicks');
+    summary.click();
+    if(!document.getElementById('objectives').checkVisibility())throw Error('Colony details did not reveal objectives');
+    summary.click();
+    document.querySelector('[data-type="harborWorks"]').click();
+    const details=document.getElementById('building-details');
+    const description=document.getElementById('intel-desc');
+    if(!inspector.checkVisibility()||description.checkVisibility())throw Error('Blueprint inspector is not compact');
+    details.querySelector('summary').click();
+    if(!description.checkVisibility())throw Error('Blueprint details cannot be opened');
+    document.querySelector('[data-type="harborWorks"]').click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   })()`);
   const harborCapture=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-harbor.png'),harborCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async()=>{
+    const card=document.querySelector('[data-type="harborWorks"]');
+    card.click();
+    const prices=[...card.querySelectorAll('.material-price')];
+    const inspectorPrices=[...document.querySelectorAll('#intel-summary .material-price')];
+    if(prices.map(el=>el.dataset.material).join(',')!=='plate,steel,module')throw Error('Harbor Works cost icons are missing');
+    for(const [index,price] of prices.entries()){
+      const art=price.querySelector('.item-icon');
+      if(!art||!getComputedStyle(art).backgroundImage.includes('data:image/webp;base64'))throw Error('Material atlas was not embedded');
+      if(price.textContent!==inspectorPrices[index]?.textContent)throw Error('Toolbar and blueprint show different prices');
+    }
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const pricesCapture=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-build-costs.png'),pricesCapture.toPNG());
   smokePhase('Captures complete');
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);

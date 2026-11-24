@@ -40,3 +40,18 @@ export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper
 for(const [name,item]of Object.entries(CONTENT.items))if(!Object.hasOwn(RESOURCE_NAMES,name)){
  RESOURCE_NAMES[name]=item.name.toUpperCase();paths[name]=paths[item.icon]||paths.module;
 }
+
+// Reading order of the six-column material atlas. Cell 23 is the generic cargo icon.
+const materialCells=[
+ 'wood','plate','gear','copper','steel','circuit',
+ 'module','coal','ore','copperOre','concentrate','bearing',
+ 'aggregate','firebrick','coke','alloy','resin','cable',
+ 'hull','hydraulics','switchgear','freightFrame','harborKit',
+];
+export function itemIcon(name){
+ const known=materialCells.indexOf(name);
+ const fallback=known<0?materialCells.indexOf(CONTENT.items[name]?.icon):-1;
+ const cell=known>=0?known:fallback>=0?fallback:23;
+ const column=cell%6*20,row=Math.floor(cell/6)*100/3;
+ return `<span class="item-icon" style="background-position:${column}% ${row}%" aria-hidden="true"></span>`;
+}

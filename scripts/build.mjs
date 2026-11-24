@@ -14,7 +14,8 @@ await cp('node_modules/three/LICENSE','public/vendor/THREE-LICENSE.txt');
 // The bundle is an internal Windows Electron resource, not a browser distribution.
 await rm('dist',{recursive:true,force:true});
 const result=await build({entryPoints:['public/app.js'],bundle:true,minify:true,format:'iife',target:['es2022'],write:false,legalComments:'inline',plugins:[{name:'shared-three',setup(b){b.onResolve({filter:/^three$/},()=>({path:resolve('public/vendor/three.module.js')}));}}]});
-const css=await readFile('public/style.css','utf8');
+const materials=await readFile('public/art/material-icons.webp');
+const css=(await readFile('public/style.css','utf8')).replace('./art/material-icons.webp',`data:image/webp;base64,${materials.toString('base64')}`);
 const threeLicense=await readFile('node_modules/three/LICENSE','utf8');
 let source=await readFile('public/index.html','utf8');
 for(const [asset,mime] of [['crab-color.png','image/png'],['crab-normal.png','image/png'],['horror-color.png','image/png'],['horror-normal.png','image/png'],['coastal-surfaces.png','image/png'],['quarry-materials.jpg','image/jpeg'],['quarry-spruce.png','image/png']]){

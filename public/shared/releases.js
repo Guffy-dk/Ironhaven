@@ -1,9 +1,9 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
-export const RELEASE_STAGE = 'alpha';
+export const RELEASE_STAGE = 'internal';
 export const CURRENT_VERSION = '0.21.1';
 export const displayVersion = v => /^\d+\.\d+\.0$/.test(v) ? v.slice(0,-2) : v;
-export const INTERNAL_BUILD = '0.21.1.1101';
+export const INTERNAL_BUILD = '0.21.1.1103';
 export const RELEASES = [
  {
   version:'0.21.1',date:'2026-11-24',title:'Harbor supply and industry',

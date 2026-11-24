@@ -320,3 +320,97 @@ body.at-start #building-labels,body.inspecting-creature #building-labels{display
 .harbor-project small{line-height:1.35;color:var(--muted)}
 .harbor-project button{margin:0}
 .resources,.hotbar{scrollbar-width:thin;scrollbar-color:#466470 #162b34}
+
+/* Keep the expedition in view. Details open beside the relevant action. */
+.left-panel .wave-panel,
+body[data-visual-style="quarry"] .left-panel .wave-panel {
+ padding: 6px 0;
+ background: transparent;
+ border: 0;
+}
+.left-panel .wave-label { display: none; }
+#colony-details { font-size: 12px; pointer-events: auto; }
+#colony-details .round-bonuses {
+ position: static;
+ display: grid;
+ text-align: left;
+ padding: 5px 0;
+ background: transparent;
+ border: 0;
+}
+#right-dock > .intel:not(.has-selection):not(.inspector-pinned) { display: none; }
+#right-dock > .intel {
+ flex: 0 1 auto;
+ min-height: 0;
+ padding: 12px;
+}
+#right-dock > .intel .intel-icon { display: none; }
+.intel h2 { font-size: 17px; margin: 3px 0 5px; }
+.intel .panel-heading { margin: 0; }
+.intel .intel-summary { font-size: 12px; color: var(--mint); }
+.intel .intel-summary:empty { display: none; }
+.intel .recipe { font-size: 11px; line-height: 1.4; }
+.intel .inspector-actions { gap: 5px; }
+#building-details, #harbor-project-details { margin-top: 8px; }
+#building-details > summary, #harbor-project-details > summary, #colony-details > summary {
+ cursor: pointer;
+ padding: 6px 0;
+ color: #b7cbd0;
+ font-size: 12px;
+}
+#right-dock > .minimap {
+ margin-top: auto;
+ align-self: end;
+ width: min(100%, 155px);
+ padding: 7px;
+}
+#right-dock > .minimap canvas { height: 75px; }
+#right-dock > .minimap .map-key { display: none; }
+.resources .resource .stock-rate { display: none; }
+.bottom-ui > .controls { display: none; }
+.visually-hidden {
+ position: absolute;
+ width: 1px;
+ height: 1px;
+ overflow: hidden;
+ clip-path: inset(50%);
+ white-space: nowrap;
+}
+.item-icon {
+ display: inline-block;
+ flex: none;
+ width: var(--item-size, 20px);
+ height: var(--item-size, 20px);
+ background-image: url("./art/material-icons.webp");
+ background-size: 600% 400%;
+ background-repeat: no-repeat;
+}
+.resources .resource:has(>.item-icon) { grid-template-columns: 26px auto; }
+.resource > .item-icon { --item-size: 26px; grid-row: 1 / 3; align-self: center; }
+.build-btn .build-cost, .intel-summary:has(>.material-price) {
+ display: flex;
+ flex-wrap: wrap;
+ align-items: center;
+ gap: 2px 5px;
+}
+.build-btn .build-cost { justify-content: center; color: var(--text); }
+.material-price {
+ display: inline-flex;
+ align-items: center;
+ gap: 2px;
+ white-space: nowrap;
+ color: var(--text);
+ font: 700 11px "Segoe UI", sans-serif;
+ font-variant-numeric: tabular-nums;
+}
+.build-cost .item-icon { --item-size: 18px; }
+.intel-summary .material-price { font-size: 13px; }
+.intel-summary .material-price.missing, .build-cost .material-price.missing { color: #ffab93; }
+@media (max-width: 1350px) {
+ .resources .resource:has(>.item-icon) { grid-template-columns: 22px auto; }
+ .resource > .item-icon { --item-size: 22px; }
+}
+@media (max-width: 1000px) {
+ #right-dock > .intel.has-selection p { display: block; }
+ #right-dock > .minimap { width: min(100%, 126px); }
+}
