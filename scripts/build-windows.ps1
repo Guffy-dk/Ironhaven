@@ -34,7 +34,7 @@ try {
   if (Test-Path -LiteralPath $defaultApp) { Remove-Item -LiteralPath $defaultApp }
   $game = Join-Path $resources 'app'
   New-Item -ItemType Directory -Force -Path $game | Out-Null
-  Copy-Item -LiteralPath 'desktop/game.cjs', 'desktop/mod-loader.cjs', 'release/Ironhaven.html', 'release/mod-base.json', 'release/mod-worker.cjs' -Destination $game -Force
+  Copy-Item -LiteralPath 'desktop/game.cjs', 'desktop/mod-loader.cjs', 'release/Ironhaven.html', 'release/Studio-Intro.html', 'release/mod-base.json', 'release/mod-worker.cjs' -Destination $game -Force
   Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt' -Destination $gameFolder -Force
   $modding = Join-Path $gameFolder 'Modding'
   New-Item -ItemType Directory -Force -Path $modding | Out-Null

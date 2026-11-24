@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900" width="1000" height="900" role="img" aria-labelledby="title">
+<title id="title">Loeth Studios</title>
+<defs>
+ <linearGradient id="riser" x1="0" y1="0" x2="0.9" y2="1" gradientUnits="objectBoundingBox">
+  <stop stop-color="#bacaff"/><stop offset=".36" stop-color="#6568b4"/><stop offset=".7" stop-color="#292251"/><stop offset="1" stop-color="#7752c6"/>
+ </linearGradient>
+ <linearGradient id="sill" x1=".14" y1="0" x2=".78" y2="1">
+  <stop stop-color="#b9a7f4"/><stop offset=".42" stop-color="#6c4cae"/><stop offset="1" stop-color="#251b54"/>
+ </linearGradient>
+ <linearGradient id="bevel" x1="0" y1=".2" x2="1" y2=".76">
+  <stop stop-color="#e1e8ff"/><stop offset=".42" stop-color="#6557a5"/><stop offset=".68" stop-color="#ccb6fc"/><stop offset="1" stop-color="#8e76cf"/>
+ </linearGradient>
+ <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+  <stop stop-color="#f5f1ed"/><stop offset="1" stop-color="#d3d7e8"/>
+ </linearGradient>
+</defs>
+<g id="upper-facet">
+ <path d="M230 548 447 109 654 109 476 423Z" fill="url(#riser)" stroke="url(#bevel)" stroke-width="7" stroke-linejoin="round"/>
+ <path d="M238 536 458 123 638 117 490 230Z" fill="#dbe4ff" opacity=".19"/>
+ <path d="M249 518 490 230 475 413Z" fill="#17183d" opacity=".51"/>
+ <path d="M458 123 490 230 475 413 428 327Z" fill="#e9ddff" opacity=".15"/>
+ <path d="M455 113 645 113 604 184" fill="none" stroke="#deebff" stroke-width="2" opacity=".8"/>
+ <path d="M288 423 618 173" fill="none" stroke="#d8d9ff" stroke-width="1.15" opacity=".38"/>
+</g>
+<g id="lower-facet">
+ <path d="M229 553 522 433 789 433 695 553Z" fill="url(#sill)" stroke="url(#bevel)" stroke-width="7" stroke-linejoin="round"/>
+ <path d="M247 548 529 443 773 439 649 485Z" fill="#edddff" opacity=".31"/>
+ <path d="M263 548 649 485 694 548Z" fill="#1b123f" opacity=".46"/>
+ <path d="M526 439 777 439 702 538" fill="none" stroke="#e2cdf9" stroke-width="1.6" opacity=".68"/>
+ <path d="M333 525 750 448" fill="none" stroke="#ede0ff" stroke-width="1" opacity=".24"/>
+</g>
+<g id="wordmark" fill="url(#porcelain)"><g transform="translate(127.5 702) scale(0.0973602 -0.0723684)"><path d="M188 1493H573V291H1249V0H188Z" transform="translate(0 0)"/><path d="M870 1241Q694 1241 597.0 1111.0Q500 981 500 745Q500 510 597.0 380.0Q694 250 870 250Q1047 250 1144.0 380.0Q1241 510 1241 745Q1241 981 1144.0 1111.0Q1047 1241 870 1241ZM870 1520Q1230 1520 1434.0 1314.0Q1638 1108 1638 745Q1638 383 1434.0 177.0Q1230 -29 870 -29Q511 -29 306.5 177.0Q102 383 102 745Q102 1108 306.5 1314.0Q511 1520 870 1520Z" transform="translate(1329 0)"/><path d="M188 1493H1227V1202H573V924H1188V633H573V291H1249V0H188Z" transform="translate(3094 0)"/><path d="M10 1493H1386V1202H891V0H506V1202H10Z" transform="translate(4517 0)"/><path d="M188 1493H573V924H1141V1493H1526V0H1141V633H573V0H188Z" transform="translate(5938 0)"/></g></g>
+<g id="studios" fill="#c6c9dd"><g transform="translate(248.0 776) scale(0.0428827 -0.0282895)"><path d="M1096 1444V1247Q981 1302 879.0 1329.0Q777 1356 682 1356Q517 1356 427.5 1292.0Q338 1228 338 1110Q338 1011 397.5 960.5Q457 910 623 879L745 854Q971 811 1078.5 702.5Q1186 594 1186 412Q1186 195 1040.5 83.0Q895 -29 614 -29Q508 -29 388.5 -5.0Q269 19 141 66V274Q264 205 382.0 170.0Q500 135 614 135Q787 135 881.0 203.0Q975 271 975 397Q975 507 907.5 569.0Q840 631 686 662L563 686Q337 731 236.0 827.0Q135 923 135 1094Q135 1292 274.5 1406.0Q414 1520 659 1520Q764 1520 873.0 1501.0Q982 1482 1096 1444Z" transform="translate(0 0)"/><path d="M-6 1493H1257V1323H727V0H524V1323H-6Z" transform="translate(1735 0)"/><path d="M178 1493H381V586Q381 346 468.0 240.5Q555 135 750 135Q944 135 1031.0 240.5Q1118 346 1118 586V1493H1321V561Q1321 269 1176.5 120.0Q1032 -29 750 -29Q467 -29 322.5 120.0Q178 269 178 561Z" transform="translate(3421 0)"/><path d="M403 1327V166H647Q956 166 1099.5 306.0Q1243 446 1243 748Q1243 1048 1099.5 1187.5Q956 1327 647 1327ZM201 1493H616Q1050 1493 1253.0 1312.5Q1456 1132 1456 748Q1456 362 1252.0 181.0Q1048 0 616 0H201Z" transform="translate(5355 0)"/><path d="M201 1493H403V0H201Z" transform="translate(7367 0)"/><path d="M807 1356Q587 1356 457.5 1192.0Q328 1028 328 745Q328 463 457.5 299.0Q587 135 807 135Q1027 135 1155.5 299.0Q1284 463 1284 745Q1284 1028 1155.5 1192.0Q1027 1356 807 1356ZM807 1520Q1121 1520 1309.0 1309.5Q1497 1099 1497 745Q1497 392 1309.0 181.5Q1121 -29 807 -29Q492 -29 303.5 181.0Q115 391 115 745Q115 1099 303.5 1309.5Q492 1520 807 1520Z" transform="translate(8406 0)"/><path d="M1096 1444V1247Q981 1302 879.0 1329.0Q777 1356 682 1356Q517 1356 427.5 1292.0Q338 1228 338 1110Q338 1011 397.5 960.5Q457 910 623 879L745 854Q971 811 1078.5 702.5Q1186 594 1186 412Q1186 195 1040.5 83.0Q895 -29 614 -29Q508 -29 388.5 -5.0Q269 19 141 66V274Q264 205 382.0 170.0Q500 135 614 135Q787 135 881.0 203.0Q975 271 975 397Q975 507 907.5 569.0Q840 631 686 662L563 686Q337 731 236.0 827.0Q135 923 135 1094Q135 1292 274.5 1406.0Q414 1520 659 1520Q764 1520 873.0 1501.0Q982 1482 1096 1444Z" transform="translate(10453 0)"/></g></g>
+</svg>

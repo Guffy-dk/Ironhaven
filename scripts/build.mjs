@@ -28,6 +28,11 @@ const html=packageHtml(source,{
 });
 await mkdir('release',{recursive:true});
 await writeFile('release/Ironhaven.html',html);
+const studioTemplate=await readFile('desktop/studio.html','utf8');
+const [studioVideo,studioPoster]=await Promise.all([readFile('public/art/studio-intro.webm'),readFile('public/art/studio-intro.jpg')]);
+await writeFile('release/Studio-Intro.html',studioTemplate
+ .replace('__STUDIO_INTRO__',`data:video/webm;base64,${studioVideo.toString('base64')}`)
+ .replace('__STUDIO_POSTER__',`data:image/jpeg;base64,${studioPoster.toString('base64')}`));
 await writeFile('release/RELEASE_NOTES.md',releaseMarkdown(currentRelease));
 const game=await import('../public/shared/sim.js');
 const {CONTENT}=await import('../public/shared/content.js');

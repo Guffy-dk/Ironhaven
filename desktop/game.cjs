@@ -7,6 +7,7 @@ const os = require('node:os');
 const {loadModSources,compileInWorker,injectModData}=require('./mod-loader.cjs');
 
 const gameUrl = 'ironhaven://game/index.html';
+const studioUrl = 'ironhaven://game/studio.html';
 const repositoryUrl = 'https://github.com/Guffy-dk/Ironhaven';
 const modSmokeTest=process.argv.includes('--mod-smoke-test');
 const smokeTest = process.argv.includes('--smoke-test')||modSmokeTest;
@@ -23,7 +24,7 @@ if (smokeTest) {
 }
 protocol.registerSchemesAsPrivileged([{ scheme: 'ironhaven', privileges: { standard: true, secure: true } }]);
 
-async function start() {
+async function prepareGameDocument() {
   smokePhase('Reading embedded game');
   let html = await readFile(path.join(__dirname, 'Ironhaven.html'), 'utf8');
   const modDirectory=path.join(app.getPath('userData'),'mods');
@@ -45,10 +46,41 @@ async function start() {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Security-Policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'`,
   };
-  protocol.handle('ironhaven', request => {
-    if (request.method !== 'GET' || request.url !== gameUrl) return new Response(null, { status: 404 });
-    return new Response(html, { headers });
-  });
+  return { html, headers };
+}
+
+async function presentStudio() {
+  await gameWindow.loadURL(studioUrl);
+  gameWindow.show();
+  const playback = gameWindow.webContents.executeJavaScript(`new Promise(resolve => {
+    const video = document.getElementById('studio-intro');
+    const finish = reason => {
+      clearTimeout(deadline);
+      video.pause();
+      resolve({ reason, duration: video.duration, played: video.currentTime });
+    };
+    const deadline = setTimeout(() => finish('timeout'), 4000);
+    video.addEventListener('ended', () => finish('ended'), { once: true });
+    window.addEventListener('keydown', event => { if (event.key === 'Escape') finish('skipped'); });
+    video.play().catch(() => setTimeout(() => finish('poster'), 1500));
+  })`);
+  if (smokeTest && !modSmokeTest) {
+    await gameWindow.webContents.executeJavaScript(`new Promise(resolve => {
+      const video = document.getElementById('studio-intro');
+      video.addEventListener('timeupdate', () => { if (video.currentTime >= 2) resolve(); });
+      setTimeout(resolve, 3500);
+    })`);
+    const capture = await gameWindow.webContents.capturePage();
+    await writeFile(path.resolve(__dirname, '../../../..', 'Ironhaven-studio.png'), capture.toPNG());
+  }
+  const result = await playback;
+  if (smokeTest && (result.reason !== 'ended' || result.duration < 2.8 || result.duration > 3.2 || result.played < 2.8)) {
+    throw Error('Studio intro did not play to completion: ' + JSON.stringify(result));
+  }
+  if (smokeTest) gameWindow.hide();
+}
+
+async function start() {
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => {
     callback(contents?.getURL() === gameUrl && permission === 'clipboard-sanitized-write');
   });
@@ -56,7 +88,7 @@ async function start() {
   Menu.setApplicationMenu(null);
   gameWindow = new BrowserWindow({
     width: 1280, height: 800, minWidth: 900, minHeight: 600, show: false,
-    title: 'Ironhaven', backgroundColor: '#101e21',
+    title: 'Ironhaven', backgroundColor: '#100e1c',
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: !smokeTest },
   });
   if(smokeTest)gameWindow.webContents.on('console-message',(event,details,message)=>{
@@ -67,14 +99,28 @@ async function start() {
     return { action: 'deny' };
   });
   gameWindow.webContents.on('will-navigate', event => event.preventDefault());
+  const studioDocument = readFile(path.join(__dirname, 'Studio-Intro.html'), 'utf8');
+  const gameDocument = prepareGameDocument();
+  protocol.handle('ironhaven', async request => {
+    if (request.method === 'GET' && request.url === studioUrl) {
+      return new Response(await studioDocument, { headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:; media-src data:; base-uri 'none'"
+      } });
+    }
+    if (request.method === 'GET' && request.url === gameUrl) {
+      const { html, headers } = await gameDocument;
+      return new Response(html, { headers });
+    }
+    return new Response(null, { status: 404 });
+  });
+  await Promise.all([studioDocument, gameDocument, presentStudio()]);
+  smokePhase('Loeth Studios intro played');
   smokePhase('Loading game and warming renderer');
   await gameWindow.loadURL(gameUrl);
   smokePhase('Game document loaded');
 
-  if (!smokeTest) {
-    gameWindow.show();
-    return;
-  }
+  if (!smokeTest) return;
   const result = await gameWindow.webContents.executeJavaScript(`(() => ({
     loaded: document.getElementById('loading')?.hidden === true,
     version: document.getElementById('version-label')?.textContent,

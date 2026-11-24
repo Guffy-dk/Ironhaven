@@ -302,10 +302,16 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — Loeth Studios launch intro
+
+- Owner requested a short startup film and reusable Loeth Studios branding with detailed reflections, shadow and animation. The internal Windows build `0.21.1.1104` starts with a three-second studio animation. It uses indigo glass, pearl lettering and a moving light strip. Escape skips the animation.
+- The Windows shell shows the studio screen while it reads the packaged game and loads enabled mod prototypes. All video and poster data are embedded locally. The original branding and animation sources are in [studio/loeth-studios](studio/loeth-studios/README.md).
+
 ### 2026-11-24 — Codex — material icon and build price preview
 
 - Owner approved the material-icon mockup and requested in-game evidence. Internal build `0.21.1.1103` adds the approved illustrated material shapes to the stock bar, build cards, blueprint prices, placement flow and production report. A build price shows each icon with its quantity and highlights the quantity of any missing material. The material name is available on hover.
 - The original art and atlas mapping cover 23 existing raw and manufactured materials, with a fallback cargo crate and reuse of known item icons for Lua mods. The offline Windows bundle embeds one 84 KB atlas. [Art source and derivation](docs/design/MATERIAL_ICONS.md).
+- The compact HUD and prices were merged after 209 automated tests and the exact Windows build passed. The native game capture shows Harbor Works with a missing iron-plate quantity in red. [PR #29](https://github.com/Guffy-dk/Ironhaven/pull/29) · [Windows captures](https://github.com/Guffy-dk/Ironhaven/actions/runs/45304344267/artifacts/14879788946).
 
 ### 2026-11-24 — Codex — compact colony UI preview
 
