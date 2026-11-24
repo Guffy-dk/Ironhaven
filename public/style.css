@@ -399,11 +399,12 @@ body[data-visual-style="quarry"] .left-panel .wave-panel {
  align-items: center;
  gap: 2px;
  white-space: nowrap;
+ color: var(--text);
  font: 700 11px "Segoe UI", sans-serif;
  font-variant-numeric: tabular-nums;
 }
 .build-cost .item-icon { --item-size: 18px; }
-.intel-summary .material-price { font-size: 13px; color: var(--text); }
+.intel-summary .material-price { font-size: 13px; }
 .intel-summary .material-price.missing, .build-cost .material-price.missing { color: #ffab93; }
 @media (max-width: 1350px) {
  .resources .resource:has(>.item-icon) { grid-template-columns: 22px auto; }

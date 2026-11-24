@@ -236,6 +236,8 @@ async function start() {
     document.getElementById('pause').click();
     for(let i=0;i<60;i++)document.getElementById('zoom-in').click();
     for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
+    const diagnostics=document.getElementById('toggle-diagnostics');
+    diagnostics.click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const fixture=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     const hub=fixture.state.buildings.find(building=>building.type==='splitter');
@@ -250,6 +252,8 @@ async function start() {
       found=document.getElementById('intel-title').textContent==='Dispatch hub';
     }
     if(!found)throw Error('Numbered Dispatch hub could not be selected');
+    diagnostics.click();
+    document.getElementById('toasts').replaceChildren();
     document.getElementById('program-building').click();
     if(!document.getElementById('program-dialog').open||!document.getElementById('program-ports').textContent.includes('4 OUT'))throw Error('Numbered port configuration failed');
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
