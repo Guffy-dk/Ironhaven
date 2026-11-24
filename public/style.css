@@ -415,4 +415,4 @@ body[data-visual-style="quarry"] .left-panel .wave-panel {
  #right-dock > .minimap { width: min(100%, 126px); }
 }
 
-.ammo-alert button{display:block;margin-top:6px;padding:4px 8px;color:inherit;font:inherit}
+.ammo-alert button{pointer-events:auto;display:block;margin-top:6px;padding:4px 8px;color:inherit;font:inherit}

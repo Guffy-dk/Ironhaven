@@ -367,6 +367,8 @@ async function start() {
     const alert=document.getElementById('ammo-alert');
     const find=document.getElementById('find-ammo-turret');
     if(alert.hidden||!find.checkVisibility())throw Error('Windows ammo shortcut is not visible');
+    const bounds=find.getBoundingClientRect();
+    if(document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2)!==find)throw Error('Windows ammo shortcut cannot receive pointer input');
     find.click();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     if(!document.getElementById('intel-title').textContent.includes('Mortar'))throw Error('Windows ammo shortcut did not select the empty mortar');
