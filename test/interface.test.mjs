@@ -459,6 +459,9 @@ test('building trades share readable map names, construction symbols and a persi
 
 test('Fabrication exposes Harbor Works and the lighthouse commissions stored project materials',async()=>{
  const saved=starterWorld();
+ saved.state.resources.plate=35;
+ saved.state.resources.steel=12;
+ saved.state.resources.module=3;
  saved.state.resources.harborKit=10;
  saved.state.resources.switchgear=8;
  const h=harness(saved);
@@ -467,6 +470,13 @@ test('Fabrication exposes Harbor Works and the lighthouse commissions stored pro
   h.key('j');
   h.key('6');
   assert.equal(h.dom.__view.tool,'harborWorks');
+  const card=h.$('hotbar').querySelector('[data-type="harborWorks"]');
+  const prices=[...card.querySelectorAll('.material-price')];
+  assert.deepEqual(prices.map(price=>price.dataset.material),['plate','steel','module']);
+  assert.deepEqual(prices.map(price=>price.textContent.trim()),['36 iron plates','12 steel','3 components']);
+  assert.equal(prices[0].title,'Iron plates · 35 available');
+  assert.deepEqual(prices.map(price=>price.classList.contains('missing')),[true,false,false]);
+  assert.equal(h.$('intel-summary').innerHTML,card.querySelector('.build-cost').innerHTML);
   assert.match(h.$('recipe').textContent,/HARBOR EQUIPMENT/);
   h.key('Escape');
   h.point('pointerdown',0,0);

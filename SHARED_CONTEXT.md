@@ -302,6 +302,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 — Codex — material icon and build price preview
+
+- Owner approved the material-icon mockup and requested in-game evidence. Internal build `0.21.1.1103` adds the approved illustrated material shapes to the stock bar, build cards, blueprint prices, placement flow and production report. A build price shows each icon with its quantity and highlights the quantity of any missing material. The material name is available on hover.
+- The original art and atlas mapping cover 23 existing raw and manufactured materials, with a fallback cargo crate and reuse of known item icons for Lua mods. The offline Windows bundle embeds one 84 KB atlas. [Art source and derivation](docs/design/MATERIAL_ICONS.md).
+
 ### 2026-11-24 — Codex — compact colony UI preview
 
 - Owner requested less text and fewer windows. Internal build `0.21.1.1102` keeps the inspector out of the way until a building or tool is selected, while retaining an explicit pin. The default view shows small swarm and map panels.

@@ -232,10 +232,11 @@ async function start() {
   const settingsCapture=await gameWindow.webContents.capturePage();await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-settings.png'),settingsCapture.toPNG());
   await gameWindow.webContents.executeJavaScript(`(async () => {
     document.getElementById('menu-dialog').close();
+    document.getElementById('resume').click();
+    document.getElementById('pause').click();
     for(let i=0;i<60;i++)document.getElementById('zoom-in').click();
     for(let i=0;i<3;i++)document.getElementById('zoom-out').click();
-    const map=document.getElementById('minimap'),r=map.getBoundingClientRect();map.dispatchEvent(new PointerEvent('click',{clientX:r.left+r.width*(.5-1/260),clientY:r.top+r.height*(.5-3/260),bubbles:true}));
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const fixture=JSON.parse(localStorage.getItem('ironhaven.save.v1'));
     const hub=fixture.state.buildings.find(building=>building.type==='splitter');
     const marker=document.getElementById('building-'+hub.id);
@@ -288,6 +289,21 @@ async function start() {
   })()`);
   const harborCapture=await gameWindow.webContents.capturePage();
   await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-harbor.png'),harborCapture.toPNG());
+  await gameWindow.webContents.executeJavaScript(`(async()=>{
+    const card=document.querySelector('[data-type="harborWorks"]');
+    card.click();
+    const prices=[...card.querySelectorAll('.material-price')];
+    const inspectorPrices=[...document.querySelectorAll('#intel-summary .material-price')];
+    if(prices.map(el=>el.dataset.material).join(',')!=='plate,steel,module')throw Error('Harbor Works cost icons are missing');
+    for(const [index,price] of prices.entries()){
+      const art=price.querySelector('.item-icon');
+      if(!art||!getComputedStyle(art).backgroundImage.includes('data:image/webp;base64'))throw Error('Material atlas was not embedded');
+      if(price.textContent!==inspectorPrices[index]?.textContent)throw Error('Toolbar and blueprint show different prices');
+    }
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  })()`);
+  const pricesCapture=await gameWindow.webContents.capturePage();
+  await writeFile(path.resolve(__dirname,'../../../..','Ironhaven-build-costs.png'),pricesCapture.toPNG());
   smokePhase('Captures complete');
   if(graphicsErrors.length)throw Error('Desktop renderer errors: '+graphicsErrors.join('\n'));
   app.exit(0);

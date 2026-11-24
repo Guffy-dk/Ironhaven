@@ -17,7 +17,7 @@ import { initWindows } from './windows.js';
 import { factoryStatus,STATUS_LABELS,productionReport,stockFlow } from './shared/diagnostics.js';
 import { parseSave,packWorldSave } from './shared/saves.js';
 import { Lan } from './network.js';
-import { icon,RESOURCE_NAMES } from './icons.js';
+import { icon,itemIcon,RESOURCE_NAMES } from './icons.js';
 import { copySetup,planPaste,planGroupUpgrade,hasOutputBuffer,outputCount,OUTPUT_CAPACITY,isPostVictory,canSpawnSwarm,BELT_CAPACITY,conveyorCount,buildingRadius,turretReload } from './shared/sim.js';
 const $=id=>document.getElementById(id),SAVE='ironhaven.save.v1',NAME='ironhaven.name';
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -68,12 +68,21 @@ function setCategory(category){
  tab=category;updateToolbar();
 }
 const SHORTCUT=['1','2','3','4','5','6','7','8','9','0'];
-function costText(type,cost=TYPES[type].cost){
- const abbreviations={wood:'W',plate:'P',gear:'⚙',copper:'Cu',steel:'S',circuit:'Cir',module:'Comp',coal:'Coal',concentrate:'Conc',bearing:'Brg'};
- return Object.entries(cost).map(([r,n])=>`${n}${abbreviations[r]||(RESOURCE_NAMES[r]||r).slice(0,4)}`).join(' · ')||'FREE';
+function showBuildPrice(el,cost,packed=0){
+ const materials=Object.entries(cost).filter(([,amount])=>amount>0);
+ const price=materials.map(([item,amount])=>packed?`${item}:${amount}`:`${item}:${amount}:${Math.min(amount,Math.floor(state.resources[item]??0))}`).join('|');
+ if(el.dataset.price===price)return;
+ el.dataset.price=price;
+ el.innerHTML=materials.map(([item,amount])=>{
+  const name=(RESOURCE_NAMES[item]||item).toLowerCase();
+  const available=Math.floor(state.resources[item]??0);
+  const missing=!packed&&available<amount;
+  const tooltip=name[0].toUpperCase()+name.slice(1)+(missing?` · ${available} available`:'');
+  return `<span class="material-price${missing?' missing':''}" data-material="${escape(item)}" title="${escape(tooltip)}">${itemIcon(item)}<span>${amount}<span class="visually-hidden"> ${escape(name)} </span></span></span>`;
+ }).join('')||'Free';
 }
 function initHotbar(){
- $('hotbar').innerHTML=TOOL_LIST.map((t)=>`<button class="build-btn" data-type="${t}" style="--building-accent:${BUILDING_IDENTITIES[t]?.accent||'#edc38f'}" title="${escape(TYPES[t].name)} (${shortcutFor(t)})"><span class="key">${shortcutFor(t)}</span><span class="build-symbol">${icon(BUILDING_IDENTITIES[t]?.icon||t)}</span>${!['repair','demolish'].includes(t)?'<span class="inventory-count" title="Buildings in your inventory">0</span>':''}<span class="build-name">${escape(TYPES[t].name)}</span><span class="build-cost">${costText(t)}</span></button>`).join('');
+ $('hotbar').innerHTML=TOOL_LIST.map((t)=>`<button class="build-btn" data-type="${t}" style="--building-accent:${BUILDING_IDENTITIES[t]?.accent||'#edc38f'}" title="${escape(TYPES[t].name)} (${shortcutFor(t)})"><span class="key">${shortcutFor(t)}</span><span class="build-symbol">${icon(BUILDING_IDENTITIES[t]?.icon||t)}</span>${!['repair','demolish'].includes(t)?'<span class="inventory-count" title="Buildings in your inventory">0</span>':''}<span class="build-name">${escape(TYPES[t].name)}</span><span class="build-cost"></span></button>`).join('');
  $('hotbar').addEventListener('click',e=>{const b=e.target.closest('[data-type]');if(b&&started)setTool(tool===b.dataset.type?null:b.dataset.type);});
  document.querySelectorAll('[data-tab]').forEach(el=>{
   el.hidden=!CATEGORIES[el.dataset.tab].tools.length;
@@ -82,10 +91,18 @@ function initHotbar(){
 }
 function updateToolbar(){
  $('hotbar').style.setProperty('--tool-columns',String(CATEGORIES[tab].tools.length));
- const repair=repairCost(roundBonus(state.wave)),repairLabel=$('hotbar').querySelector('[data-type=repair] .build-cost');
- const repairText=costText('repair',repair);if(repairLabel.textContent!==repairText)repairLabel.textContent=repairText;
+ const repair=repairCost(roundBonus(state.wave));
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
- document.querySelectorAll('.build-btn').forEach(el=>{const t=el.dataset.type;el.hidden=!CATEGORIES[tab].tools.includes(t);el.classList.toggle('active',tool===t);const count=inventoryCount(state,playerId,t),badge=el.querySelector('.inventory-count');if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}el.classList.toggle('unaffordable',count===0&&Object.entries(t==='repair'?repair:TYPES[t].cost).some(([r,n])=>state.resources[r]<n));});
+ document.querySelectorAll('.build-btn').forEach(el=>{
+  const type=el.dataset.type;
+  el.hidden=!CATEGORIES[tab].tools.includes(type);
+  el.classList.toggle('active',tool===type);
+  const count=inventoryCount(state,playerId,type),badge=el.querySelector('.inventory-count');
+  if(badge){badge.textContent=String(count);badge.classList.toggle('has-stock',count>0);}
+  const cost=type==='repair'?repair:TYPES[type].cost;
+  if(!el.hidden)showBuildPrice(el.querySelector('.build-cost'),cost,count);
+  el.classList.toggle('unaffordable',count===0&&Object.entries(cost).some(([item,amount])=>state.resources[item]<amount));
+ });
 }
 function endCreatureView(){selectedEnemyId=null;view.exitInspection?.();document.body.classList.remove('inspecting-creature');$('creature-back').hidden=true;}
 $('creature-back').onclick=()=>setTool(null);
@@ -243,6 +260,7 @@ function updateInspector(){
    const kind=hostileKind(enemy),spec=HOSTILES[kind],roles={runner:'Fast and lightly armored. Light briefly slows it by 15% without changing its approach.',drowned:'A drowned coastal worker. Illumination briefly draws it toward the light source: the lighthouse or a nearby Harbor lamp.',guard:'Takes half damage in darkness. Keep it lit for 0.65 seconds to expose its armor.',spitter:'A ranged marine predator. Its mist protects nearby unlit targets; illuminate it to clear that protection.',walker:'Hunts the lighthouse. Arrives every fifth swarm. One second of light exposes its armor.'};
    for(const id of ['toggle-production','program-building','rotate-building','upgrade-turret','upgrade-impact','input-stock','output-options','warehouse-options','blueprint-site','port-key'])$(id).hidden=true;
    $('intel').classList.add('has-selection');$('intel-label').textContent='COASTAL HOSTILE';$('intel-icon').innerHTML='';$('intel-title').textContent=spec.name;$('intel-desc').textContent=roles[kind];
+   delete $('intel-summary').dataset.price;
    $('intel-summary').textContent=Math.ceil(enemy.hp)+' / '+enemy.maxHp+' HP · '+(enemy.illuminated?'Lit':'Unlit');
    $('intel-stats').innerHTML=`<div class="stat-row"><span>Health</span><span>${Math.ceil(enemy.hp)} / ${enemy.maxHp}</span></div><div class="stat-row"><span>Illuminated</span><span>${enemy.illuminated?'Yes':'No'}</span></div>`;
    $('recipe').textContent=kind==='guard'||kind==='walker'?'SUSTAINED LIGHT EXPOSES ARMOR':'';$('intel-tip').textContent='Live creature view · Esc / right-click returns to the colony.';return;
@@ -257,13 +275,12 @@ function updateInspector(){
 
  $('intel-label').textContent=tool?'BLUEPRINT':b?'SELECTED BUILDING':'COLONY STATUS';$('intel-icon').innerHTML=icon(BUILDING_IDENTITIES[type]?.icon||type,28);$('intel').style.setProperty('--building-accent',BUILDING_IDENTITIES[type]?.accent||'#edc38f');$('intel-title').textContent=def.name;$('intel-desc').textContent=def.desc;
  const status=b?STATUS_LABELS[factoryStatus(state,b,new Map(state.buildings.map(v=>[key(v.x,v.z),v])))]:null;
- if(tool){
-  const packed=inventoryCount(state,playerId,type);
-  const cost=tool==='repair'?repairCost(roundBonus(state.wave)):def.cost;
-  $('intel-summary').textContent=packed?'In inventory: '+packed:
-   Object.entries(cost).map(([material,count])=>count+' '+ITEM_NAMES[material]).join(' · ');
+ const summary=$('intel-summary'),packed=tool?inventoryCount(state,playerId,type):0;
+ if(tool&&!packed){
+  showBuildPrice(summary,tool==='repair'?repairCost(roundBonus(state.wave)):def.cost);
  }else{
-  $('intel-summary').textContent=b?[status,def.fixedLevel?null:'Level '+(b.level||1),b.hp<maxHp(b)?Math.ceil(b.hp)+' HP':null].filter(Boolean).join(' · '):'';
+  delete summary.dataset.price;
+  summary.textContent=packed?'In inventory: '+packed:b?[status,def.fixedLevel?null:'Level '+(b.level||1),b.hp<maxHp(b)?Math.ceil(b.hp)+' HP':null].filter(Boolean).join(' · '):'';
  }
  $('port-key').hidden=!LOGISTICS_TYPES.includes(type);
  const productionToggle=$('toggle-production');productionToggle.hidden=!b||!!tool||!(hasOutputBuffer(type)||type==='sawmill');productionToggle.textContent=b?.disabled?'Resume production':'Pause production';
@@ -363,7 +380,7 @@ function updateUi(){
  const flow=stockFlow(state);
  const hudResources=['wood','plate','gear','copper','steel','circuit','module','coal','power'];
  if(started&&state.status==='playing'&&ended){ended=false;$('end-dialog').close();}
- $('resources').innerHTML=hudResources.map(r=>`<div title="${r==='power'?state.power.total+' generated/s · '+state.power.used+' needed/s · '+Math.floor(state.resources.power)+' / '+POWER_CAPACITY+' reserve':`${Math.floor(state.resources[r])} available · shared storage ${storageUsed(state)} / ${storageCapacity(state)} items · ${flow[r].toFixed(1)} net/min`} " class="resource ${r==='power'?'power':''} ${r==='power'&&state.power.used>state.power.total?'low':''}">${icon(r,23)}<strong>${r==='power'?`${state.power.total}<span class="resource-limit">/${state.power.used}</span>`:`${Math.floor(state.resources[r])}`}</strong><small>${r==='power'?'POWER · GEN / LOAD':RESOURCE_NAMES[r]}</small></div>`).join('')+`<div class="resource shared-storage" title="One capacity shared by all materials"><strong>${storageUsed(state)}<span class="resource-limit">/${storageCapacity(state)}</span></strong><small>STORAGE · ALL ITEMS</small></div>`;
+ $('resources').innerHTML=hudResources.map(r=>`<div title="${r==='power'?state.power.total+' generated/s · '+state.power.used+' needed/s · '+Math.floor(state.resources.power)+' / '+POWER_CAPACITY+' reserve':`${Math.floor(state.resources[r])} available · shared storage ${storageUsed(state)} / ${storageCapacity(state)} items · ${flow[r].toFixed(1)} net/min`} " class="resource ${r==='power'?'power':''} ${r==='power'&&state.power.used>state.power.total?'low':''}">${r==='power'?icon('power',23):itemIcon(r)}<strong>${r==='power'?`${state.power.total}<span class="resource-limit">/${state.power.used}</span>`:`${Math.floor(state.resources[r])}`}</strong><small>${r==='power'?'POWER · GEN / LOAD':RESOURCE_NAMES[r]}</small></div>`).join('')+`<div class="resource shared-storage" title="One capacity shared by all materials"><strong>${storageUsed(state)}<span class="resource-limit">/${storageCapacity(state)}</span></strong><small>STORAGE · ALL ITEMS</small></div>`;
  const incoming=state.enemies.some(e=>!e.training),time=Math.max(0,state.nextWave-state.time);$('wave-label').textContent=state.paused?'GAME PAUSED':incoming?'PERIMETER CONTACT':'PREPARE YOUR COLONY';$('wave-title').textContent=state.paused?'Paused':incoming?'Swarm attacking':'Next swarm';$('countdown').textContent=incoming?String(state.enemies.length):`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;
  $('wave-fill').style.width=incoming?'100%':Math.min(100,(1-time/(state.wave===0?100:95))*100)+'%';$('wave-fill').style.background=incoming?'var(--red)':'var(--gold)';$('wave-detail').textContent=isPostVictory(state)?`SWARM ${state.wave+(incoming?0:1)} · ENDLESS`:`SWARM ${Math.min(FINAL_WAVE,state.wave+(incoming?0:1))} OF ${FINAL_WAVE}`;$('early-wave').disabled=incoming||!canSpawnSwarm(state)||mode==='client'||!started;$('day').textContent='DAY '+String(1+Math.floor(state.time/180)).padStart(2,'0');$('wave-panel').classList.toggle('imminent',started&&!incoming&&time<=20&&canSpawnSwarm(state));
  const turrets=state.buildings.filter(b=>usesAmmo(b.type)),dry=turrets.filter(b=>b.ammo===0).length,low=turrets.filter(b=>b.ammo<=3).length,warning=dry>0||state.resources.gear<=2&&turrets.length>0||low>0&&state.resources.gear===0;
@@ -656,7 +673,7 @@ function drawMachineIO(){
  panel.hidden=!position?.visible;
  if(panel.hidden)return;
  if(panel.dataset.type!==target.type){
-  const item=(name,quantity=1)=>`<span class="io-item" data-item="${name}">${icon(name,16)}${quantity>1?quantity+' × ':''}${escape(ITEM_NAMES[name])}</span>`;
+  const item=(name,quantity=1)=>`<span class="io-item" data-item="${name}">${itemIcon(name)}${quantity>1?quantity+' × ':''}${escape(ITEM_NAMES[name])}</span>`;
   const row=(input,output)=>`<div class="io-line"><span class="io-input">${input}</span><span class="io-arrow" aria-hidden="true">→</span><span class="io-output">${output}</span></div>`;
   panel.innerHTML=target.type==='smelter'?row(item('ore'),item('plate'))+row(item('copperOre'),item('copper')):
    recipe?row(Object.entries(recipe.input).map(([name,count])=>item(name,count)).join(''),item(recipe.output,recipe.count??1)):
@@ -730,7 +747,7 @@ function retryCheckpoint(index=0){
  }catch(e){toast(e.message,true);}
 }
 $('retry-checkpoint').onclick=()=>retryCheckpoint(Number($('checkpoint-choice').value)||0);$('end-retry').onclick=()=>retryCheckpoint(0);
-function renderProduction(){const report=productionReport(state);$('production-summary').innerHTML=Object.entries(report.counts).filter(([k])=>k!=='idle').map(([k,n])=>`<span class="diagnostic-count ${k}">${escape(STATUS_LABELS[k])}: ${n}</span>`).join('');$('production-rows').innerHTML=report.materials.map(r=>`<tr><td>${escape(RESOURCE_NAMES[r.resource])}</td><td>${Math.floor(r.stock)}</td><td>${r.perMinute.toFixed(1)}</td><td>${r.demand.toFixed(1)}</td></tr>`).join('');}
+function renderProduction(){const report=productionReport(state);$('production-summary').innerHTML=Object.entries(report.counts).filter(([k])=>k!=='idle').map(([k,n])=>`<span class="diagnostic-count ${k}">${escape(STATUS_LABELS[k])}: ${n}</span>`).join('');$('production-rows').innerHTML=report.materials.map(r=>`<tr><td><span class="io-item">${itemIcon(r.resource)}${escape(RESOURCE_NAMES[r.resource])}</span></td><td>${Math.floor(r.stock)}</td><td>${r.perMinute.toFixed(1)}</td><td>${r.demand.toFixed(1)}</td></tr>`).join('');}
 $('production-overview').onclick=()=>{$('menu-dialog').close();renderProduction();$('production-dialog').showModal();};
 $('toggle-diagnostics').onclick=()=>{showDiagnostics=!showDiagnostics;$('toggle-diagnostics').textContent=(showDiagnostics?'Hide':'Show')+' machine status overlay (B)';toast(showDiagnostics?'Machine diagnostics enabled.':'Machine diagnostics hidden.');};
 // 20 authoritative ticks/second; clients only render received snapshots.
