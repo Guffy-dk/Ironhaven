@@ -3,12 +3,13 @@
 import {writeFile,mkdir,rename} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
 import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';
-const {createExpedition,command,step,STEP,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,buildingPower,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
+const {createExpedition,canBuild,command,step,powerOutput,STEP,RESOURCE_KEYS,DIFFICULTIES,maxHp,upgradeCost,upgradeLocked,TURRETS,turretStats,storageUsed,storageCapacity,buildingPower,key,DIRS}=await import(process.env.SIM_MODULE?pathToFileURL(resolve(process.env.SIM_MODULE)).href:'../public/shared/sim.js');
 await mkdir('work',{recursive:true});
 const seed=Number(process.argv[2]||417),policy=process.argv[3]||'industry',difficulty=process.argv[4]||'standard';
 const horizon=Number(process.argv[5]??15000), endless=process.argv[6]==='endless';
 const shedLoad=process.env.CAMPAIGN_SHED_LOAD==='1';
 const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
+const sentryFallback=process.env.CAMPAIGN_SENTRY_FALLBACK==='1';
 const coalPowerTrial=process.env.CAMPAIGN_COAL_POWER==='1';
 const marineTrial=process.env.CAMPAIGN_MARINE==='1';
 const coalReserve=process.env.CAMPAIGN_COAL_RESERVE==='1';
@@ -17,7 +18,7 @@ if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Err
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
-const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'');
+const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'')+(sentryFallback?'-fallback':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -129,9 +130,34 @@ function manageCombatPower(){
   }
  }
 }
+const fallbackPlacements=[];
+let lastFallbackWave=null;
+function placeFallbackSentry(){
+ if(policy==='single'||lastFallbackWave===s.wave||s.enemies.length>2||s.resources.gear>=1)return;
+ const enemy=s.enemies[0];
+ if(s.buildings.some(b=>b.type==='turret'&&b.active&&Math.hypot(b.x-enemy.x,b.z-enemy.z)<turretStats(b).range*.82))return;
+ const x0=Math.round(enemy.x),z0=Math.round(enemy.z);
+ const sites=[];
+ for(let z=z0-4;z<=z0+4;z++){
+  for(let x=x0-4;x<=x0+4;x++){
+   const distance=Math.hypot(x-enemy.x,z-enemy.z);
+   if(distance>=2&&distance<=5&&!reserved.has(key(x,z)))sites.push({x,z,distance});
+  }
+ }
+ sites.sort((a,b)=>a.distance-b.distance);
+ const site=sites.find(({x,z})=>!canBuild(s,'turret',x,z,host));
+ if(!site)return;
+ const {x,z}=site;
+ if(!send({type:'build',building:'turret',x,z})){
+  lastFallbackWave=s.wave;
+  built++;
+  fallbackPlacements.push({wave:s.wave,second:Math.round(s.time),x,z});
+ }
+}
 function act(){
  if((marineTrial||coalPowerTrial)&&!s.enemies.length&&s.resources.module>=5&&s.resources.circuit>=12&&s.resources.plate>=130&&s.resources.wood>=90&&s.power.total>=s.power.used+20)marineCommissioned=true;
  const stalled=s.enemies.length&&s.time-lastKillTime>120;
+ if(sentryFallback&&stalled)placeFallbackSentry();
  if(policy==='refining'&&s.resources.module>=2&&s.resources.steel>=20&&s.resources.gear>=30&&s.resources.plate>=115&&s.resources.wood>=60)refineryCommissioned=true;
  if(policy==='harbor'&&s.wave>=8&&s.resources.plate>=95&&s.resources.gear>=24&&s.resources.wood>=70&&s.power.total>=s.power.used+10)refineryCommissioned=true;
  for(const p of plans){if(at(p.x,p.z))continue;if(stalled&&!TURRETS.includes(p.type)&&!covered(p.x,p.z)&&s.enemies.some(e=>Math.hypot(e.x-p.x,e.z-p.z)<4))continue;if(policy==='single'&&s.enemies.length)continue;if(policy==='no_artillery'&&p.type==='mortar')continue;if(p.type==='wall'&&(s.resources.plate<100||s.wave<3))continue;
@@ -190,6 +216,9 @@ function act(){
 const began=performance.now();
 let previousWave=0,maxStock=storageUsed(s),victorySeconds=null,losses=0,shots=0,ammoStarvedSamples=0,unpoweredTurretSamples=0,combatSamples=0,unpoweredCombatSamples=0;
 const outages={};
+const fuelWindow={startTick:null,ticks:0,fueledTicks:0,availablePowerTicks:0,coalBurned:0};
+const trialEngineType=marineTrial?'marineGenerator':coalPowerTrial?'coalGenerator':null;
+const windowTicks=Math.round(600/STEP);
 function sample(){
  return {wave:s.wave,time:Math.round(s.time),kills:s.totalKills,losses,repairs,upgrades,shots,ammoStarvedSamples,unpoweredTurretSamples,combatSamples,unpoweredCombatSamples,productionPauses,reserveBuilds,marineBuilds,marinePoweredSeconds,firstMarineSecond,coalPowerBuilds,coalPowerSeconds,coalPowerLevelThreeSeconds,firstCoalPowerSecond,outages:structuredClone(outages),
   refineryCommissioned,resources:Object.fromEntries(RESOURCE_KEYS.map(r=>[r,Math.floor(s.resources[r])])),
@@ -201,7 +230,21 @@ function sample(){
 for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  if(ticks%40===0)act();
  const structures=s.buildings.length;
+ const measureFuel=trialEngineType&&fuelWindow.ticks<windowTicks;
+ const engine=measureFuel?at(4,-2):null;
+ const participating=engine?.type===trialEngineType;
+ const fueled=participating&&s.resources.coal>0;
+ const progress=participating?engine.progress:0;
+ if(fueled&&fuelWindow.startTick===null)fuelWindow.startTick=ticks;
+ if(measureFuel&&fuelWindow.startTick!==null){
+  fuelWindow.ticks++;
+  if(fueled){
+   fuelWindow.fueledTicks++;
+   fuelWindow.availablePowerTicks+=powerOutput(engine);
+  }
+ }
  step(s);
+ if(fueled&&engine.progress<progress)fuelWindow.coalBurned++;
  losses+=structures-s.buildings.length;
  if(coalPowerTrial&&ticks%20===0&&s.resources.coal>0){
   const engine=at(4,-2);
@@ -243,10 +286,13 @@ for(let ticks=0;ticks<Math.ceil(horizon/STEP)&&s.status==='playing';ticks++){
  }
 }
 const final=sample();
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,victorySeconds,
+const generatorWindow={startSecond:fuelWindow.startTick===null?null:fuelWindow.startTick*STEP,
+ seconds:fuelWindow.ticks*STEP,fueledSeconds:fuelWindow.fueledTicks*STEP,
+ availablePowerSeconds:Number((fuelWindow.availablePowerTicks*STEP).toFixed(2)),coalBurned:fuelWindow.coalBurned};
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
- final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
+ generatorWindow,fallbackPlacements,final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
 if(saveCheckpoints)await writeJson(`${outputStem}-save.json`,{state:s,playerId:host});
 await writeJson(`${outputStem}.json`,report);
 console.log(JSON.stringify({...report,waves:undefined,final:undefined},null,2));
