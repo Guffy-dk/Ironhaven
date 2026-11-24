@@ -6,13 +6,31 @@ const powerTrial=process.env.CAMPAIGN_MATRIX==='combat-power';
 const reserveTrial=process.env.CAMPAIGN_MATRIX==='power-reserve';
 const industryTrial=process.env.CAMPAIGN_MATRIX==='industry-fuel';
 const marineMatrix=process.env.CAMPAIGN_MATRIX==='marine-power';
-const dir=marineMatrix?'work/campaign-matrix-marine-power':industryTrial?'work/campaign-matrix-industry-fuel':reserveTrial?'work/campaign-matrix-power-reserve':powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
+const coalPowerMatrix=process.env.CAMPAIGN_MATRIX==='coal-versus-marine';
+const dir=coalPowerMatrix?'work/campaign-matrix-coal-versus-marine':marineMatrix?'work/campaign-matrix-marine-power':industryTrial?'work/campaign-matrix-industry-fuel':reserveTrial?'work/campaign-matrix-power-reserve':powerTrial?'work/campaign-matrix-combat-power':'work/campaign-matrix';
 await mkdir(dir,{recursive:true});
 const jobs=[];
-function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false,powerReserve=false,coalReserve=false,marineTrial=false){
- jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial});
+function add(seed,policy,difficulty,horizon=9000,endless=false,group='baseline',shedLoad=false,powerReserve=false,coalReserve=false,marineTrial=false,coalPowerTrial=false){
+ jobs.push({seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial});
 }
-if(marineMatrix){
+if(coalPowerMatrix){
+ function pair(seed,difficulty,horizon=9000,endless=false,group='comparison'){
+  add(seed,'industry',difficulty,horizon,endless,group,false,false,false,true);
+  add(seed,'industry',difficulty,horizon,endless,group,false,false,false,false,true);
+ }
+ for(const seed of [417,2026,1967,8813])pair(seed,'standard');
+ pair(4297,'veteran');
+ pair(417,'relaxed',72000,true);
+ pair(4297,'relaxed',72000,true);
+ pair(2801,'standard',72000,true);
+ pair(1807,'veteran');
+ for(const seed of [1913,6197]){
+  pair(seed,'standard',9000,false,'holdout');
+  pair(seed,'veteran',9000,false,'holdout');
+  pair(seed,'relaxed',72000,true,'holdout');
+ }
+ for(const policy of ['pulse','mortars','logistics','early_defense','single'])add(1913,policy,'standard',9000,false,'holdout');
+}else if(marineMatrix){
  function pair(seed,difficulty,horizon=9000,endless=false,group='comparison'){
   add(seed,'industry',difficulty,horizon,endless,group);
   add(seed,'industry',difficulty,horizon,endless,group,false,false,false,true);
@@ -103,15 +121,15 @@ if(!Number.isInteger(workers)||workers<1||workers>8)throw Error('CAMPAIGN_WORKER
 let next=0;
 const reports=[];
 async function run(job){
- const {seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial}=job;
- const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}${powerReserve?'-reserve':''}${coalReserve?'-fuel':''}${marineTrial?'-marine':''}`;
+ const {seed,policy,difficulty,horizon,endless,group,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial}=job;
+ const stem=`campaign-${policy}-${seed}${difficulty==='standard'?'':'-'+difficulty}-${horizon}${endless?'-endless':''}${shedLoad?'-shed-load':''}${powerReserve?'-reserve':''}${coalReserve?'-fuel':''}${marineTrial?'-marine':''}${coalPowerTrial?'-coal-power':''}`;
  const reportPath=`work/${stem}.json`;
  async function readReport(){
   const report=JSON.parse(await readFile(reportPath,'utf8'));
   for(const key of ['seed','policy','difficulty','horizon','endless']){
    if(report[key]!==job[key])throw Error(`Checkpoint mismatch for ${stem}: ${key}`);
   }
-  if((report.shedLoad??false)!==shedLoad||(report.powerReserve??false)!==powerReserve||(report.coalReserve??false)!==coalReserve||(report.marineTrial??false)!==marineTrial)throw Error(`Power policy mismatch for ${stem}`);
+  if((report.shedLoad??false)!==shedLoad||(report.powerReserve??false)!==powerReserve||(report.coalReserve??false)!==coalReserve||(report.marineTrial??false)!==marineTrial||(report.coalPowerTrial??false)!==coalPowerTrial)throw Error(`Power policy mismatch for ${stem}`);
   return {...report,group};
  }
  if(resume){
@@ -121,7 +139,7 @@ async function run(job){
  const log=await open(`${dir}/${stem}.log`,'w');
  try{
   await new Promise((resolve,reject)=>{
-   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0',CAMPAIGN_POWER_RESERVE:powerReserve?'1':'0',CAMPAIGN_COAL_RESERVE:coalReserve?'1':'0',CAMPAIGN_MARINE:marineTrial?'1':'0'},stdio:['ignore',log.fd,log.fd]});
+   const child=spawn(process.execPath,['scripts/play-campaign.mjs',String(seed),policy,difficulty,String(horizon),endless?'endless':'campaign'],{env:{...process.env,CAMPAIGN_SHED_LOAD:shedLoad?'1':'0',CAMPAIGN_POWER_RESERVE:powerReserve?'1':'0',CAMPAIGN_COAL_RESERVE:coalReserve?'1':'0',CAMPAIGN_MARINE:marineTrial?'1':'0',CAMPAIGN_COAL_POWER:coalPowerTrial?'1':'0'},stdio:['ignore',log.fd,log.fd]});
    child.on('error',reject);
    child.on('exit',(code,signal)=>code===0?resolve():reject(Error(`${stem} exited ${signal??code}`)));
   });
@@ -133,7 +151,7 @@ async function worker(){
   const index=next++;
   const report=await run(jobs[index]);
   reports[index]=report;
-  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon} ${report.marineTrial?'marine':report.powerReserve?'reserve':report.shedLoad?'shed':'control'}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
+  console.log(`${report.difficulty} ${report.policy} ${report.seed} ${report.horizon} ${report.coalPowerTrial?'coal':report.marineTrial?'marine':report.powerReserve?'reserve':report.shedLoad?'shed':'control'}: ${report.outcome}, swarm ${report.wave}, ${report.kills} kills`);
  }
 }
 await Promise.all(Array.from({length:workers},worker));
