@@ -171,10 +171,23 @@ async function start() {
   smokePhase('Colony captured; inspecting creature');
   const inspected=await gameWindow.webContents.executeJavaScript(`(async () => {
     const canvas=document.getElementById('world');
-    for(let y=.64;y<.81;y+=.008){
-      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
-      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:innerWidth*.5,clientY:innerHeight*y,bubbles:true}));
+    const health=document.getElementById('enemy-health');
+    const {width,height}=health;
+    const {data}=health.getContext('2d').getImageData(0,0,width,height);
+    const bars=[];
+    // Five hostiles of known types are lined up west to east in the fixture.
+    for(let y=1;y<height-1;y++)for(let x=1;x<width-24;x++){
+      const i=(y*width+x)*4;
+      const fill=(data[i]===237&&data[i+1]===205&&data[i+2]===145)||(data[i]===216&&data[i+1]===137&&data[i+2]===118);
+      if(fill&&data[i-4]!==data[i]&&data[i-width*4]!==data[i]&&data[i+8*4]===data[i])bars.push({x:x+12,y});
+    }
+    if(bars.length!==5)throw Error('Expected five hostile health bars, found '+bars.length);
+    const guard=bars.sort((a,b)=>a.x-b.x)[2];
+    for(let y=guard.y;y<guard.y+60;y+=3){
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{button:0,clientX:guard.x,clientY:y,bubbles:true}));
+      window.dispatchEvent(new PointerEvent('pointerup',{button:0,clientX:guard.x,clientY:y,bubbles:true}));
       if(document.getElementById('intel-title').textContent==='Shell guard')break;
+      if(!document.getElementById('creature-back').hidden)document.getElementById('creature-back').click();
     }
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     return document.getElementById('intel-title').textContent;
