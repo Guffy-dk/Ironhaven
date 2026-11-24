@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 22.27 dansk tid
+
+- Kørsel `2026-11-24T22:27:27+01:00`, simulation `8cf1b9f`, driver `af38083`, eksisterende build `0.21.2.3`.
+- 35/35 forløb, 10 tidligere kontroller gentaget. Nye holdouts 2603 og 9067. 59 effektudfald, hvoraf 35 sluttede før forsøgets slutpunkt.
+- Næste forsøg kan skelne tabt kapacitet fra voksende belastning og måle målrettet genopbygning. Spilværdierne beholdes.
+- [Rapport](balance-2026-11-24-power-recovery.md) · [Rådata](balance-2026-11-24-power-recovery.json).
+
 ### 2026-11-24 kl. 19.27 dansk tid
 
 - Kørsel `2026-11-24T19:27:27+01:00`, simulation `6380255`, testdriver `fb03be5`, eksisterende build `0.21.2.3`.

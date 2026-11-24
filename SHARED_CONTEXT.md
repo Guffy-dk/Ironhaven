@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 22:27 Europe/Copenhagen — Codex — power recovery telemetry
+
+- 35 earned-resource simulations on `8cf1b9f`, driver `af38083`. The optional meter recorded 59 defense outages and 35 recoveries, with distinct observations for empty fuel and unaffordable reinstatement on former generator sites.
+- Game and release code unchanged. Next distinguish lost generation capacity from rising demand and measure targeted rebuilding. [Report](docs/playtests/balance-2026-11-24-power-recovery.md).
+
 ### 2026-11-24 19:27 Europe/Copenhagen — Codex — outage-scoped repair reserve
 
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
