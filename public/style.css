@@ -339,7 +339,11 @@ body[data-visual-style="quarry"] .left-panel .wave-panel {
  border: 0;
 }
 #right-dock > .intel:not(.has-selection):not(.inspector-pinned) { display: none; }
-#right-dock > .intel { padding: 12px; }
+#right-dock > .intel {
+ flex: 0 1 auto;
+ min-height: 0;
+ padding: 12px;
+}
 #right-dock > .intel .intel-icon { display: none; }
 .intel h2 { font-size: 17px; margin: 3px 0 5px; }
 .intel .panel-heading { margin: 0; }

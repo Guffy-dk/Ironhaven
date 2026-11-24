@@ -306,6 +306,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Owner requested less text and fewer windows. Internal build `0.21.1.1102` keeps the inspector out of the way until a building or tool is selected, while retaining an explicit pin. The default view shows small swarm and map panels.
 - Colony objectives, team and round bonuses open from Colony details. Building summaries retain price, recipe, status and immediate actions. Details & settings holds description, advanced stats, warehouse exports and other settings. Harbor projects have their own disclosure within the lighthouse inspector. The top bar shows current figures, with flow and reserve available on hover and detailed production in the existing report.
+- On-map building markers retain type icons and numeric levels, with names available on hover and selection. The inspector fits its contents and scrolls when expanded. The Escape menu uses short category names.
 - Maintains the existing placement, construction, pause, program, tutorial and settings actions. The public `v0.21.1` release is the previously authorized gameplay update. This UI preview uses the internal Windows CI build.
 
 ### 2026-11-24 — Codex — harbor industry 0.21.1
