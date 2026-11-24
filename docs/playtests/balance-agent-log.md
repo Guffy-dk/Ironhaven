@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-24 kl. 13.27 dansk tid
+
+- Kørsel `2026-11-24T13:27:27+01:00`, simulation `7dfc892`, UI-kandidat `3354fd0`, internt build `0.21.2.1`.
+- 35/35 automatiserede forløb. 20 af 20 matchede tidligere kontroller på seks mål. Holdout-seeds 6029 og 9017.
+- Find turret føjer navigation til den eksisterende ammunitionsadvarsel. Næste fokus er brug under menneskeligt spil.
+- [Rapport](balance-2026-11-24-ammo-shortcut.md) · [Rådata](balance-2026-11-24-ammo-shortcut.json).
+
 ### 2026-11-24 kl. 10.27 dansk tid
 
 - Kørsel `2026-11-24T10:27:27+01:00`, simulation `96fe517`, driver `90f2033`, spil `0.21.2`, eksisterende metadata-id `0.21.1.1104`.

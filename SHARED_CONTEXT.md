@@ -304,6 +304,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-24 13:27 Europe/Copenhagen — Codex — ammo warning navigation
+
+- UI commit `3354fd0`, merged in [PR #31](https://github.com/Guffy-dk/Ironhaven/pull/31) at `2818265`. Internal build `0.21.2.1`. Find turret in the existing ammunition alert focuses and selects the affected turret through the building inspector. The simulation stays at `7dfc892`. 35 earned-resource scenarios on two workers. [Report](docs/playtests/balance-2026-11-24-ammo-shortcut.md).
+- The public patcher remains on 0.21.2. Local suite passed 210 tests and [Windows CI](https://github.com/Guffy-dk/Ironhaven/actions/runs/45394771250) captured the selected mortar. Next gather human playtest evidence for the alert in live combat.
+
 ### 2026-11-24 10:27 Europe/Copenhagen — Codex — sentry fallback and fuel window
 
 - Baseline `96fe517`, driver `90f2033`. 35 ordinary-command runs on two workers. The optional sentry fallback was exercised in 1 of 15 pairs. Generator comparison reports the first 600 seconds of operation where both measurements covered the window.
