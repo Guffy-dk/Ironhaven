@@ -34,10 +34,11 @@ jobs:
           version="$(git show "$RELEASE_REF:package.json" | node -p 'JSON.parse(require("fs").readFileSync(0,"utf8")).version')"
           [[ "v$version" == "$RELEASE_TAG" ]] || { echo "package.json is $version, not $RELEASE_TAG." >&2; exit 1; }
           if git ls-remote --exit-code origin "refs/tags/$RELEASE_TAG" >/dev/null; then echo 'The tag already exists.' >&2; exit 1; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag -a "$RELEASE_TAG" "$RELEASE_REF" -m "Ironhaven $RELEASE_TAG"
-          git push origin "refs/tags/$RELEASE_TAG"
+          # A git push of this tag is refused when the release contains workflow changes, because
+          # the Actions token cannot hold the workflows permission; the refs API creates the same tag.
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$RELEASE_REF" >/dev/null
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   linux:
     needs: tag
