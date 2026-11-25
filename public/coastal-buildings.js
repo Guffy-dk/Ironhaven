@@ -16,7 +16,7 @@ function material(name){
    roughness:name==='glass'?.2:name==='steel'||name==='roof'?.57:.92,metalness:name==='steel'?.5:0,
    // Lamplit interiors: warm windows and doorways glow enough for the bloom pass to pick them up.
    emissive:name==='warm'?0xff9a3c:name==='glass'?0x6b3a12:0x000000,emissiveIntensity:name==='warm'?1.35:name==='glass'?.32:0});
-  if(painted){weatheredPaint(mat,name==='roof'?.48:.72);mat.userData.paintSurface=name;}
+  if(painted){weatheredPaint(mat,name==='roof'?.22:.72);mat.userData.paintSurface=name;}
   materials.set(name,mat);
  }
  return materials.get(name);

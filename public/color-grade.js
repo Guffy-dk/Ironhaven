@@ -9,11 +9,11 @@ float hash(vec2 p){p=fract(p*vec2(443.897,441.423));p+=dot(p,p.yx+19.19);return 
 void main(){
  vec4 src=texture2D(tDiffuse,vUv);vec3 c=src.rgb;
  float l=dot(c,vec3(.2126,.7152,.0722));
- vec3 graded=mix(vec3(l),c,.86);
+ vec3 graded=mix(vec3(l),c,.95);
  graded*=mix(vec3(.94,.985,1.05),vec3(1.05,1.,.92),smoothstep(.12,.78,l));
- graded=mix(graded,graded*graded*(3.-2.*graded),.28);
+ graded=mix(graded,graded*graded*(3.-2.*graded),.42);
  float v=smoothstep(.98,.32,length((vUv-.5)*vec2(1.12,1.)));
- graded*=mix(.8,1.,v);
+ graded*=mix(.88,1.,v);
  graded+=(hash(vUv*resolution+fract(time*.731)*97.)-.5)*.022;
  gl_FragColor=vec4(mix(c,clamp(graded,0.,1.),strength),src.a);
 }`

@@ -467,7 +467,7 @@ export class View{
     color.lerp(mud,T.MathUtils.smoothstep(damp,.55,1.6)*.5);
     const peat=Math.cos(x*.13-z*.09)+Math.sin(z*.17+x*.07);
     color.lerp(moss,T.MathUtils.smoothstep(peat,.6,1.7)*.35);
-    color.lerp(albedoTint,.6);
+    color.lerp(albedoTint,.42).multiplyScalar(.8);
     const meadow=Math.sin(x*.47-z*.21)+Math.cos(z*.49+x*.23)+Math.sin(x*1.28-z*.66)*.2;
     const baseGrowth=T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16);
     const coastalGrowth=(.6+T.MathUtils.smoothstep(meadow,-.74,.84)*.4)*T.MathUtils.smoothstep(Math.abs(x),.45,1.3)*T.MathUtils.smoothstep(Math.hypot(x,z+8),1,2)*T.MathUtils.smoothstep(coastalHeight(s.terrain,x,z),-.6,-.05);
@@ -513,14 +513,11 @@ export class View{
   if(quarry){
    // Natural outcrops: weathered bedrock with a restrained mineral cast. Iron shows rust,
    // copper a verdigris bloom and coal a black seam, readable without saturated colour blobs.
-   // Readable deposits (playtest feedback): mineral-stained ground marks location and outline,
-   // with weathered outcrops on top. Iron rust, copper verdigris, coal dust.
-   this.depositStain(s.terrain.ore,0x9a5534);
-   this.depositStain(s.terrain.copper??[],0x3f8a72);
-   this.depositStain(s.terrain.coal??[],0x0d0e10);
-   this.quarryDeposit(s.terrain.ore,0xb0623c,0x6c645a,rand);
-   this.quarryDeposit(s.terrain.copper??[],0x55ad8d,0x6a675d,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x111214,0x45433f,rand);
+   // Readable deposits (playtest feedback): dense, tall outcrops in a strong mineral colour with clear value
+   // contrast against the ground, so the field reads as one area without a painted outline.
+   this.quarryDeposit(s.terrain.ore,0xd07a45,0x7a6656,rand);
+   this.quarryDeposit(s.terrain.copper??[],0x4fc29c,0x5f6e66,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x0b0c0e,0x2b2a29,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
@@ -535,24 +532,6 @@ export class View{
   });
   rocks.castShadow=true;this.terrain.add(rocks);
  }
- depositStain(tiles,color){
-  if(!tiles.length)return;
-  if(!this.stainTexture){
-   const size=96,data=new Uint8Array(size*size*4),noise=(x,y)=>{const n=Math.sin(x*12.9898+y*78.233)*43758.5453;return n-Math.floor(n);};
-   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    const i=(y*size+x)*4,u=(x-47.5)/47.5,v=(y-47.5)/47.5,r=Math.hypot(u,v);
-    // Rounded, mottled stain: solid centre, soft irregular rim so neighbouring tiles merge into one patch.
-    const mottle=.75+.25*(noise(Math.floor(x/3),Math.floor(y/3))*.6+noise(Math.floor(x/7),Math.floor(y/7))*.4);
-    const body=Math.min(1,Math.max(0,(1.02-r)/.42));
-    data[i]=data[i+1]=data[i+2]=255;data[i+3]=Math.round(255*body*mottle);
-   }
-   this.stainTexture=new T.DataTexture(data,size,size);this.stainTexture.magFilter=T.LinearFilter;this.stainTexture.needsUpdate=true;
-  }
-  const stain=new T.InstancedMesh(new T.PlaneGeometry(1.32,1.32).rotateX(-Math.PI/2),new T.MeshStandardMaterial({color,map:this.stainTexture,transparent:true,opacity:.5,roughness:.95,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),tiles.length);
-  const random=rng(tiles.length*7919+Math.round(tiles[0].x*31+tiles[0].z*17));
-  tiles.forEach((p,i)=>{this.dummy.position.set(p.x+(random()-.5)*.25,.008,p.z+(random()-.5)*.25);this.dummy.rotation.set(0,random()*6.28,0);const k=1.25+random()*.4;this.dummy.scale.set(k,1,k*(.85+random()*.3));this.dummy.updateMatrix();stain.setMatrixAt(i,this.dummy.matrix);});
-  stain.receiveShadow=true;stain.renderOrder=1;this.terrain.add(stain);
- }
  quarryDeposit(tiles,vein,bedrock,random){
   const chunks=new Map();
   for(const tile of tiles){
@@ -563,18 +542,17 @@ export class View{
   const {shape,material}=quarryStoneSurface();
   const highlight=new T.Color(vein),bed=new T.Color(bedrock),color=new T.Color(),pose=this.dummy;
   for(const patch of chunks.values()){
-   const scatter=new T.InstancedMesh(shape,material,patch.length*5);
+   const scatter=new T.InstancedMesh(shape,material,patch.length*7);
    let index=0;
-   // One weathered boulder per tile with loose scree around it; only some faces carry the mineral cast.
-   for(const {x,z} of patch)for(let fragment=0;fragment<5;fragment++){
-   const base=fragment===0,size=base?.24+random()*.1:.04+random()*.07;
-   // Tall, tilted and half-buried pieces catch the light on different faces like real rock.
-   pose.position.set(x+(random()-.5)*(base?.4:.95),base?.02+random()*.03:.02+size*.12,z+(random()-.5)*(base?.4:.95));
-   pose.rotation.set((random()-.5)*1.1,random()*6.3,(random()-.5)*.9);
-   pose.scale.set(size*(.85+random()*.5),size*(base?.75+random()*.35:.8+random()*.4),size*(.7+random()*.4));pose.updateMatrix();
+   // A tall central boulder and a bed of broken rock per tile: the deposit reads as a solid, raised field.
+   for(const {x,z} of patch)for(let fragment=0;fragment<7;fragment++){
+   const base=fragment===0,size=base?.32+random()*.1:.09+random()*.1;
+   pose.position.set(x+(random()-.5)*(base?.35:.92),base?.06:.03+size*.15,z+(random()-.5)*(base?.35:.92));
+   pose.rotation.set((random()-.5)*.9,random()*6.3,(random()-.5)*.7);
+   pose.scale.set(size*(.9+random()*.4),size*(base?1.05+random()*.35:.85+random()*.4),size*(.75+random()*.35));pose.updateMatrix();
    scatter.setMatrixAt(index,pose.matrix);
-   const cast=base?.32+random()*.18:random()<.4?.35+random()*.25:random()*.12;
-   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,cast).multiplyScalar(.82+random()*.3));
+   const cast=base?.82:.55+random()*.35;
+   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,cast).multiplyScalar(.9+random()*.22));
    }
    scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
   }

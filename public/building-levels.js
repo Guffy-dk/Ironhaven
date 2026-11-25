@@ -8,17 +8,17 @@ export function levelPlaque(group,type,level=1,dir=0){
  const belt=type==='belt',tier=level>=8?2:level>=4?1:0,key=`${level}:${belt}`;
  if(!plaques.has(key)){
   const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;const ctx=canvas.getContext('2d');
-  // Weathered enamel sign: lit by the scene like the building it is bolted to, not a glowing UI badge.
-  ctx.fillStyle=['#24383a','#2c4c52','#5a4b30'][tier];ctx.fillRect(0,0,256,128);
-  for(let i=0;i<900;i++){const g=Math.random();ctx.fillStyle=`rgba(${g<.5?'0,0,0':'214,196,160'},${.035+Math.random()*.06})`;ctx.fillRect(Math.random()*256,Math.random()*128,1+Math.random()*3,1+Math.random()*2);}
-  ctx.strokeStyle=['#7f8a80','#86aaa9','#b9a274'][tier];ctx.lineWidth=7;ctx.strokeRect(6,6,244,116);
-  ctx.fillStyle='#ddd2b8';ctx.font='bold 84px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ROMAN_LEVELS[level-1]||'I',128,68);
-  ctx.fillStyle='rgba(60,40,25,.35)';for(const [x,y] of [[16,16],[240,16],[16,112],[240,112]]){ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();}
+  // Level sign (playtest feedback): a plain number readable at play zoom, on a dark enamel plate whose
+  // rim colour steps up with the tier (steel, teal, brass), so upgrades are visible without clicking.
+  ctx.fillStyle='#14191a';ctx.fillRect(0,0,256,128);
+  for(let i=0;i<500;i++){ctx.fillStyle=`rgba(214,196,160,${.02+Math.random()*.04})`;ctx.fillRect(Math.random()*256,Math.random()*128,1+Math.random()*3,1+Math.random()*2);}
+  ctx.strokeStyle=['#a9b6b1','#5fd3c3','#f2c15a'][tier];ctx.lineWidth=12;ctx.strokeRect(8,8,240,112);
+  ctx.fillStyle='#fff4da';ctx.font='bold 100px Arial, Helvetica, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(level),128,70);
   const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;
-  plaques.set(key,new T.MeshStandardMaterial({map:tex,side:T.DoubleSide,roughness:.58,metalness:.25,polygonOffset:true,polygonOffsetFactor:-2}));
+  plaques.set(key,new T.MeshStandardMaterial({map:tex,side:T.DoubleSide,roughness:.5,metalness:.15,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.22,polygonOffset:true,polygonOffsetFactor:-2}));
  }
  const defense=['turret','gunTurret','mortar','pulseTurret'].includes(type);
- const small=belt||defense;if(!planes.has(small))planes.set(small,new T.PlaneGeometry(small?.2:.4,small?.13:.21));
+ const small=belt||defense;if(!planes.has(small))planes.set(small,new T.PlaneGeometry(small?.27:.5,small?.17:.27));
  const plaque=new T.Mesh(planes.get(small),plaques.get(key));
  plaque.name='roof-level';plaque.rotation.x=-Math.PI/2;
  plaque.position.set(belt?0:.05,belt?.235:(ROOF_HEIGHTS[type]??(type==='wall'?.59:['turret','gunTurret','mortar','pulseTurret'].includes(type)?.36:.88))+.045,belt?0:.22);

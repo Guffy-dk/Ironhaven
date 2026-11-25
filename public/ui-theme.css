@@ -331,3 +331,5 @@ html body.ih-theme .world-kind svg{width:12px;height:12px}
 html body.ih-theme .world-kind .type-level,html body.ih-theme .world-upgrades{font:600 10px/1 var(--ih-mono);color:var(--ih-ink)}
 html body.ih-theme .building-label::after{opacity:.3}
 html body.ih-theme .world-ammo{font:700 10px/1 var(--ih-text);letter-spacing:.08em;padding:3px 6px;border-radius:3px;background:rgba(80,26,18,.88);color:#ffd9cc;border:1px solid rgba(236,107,78,.5)}
+/* Level badges must read at a glance (playtest feedback): high-contrast amber number. */
+html body.ih-theme .world-upgrades,html body.ih-theme .world-kind .type-level{display:inline-block;min-width:18px;padding:2px 5px;border-radius:3px;text-align:center;font:700 12px/1 var(--ih-mono);color:#1c1408;background:linear-gradient(180deg,#ffd58e,#e9a23b);border:1px solid #2c1d0a;box-shadow:0 1px 3px rgba(0,0,0,.6);opacity:1}
