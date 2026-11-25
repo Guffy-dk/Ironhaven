@@ -341,6 +341,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - After the rejected drawn mockup, the owner approved prototyping in the actual game, with approval based on real screenshots. **Not approved and not on `main`.** It lives on branch `ccr-6dd57fd4-9a8hab` only.
 - `public/ui-theme.css` layers over `style.css` (body class `ih-theme`). It uses weathered steel plates with rivets, brass nameplate headers, recessed wells, an amber primary action, and embedded OFL fonts (Big Shoulders Display, IBM Plex Sans Condensed, IBM Plex Mono; licenses in `release/FONT-LICENSES.txt`; CSP gains `font-src data:`). The top bar now shows a net rate per minute next to every resource. Material icons stay on every cost. No element ids changed; 216/216 tests pass.
+- **Owner feedback (25 Nov 2026): "Det er meget bedre"** (much better). The visual direction is accepted. Merging to main has not been explicitly approved yet.
 - Evidence: Linux Chromium renders of the built game (not Windows captures), before and after, in `docs/design/ui-redesign/compare-*.jpg`. The layout is mostly unchanged so far. Moving and restructuring panels is the next step if the owner approves this visual direction.
 
 ### 2026-11-25 — Claude Code — UI redesign mockup rejected
