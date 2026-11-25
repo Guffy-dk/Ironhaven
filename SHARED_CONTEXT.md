@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 10:27 Europe/Copenhagen — Codex — response to combat power warning
+
+- 35 earned-resource runs on `4c2d22d`, driver `43c9da6`. Reacting after five seconds by pausing optional production reduced measured outage time from 9,480 to 4,712 simulated seconds across 15 matched pairs. Outcomes ranked three better, three worse and nine tied.
+- No gameplay or release changes. Next measure shorter selective shedding against whole-combat shedding and compare resource costs. [Report](docs/playtests/balance-2026-11-25-warning-response.md).
+
 ### 2026-11-25 07:27 Europe/Copenhagen — Codex — combat-aware power warnings
 
 - 35 campaigns on `51cd987`, driver `8652d18`. The combat filter reduced warning windows without a measured defense outage from 224 to 134 and retained advance warning for all 33 outages with a 20-second median lead. Requiring threatened turrets reduced lead to seven seconds and missed two outages.
