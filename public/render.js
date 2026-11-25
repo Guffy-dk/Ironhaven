@@ -602,17 +602,21 @@ export class View{
      const rear=(b.dir+2)%4,side=DIRS[cargo.itemSide]&&cargo.itemSide!==b.dir?cargo.itemSide:rear;
      const [ix,iz]=DIRS[side],[ox,oz]=DIRS[b.dir],bend=side!==rear;
      let enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5,size=1,rise=0;
-     // Presentation only: cargo emerges from a machine outlet and shrinks as it is fed into the next machine.
+     // Presentation only: cargo eases out of a machine outlet and is drawn into the machine it feeds.
+     const smooth=u=>u*u*(3-2*u);
      const source=grid.get(key(b.x+ix,b.z+iz)),target=grid.get(key(b.x+ox,b.z+oz));
-     if(feedsMachine(source)&&t<.35){const u=t/.35;size=.35+.65*u;enter+=(1-u)*.28;rise=(1-u)*.04;}
+     if(feedsMachine(source)&&t<.4){const u=smooth(t/.4);size=.3+.7*u;enter+=(1-u)*.3;rise=(1-u)*.05;}
      const intoMachine=feedsMachine(target);
-     if(intoMachine&&t>.72){const u=(t-.72)/.28;size*=1-.4*u;}
+     if(intoMachine&&t>.66){const u=smooth((t-.66)/.34);size*=1-.35*u;rise-=u*.015;}
      const x=b.x+enter*ix+leave*ox,z=b.z+enter*iz+leave*oz;
      if(cargoCount>=this.beltItems.instanceMatrix.count)return;
-     this.dummy.position.set(x,(quarry?.255:.3)+rise,z);this.dummy.scale.setScalar(size);this.dummy.updateMatrix();
+     // Ride over the rollers and face the direction of travel.
+     const heading=Math.atan2(bend?ox*t-ix*(1-t):ox,bend?oz*t-iz*(1-t):oz);
+     this.dummy.rotation.set(0,heading,0);
+     this.dummy.position.set(x,(quarry?.255:.3)+rise+Math.abs(Math.sin((t+b.x*.37+b.z*.61)*Math.PI*4))*.006,z);this.dummy.scale.setScalar(size);this.dummy.updateMatrix();
      this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
      this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
-     cargoTrack.set(b.id+':'+cargo.itemTick,{x,z,ox,oz,item:cargo.item,size,intoMachine});
+     cargoTrack.set(b.id+':'+cargo.itemTick,{x,z,ox,oz,item:cargo.item,size,heading,intoMachine});
     };
     if(motion)motion.drawBeltItems(b,draw);
     else if(b.item)for(const cargo of [b,...(b.beltQueue??[])])draw(cargo,conveyorProgress(b,cargo,s.tick));
@@ -623,15 +627,16 @@ export class View{
   this.cargoGhosts??=[];
   for(const [id,last] of this.cargoTrack??[])if(!cargoTrack.has(id)&&last.intoMachine&&this.cargoGhosts.length<96)this.cargoGhosts.push({...last,age:0});
   this.cargoTrack=cargoTrack;
-  this.cargoGhosts=this.cargoGhosts.filter(g=>(g.age+=Math.max(0,Math.min(.1,dt||0)))<.32);
+  this.cargoGhosts=this.cargoGhosts.filter(g=>(g.age+=Math.max(0,Math.min(.1,dt||0)))<.45);
   for(const g of this.cargoGhosts){
    if(cargoCount>=this.beltItems.instanceMatrix.count)break;
-   const u=g.age/.32;
-   this.dummy.position.set(g.x+g.ox*u*.42,(quarry?.255:.3)+u*.05,g.z+g.oz*u*.42);this.dummy.scale.setScalar(Math.max(.02,g.size*(1-u)));this.dummy.updateMatrix();
+   const u=g.age/.45,ease=u*u*(3-2*u);
+   this.dummy.rotation.set(0,g.heading??0,0);
+   this.dummy.position.set(g.x+g.ox*ease*.46,(quarry?.255:.3)-.015-ease*.03,g.z+g.oz*ease*.46);this.dummy.scale.setScalar(Math.max(.02,g.size*(1-ease)));this.dummy.updateMatrix();
    this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
    this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[g.item]??C.light));
   }
-  this.dummy.scale.setScalar(1);
+  this.dummy.scale.setScalar(1);this.dummy.rotation.set(0,0,0);
   this.beltItems.count=cargoCount;
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}

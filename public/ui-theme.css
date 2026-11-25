@@ -297,3 +297,26 @@ html body.ih-theme #upgrade-turret .upgrade-title{font:600 14px/1 var(--ih-text)
 html body.ih-theme .recipe-time{margin-left:4px}
 html body.ih-theme .swarm-hud{top:240px;z-index:6}
 html body.ih-theme .camera-tools #auto-light,html body.ih-theme .camera-tools #aim-light{font-size:11px;letter-spacing:0;padding:0 6px}
+
+/* ---------- motion: soft transitions for panels, dialogs and controls ---------- */
+@keyframes ih-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes ih-slide-left{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes ih-dialog-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes ih-fade{from{opacity:0}to{opacity:1}}
+@keyframes ih-warning-in{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
+html body.ih-theme button,html body.ih-theme .build-btn,html body.ih-theme .menu-link,html body.ih-theme .tabs button,html body.ih-theme summary{transition:background-color .18s ease,background .18s ease,box-shadow .2s ease,color .15s ease,border-color .2s ease,transform .12s ease,filter .18s ease}
+html body.ih-theme button:not(:disabled):active,html body.ih-theme .build-btn:active{transform:translateY(1px);filter:brightness(.94)}
+html body.ih-theme .build-btn:hover .build-symbol{transform:translateY(-2px);box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 0 0 1px #050708,0 0 0 2px color-mix(in srgb,var(--building-accent,#edc38f) 60%,transparent),0 6px 14px rgba(0,0,0,.45)}
+html body.ih-theme .build-btn .build-symbol{transition:transform .2s cubic-bezier(.2,.8,.3,1),box-shadow .2s ease}
+html body.ih-theme .tabs button.active::after{animation:ih-fade .25s ease}
+html body.ih-theme #right-dock>.intel:not([hidden]){animation:ih-slide-left .26s cubic-bezier(.2,.8,.3,1)}
+html body.ih-theme .left-panel:not([hidden]),html body.ih-theme .bottom-ui{animation:ih-fade .35s ease both}
+html body.ih-theme .topbar{animation:ih-rise .35s cubic-bezier(.2,.8,.3,1) both}
+html body.ih-theme dialog[open]{animation:ih-dialog-in .24s cubic-bezier(.2,.8,.3,1)}
+html body.ih-theme dialog[open]::backdrop{animation:ih-fade .24s ease}
+html body.ih-theme .swarm-warning:not([hidden]),html body.ih-theme .ammo-alert:not([hidden]),html body.ih-theme .fuel-alert:not([hidden]){animation:ih-warning-in .28s cubic-bezier(.2,.8,.3,1)}
+html body.ih-theme #area-tools:not([hidden]),html body.ih-theme .tool-hint:not([hidden]){animation:ih-fade .2s ease-out}
+html body.ih-theme .left-panel #wave-fill{transition:width .5s linear}
+html body.ih-theme .hp-bar i{transition:width .3s ease}
+html body.ih-theme details[open]>:not(summary){animation:ih-rise .22s ease-out}
+@media(prefers-reduced-motion:reduce){html body.ih-theme *,html body.ih-theme *::before,html body.ih-theme *::after,html body.ih-theme dialog::backdrop{animation:none!important;transition:none!important}}

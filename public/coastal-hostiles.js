@@ -60,7 +60,7 @@ export class CoastalHostiles{
   for(const group of this.species.values()){if(group.prototype.material.userData.shader)group.prototype.material.userData.shader.uniforms.coastalTime.value=time;group.count=0;group.ids=[];for(const [part,mesh] of Object.entries(group.meshes)){mesh.geometry=low?group.prototype.low[part]:group.prototype[part];mesh.castShadow=castShadows;}}
   const next=new Map(),seen=new Map(),alive=new Set();let contactCount=0;
   // Presentation only: flinches, lunges and falls never feed back into the simulation.
-  this.lastHp??=new Map();this.flinch??=new Map();this.corpses??=[];this.lastSeen??=new Map();
+  this.lastHp??=new Map();this.flinch??=new Map();this.corpses??=[];this.lastSeen??=new Map();this.gaits??=new Map();
   const step=Math.max(0,Math.min(.1,dt||0));
   for(const e of enemies)alive.add(e.id);
   const vanished=[...this.lastSeen.keys()].filter(id=>!alive.has(id));
@@ -78,7 +78,7 @@ export class CoastalHostiles{
    for(const [part,sockets] of [['limbs',p.sockets],['arms',p.armSockets]]){
     const mesh=group.meshes[part];if(!mesh)continue;
     sockets.forEach((socket,i)=>{
-     const stride=Math.sin(o.phase+socket.phase)*(o.moving?.28:.035)+(part==='arms'?-o.attack*.9:0);
+     const stride=Math.sin(o.phase+socket.phase)*(.035+.245*o.move)+(part==='arms'?-o.attack*.9:0);
      this.pose.position.set(socket.x,socket.y,socket.z);
      this.pose.rotation.set(stride+o.curl,socket.angle||0,kind==='drowned'?socket.side*.07:stride*.15);
      if(socket.side<0)this.pose.rotation.y+=Math.PI;
@@ -87,7 +87,7 @@ export class CoastalHostiles{
      const lower=group.meshes[part==='limbs'?'lowerLimbs':'forearms'];
      if(lower){
       this.segment.position.set(...(part==='limbs'?p.knee:p.elbow));
-      const lift=Math.max(0,Math.sin(o.phase+socket.phase))*(o.moving?1:0);
+      const lift=Math.max(0,Math.sin(o.phase+socket.phase))*o.move;
       this.segment.rotation.set((part==='arms'?-.15+stride*.4:kind==='drowned'?lift*.8:0)+o.curl*.8,0,part==='limbs'&&kind!=='drowned'?lift*.42:0);
       this.segment.scale.setScalar(1);this.segment.updateMatrix();this.segment.matrix.premultiply(this.pose.matrix);
       lower.setMatrixAt(index*sockets.length+i,this.segment.matrix);lower.setColorAt(index*sockets.length+i,this.tint);
@@ -101,20 +101,31 @@ export class CoastalHostiles{
    if(coastalLand(bounds?.terrain,at.x,at.z,0)){const radius=kind==='walker'?.85:kind==='guard'?.7:kind==='runner'?.45:.4;this.segment.position.set(at.x,actorElevation(bounds?.terrain,at.x,at.z)+.003,at.z);this.segment.rotation.set(0,Math.atan2(-e.x,-e.z),0);this.segment.scale.set(radius*2,1,radius*1.6);this.segment.updateMatrix();this.contact.setMatrixAt(contactCount++,this.segment.matrix);}
    const moving=previous&&Math.hypot(e.x-previous.x,e.z-previous.z)>.0001;
    const target=moving?Math.atan2(e.x-previous.x,e.z-previous.z):old??Math.atan2(-e.x,-e.z);
-   const angle=old===undefined?target:old+Math.atan2(Math.sin(target-old),Math.cos(target-old))*(1-Math.exp(-dt*12));next.set(e.id,angle);
-   const phase=time*p.frequency+e.id*.73;
-   const lastHp=this.lastHp.get(e.id);if(lastHp!==undefined&&e.hp<lastHp-1e-6)this.flinch.set(e.id,.22);
+   const angle=old===undefined?target:old+Math.atan2(Math.sin(target-old),Math.cos(target-old))*(1-Math.exp(-dt*10));next.set(e.id,angle);
+   // Gait is driven by distance actually covered on screen, so feet plant instead of sliding,
+   // and a smoothed "move" weight eases between standing and walking.
+   const gait=this.gaits.get(e.id)??{x:at.x,z:at.z,cycle:e.id*.73,move:0,speed:0};
+   const travelled=Math.min(.5,Math.hypot(at.x-gait.x,at.z-gait.z));gait.x=at.x;gait.z=at.z;
+   const instant=step>0?travelled/step:0;gait.speed+=(instant-gait.speed)*(1-Math.exp(-step*10));
+   gait.move+=((gait.speed>.08?1:0)-gait.move)*(1-Math.exp(-step*7));
+   const strideLength={runner:.34,drowned:.42,guard:.5,spitter:.4,walker:1.05}[kind]??.4;
+   gait.cycle+=travelled/strideLength*Math.PI*2+step*(1-gait.move)*1.3;
+   this.gaits.set(e.id,gait);
+   const phase=gait.cycle,move=gait.move;
+   const lastHp=this.lastHp.get(e.id);if(lastHp!==undefined&&e.hp<lastHp-1e-6)this.flinch.set(e.id,.3);
    const flinch=Math.max(0,(this.flinch.get(e.id)??0)-step);if(flinch>0)this.flinch.set(e.id,flinch);else this.flinch.delete(e.id);
-   const hit=flinch/.22,attack=Math.max(0,Math.min(1,((e.cooldown||0)-.35)/.65)),lunge=Math.sin(attack*Math.PI);
+   // A damped recoil: a quick knock back that settles with a small overshoot.
+   const k=1-flinch/.3,hit=flinch>0?Math.exp(-k*5)*Math.cos(k*7.5):0;
+   const attack=Math.max(0,Math.min(1,((e.cooldown||0)-.35)/.65)),lunge=Math.sin(attack*Math.PI)**1.5;
    const visible=e.illuminated||isInLighthouseBeam(beam,at);
-   const gait=moving?Math.abs(Math.sin(phase)):0,breath=Math.sin(time*2.1+e.id)*.5+.5;
-   place(group,p,kind,at,angle,{id:e.id,phase,moving,attack,curl:0,
-    push:lunge*(kind==='walker'?.22:.12)-hit*.07,
-    lift:moving?gait*.03:.004+breath*.006,
-    pitch:(moving?.07:0)+lunge*.22-hit*.12,
-    roll:moving?Math.sin(phase)*.045:0,
-    wide:1+hit*.06,tall:(1-hit*.12)*(moving?1:1+breath*.012),
-    tint:(visible?1.03:.9)+hit*.55});
+   const footfall=Math.abs(Math.sin(phase)),breath=Math.sin(time*1.7+e.id)*.5+.5,heavy=kind==='walker'||kind==='guard'?1.4:1;
+   place(group,p,kind,at,angle,{id:e.id,phase,move,attack,curl:0,
+    push:lunge*(kind==='walker'?.22:.12)-hit*.08,
+    lift:move*footfall*.026*heavy+(1-move)*(.004+breath*.006),
+    pitch:move*Math.min(.11,gait.speed*.06)+lunge*.22-hit*.12,
+    roll:move*Math.sin(phase)*.04*heavy,
+    wide:1+Math.max(0,hit)*.05+move*(1-footfall)*.015,tall:(1-Math.max(0,hit)*.1)*(1-move*(1-footfall)*.02)*(1+(1-move)*breath*.012),
+    tint:(visible?1.03:.9)+Math.max(0,hit)*.5});
    this.lastHp.set(e.id,e.hp);seen.set(e.id,{kind,at:{x:at.x,z:at.z},angle,phase,tint:visible?1.03:.9});
   }
   // Shadow updates follow living hostiles; a falling body fades without forcing shadow re-renders.
@@ -123,11 +134,12 @@ export class CoastalHostiles{
   this.corpses=this.corpses.filter(c=>(c.age+=step)<1.1);
   for(const c of this.corpses){
    const group=this.species.get(c.kind);if(!group||group.count>=this.capacity)continue;
-   const t=Math.min(1,c.age/1.1),fall=1-(1-Math.min(1,t*2.2))**3;
-   place(group,group.prototype,c.kind,c.at,c.angle,{id:null,phase:c.phase,moving:false,attack:0,curl:fall*.9,
+   const t=Math.min(1,c.age/1.1),u=Math.min(1,t*1.9),fall=u<.5?4*u*u*u:1-(-2*u+2)**3/2;
+   place(group,group.prototype,c.kind,c.at,c.angle,{id:null,phase:c.phase,move:0,attack:0,curl:fall*.9,
     push:0,lift:-fall*.12-t*t*.25,pitch:-fall*.25,roll:fall*1.25,wide:1-t*t*.35,tall:1-t*t*.45,tint:c.tint*(1-t*.45)});
   }
   for(const id of this.lastHp.keys())if(!alive.has(id)){this.lastHp.delete(id);this.flinch.delete(id);}
+  for(const id of this.gaits.keys())if(!alive.has(id))this.gaits.delete(id);
   this.lastSeen=seen;
   this.contact.count=contactCount;this.contact.visible=contactCount>0;if(contactCount)this.contact.instanceMatrix.needsUpdate=true;
   this.hasVisible=liveVisible;
