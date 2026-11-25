@@ -308,6 +308,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 01:27 Europe/Copenhagen — Codex — outage onset and rebuild priority
+
+- 35 earned-resource simulations on `c7efa80` with driver `7cee0bd`. At 29 of 30 recorded defense outages in controls, load already exceeded production at the preceding sample. Rebuild priority changed none of six outcome metrics in 15 pairs. It executed three builds in one pair, with identical observed shortage time.
+- No gameplay or release changes. Next measure when the power reserve starts falling, before defenses stop. [Report](docs/playtests/balance-2026-11-25-power-origin.md).
+
 ### 2026-11-24 22:27 Europe/Copenhagen — Codex — power recovery telemetry
 
 - 35 earned-resource simulations on `8cf1b9f`, driver `af38083`. The optional meter recorded 59 defense outages and 35 recoveries, with distinct observations for empty fuel and unaffordable reinstatement on former generator sites.

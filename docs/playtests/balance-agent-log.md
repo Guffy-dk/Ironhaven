@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 01.27 dansk tid
+
+- Kørsel `2026-11-25T01:27:27+01:00`, simulation `c7efa80`, testdriver `7cee0bd`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 3583 og 8363.
+- Genopbygningsprioriteten gav 0 bedre, 0 dårligere og 15 lige kampagner målt på sejr og højeste swarm. 15/15 gentog alle seks mål. Forsøget gennemførte 3 prioriterede genopbygninger i 1 af 15 par.
+- Spilværdierne beholdes. Næste forsøg måler underskuddet før tårnene falder ud.
+- [Rapport](balance-2026-11-25-power-origin.md) · [Rådata](balance-2026-11-25-power-origin.json).
+
 ### 2026-11-24 kl. 22.27 dansk tid
 
 - Kørsel `2026-11-24T22:27:27+01:00`, simulation `8cf1b9f`, driver `af38083`, eksisterende build `0.21.2.3`.
