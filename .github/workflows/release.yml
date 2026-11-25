@@ -2,13 +2,50 @@ name: Release Windows and Linux game
 on:
   push:
     tags: ['v*']
+  # Owner-requested release from an environment that cannot push tags: Actions tags the given
+  # commit on main (after checking it matches package.json) and the same verified pipeline runs.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (vMAJOR.MINOR.PATCH) matching package.json
+        required: true
+      commit:
+        description: Full commit SHA on main to release
+        required: true
 permissions:
   contents: write
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+  RELEASE_REF: ${{ inputs.commit || github.sha }}
 jobs:
-  linux:
+  tag:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create the release tag for a dispatched release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release tag.' >&2; exit 1; }
+          [[ "$RELEASE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Give the full commit SHA.' >&2; exit 1; }
+          git merge-base --is-ancestor "$RELEASE_REF" origin/main || { echo 'The commit is not on main.' >&2; exit 1; }
+          version="$(git show "$RELEASE_REF:package.json" | node -p 'JSON.parse(require("fs").readFileSync(0,"utf8")).version')"
+          [[ "v$version" == "$RELEASE_TAG" ]] || { echo "package.json is $version, not $RELEASE_TAG." >&2; exit 1; }
+          if git ls-remote --exit-code origin "refs/tags/$RELEASE_TAG" >/dev/null; then echo 'The tag already exists.' >&2; exit 1; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$RELEASE_TAG" "$RELEASE_REF" -m "Ironhaven $RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
+
+  linux:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_REF }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -35,6 +72,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_REF }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -49,7 +88,6 @@ jobs:
       - name: Publish Windows and Linux game and patchers
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $existingPatchers = @{
             'v0.21.1' = 'v0.20.1'
@@ -65,8 +103,6 @@ jobs:
           gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json release/Ironhaven-Linux-x64.tar.gz release/Ironhaven-Linux-manifest.json release/Ironhaven-Patcher-Linux @captures --latest=false --title "Ironhaven $env:RELEASE_TAG Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
 
       - name: Verify published Windows installation
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tests = Join-Path $PWD "release/windows-$version/PatcherTests.exe"
@@ -83,12 +119,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_REF }}
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
       - name: Verify published Linux installation
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           for attempt in 1 2 3; do
             dotnet run --project desktop/patcher/linux/tests -c Release -- "$RELEASE_TAG" --exact && exit 0
@@ -104,5 +140,4 @@ jobs:
       - name: Promote verified release to latest
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
         run: gh release edit "$RELEASE_TAG" --latest --repo "$GITHUB_REPOSITORY"

@@ -356,6 +356,7 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - **Owner decision (25 Nov 2026):** merge the HUD layout, animation and transition work to `main` and **publish to the patcher**. This is an explicit release request. Claude chose public version `0.22.0`, a three-part version for the patcher, because the release adds Linux, internet co-op, the new UI, animation and the difficulty pass.
 - It is the first release with Linux assets (`Ironhaven-Linux-x64.tar.gz`, its manifest and `Ironhaven-Patcher-Linux`). The Windows patcher is rebuilt from the platform-neutral sources and keeps the same manifest format, so existing Windows patchers keep updating. The release workflow verifies the published installation on both platforms before promoting it to latest. The result is recorded below once known.
+- The cloud session's git proxy refuses tag pushes (HTTP 403). With owner approval ("Nr 3"), the release workflow gained `workflow_dispatch` inputs `tag` and `commit`. A first job checks that the commit is on `main`, that `package.json` matches the tag and that the tag does not exist yet. It then creates the tag in Actions, and the unchanged build, verification and promotion jobs run on that exact commit. Tag pushes still work as before.
 
 ### 2026-11-25 — Claude Code — presentation-only animation (approved for 0.22.0)
 
