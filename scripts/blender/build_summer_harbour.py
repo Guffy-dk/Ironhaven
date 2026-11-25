@@ -317,12 +317,82 @@ def creatures():
         keep.select_set(True); bpy.context.view_layer.objects.active = keep
         bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, f'creature-{kind}.glb'), export_format='GLB', use_selection=True, export_image_format='JPEG', export_jpeg_quality=88)
 
+def conifer(pid, cards_per_tree=2600, card_size=(.7, 1.15)):
+    # Game-ready conifer from a scanned tree whose needles are millions of real triangles (unusable in a
+    # game, and decimation erases them). Bake a real needle spray from the scan to an alpha card, then grow
+    # cards along the scanned twig surface; bark, trunk and dead branches keep their scanned geometry.
+    import numpy as np, random
+    reset(); random.seed(7)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(CACHE, 'models', pid, pid + '.gltf'))
+    for o in [o for o in bpy.data.objects if o.type == 'MESH']:
+        bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active = o
+        bpy.ops.mesh.separate(type='MATERIAL')
+    twigs = [o for o in bpy.data.objects if o.type == 'MESH' and 'twig' in o.active_material.name]
+    # 1. Bake: orthographic top view of a branch tip from the scan, transparent film.
+    src = max(twigs, key=lambda o: len(o.data.polygons))
+    n = len(src.data.polygons); centres = np.empty(n * 3, 'f4'); src.data.polygons.foreach_get('center', centres); centres = centres.reshape(n, 3)
+    world = np.array(src.matrix_world); centres = centres @ world[:3, :3].T + world[:3, 3]
+    z = centres[:, 2]; h = z.max(); r = np.hypot(centres[:, 0] - centres[:, 0].mean(), centres[:, 1] - centres[:, 1].mean())
+    band = (z > h * .35) & (z < h * .6); pick = centres[band][np.argsort(r[band])[int(band.sum() * .8)]]
+    for o in bpy.data.objects:
+        if o.type == 'MESH': o.hide_render = o is not src
+    # Bake albedo, not lighting: dense needles shade each other black. Emission of the base colour, cut by alpha.
+    tw = src.active_material.node_tree; pb = next(nd for nd in tw.nodes if nd.type == 'BSDF_PRINCIPLED'); outn = next(nd for nd in tw.nodes if nd.type == 'OUTPUT_MATERIAL')
+    emit = tw.nodes.new('ShaderNodeEmission'); clear = tw.nodes.new('ShaderNodeBsdfTransparent'); mixn = tw.nodes.new('ShaderNodeMixShader')
+    if pb.inputs['Base Color'].links: tw.links.new(pb.inputs['Base Color'].links[0].from_socket, emit.inputs['Color'])
+    else: emit.inputs['Color'].default_value = pb.inputs['Base Color'].default_value
+    if pb.inputs['Alpha'].links: tw.links.new(pb.inputs['Alpha'].links[0].from_socket, mixn.inputs['Fac'])
+    else: mixn.inputs['Fac'].default_value = 1
+    tw.links.new(clear.outputs[0], mixn.inputs[1]); tw.links.new(emit.outputs[0], mixn.inputs[2]); tw.links.new(mixn.outputs[0], outn.inputs['Surface'])
+    cam_data = bpy.data.cameras.new('bake'); cam_data.type = 'ORTHO'; cam_data.ortho_scale = 1.3; cam_data.clip_start = .01; cam_data.clip_end = 1.4
+    cam = bpy.data.objects.new('bake', cam_data); bpy.context.collection.objects.link(cam); cam.location = (pick[0], pick[1], pick[2] + .7)
+    sc = bpy.context.scene; sc.camera = cam; sc.render.engine = 'CYCLES'; sc.cycles.samples = 32; sc.render.film_transparent = True
+    sc.render.resolution_x = sc.render.resolution_y = 512; sc.view_settings.view_transform = 'Standard'
+    w = bpy.data.worlds.new('bake'); sc.world = w; w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Strength'].default_value = 1.1
+    card_png = os.path.join(OUT, f'{pid}-needles.png'); sc.render.filepath = card_png; sc.render.image_settings.color_mode = 'RGBA'
+    bpy.ops.render.render(write_still=True)
+    # 2. Cards on the scanned twig surface, area-weighted, facing between the surface normal and the sky.
+    img = bpy.data.images.load(card_png); img.alpha_mode = 'STRAIGHT'
+    mat = bpy.data.materials.new(f'{pid}-needles'); mat.use_nodes = True; nt = mat.node_tree; bsdf = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color']); nt.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    bsdf.inputs['Roughness'].default_value = .8; mat.blend_method = 'CLIP'; mat.use_backface_culling = False
+    for t in twigs:
+        m = len(t.data.polygons); c = np.empty(m * 3, 'f4'); nrm = np.empty(m * 3, 'f4'); area = np.empty(m, 'f4')
+        t.data.polygons.foreach_get('center', c); t.data.polygons.foreach_get('normal', nrm); t.data.polygons.foreach_get('area', area)
+        c = c.reshape(m, 3); nrm = nrm.reshape(m, 3)
+        chosen = np.random.default_rng(11).choice(m, size=min(cards_per_tree, m), replace=False, p=area / area.sum())
+        verts, faces, uvs = [], [], []
+        for k, i in enumerate(chosen):
+            up = np.array([0, 0, 1.]); nn = nrm[i] * (1 if nrm[i][2] >= 0 else -1); axis = nn * .5 + up * .5; axis /= np.linalg.norm(axis)
+            a = np.cross(axis, [1, 0, 0] if abs(axis[0]) < .9 else [0, 1, 0]); a /= np.linalg.norm(a); b = np.cross(axis, a)
+            spin = random.uniform(0, math.tau); u = a * math.cos(spin) + b * math.sin(spin); v = np.cross(axis, u)
+            half = random.uniform(*card_size) / 2; o = c[i]
+            base = len(verts)
+            for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)): verts.append(tuple(o + (su * u + sv * v) * half))
+            faces.append((base, base + 1, base + 2, base + 3)); uvs += [(0, 0), (1, 0), (1, 1), (0, 1)]
+        me = bpy.data.meshes.new(t.name + '-cards'); me.from_pydata(verts, [], faces); me.update()
+        layer = me.uv_layers.new(); [setattr(layer.data[i], 'uv', uv) for i, uv in enumerate(uvs)]
+        me.materials.append(mat)
+        cards = bpy.data.objects.new(t.name.split('.')[0] + '_cards', me); cards.matrix_world = t.matrix_world.copy()
+        cards.parent = t.parent; cards.matrix_parent_inverse = t.matrix_parent_inverse.copy(); bpy.context.collection.objects.link(cards)
+        bpy.data.objects.remove(t, do_unlink=True)
+    bpy.data.objects.remove(cam, do_unlink=True)
+    for o in [o for o in bpy.data.objects if o.type == 'MESH' and not o.name.endswith('_cards')]:
+        o.hide_render = False
+        if len(o.data.polygons) > 6000:
+            mod = o.modifiers.new('budget', 'DECIMATE'); mod.ratio = 6000 / len(o.data.polygons)
+            bpy.context.view_layer.objects.active = o; bpy.ops.object.modifier_apply(modifier='budget')
+    bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'nature-' + pid + '.glb'), export_format='GLB', export_image_format='AUTO')
+
+def fir(): conifer('fir_tree_01')
+
 def nature():
     # CC0 Poly Haven nature and harbour props, decimated to game budgets for instancing.
     budget = {'fir_sapling': 9000, 'pine_sapling_small': 6000, 'rock_moss_set_01': 6000, 'fern_02': 3000, 'wooden_crate_01': 2000,
               'wooden_barrels_01': 4000, 'boulder_01': 4000, 'tree_stump_01': 3000, 'shrub_04': 4000,
               # Full-size scanned trees, coast rock and the harbour kit (owner: "no toy art", 25 Nov 2026).
-              'fir_tree_01': 14000, 'pine_tree_01': 14000, 'coast_rocks_01': 8000, 'coast_rocks_02': 8000, 'coast_land_rocks_02': 8000,
+              'coast_rocks_01': 8000, 'coast_rocks_02': 8000, 'coast_land_rocks_02': 8000,
               'coast_line_01': 12000, 'modular_wooden_pier': 30000, 'modular_factory_facade': 40000, 'modular_industrial_pipes_01': 20000,
               'overhead_crane': 20000, 'modular_electricity_poles': 12000, 'ship_pinnace': 30000, 'dutch_ship_medium': 40000,
               'lateral_sea_marker': 4000, 'ocean_buoy': 4000, 'grass_medium_01': 1500, 'shrub_02': 4000, 'street_lamp_01': 4000,
@@ -338,6 +408,6 @@ def nature():
         bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'nature-' + pid + '.glb'), export_format='GLB', export_image_format='JPEG', export_jpeg_quality=88)
 
 only = set(argv[2:])
-for step in (smelter, drill, warehouse, lighthouse, creatures, nature):
+for step in (smelter, drill, warehouse, lighthouse, creatures, nature, fir):
     if not only or step.__name__ in only: step()
 print('BUILT', sorted(os.listdir(OUT)))

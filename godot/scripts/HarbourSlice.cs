@@ -251,12 +251,12 @@ public partial class HarbourSlice : Node3D
 			else if (rng.Randf() < 0.004f) boulders.Add(Placed(x, z, rng.RandfRange(0.8f, 1.4f), 0.2f));
 			else if (forest > 0.5f && rng.Randf() < 0.02f) stumps.Add(Placed(x, z, rng.RandfRange(1f, 1.4f)));
 		}
-		// Scanned full-size spruce and pine (1 unit ≈ 2 m), three variants each; saplings as undergrowth.
+		// Scanned spruce (1 unit ≈ 2 m) in three variants, needles baked to alpha cards in Blender; saplings as undergrowth.
 		var variants = new[] { "_a_", "_b_", "_c_" };
 		for (int v = 0; v < 3; v++)
 		{
 			Scatter("nature-fir_tree_01", firs.FindAll(t => firs.IndexOf(t) % 3 == v), variants[v]);
-			Scatter("nature-pine_tree_01", pines.FindAll(t => pines.IndexOf(t) % 3 == v), variants[v]);
+			Scatter("nature-fir_tree_01", pines.FindAll(t => pines.IndexOf(t) % 3 == v), variants[(v + 1) % 3]);
 		}
 		Scatter("nature-fir_sapling", saplings); Scatter("nature-fern_02", ferns);
 		Scatter("nature-shrub_04", shrubs); Scatter("nature-shrub_02", shrubs2); Scatter("nature-rock_moss_set_01", rocks); Scatter("nature-boulder_01", boulders); Scatter("nature-tree_stump_01", stumps);
