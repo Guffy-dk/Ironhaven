@@ -628,7 +628,8 @@ for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest
 function buildingLabels(){
  const root=$('building-labels'),wanted=new Set(),occupied=new Map(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
  for(const b of (selected?[...state.buildings].sort((a,b)=>(b.id===selected)-(a.id===selected)):state.buildings)){
-  const identity=preferences.interface.buildingTypes&&(view.zoom<24||selected===b.id)?BUILDING_IDENTITIES[b.type]:null;
+  // Type tags read as clutter at colony distance; show them close up, or for the hovered or selected building.
+  const identity=preferences.interface.buildingTypes&&(view.zoom<12||selected===b.id||hover?.x===b.x&&hover?.z===b.z)?BUILDING_IDENTITIES[b.type]:null;
   const damaged=b.hp<maxHp(b),ammoLow=usesAmmo(b.type)&&(b.ammo<=3||state.resources.gear<=1&&b.ammo<=6);
   const status=showDiagnostics&&(RECIPES[b.type]||['inserter','splitter','drill','copperDrill','sawmill','generator','turret'].includes(b.type))?factoryStatus(state,b,grid):null;
   const upgrades=preferences.interface.buildingLevels&&(b.level||1)>1&&view.zoom<45&&(!['belt','wall'].includes(b.type)||selected===b.id);

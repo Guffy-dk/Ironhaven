@@ -471,7 +471,8 @@ test('master volume scales actual sound gain and the mute controls stay in sync'
 test('mineral names stay removed and numeric level badges can be toggled',async()=>{
  const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');machine.level=4;machine.hp=maxHp(machine);
  const h=harness(saved);try{
-  h.$('resume').click();h.frame(1000);assert.equal(h.$('building-'+machine.id).querySelector('.world-upgrades').textContent,'4');assert.equal(h.$('mineral-labels').hidden,true);
+  // Type tags appear when the camera is close (or on hover/selection) to keep the colony view uncluttered.
+  h.$('resume').click();h.dom.__view.zoom=10;h.frame(1000);assert.equal(h.$('building-'+machine.id).querySelector('.world-upgrades').textContent,'4');assert.equal(h.$('mineral-labels').hidden,true);
   const before=h.save();h.$('show-levels').checked=false;h.$('show-levels').dispatchEvent(new h.dom.Event('change'));h.$('show-minerals').checked=false;h.$('show-minerals').dispatchEvent(new h.dom.Event('change'));h.frame(1300);
   assert.ok(h.$('building-'+machine.id)?.querySelector('.world-kind'));assert.ok(!h.$('building-'+machine.id).querySelector('.world-upgrades'));h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1600);assert.ok(!h.$('building-'+machine.id));assert.equal(h.$('mineral-labels').hidden,true);assert.deepEqual(h.save(),before);
   const prefs=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(prefs.interface.buildingLevels,false);assert.equal(prefs.interface.mineralLabels,false);
@@ -486,7 +487,7 @@ test('Q deletes single and drag-selected structures while Escape cancels tools',
 });
 test('building trades share readable map names, construction symbols and a persistent label toggle',async()=>{
  const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');const h=harness(saved);let stored;
- try{h.$('resume').click();h.frame(1000);const label=h.$('building-'+machine.id);assert.match(label?.textContent||'',/SMELTER/);assert.ok(label.querySelector('svg'));const before=label.firstChild;h.frame(1250);assert.ok(label.firstChild===before,'Unchanged SVG labels must not rebuild every frame');assert.match(h.$('building-key').textContent,/Smelter.*Assembler.*Steel foundry.*Circuit assembler.*Component factory/);assert.equal(h.$('show-building-types').checked,true);h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1500);assert.ok(!h.$('building-'+machine.id));stored=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(stored.interface.buildingTypes,false);
+ try{h.$('resume').click();h.dom.__view.zoom=10;h.frame(1000);const label=h.$('building-'+machine.id);assert.match(label?.textContent||'',/SMELTER/);assert.ok(label.querySelector('svg'));const before=label.firstChild;h.frame(1250);assert.ok(label.firstChild===before,'Unchanged SVG labels must not rebuild every frame');assert.match(h.$('building-key').textContent,/Smelter.*Assembler.*Steel foundry.*Circuit assembler.*Component factory/);assert.equal(h.$('show-building-types').checked,true);h.$('show-building-types').checked=false;h.$('show-building-types').dispatchEvent(new h.dom.Event('change'));h.frame(1500);assert.ok(!h.$('building-'+machine.id));stored=JSON.parse(h.dom.localStorage.getItem('ironhaven.preferences.v1'));assert.equal(stored.interface.buildingTypes,false);
  }finally{await h.close();}
  const reopened=harness(saved,{preferences:stored});try{assert.equal(reopened.$('show-building-types').checked,false);}finally{await reopened.close();}
 });

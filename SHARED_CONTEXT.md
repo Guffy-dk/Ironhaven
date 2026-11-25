@@ -352,11 +352,22 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — owner-authorised visual overhaul (in progress)
+
+- **Owner decision (25 Nov 2026):** Claude has full authority to change the look of the whole game and must fix what makes it tiresome to look at: the uniform ground, toy-like boxes without scale, saturated mineral blobs, badge and arrow noise, flat lighting and no wetness, mist or warm window light. The recommended direction is North Atlantic harbour industry, 1890–1940: timber and tar, then brick and riveted iron, then concrete and steel, used as visual progression. Releases still need an explicit owner request.
+- First pass:
+  - Deposits are weathered, half-buried outcrops with restrained mineral casts: rust for iron, verdigris for copper, black seams for coal.
+  - The ground has wet mud and peat variation under a less beige wash.
+  - Port arrows are smaller painted-metal plates.
+  - Building type tags show only when zoomed in closer than the default (zoom < 12) or for the hovered or selected building. Two interface tests now zoom in first.
+  - A display-space colour grade (`public/color-grade.js`, after `OutputPass`) adds slight desaturation, cool shadows and warm highlights, a soft curve, a vignette and fine grain.
+- Next: building scale and era materials, sea mist, wet sheen and warm window light. Each step gets before/after captures.
+
 ### 2026-11-25 — Claude Code — 0.22.0 release request
 
 - **Owner decision (25 Nov 2026):** merge the HUD layout, animation and transition work to `main` and **publish to the patcher**. This is an explicit release request. Claude chose public version `0.22.0`, a three-part version for the patcher, because the release adds Linux, internet co-op, the new UI, animation and the difficulty pass.
-- It is the first release with Linux assets (`Ironhaven-Linux-x64.tar.gz`, its manifest and `Ironhaven-Patcher-Linux`). The Windows patcher is rebuilt from the platform-neutral sources and keeps the same manifest format, so existing Windows patchers keep updating. The release workflow verifies the published installation on both platforms before promoting it to latest. The result is recorded below once known.
-- The cloud session's git proxy refuses tag pushes (HTTP 403). With owner approval ("Nr 3"), the release workflow gained `workflow_dispatch` inputs `tag` and `commit`. A first job checks that the commit is on `main`, that `package.json` matches the tag and that the tag does not exist yet. It then creates the tag in Actions, and the unchanged build, verification and promotion jobs run on that exact commit. Tag pushes still work as before.
+- It is the first release with Linux assets (`Ironhaven-Linux-x64.tar.gz`, its manifest and `Ironhaven-Patcher-Linux`). The Windows patcher is rebuilt from the platform-neutral sources and keeps the same manifest format, so existing Windows patchers keep updating. The release workflow verifies the published installation on both platforms before promoting it to latest. **Published:** [v0.22.0](https://github.com/Guffy-dk/Ironhaven/releases/tag/v0.22.0) from `cfbe3ef` (game code identical to the CI-verified `b67548d`, plus the release workflow and context). [Release run 45666047691](https://github.com/Guffy-dk/Ironhaven/actions/runs/45666047691): tag, Linux build, Windows build and publish, published-install verification on Windows and Linux, and promotion to latest all succeeded.
+- The cloud session's git proxy refuses tag pushes (HTTP 403). With owner approval ("Nr 3"), the release workflow gained `workflow_dispatch` inputs `tag` and `commit`. A first job checks that the commit is on `main`, that `package.json` matches the tag and that the tag does not exist yet. It then creates the tag through the refs API (a git push and the API are both refused for a commit whose workflow files differ from `main`; release the current `main` head), and the unchanged build, verification and promotion jobs run on that exact commit. Tag pushes still work as before.
 
 ### 2026-11-25 — Claude Code — presentation-only animation (approved for 0.22.0)
 

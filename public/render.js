@@ -6,6 +6,8 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {ColorGradeShader} from './color-grade.js';
 import {outlineBuilding,outlineMaterial} from './building-outlines.js';
 import {levelPlaque} from './building-levels.js';
 import {conveyorSurface} from './conveyor-surface.js';
@@ -285,9 +287,15 @@ const portArrow=(()=>{
  arrow.lineTo(.18,0);arrow.lineTo(.01,.12);arrow.lineTo(.01,.05);arrow.lineTo(-.17,.05);arrow.closePath();
  return new T.ShapeGeometry(arrow).rotateX(-Math.PI/2);
 })();
+const portArrowMaterials=new Map();
+// Painted metal arrow plates: readable port direction without glowing UI colours on every machine.
+function portArrowMaterial(color){
+ if(!portArrowMaterials.has(color)){const tint=new T.Color(color).lerp(new T.Color(0x6f716c),.45);portArrowMaterials.set(color,new T.MeshStandardMaterial({color:tint,roughness:.62,metalness:.35,emissive:tint,emissiveIntensity:.18}));}
+ return portArrowMaterials.get(color);
+}
 function port(g,side,text,color){
  const[dx,dz]=DIRS[side];
- const arrow=new T.Mesh(portArrow,mat(color,true));
+ const arrow=new T.Mesh(portArrow,portArrowMaterial(color));arrow.scale.setScalar(.78);
  arrow.name=`arrow-${text}`;
  arrow.position.set(dx*.66,.21,dz*.66);
  arrow.rotation.y=-(side+(text==='IN'||text==='1'?2:0))*Math.PI/2;
@@ -330,6 +338,7 @@ export class View{
   this.lighthouseLight=new LighthouseLight(this.scene);this.baseLampLights=new BaseLampLights(this.scene);
   this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));
   this.composer.addPass(new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.35,.42,2.2));this.composer.addPass(new OutputPass());
+  this.colorGrade=new ShaderPass(ColorGradeShader);this.composer.addPass(this.colorGrade);
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
   this.actorHeading=new Map();
   this.coastalHostiles=new CoastalHostiles(this.scene);this.depositHighlights=new Map();
@@ -445,11 +454,16 @@ export class View{
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
   this.depositHighlights.clear();
   const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?240:104,s.terrain.coast?240:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
-  const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x91816c),albedoTint=new T.Color(0xe8e1d5);
+  const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x8d8476),albedoTint=new T.Color(0xdcd8cc),mud=new T.Color(0x3f3a31),moss=new T.Color(0x4d5a3a);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
     const exposed=Math.sin(x*.53+z*.28)+Math.cos(z*.51-x*.32)+.43*Math.sin(x*.96-z*.76);
-    color.lerp(gravel,Math.min(.78,Math.max(0,.43*exposed-.12)));
-    color.lerp(albedoTint,.76);
+    color.lerp(gravel,Math.min(.7,Math.max(0,.4*exposed-.14)));
+    // Wet, trodden mud and darker peat break up the single beige field.
+    const damp=Math.sin(x*.21+z*.17)+Math.cos(z*.23-x*.29)*.8+Math.sin(x*.71+z*.53)*.35;
+    color.lerp(mud,T.MathUtils.smoothstep(damp,.55,1.6)*.5);
+    const peat=Math.cos(x*.13-z*.09)+Math.sin(z*.17+x*.07);
+    color.lerp(moss,T.MathUtils.smoothstep(peat,.6,1.7)*.35);
+    color.lerp(albedoTint,.6);
     const meadow=Math.sin(x*.47-z*.21)+Math.cos(z*.49+x*.23)+Math.sin(x*1.28-z*.66)*.2;
     const baseGrowth=T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16);
     const coastalGrowth=(.6+T.MathUtils.smoothstep(meadow,-.74,.84)*.4)*T.MathUtils.smoothstep(Math.abs(x),.45,1.3)*T.MathUtils.smoothstep(Math.hypot(x,z+8),1,2)*T.MathUtils.smoothstep(coastalHeight(s.terrain,x,z),-.6,-.05);
@@ -493,9 +507,11 @@ export class View{
   trees.forEach((v,i)=>{this.dummy.position.set(v.x,.3,v.z);this.dummy.rotation.set(0,rand()*6,0);this.dummy.scale.set(.8+rand()*.4,v.h*1.15,.8+rand()*.4);this.dummy.updateMatrix();trunks.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=.9*v.h;this.dummy.updateMatrix();leaves.setMatrixAt(i,this.dummy.matrix);this.dummy.position.y=1.6*v.h;this.dummy.updateMatrix();tops.setMatrixAt(i,this.dummy.matrix);});for(const o of[trunks,leaves,tops]){o.castShadow=true;o.receiveShadow=true;this.terrain.add(o);}
   }
   if(quarry){
-   this.quarryDeposit(s.terrain.ore,0x96d2df,0x61797a,rand);
-   this.quarryDeposit(s.terrain.copper??[],0xf1b17c,0x8c624a,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x344653,0x19272e,rand);
+   // Natural outcrops: weathered bedrock with a restrained mineral cast. Iron shows rust,
+   // copper a verdigris bloom and coal a black seam, readable without saturated colour blobs.
+   this.quarryDeposit(s.terrain.ore,0x8e5f49,0x67635b,rand);
+   this.quarryDeposit(s.terrain.copper??[],0x5f9c88,0x6a655b,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x141517,0x45433f,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
@@ -520,15 +536,18 @@ export class View{
   const {shape,material}=quarryStoneSurface();
   const highlight=new T.Color(vein),bed=new T.Color(bedrock),color=new T.Color(),pose=this.dummy;
   for(const patch of chunks.values()){
-   const scatter=new T.InstancedMesh(shape,material,patch.length*3);
+   const scatter=new T.InstancedMesh(shape,material,patch.length*5);
    let index=0;
-   for(const {x,z} of patch)for(let fragment=0;fragment<3;fragment++){
-   const base=fragment===0,size=base?.23+random()*.07:.06+random()*.07;
-   pose.position.set(x+(random()-.5)*(base?.47:.83),base?.062:.051+size*.17,z+(random()-.5)*(base?.47:.83));
-   pose.rotation.set(random()*.4,random()*6,random()*.31);
-   pose.scale.set(size*1.16,size*(base?.39:.56),size*.88);pose.updateMatrix();
+   // One weathered boulder per tile with loose scree around it; only some faces carry the mineral cast.
+   for(const {x,z} of patch)for(let fragment=0;fragment<5;fragment++){
+   const base=fragment===0,size=base?.24+random()*.1:.04+random()*.07;
+   // Tall, tilted and half-buried pieces catch the light on different faces like real rock.
+   pose.position.set(x+(random()-.5)*(base?.4:.95),base?.02+random()*.03:.02+size*.12,z+(random()-.5)*(base?.4:.95));
+   pose.rotation.set((random()-.5)*1.1,random()*6.3,(random()-.5)*.9);
+   pose.scale.set(size*(.85+random()*.5),size*(base?.75+random()*.35:.8+random()*.4),size*(.7+random()*.4));pose.updateMatrix();
    scatter.setMatrixAt(index,pose.matrix);
-   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,base?.68:random()*.23+.75));
+   const cast=base?.32+random()*.18:random()<.4?.35+random()*.25:random()*.12;
+   scatter.setColorAt(index++,color.copy(bed).lerp(highlight,cast).multiplyScalar(.82+random()*.3));
    }
    scatter.castShadow=true;scatter.receiveShadow=true;this.terrain.add(scatter);
   }
@@ -715,6 +734,7 @@ export class View{
    if(this.shadowKey!==key){this.shadowKey=key;this.setShadowArea(x,z,radius);}
   }
   outlineMaterial.uniforms.width.value=Math.min(.028,Math.max(.008,(this.worldPerPixel??.02)*.65));
+  if(this.colorGrade){this.colorGrade.uniforms.time.value=performance.now()/1000;this.colorGrade.uniforms.resolution.value.set(innerWidth,innerHeight);}
   if(this.composer&&this.renderer.shadowMap?.enabled)this.composer.render();else this.renderer.render(this.scene,this.camera);
  }
  project(x,z,y=1.3){const v=(this.projected??=new T.Vector3()).set(x,y,z).project(this.camera);return{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight,visible:v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}
