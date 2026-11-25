@@ -352,9 +352,14 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
-### 2026-11-25 — Claude Code — presentation-only animation (awaiting owner review)
+### 2026-11-25 — Claude Code — 0.22.0 release request
 
-- Owner request: more life in monsters and in belt cargo entering and leaving machines, with no gameplay change. This is on branch `ccr-6dd57fd4-9a8hab` and **not yet on `main`**, together with the HUD layout restructure, which also awaits approval.
+- **Owner decision (25 Nov 2026):** merge the HUD layout, animation and transition work to `main` and **publish to the patcher**. This is an explicit release request. Claude chose public version `0.22.0`, a three-part version for the patcher, because the release adds Linux, internet co-op, the new UI, animation and the difficulty pass.
+- It is the first release with Linux assets (`Ironhaven-Linux-x64.tar.gz`, its manifest and `Ironhaven-Patcher-Linux`). The Windows patcher is rebuilt from the platform-neutral sources and keeps the same manifest format, so existing Windows patchers keep updating. The release workflow verifies the published installation on both platforms before promoting it to latest. The result is recorded below once known.
+
+### 2026-11-25 — Claude Code — presentation-only animation (approved for 0.22.0)
+
+- Owner request: more life in monsters and in belt cargo entering and leaving machines, with no gameplay change. The owner approved it together with the HUD layout for 0.22.0.
 - `public/coastal-hostiles.js`: body bob, lean and sway synced to the stride; an attack lunge from the existing cooldown; a 0.22 s hit flinch with a flash when HP drops; and a 1.1 s topple, curl and sink for hostiles that disappear. Batches of more than 40 removed at once are skipped, which covers loads and resets. The shadow-update trigger still follows living hostiles only.
 - `public/render.js`: cargo grows out of a machine outlet onto the belt, shrinks as it nears a machine it feeds, and a short ghost slides into the machine after the simulation hands it over. Nothing reads back into the simulation, and the simulation files are unchanged.
 - Review material: `scripts/animation-demo-world.mjs` builds a running review fixture (two long ore lines and sturdier hostiles; fixture only). The 20 fps clips in `docs/design/animation/` are Linux SwiftShader renders, not Windows captures. Capture lesson: Playwright's `clock.install()` keeps running in real time, so call `clock.pauseAt()` or the game simulates roughly 20 times too fast between screenshots.

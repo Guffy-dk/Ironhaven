@@ -1,10 +1,20 @@
 // Release history is also the source for the in-game menu and GitHub release notes.
 // Add a new entry and bump package.json together for EVERY release, including patches.
 export const RELEASE_STAGE = 'alpha';
-export const CURRENT_VERSION = '0.21.3';
+export const CURRENT_VERSION = '0.22.0';
 export const displayVersion = v => /^\d+\.\d+\.0$/.test(v) ? v.slice(0,-2) : v;
 export const INTERNAL_BUILD = '0.21.2.3';
 export const RELEASES = [
+ {
+  version:'0.22.0',date:'2026-11-25',title:'Linux, internet co-op and a new harbour-steel interface',
+  changes:[
+   'Ironhaven now runs on Linux x64 as well as Windows x64. Linux players use Ironhaven-Patcher-Linux or the tar.gz package.',
+   'Co-op works over the internet without port forwarding. Exchange the invitation and answer codes as before; very strict company or mobile networks can still block direct connections.',
+   'A redesigned interface in weathered steel and brass: the swarm watch sits at the top, lighthouse controls are beside the map, and recipes and upgrade prices show material icons. Resources show their net rate per minute.',
+   'Smoother animation: hostiles walk without sliding, lunge when they attack, recoil when hit and fall when defeated. Cargo eases out of machines and into the machine it feeds. Panels and menus glide in.',
+   'Easier pacing: 120 seconds before the first swarm and 110 seconds between swarms on Standard. Swarms grow more gently, Veteran is slightly milder and the first Abyss walker is weaker.'
+  ]
+ },
  {
   version:'0.21.3',date:'2026-11-24',title:'Faster dispatch and timber logistics',
   changes:[

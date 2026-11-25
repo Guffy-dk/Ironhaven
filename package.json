@@ -1,6 +1,6 @@
 {
   "name": "ironhaven",
-  "version": "0.21.3",
+  "version": "0.22.0",
   "private": true,
   "type": "module",
   "description": "Windows and Linux x64 coastal factory survival for 1\u20134 players",
