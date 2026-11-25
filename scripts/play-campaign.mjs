@@ -12,7 +12,8 @@ const powerReserve=process.env.CAMPAIGN_POWER_RESERVE==='1';
 const outageReserve=process.env.CAMPAIGN_REPAIR_RESERVE==='outage';
 const recoveryTelemetry=process.env.CAMPAIGN_POWER_RECOVERY==='1';
 const shortResponse=process.env.CAMPAIGN_WARNING_RESPONSE==='short';
-const cappedResponse=process.env.CAMPAIGN_WARNING_RESPONSE==='capped';
+const reserveRestart=process.env.CAMPAIGN_WARNING_RESPONSE==='restart';
+const cappedResponse=reserveRestart||process.env.CAMPAIGN_WARNING_RESPONSE==='capped';
 const warningResponse=cappedResponse||shortResponse||process.env.CAMPAIGN_WARNING_RESPONSE==='1';
 const combatLead=process.env.CAMPAIGN_COMBAT_LEAD==='1';
 const reserveLead=process.env.CAMPAIGN_RESERVE_LEAD==='1';
@@ -28,7 +29,7 @@ if(!Object.hasOwn(DIFFICULTIES,difficulty)||!policies.includes(policy))throw Err
 if(!Number.isSafeInteger(seed)||seed<1||!Number.isFinite(horizon)||horizon<=0)throw Error('Use a positive seed and horizon in seconds');
 const suffix=difficulty==='standard'?'':'-'+difficulty;
 const stem=`work/campaign-${policy}-${seed}${suffix}${process.argv[5]?`-${horizon}${endless?'-endless':''}`:''}`;
-const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'')+(sentryFallback?'-fallback':'')+(outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':'')+(recoveryTelemetry?'-power-recovery':'')+(powerOrigin?'-power-origin':'')+(rebuildPriority?'-priority':'')+(reserveLead?'-reserve-lead':'')+(combatLead?'-combat-lead':'')+(warningResponse?'-warning-response':'')+(shortResponse?'-short':cappedResponse?'-capped':'');
+const outputStem=stem+(shedLoad?'-shed-load':'')+(powerReserve?'-reserve':'')+(coalReserve?'-fuel':'')+(marineTrial?'-marine':'')+(coalPowerTrial?'-coal-power':'')+(sentryFallback?'-fallback':'')+(outageReserve?'-outage-reserve':repairReserve?'-repair-reserve':'')+(recoveryTelemetry?'-power-recovery':'')+(powerOrigin?'-power-origin':'')+(rebuildPriority?'-priority':'')+(reserveLead?'-reserve-lead':'')+(combatLead?'-combat-lead':'')+(warningResponse?'-warning-response':'')+(shortResponse?'-short':cappedResponse?'-capped':'')+(reserveRestart?'-restart':'');
 const saveCheckpoints=process.env.CAMPAIGN_CHECKPOINTS!=='0';
 async function writeJson(file,value){
  await writeFile(file+'.tmp',JSON.stringify(value,null,2));
@@ -174,12 +175,24 @@ const priorityBuilds=[];
 const reserveDrawdowns=[];
 const responseWindows=[];
 let response=null,lastShortResponseWave=null;
+function canRestartOnReserve(){
+ const paused=s.buildings.filter(b=>b.disabled&&suspended.has(b.id));
+ if(!paused.length)return false;
+ const restoredLoad=paused.reduce((sum,b)=>sum+buildingPower({...b,disabled:false}),0);
+ const deficit=Math.max(0,s.power.used+restoredLoad-s.power.total);
+ return s.resources.power>=Math.max(60,15*deficit);
+}
 function respondToCombatWarning(){
  const attackSoon=s.enemies.length>0||(canSpawnSwarm(s)&&s.nextWave-s.time<=30);
  const signal=reserveDrawdown?.firstCombatSignal;
  const targetWave=s.enemies.length?s.wave:s.wave+1;
  if(response&&(!attackSoon||(shortResponse&&s.time>=response.expiresAt)))response=null;
  const limited=shortResponse||cappedResponse;
+ if(reserveRestart&&response&&canRestartOnReserve()){
+  response.earlyRestartSecond=Math.round(s.time);
+  response.restartReserve=s.resources.power;
+  response=null;
+ }
  const canRespond=!limited||lastShortResponseWave!==targetWave;
  if(!response&&canRespond&&attackSoon&&signal&&s.time-signal.second>=5&&s.power.used>s.power.total){
   response={wave:s.wave,signalSecond:signal.second,responseSecond:Math.round(s.time),pauses:0};
@@ -447,7 +460,7 @@ const final=sample();
 const generatorWindow={startSecond:fuelWindow.startTick===null?null:fuelWindow.startTick*STEP,
  seconds:fuelWindow.ticks*STEP,fueledSeconds:fuelWindow.fueledTicks*STEP,
  availablePowerSeconds:Number((fuelWindow.availablePowerTicks*STEP).toFixed(2)),coalBurned:fuelWindow.coalBurned};
-const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve,outageReserve,recoveryTelemetry,powerOrigin,rebuildPriority,priorityBuilds,reserveLead,combatLead,warningResponse,shortResponse,cappedResponse,responseWindows,reserveDrawdowns,victorySeconds,
+const report={seed,mapSeed:s.seed,swarmSeed:s.swarmSeed,policy,difficulty,horizon,endless,shedLoad,powerReserve,coalReserve,marineTrial,coalPowerTrial,sentryFallback,repairReserve,outageReserve,recoveryTelemetry,powerOrigin,rebuildPriority,priorityBuilds,reserveLead,combatLead,warningResponse,shortResponse,cappedResponse,reserveRestart,responseWindows,reserveDrawdowns,victorySeconds,
  outcome:s.status==='playing'?'horizon':s.status,wave:s.wave,seconds:final.time,kills:s.totalKills,built,repairs,upgrades,
  upgradeMilestones,planned:initialPlans,maxStock,capacity:storageCapacity(s),cpuSeconds:+((performance.now()-began)/1000).toFixed(2),
  generatorWindow,fallbackPlacements,recoveryEpisodes,final,waves:rows,caveat:'Scripted play using ordinary commands. Ammo starvation is sampled once per simulated second during combat.'};
