@@ -10,7 +10,7 @@ import {HOSTILES,hostileKind} from './shared/hostiles.js';
 import { View } from './render.js';
 import { RenderMotion } from './motion.js';
 import { upgradeColor } from './upgrade-colors.js';
-import { createGame,createExpedition,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,usesAmmo,POWER_CAPACITY,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,maxUpgrades,upgradeLocked,storageCapacity,storageUsed,warehouseUsed,planMove,buildingPower,productionSpeed,plateYield,beltTravelTicks,powerOutput,warehouseCapacity,warehouseStock,roundBonus,repairCost,TURRETS,GENERATORS,SIZE,SWARM_DIRECTIONS,sawmillTrees,sawmillRate,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
+import { occupies,buildingGrid,footprint,createGame,createExpedition,addPlayer,removePlayer,command,step,STEP,TYPES,canBuild,FINAL_WAVE,migrateGame,inventoryCount,maxHp,turretStats,usesAmmo,POWER_CAPACITY,DIRECTIONAL,DIRS,planRoute,planBeltDrag,key,RECIPES,RESOURCE_KEYS,upgradeCost,MAX_UPGRADES,maxUpgrades,upgradeLocked,storageCapacity,storageUsed,warehouseUsed,planMove,buildingPower,productionSpeed,plateYield,beltTravelTicks,powerOutput,warehouseCapacity,warehouseStock,roundBonus,repairCost,TURRETS,GENERATORS,SIZE,SWARM_DIRECTIONS,sawmillTrees,sawmillRate,waveForecast,LOGISTICS_TYPES,PROGRAM_ROLES,DEFAULT_PROGRAM,ITEM_KEYS,programFor,logisticsPorts } from './shared/sim.js';
 import { CURRENT_VERSION,RELEASE_STAGE,RELEASES,displayVersion,INTERNAL_BUILD } from './shared/releases.js';
 import { TUTORIAL_STEPS,tutorialTargets } from './shared/tutorial.js';
 import { initWindows } from './windows.js';
@@ -257,7 +257,7 @@ function componentWarehouse(factory,grid){
 $('component-warehouse').onclick=()=>{
  const factory=state.buildings.find(building=>building.id===selected);
  if(factory?.type!=='componentFactory')return;
- const warehouse=componentWarehouse(factory,new Map(state.buildings.map(b=>[key(b.x,b.z),b])));
+ const warehouse=componentWarehouse(factory,buildingGrid(state.buildings));
  if(warehouse&&warehouse.exportItem!=='recipe'){
   execute({type:'configureWarehouse',id:warehouse.id,x:warehouse.x,z:warehouse.z,item:'recipe'});
   updateInspector();
@@ -465,7 +465,7 @@ function refreshRoute(){
   routePlan=single?null:drag?planBeltDrag(state,[...drag,end],dir):planRoute(state,tool,start,end,dir);
  }
  if(!routePlan){view.previewRoute([]);return false;}
- const grid=new Map(state.buildings.map(b=>[key(b.x,b.z),b])),fresh=routePlan.cells.filter(c=>!grid.has(key(c.x,c.z))).length,packed=Math.min(fresh,inventoryCount(state,playerId,tool)),craft=fresh-packed;
+ const grid=buildingGrid(state.buildings),fresh=routePlan.cells.filter(c=>!grid.has(key(c.x,c.z))).length,packed=Math.min(fresh,inventoryCount(state,playerId,tool)),craft=fresh-packed;
  const missing=Object.entries(TYPES[tool].cost).some(([r,n])=>state.resources[r]<n*craft),error=routePlan.error||(missing?'Not enough materials for the entire route':null);
  view.previewRoute(routePlan.cells,!error,tool==='belt');$('tool-hint').classList.toggle('invalid',!!error);$('tool-hint').textContent=error||`${routePlan.cells.length} tiles · ${packed} from inventory · ${Object.entries(TYPES[tool].cost).map(([r,n])=>`${n*craft} ${RESOURCE_NAMES[r].toLowerCase()}`).join(' + ')} · Release to build · ${drag?'R turns · ':''}Esc cancels`;
  view.cursor.visible=false;if(view.ghost)view.ghost.visible=false;
@@ -486,7 +486,7 @@ function commitRoute(){
  updateHover();
 }
 function buildAt(cell){
- if(!cell||!tool||!started)return;const b=state.buildings.find(b=>b.x===cell.x&&b.z===cell.z);
+ if(!cell||!tool||!started)return;const b=state.buildings.find(b=>occupies(b,cell.x,cell.z));
  if((tool==='belt'||isBarrier(tool))&&b?.type===tool){rowAnchor={...cell,type:tool};toast('Anchor set. Drag from here or Shift-click an endpoint.');return;}
  const cmd=tool==='demolish'||tool==='repair'?{type:tool,x:cell.x,z:cell.z}:{type:'build',building:tool,x:cell.x,z:cell.z,dir};
  if(execute(cmd)!==false){rowAnchor={...cell,type:tool};tone(tool==='demolish'?190:700,.035,.015,'triangle');}updateHover();
@@ -513,7 +513,7 @@ $('world').addEventListener('pointerdown',e=>{
    lastRouteKey='';updateHover();
   }
   else buildAt(hover);
- }else{selectionGesture={down:{...hover},screen:{x:e.clientX,y:e.clientY},moved:false};const b=state.buildings.find(b=>b.x===hover.x&&b.z===hover.z);selected=b?.id||null;areaIds=b?[b.id]:[];view.select(b);if(b)$('intel').hidden=false;updateAreaTools();updateInspector();}
+ }else{selectionGesture={down:{...hover},screen:{x:e.clientX,y:e.clientY},moved:false};const b=state.buildings.find(b=>occupies(b,hover.x,hover.z));selected=b?.id||null;areaIds=b?[b.id]:[];view.select(b);if(b)$('intel').hidden=false;updateAreaTools();updateInspector();}
 });
 window.addEventListener('pointerup',e=>{
  if(selectionGesture&&e.button===0){
@@ -532,7 +532,7 @@ window.addEventListener('pointercancel',()=>{if(selectionGesture){selectionGestu
 $('world').addEventListener('contextmenu',e=>e.preventDefault());
 $('world').addEventListener('pointerleave',()=>{if(!rowGesture&&!selectionGesture&&!movingArea){pointer=null;hover=null;updateHover();}});
 function rotateExisting(){
- const b=hover&&state.buildings.find(b=>b.x===hover.x&&b.z===hover.z&&b.type==='belt')||state.buildings.find(b=>b.id===selected);
+ const b=hover&&state.buildings.find(b=>occupies(b,hover.x,hover.z)&&b.type==='belt')||state.buildings.find(b=>b.id===selected);
  if(!b||!DIRECTIONAL.includes(b.type))return false;
  execute({type:'rotate',x:b.x,z:b.z});lastRouteKey='';tone(550,.04);updateInspector();return true;
 }
@@ -626,7 +626,7 @@ $('menu-field-guide').onclick=()=>{$('menu-dialog').close();$('help-dialog').sho
 updateSound();renderPreferences();
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
 function buildingLabels(){
- const root=$('building-labels'),wanted=new Set(),occupied=new Map(),grid=showDiagnostics?new Map(state.buildings.map(b=>[key(b.x,b.z),b])):null;
+ const root=$('building-labels'),wanted=new Set(),occupied=new Map(),grid=showDiagnostics?buildingGrid(state.buildings):null;
  for(const b of (selected?[...state.buildings].sort((a,b)=>(b.id===selected)-(a.id===selected)):state.buildings)){
   // Type tags read as clutter at colony distance; show them close up, or for the hovered or selected building.
   const identity=preferences.interface.buildingTypes&&(view.zoom<12||selected===b.id||hover?.x===b.x&&hover?.z===b.z)?BUILDING_IDENTITIES[b.type]:null;

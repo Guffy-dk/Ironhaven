@@ -1,4 +1,4 @@
-import {RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,turretReload,storageCapacity,storageUsed,storageFull,turretStats,sawmillTrees,sawmillOutlet,TURRETS,usesAmmo,GENERATORS,LOGISTICS_TYPES,logisticsStatus,canAcceptItem,canShareOutput,hasOutputBuffer,outputCount,OUTPUT_CAPACITY} from './sim.js';
+import {buildingGrid,RECIPES,DIRS,key,RESOURCE_KEYS,productionRecipe,productionSpeed,roundBonus,turretReload,storageCapacity,storageUsed,storageFull,turretStats,sawmillTrees,sawmillOutlet,TURRETS,usesAmmo,GENERATORS,LOGISTICS_TYPES,logisticsStatus,canAcceptItem,canShareOutput,hasOutputBuffer,outputCount,OUTPUT_CAPACITY} from './sim.js';
 export const STATUS_LABELS={paused:'Production paused',running:'Running',trees:'No trees in range',input:'Waiting for inputs',output:'Output blocked',buffering:'Buffering output',storage:'Storage full',power:'No power',ammo:'No ammunition',fuel:'No fuel',idle:'Operational',source:'No input conveyor',claimed:'Input conveyor already assigned',bypass:'Bypassing / filter'};
 export function factoryStatus(s,b,grid){
  if(b.disabled)return 'paused';
@@ -22,7 +22,7 @@ export function stockFlow(s){
  return Object.fromEntries(RESOURCE_KEYS.map(r=>[r,elapsed>=1?((s.stats.stockFlow?.[r]??0)-(first?.stockFlow?.[r]??0))*60/elapsed:0]));
 }
 export function productionReport(s){
- const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),counts={},demand=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])),bonus=roundBonus(s.wave);
+ const grid=buildingGrid(s.buildings),counts={},demand=Object.fromEntries(RESOURCE_KEYS.map(r=>[r,0])),bonus=roundBonus(s.wave);
  for(const b of s.buildings){if(usesAmmo(b.type))demand.gear+=60/turretStats(b).interval/turretReload(b,bonus);const generator=GENERATORS[b.type];if(generator)demand[generator.fuel]+=60/generator.seconds*(1+((b.level||1)-1)*.12);const status=factoryStatus(s,b,grid);counts[status]=(counts[status]||0)+1;const recipe=RECIPES[b.type];if(recipe)for(const[r,n]of Object.entries(recipe.input))if(r in demand)demand[r]+=n*60/recipe.seconds*productionSpeed(b,bonus,s.difficulty);}
  const history=s.stats?.history||[],first=history[0],last=history.at(-1),seconds=first&&last?last.time-first.time:0;
  const materials=RESOURCE_KEYS.map(r=>({resource:r,stock:s.resources[r],capacity:storageCapacity(s),perMinute:seconds>0?((last.totals[r]||0)-(first.totals[r]||0))/seconds*60:0,demand:demand[r]}));

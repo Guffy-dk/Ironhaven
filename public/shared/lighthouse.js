@@ -15,7 +15,7 @@ export function turnLighthouse(core,seconds){
 }
 export function lighthouseBeam(core,heading=lighthouseHeading(core)){
  if(!core||core.hp<=0)return null;
- return {x:core.x,z:core.z,dx:Math.sin(heading),dz:Math.cos(heading),reach:core.islandBeacon?128+((core.level||1)-1)*2:LIGHTHOUSE_REACH,cone:core.islandBeacon?Math.PI/5+((core.level||1)-1)*Math.PI/360:LIGHTHOUSE_CONE};
+ return {x:core.x,z:core.z,dx:Math.sin(heading),dz:Math.cos(heading),reach:core.islandBeacon?192+((core.level||1)-1)*3:LIGHTHOUSE_REACH,cone:core.islandBeacon?Math.PI/5+((core.level||1)-1)*Math.PI/360:LIGHTHOUSE_CONE};
 }
 export function isInLighthouseBeam(beam,{x,z}){
  if(!beam)return false;

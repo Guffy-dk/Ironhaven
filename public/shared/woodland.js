@@ -1,5 +1,6 @@
 // Cache a small distance field per target tile. Every hostile can use the same field.
-export const BUILD_EDGE=128;
+// Larger world for multi-tile buildings (owner decision, 25 Nov 2026).
+export const BUILD_EDGE=192;
 export const MAP_SIZE=(BUILD_EDGE+2)*2;
 export const SWARM_SPAWN_EDGE=BUILD_EDGE;
 const EDGE=BUILD_EDGE+1, WIDTH=EDGE*2+1, CELLS=WIDTH*WIDTH;

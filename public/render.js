@@ -19,7 +19,7 @@ import {BaseLampLights,makeLampModel} from './base-lamps.js';
 import {CoastalWater} from './coastal-water.js';
 import {LighthouseLight} from './lighthouse-light.js';
 import {isBarrier} from './shared/sim.js';
-import { TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
+import { footprint, buildingGrid, TYPES, rng, DIRS, DIRECTIONAL, key, beltInputs, productionSpeed, GENERATORS, SIZE, BUILD_EDGE, BELT_CAPACITY, conveyorProgress, buildingRadius } from './shared/sim.js';
 import { upgradeColor } from './upgrade-colors.js';
 const C={ground:0x263e3e,edge:0x112a2e,steel:0x617c79,dark:0x283f42,light:0xb7c6b3,gold:0xeab568,orange:0xed8e50,mint:0x9dd2b9,tree:0x315b50,treeTop:0x427465,wood:0x6b6552};
 const CAMERA_OFFSET=new T.Vector3(0,32,27);
@@ -314,6 +314,13 @@ function port(g,side,text,color){
  if(!portBadges.has(g))portBadges.set(g,[]);
  portBadges.get(g).push(label);g.add(label);
 }
+// Multi-tile buildings fill their footprint; height grows more slowly so large halls stay grounded.
+function sizeToFootprint(model,type){
+ const f=footprint(type);if(f<=1)return;
+ model.scale.set(f*.94,f**.62,f*.94);model.userData.footprint=f;
+ // Signs and port arrows keep a readable, consistent size instead of growing with the hall.
+ model.traverse(o=>{if(o.name==='trade-sign'||o.name==='roof-level'){o.scale.set(1.9/(f*.94),1.9/(f*.94),1);}else if(o.name?.startsWith('arrow-')){o.scale.set(1.5/(f*.94),1,1.5/(f*.94));}});
+}
 // Buildings that take or hand over belt cargo as a machine (not belts, hubs or barriers).
 const feedsMachine=b=>!!b&&b.type!=='belt'&&b.type!=='splitter'&&!isBarrier(b.type);
 export class View{
@@ -429,7 +436,7 @@ export class View{
   bs.forEach((b,i)=>{this.dummy.position.set(b.x,.3,b.z);this.dummy.rotation.set(-Math.PI/2,0,0);this.dummy.scale.set(1,1,1);this.dummy.updateMatrix();mesh.setMatrixAt(i,this.dummy.matrix);});mesh.frustumCulled=false;this.areaMesh=mesh;this.scene.add(mesh);
  }
  setTool(type,dir=0,neighbors=[]){this.miningTool=type;for(const [kind,mesh] of this.depositHighlights??[])mesh.visible=kind===type;this.previewRange.visible=false;this.grid.visible=!!type;this.ghostDir=dir;this.wallPreview=neighbors.join(':');if(this.ghost){this.scene.remove(this.ghost);this.ghostMaterial.dispose();this.ghost=null;}
-  if(type&&!['demolish','repair'].includes(type)){this.ghost=type==='belt'?new T.Group():makeModel(type,dir,neighbors,1,this.style);
+  if(type&&!['demolish','repair'].includes(type)){this.ghost=type==='belt'?new T.Group():makeModel(type,dir,neighbors,1,this.style);sizeToFootprint(this.ghost,type);
    if(type==='belt'){
     const deck=new T.Mesh(new T.PlaneGeometry(.96,.57).rotateX(-Math.PI/2),new T.MeshBasicMaterial());deck.rotation.y=-dir*Math.PI/2;deck.position.y=.2;this.ghost.add(deck);
     const arrow=new T.Mesh(beltArrow,new T.MeshBasicMaterial({color:0xf4e8bd,depthTest:false}));arrow.name='arrow-preview';arrow.rotation.set(-Math.PI/2,0,-dir*Math.PI/2);arrow.position.set(DIRS[dir][0]*.16,.23,DIRS[dir][1]*.16);this.ghost.add(arrow);
@@ -438,7 +445,7 @@ export class View{
  hover(cell,valid,tool,radius=0){this.cursor.visible=!!cell&&!!tool;this.previewRange.visible=!!cell&&radius>0;
   if(!cell){if(this.ghost)this.ghost.visible=false;return;}
   const color=valid?C.mint:0xf5816d;
-  this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(color);
+  this.cursor.position.set(cell.x,.03,cell.z);this.cursor.material.color.set(color);{const f=tool&&TYPES[tool]?footprint(tool):1;this.cursor.scale.set(f,1,f);}
   if(radius){this.previewRange.scale.setScalar(radius/10);this.previewRange.position.set(cell.x,.04,cell.z);this.previewRange.material.color.set(color);}
   if(isBarrier(tool)){const neighbors=barricadeNeighbors(cell,this.cellGrid);if(neighbors.join(':')!==this.wallPreview)this.setTool(tool,this.ghostDir,neighbors);}
   if(this.ghost){this.ghost.visible=true;this.ghost.position.set(cell.x,0,cell.z);this.ghostMaterial.color.set(valid?C.mint:0xf5816d);}}
@@ -449,7 +456,7 @@ export class View{
    if(next)sizePortBadges(next,this.worldPerPixel,true);
   }
   const radius=buildingRadius(b);
-  this.selected=b?.id;this.selection.visible=!!b;this.range.visible=radius>0;if(radius)this.range.scale.setScalar(radius/10);if(b){this.selection.position.set(b.x,.04,b.z);this.range.position.set(b.x,.035,b.z);}
+  this.selected=b?.id;this.selection.visible=!!b;this.range.visible=radius>0;if(radius)this.range.scale.setScalar(radius/10);if(b){this.selection.position.set(b.x,.04,b.z);this.selection.scale.set(footprint(b.type),1,footprint(b.type));this.range.position.set(b.x,.035,b.z);}
  }
  staticTerrain(s){
   this.renderer.shadowMap.needsUpdate=true;
@@ -457,7 +464,7 @@ export class View{
   this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
   this.depositHighlights.clear();
-  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?240:104,s.terrain.coast?240:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
+  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?340:104,s.terrain.coast?340:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
   const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x8d8476),albedoTint=new T.Color(0xdcd8cc),mud=new T.Color(0x3f3a31),moss=new T.Color(0x4d5a3a);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
     const exposed=Math.sin(x*.53+z*.28)+Math.cos(z*.51-x*.32)+.43*Math.sin(x*.96-z*.76);
@@ -478,7 +485,7 @@ export class View{
   const ground=new T.Mesh(groundGeometry,quarry?quarryTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
   ground.receiveShadow=true;this.ground.add(ground);let i=0;
   if(s.terrain.coast){
-   const coastRocks=[];for(let x=s.terrain.coast.kind==='island'?-120:-23;x<=(s.terrain.coast.kind==='island'?120:23);x+=1.4)for(let z=s.terrain.coast.kind==='island'?-115:-16;z<(s.terrain.coast.kind==='island'?115:2);z+=1.4){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
+   const coastRocks=[];for(let x=s.terrain.coast.kind==='island'?-178:-23;x<=(s.terrain.coast.kind==='island'?178:23);x+=1.4)for(let z=s.terrain.coast.kind==='island'?-170:-16;z<(s.terrain.coast.kind==='island'?170:2);z+=1.4){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
    const stone=quarryStoneSurface(),cliff=new T.InstancedMesh(stone.shape,stone.material,coastRocks.length),tint=new T.Color();
    coastRocks.forEach((p,i)=>{this.dummy.position.set(p.x,p.y-.12,p.z);this.dummy.rotation.set(rand()*.4,rand()*6,rand()*.35);this.dummy.scale.set(.38+rand()*.4,.3+rand()*.3,.36+rand()*.4);this.dummy.updateMatrix();cliff.setMatrixAt(i,this.dummy.matrix);cliff.setColorAt(i,tint.setHex(0x757970).multiplyScalar(.75+rand()*.35));});
    cliff.castShadow=true;cliff.receiveShadow=true;this.terrain.add(cliff);
@@ -585,7 +592,7 @@ export class View{
   this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
   this.coastalWater.sync(s.terrain,time,beam);this.baseLampLights.sync(s.buildings,this.center,this.zoom,!this.renderer.shadowMap.enabled);
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);
-  const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));this.cellGrid=grid;
+  const grid=buildingGrid(s.buildings);this.cellGrid=grid;
   let structuresChanged=false;const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){structuresChanged=true;this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
   if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
    const belts=s.buildings.reduce((count,b)=>count+Number(b.type==='belt'),0);
@@ -595,7 +602,7 @@ export class View{
   this.dummy.rotation.set(0,0,0);this.dummy.scale.setScalar(1);
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):isBarrier(b.type)?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
-    g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;
+    g=makeModel(b.type,b.dir,inputs,b.level||1,this.style);g.userData.signature=signature;sizeToFootprint(g,b.type);
     for(const name of ['rotor','cargoCapsule','dispatchDial','head','beacon','lantern','bulb']){
      const part=g.getObjectByName(name);
      if(part){g.userData[name]=part;part.traverse(o=>{o.castShadow=false;});}

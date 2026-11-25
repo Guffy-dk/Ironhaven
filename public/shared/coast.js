@@ -30,7 +30,7 @@ export function establishCoast(state){
 // New islands are opt-in world generation; saved headlands keep their original coast.
 export function establishIsland(state){
  const terrain=state.terrain,seed=(state.seed%997)*.01;
- terrain.coast={kind:'island',x:0,z:0,rx:112,rz:104,seed};
+ terrain.coast={kind:'island',x:0,z:0,rx:168,rz:156,seed};
  const core=state.buildings.find(b=>b.type==='hq');core.x=0;core.z=0;core.islandBeacon=true;core.lighthouseAuto=true;
  const occupied=new Set();
  const deposit=(name,cx,cz,r)=>{for(let x=cx-r;x<=cx+r;x++)for(let z=cz-r;z<=cz+r;z++){
@@ -38,16 +38,16 @@ export function establishIsland(state){
   terrain[name].push({x,z});occupied.add(key);
  }};
  for(const name of ['ore','copper','coal'])terrain[name]=[];
- deposit('ore',4,5,2);deposit('ore',-13,-7,3);deposit('copper',14,-10,3);deposit('coal',-14,13,3);
+ deposit('ore',8,9,4);deposit('ore',-20,-11,5);deposit('copper',21,-15,5);deposit('coal',-21,20,5);
  for(let ring=0;ring<3;ring++)for(let i=0;i<10;i++){
-  const angle=i*Math.PI/5+ring*.31+seed*.1,r=35+ring*25;
-  deposit(['ore','copper','coal'][(i+ring)%3],Math.round(Math.sin(angle)*r),Math.round(Math.cos(angle)*r),3+(i%3===0?1:0));
+  const angle=i*Math.PI/5+ring*.31+seed*.1,r=52+ring*38;
+  deposit(['ore','copper','coal'][(i+ring)%3],Math.round(Math.sin(angle)*r),Math.round(Math.cos(angle)*r),5+(i%3===0?2:0));
  }
- for(const name of ['trees','rocks'])terrain[name]=terrain[name].filter(p=>coastalLand(terrain,p.x,p.z,4)&&!occupied.has(p.x+','+p.z)&&Math.hypot(p.x,p.z)>21);
+ for(const name of ['trees','rocks'])terrain[name]=terrain[name].filter(p=>coastalLand(terrain,p.x,p.z,4)&&!occupied.has(p.x+','+p.z)&&Math.hypot(p.x,p.z)>30);
  // Keep the tutorial sawmill grove; open corridors separate the outer groves.
- for(const [x,z] of [[9,2],[9,3],[10,3],[9,4],[10,4],[9,5],[10,5]])terrain.trees.push({x,z,h:1.3});
+ for(let x=14;x<=17;x++)for(let z=1;z<=6;z++)if((x+z)%3)terrain.trees.push({x,z,h:1.3});
  for(let i=0;i<16;i++){
-  const a=i*Math.PI/8+seed*.1,cx=Math.round(Math.sin(a)*94),cz=Math.round(Math.cos(a)*88);
+  const a=i*Math.PI/8+seed*.1,cx=Math.round(Math.sin(a)*141),cz=Math.round(Math.cos(a)*132);
   for(let dx=-3;dx<=3;dx++)for(let dz=-3;dz<=3;dz++){
    const x=cx+dx,z=cz+dz;if(dx*dx+dz*dz>10||!coastalLand(terrain,x,z,6)||occupied.has(x+','+z))continue;
    if(!terrain.trees.some(t=>t.x===x&&t.z===z))terrain.trees.push({x,z,h:1.15+.2*Math.sin(x+z)});

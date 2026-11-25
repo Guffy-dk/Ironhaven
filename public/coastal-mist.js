@@ -5,7 +5,7 @@ export class CoastalMist{
  constructor(size){
   this.material=new T.ShaderMaterial({
    transparent:true,depthWrite:false,fog:false,
-   uniforms:{time:{value:0},island:{value:110},color:{value:new T.Color(0xb9c4c4)},strength:{value:1}},
+   uniforms:{time:{value:0},island:{value:165},color:{value:new T.Color(0xb9c4c4)},strength:{value:1}},
    vertexShader:`varying vec2 vWorld;void main(){vec4 w=modelMatrix*vec4(position,1.);vWorld=w.xz;gl_Position=projectionMatrix*viewMatrix*w;}`,
    fragmentShader:`uniform float time;uniform float island;uniform vec3 color;uniform float strength;varying vec2 vWorld;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}

@@ -357,6 +357,18 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — multi-tile buildings and a larger map (prototype on branch)
+
+- **Owner decisions (25 Nov 2026):** make the map much larger and let buildings differ in size. **Old saves do not need to stay compatible.** The owner asked to build it and show the result.
+- Prototype on `ccr-6dd57fd4-9a8hab` (**not on `main`**: 61 of 216 tests assume one-tile buildings and exact old rates and must be rewritten first):
+  - `FOOTPRINTS` in `public/shared/sim.js`: square, odd sizes, anchored on the centre tile. Belts, hubs, walls, lamps and turrets stay 1×1. Drills, smelters, assemblers, foundries, circuit assemblers, sawmills, generators, the lighthouse and all recipe and harbour machines are 3×3. Warehouses and component factories are 5×5.
+  - `buildingGrid` maps every footprint cell. Placement checks the whole area: it must be on land, free and clear of trees and rocks, and drills need at least one deposit cell under them. Machines hand over output at `edgeTile` (just outside the middle of the output side) and accept belt input along their sides. Belts and dispatch hubs work as before.
+  - Work rate and power scale with `footprintOutput` (3×3 = 4×, 5×5 = 9×) and construction cost with size (3×3 = 3×, 5×5 = 6×), so one large machine replaces several small ones.
+  - The build area is 385 tiles across (`BUILD_EDGE` 192), the island is 1.5× larger with wider deposit seams, and the lighthouse reach is scaled to match. The starter chains are rebuilt for 3×3 machines.
+  - Rendering scales models to their footprint (height ~ f^0.62) and keeps signs and port arrows at a readable size. Selection, placement cursor and ghost preview show the full footprint. Picking and commands find a building from any of its cells.
+- Evidence: `scripts/footprint-demo-world.mjs` builds a factory like the owner's screenshot. It has six 3×3 drills on an iron field, a dispatch column feeding eight 3×3 smelters and two 5×5 warehouses. It places with 0 errors and delivered about 400 plates in its first 45 s. Captures are in `docs/design/footprints/` (Linux SwiftShader).
+- Next, before `main`: rewrite the failing tests around the new layouts, then the tutorial targets, balance re-measurement, copy/move tooling checks and real per-size building art.
+
 ### 2026-11-25 — Claude Code — readability over realism (playtest feedback)
 
 - Owner reminder: playtesters found the factories hard to tell apart by appearance during play, and ore deposits hard to locate and outline. **Readability takes precedence over realism** in the visual overhaul.

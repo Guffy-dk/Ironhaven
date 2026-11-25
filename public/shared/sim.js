@@ -66,6 +66,7 @@ Object.assign(TYPES, {
   desc:'A long-range single-target defense. Deals consistent damage to armored enemies in darkness and uses gears for ammunition. Needs five power at level one.'}
 });
 export const isBarrier=type=>type==='wall'||type==='basaltBreakwater';
+const FOOTPRINT_COST={3:3,5:6};
 export const RESOURCE_KEYS=['wood','plate','gear','copper','steel','circuit','module','coal'];
 export const POWER_CAPACITY=180;
 export const MAX_UPGRADES=10;
@@ -107,6 +108,19 @@ export function productionRecipe(b){
  return recipe&&Object.entries(recipe.input).every(([item,n])=>b.input.filter(v=>v===item).length>=n)?recipe:null;
 }
 export const DIRECTIONAL = ['splitter','belt','storage','drill','copperDrill','coalMine','sawmill',...Object.keys(RECIPES)];
+// Building footprints (owner decision, 25 Nov 2026): square, odd sizes and anchored on the centre tile,
+// so buildings differ in size. Belts, hubs, walls, lamps and turrets stay one tile.
+export const FOOTPRINTS={hq:3,drill:3,copperDrill:3,coalMine:3,smelter:3,assembler:3,foundry:3,circuitLab:3,sawmill:3,generator:3,coalGenerator:3,storage:5,componentFactory:5};
+export const footprint=type=>FOOTPRINTS[type]??(Object.hasOwn(RECIPES,type)||Object.hasOwn(GENERATORS,type)?3:1);
+// A larger machine replaces several small ones: work rate and construction cost scale with its size.
+export const footprintOutput=type=>({1:1,3:4,5:9})[footprint(type)]??1;
+const footprintReach=type=>(footprint(type)-1)/2;
+export function occupies(b,x,z){const r=footprintReach(b.type);return Math.abs(x-b.x)<=r&&Math.abs(z-b.z)<=r;}
+export function footprintCells(type,x,z){const r=footprintReach(type),cells=[];for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++)cells.push({x:x+dx,z:z+dz});return cells;}
+// The tile just outside the middle of a side: where a machine hands over output or takes a port.
+export function edgeTile(b,d){const r=footprintReach(b.type),[dx,dz]=DIRS[d];return {x:b.x+dx*(r+1),z:b.z+dz*(r+1)};}
+export function buildingGrid(buildings){const grid=new Map();for(const b of buildings)for(const c of footprintCells(b.type,b.x,b.z))grid.set(key(c.x,c.z),b);return grid;}
+export function sideToward(b,from){const dx=from.x-b.x,dz=from.z-b.z;return Math.abs(dx)>=Math.abs(dz)?(dx>0?0:2):(dz>0?1:3);}
 // All data-stage content enters the same authoritative production/storage paths.
 for(const [item,definition]of Object.entries(CONTENT.items)){
  if(!ITEM_KEYS.includes(item))ITEM_KEYS.push(item);
@@ -174,7 +188,8 @@ export function productionSpeed(b,bonus,difficulty){
  const speedGain=EXTRACTORS.includes(b.type)||b.type==='smelter'?.25:
   b.type==='circuitLab'||b.type==='componentFactory'?.20:.10;
  const upgrade=(1+((b.level||1)-1)*speedGain)*(DIFFICULTIES[difficulty]?.production??1);
- return bonus?.types?.includes(b.type)?upgrade*bonus.speed:upgrade;
+ const sized=upgrade*footprintOutput(b.type);
+ return bonus?.types?.includes(b.type)?sized*bonus.speed:sized;
 }
 export const buildingPower = b => b.disabled?0:Math.ceil(TYPES[b.type].power*(1+((b.level||1)-1)*(TURRETS.includes(b.type)&&b.type!=='coastWatch'?.2:.1)));
 // resources is the shared total; warehouse.stock records where its stored subset sits.
@@ -207,7 +222,7 @@ export function spendResource(s,item,amount,preferred=null){
 const warehouseCanExport=(b,item)=>warehouseStock(b,item)>(b.exportReserve??0);
 const validExportReserve=value=>Number.isInteger(value)&&value>=0&&value<=199;
 const warehouseExportValid=item=>item===null||item==='recipe'||RESOURCE_KEYS.includes(item);
-export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3);
+export const powerOutput=b=>b.type==='hq'?18+((b.level||1)-1)*3:GENERATORS[b.type].power*(1+((b.level||1)-1)*.3)*footprintOutput(b.type);
 // Refining conserves material: upgrades improve throughput, never multiply ore.
 const plateYieldUnits=b=>4;
 export const plateYield=b=>plateYieldUnits(b)/4;
@@ -411,19 +426,18 @@ export function createGame(seed=2026,{difficulty='standard'}={}){
  for(const item of RESOURCE_KEYS)s.resources[item]??=0;
  building(s,'hq',0,0);
  if(difficulty==='relaxed')Object.assign(s.resources,{wood:195,plate:210,gear:28});
- // Two working starter chains: ore → plate → shared storage / gears.
- for(const z of [-3,3]){
-  building(s,'drill',-8,z);building(s,'belt',-7,z);building(s,'smelter',-6,z);
-  for(let x=-5;x<=-2;x++)building(s,'belt',x,z);
-  if(z===-3){building(s,'belt',-1,z,1);building(s,'belt',-1,-2,1);building(s,'belt',-1,-1,0);building(s,'belt',0,-1,1);}
-  else{building(s,'assembler',-1,z,3);building(s,'belt',-1,2,3);building(s,'belt',-1,1,0);building(s,'belt',0,1,3);}
+ // Two working starter chains sized for 3×3 machines: ore → plates into the lighthouse, ore → plates → gears.
+ for(const z of [0,5]){
+  for(const c of footprintCells('drill',-11,z)){if(!s.terrain.ore.some(o=>o.x===c.x&&o.z===c.z))s.terrain.ore.push({x:c.x,z:c.z});}
+  building(s,'drill',-11,z);building(s,'belt',-9,z);building(s,'belt',-8,z);building(s,'smelter',-6,z);
+  if(z===0)for(let x=-4;x<=-2;x++)building(s,'belt',x,z);
+  else{building(s,'belt',-4,z);building(s,'assembler',-2,z,3);building(s,'belt',-2,3,3);building(s,'belt',-2,2,3);building(s,'belt',-2,1,0);}
  }
- building(s,'generator',3,-2);building(s,'sawmill',7,6); 
-
+ building(s,'generator',4,-3);building(s,'sawmill',8,3);
  for(const [x,z] of [[-5,-8],[5,-8],[6,7],[-5,7]]){const b=building(s,'turret',x,z);b.ammo=24;}
  for(let x=-6;x<=6;x++){if(Math.abs(x)<2)continue;building(s,'wall',x,-10);building(s,'wall',x,10);}
  for(let z=-9;z<=9;z++){if(Math.abs(z)<3)continue;building(s,'wall',-13,z);building(s,'wall',12,z);}
- const occupied=new Set(s.buildings.map(b=>key(b.x,b.z)));
+ const occupied=new Set([...buildingGrid(s.buildings).keys()]);
  for(const type of ['trees','rocks'])s.terrain[type]=s.terrain[type].filter(v=>!occupied.has(key(v.x,v.z)));
  updatePower(s);return s;
 }
@@ -471,13 +485,16 @@ export function removePlayer(s,id){const leaving=s.players.find(p=>p.id===id),re
 function placementError(s,type,x,z,ignoreBelts=false){
  const def=TYPES[type];if(type==='inserter'||!Object.hasOwn(TYPES,type)||!def||type==='hq'||['repair','demolish'].includes(type))return 'Invalid building';
  if(!Number.isInteger(x)||!Number.isInteger(z)||Math.abs(x)>BUILD_EDGE||Math.abs(z)>BUILD_EDGE)return 'Outside the construction zone';
- if(!coastalLand(s.terrain,x,z))return 'Build on dry land above the shoreline';
- const occupied=s.buildings.find(b=>b.x===x&&b.z===z);
- if(occupied&&!(ignoreBelts&&occupied.type==='belt'))return 'Tile is occupied';
- if(s.terrain.trees.some(b=>b.x===x&&b.z===z)||s.terrain.rocks.some(b=>b.x===x&&b.z===z))return 'Clear the tile with Dismantle first';
- if(type==='drill'&&!s.terrain.ore.some(b=>b.x===x&&b.z===z))return 'Drills must be placed on iron deposits';
- if(type==='copperDrill'&&!s.terrain.copper?.some(b=>b.x===x&&b.z===z))return 'Copper drills must be placed on copper deposits';
- if(type==='coalMine'&&!s.terrain.coal?.some(b=>b.x===x&&b.z===z))return 'Coal mines must be placed on coal deposits';
+ const cells=footprintCells(type,x,z),cellKeys=new Set(cells.map(c=>key(c.x,c.z)));
+ if(cells.some(c=>Math.abs(c.x)>BUILD_EDGE||Math.abs(c.z)>BUILD_EDGE))return 'Outside the construction zone';
+ if(cells.some(c=>!coastalLand(s.terrain,c.x,c.z)))return 'Build on dry land above the shoreline';
+ const occupiedBy=s.buildings.filter(b=>footprintCells(b.type,b.x,b.z).some(c=>cellKeys.has(key(c.x,c.z))));
+ if(occupiedBy.some(b=>!(ignoreBelts&&b.type==='belt')))return cells.length>1?'Not enough free space':'Tile is occupied';
+ if(s.terrain.trees.some(t=>cellKeys.has(key(t.x,t.z)))||s.terrain.rocks.some(t=>cellKeys.has(key(t.x,t.z))))return cells.length>1?'Clear trees and rocks from the whole area first':'Clear the tile with Dismantle first';
+ const onDeposit=list=>!!list?.some(t=>cellKeys.has(key(t.x,t.z)));
+ if(type==='drill'&&!onDeposit(s.terrain.ore))return 'Drills must be placed on iron deposits';
+ if(type==='copperDrill'&&!onDeposit(s.terrain.copper))return 'Copper drills must be placed on copper deposits';
+ if(type==='coalMine'&&!onDeposit(s.terrain.coal))return 'Coal mines must be placed on coal deposits';
  if(type==='sawmill'&&!sawmillTrees(s.terrain,{x,z}))return 'A sawmill needs trees within five tiles';
  return null;
 }
@@ -490,7 +507,7 @@ export function canBuild(s,type,x,z,playerId){
 export function outputPointsAt(b,x,z){
  if(LOGISTICS_TYPES.includes(b.type)){const p=programFor(b),ports=logisticsPorts(b);return PROGRAM_ROLES.some(role=>p[role]>0&&(b.type==='splitter'||role!=='forward')&&b.x+DIRS[ports[role]][0]===x&&b.z+DIRS[ports[role]][1]===z);}
  if(b.type==='storage'&&!b.exportItem)return false;
- const [dx,dz]=DIRS[b.dir||0];return DIRECTIONAL.includes(b.type)&&b.x+dx===x&&b.z+dz===z;
+ const out=edgeTile(b,b.dir||0);return DIRECTIONAL.includes(b.type)&&out.x===x&&out.z===z;
 }
 export function beltInputs(b,grid){
  const inputs=[];for(let d=0;d<4;d++){if(d===b.dir)continue;const[dx,dz]=DIRS[d],other=grid.get(key(b.x+dx,b.z+dz));if(other&&outputPointsAt(other,b.x,b.z))inputs.push(d);}
@@ -523,7 +540,7 @@ export function planBeltDrag(s,points,dir){
  if(path.length<2)return invalid('Drag to another tile to lay a conveyor line');
  const last=path.at(-1),incoming=last.dir;
  if(dir!==(incoming+2)%4)last.dir=dir;
- const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b]));
+ const grid=buildingGrid(s.buildings);
  const blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(b=>key(b.x,b.z)));
  const cells=[];
  for(const [i,cell] of path.entries()){
@@ -545,7 +562,7 @@ export function planBeltDrag(s,points,dir){
 export function planRoute(s,type,start,end,dir=0){
  if(type!=='belt'&&!isBarrier(type))return{error:'Rows are available for conveyors and barricades',cells:[]};
  if(!start||!end||![start.x,start.z,end.x,end.z].every(Number.isInteger)||Math.abs(start.x)>BUILD_EDGE||Math.abs(start.z)>BUILD_EDGE||Math.abs(end.x)>BUILD_EDGE||Math.abs(end.z)>BUILD_EDGE)return{error:'Route is outside the construction zone',cells:[]};
- const grid=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(v=>key(v.x,v.z)));
+ const grid=buildingGrid(s.buildings),blocked=new Set([...s.terrain.trees,...s.terrain.rocks].map(v=>key(v.x,v.z)));
  const first=grid.get(key(start.x,start.z)),last=grid.get(key(end.x,end.z));
  // Existing conveyors can be endpoints. A route cannot replace a crossing conveyor.
  const allowed=(x,z)=>{
@@ -732,7 +749,7 @@ export function command(s,playerId,cmd){
  if(cmd.type==='buildRow'){
   const dir=Number.isInteger(cmd.dir)?((cmd.dir%4)+4)%4:0;
   const plan=cmd.building==='belt'&&cmd.points!==undefined?planBeltDrag(s,cmd.points,dir):planRoute(s,cmd.building,cmd.start,cmd.end,dir);if(plan.error)return plan.error;
-  const existing=new Map(s.buildings.map(b=>[key(b.x,b.z),b])),fresh=plan.cells.filter(c=>!existing.has(key(c.x,c.z))),count=Math.max(0,fresh.length-inventoryCount(s,p.id,cmd.building));
+  const existing=buildingGrid(s.buildings),fresh=plan.cells.filter(c=>!existing.has(key(c.x,c.z))),count=Math.max(0,fresh.length-inventoryCount(s,p.id,cmd.building));
   for(const[r,n]of Object.entries(TYPES[cmd.building].cost))if(s.resources[r]<n*count)return 'Not enough materials for the entire route';
   for(const c of plan.cells){const b=existing.get(key(c.x,c.z));if(b)b.dir=c.dir;else place(s,p,cmd.building,c.x,c.z,c.dir);}updatePower(s);return null;
  }
@@ -743,7 +760,7 @@ export function command(s,playerId,cmd){
   place(s,p,cmd.building,x,z,dir);
   updatePower(s);return null;
  }
- const b=s.buildings.find(b=>b.x===x&&b.z===z);
+ const b=s.buildings.find(b=>occupies(b,x,z));
  if(cmd.type==='toggleProduction'){if(!b||!PRODUCERS.includes(b.type)||cmd.id!==b.id)return 'Select a production building';b.disabled=!b.disabled;updatePower(s);return null;}
  if(cmd.type==='configureWarehouse'){
   if(b?.type!=='storage'||cmd.id!==b.id)return 'Select a warehouse';
@@ -823,9 +840,9 @@ export function sawmillOutlet(b,target){
 }
 export function canAcceptItem(s,b,item,from,cycles=4){
  if(!b)return false;
- if(from&&hasOutputSide(b)){const[dx,dz]=DIRS[b.dir];if(from.x===b.x+dx&&from.z===b.z+dz)return false;}
+ if(from&&hasOutputSide(b)){const out=edgeTile(b,b.dir);if(occupies(from,out.x,out.z))return false;}
  if(b.type==='hq'||b.type==='storage')return from?.type!=='storage'&&RESOURCE_KEYS.includes(item)&&!storageFull(s,b,item);
- if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return conveyorCount(b)<DISPATCH_CAPACITY&&(!from||from.x===b.x+dx&&from.z===b.z+dz);}
+ if(b.type==='splitter'){const[dx,dz]=DIRS[(b.dir+2)%4];return conveyorCount(b)<DISPATCH_CAPACITY&&(!from||occupies(from,b.x+dx,b.z+dz));}
  if(b.type==='belt'){
   const last=b.beltQueue?.at(-1)??b;
   return !b.item||conveyorCount(b)<BELT_CAPACITY&&conveyorProgress(b,last,s.tick)>=BELT_SPACING;
@@ -841,7 +858,7 @@ function accept(s,b,item,from,cycles=4,carryTime=0){
   return true;
  }
  if(b.type==='belt'||b.type==='splitter'){
-  const itemSide=from?DIRS.findIndex(([dx,dz])=>b.x+dx===from.x&&b.z+dz===from.z):(b.dir+2)%4;
+  const itemSide=from?sideToward(b,from):(b.dir+2)%4;
   const cargo={item,itemSide,itemTick:s.tick,itemProgress:0};
   if(b.type==='belt'){
    const tail=b.beltQueue?.at(-1)??b;
@@ -919,7 +936,7 @@ function spatialIndex(s){
  if(cached&&!cached.dirty&&cached.count===s.buildings.length&&cached.terrain===s.terrain&&cached.trees===s.terrain.trees&&cached.treeCount===s.terrain.trees.length)return cached;
  const grid=new Map(),industry=[],buckets=new Map(),lamps=new Map(),blockers=[];
  s.buildings.forEach((b,order)=>{
-  grid.set(key(b.x,b.z),b);
+  for(const c of footprintCells(b.type,b.x,b.z))grid.set(key(c.x,c.z),b);
   if(!['hq','belt','splitter'].includes(b.type)&&!isBarrier(b.type)&&!lampRadius(b.type))blockers.push(b);
   if(hasOutputBuffer(b.type)||b.type==='sawmill'||lampRadius(b.type)||Object.hasOwn(GENERATORS,b.type)){
    industry.push(b);const cell=key(Math.floor(b.x/INDUSTRY_CELL),Math.floor(b.z/INDUSTRY_CELL)),entry={b,order};
@@ -961,12 +978,12 @@ export function step(s,dt=STEP){
  for(const{b,item,itemTick,carryTime=0}of moving){
   if(b.item!==item||b.itemTick!==itemTick)continue;
   if(b.type==='splitter'){dispatch(s,b,item,grid);continue;}
-  const[dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
+  const edge=edgeTile(b,b.dir),target=grid.get(key(edge.x,edge.z));
   if(accept(s,target,item,b,4,carryTime))shiftConveyor(b);
  }
  // Advance only output that was already queued before this pass, one machine per tick.
  for(const b of s.buildings.filter(b=>b.active&&b.item&&hasOutputBuffer(b.type))){
-  const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
+  const edge=edgeTile(b,b.dir),out=grid.get(key(edge.x,edge.z));
   if(b.type==='sawmill'&&!sawmillOutlet(b,out)){
    if(storageUsed(s)>=storageCapacity(s))continue;
    s.resources.wood++;
@@ -977,7 +994,7 @@ export function step(s,dt=STEP){
  }
  for(const b of s.buildings){
   if(b.type==='storage'&&b.exportItem&&s.tick%8===b.id%8){
-   const [dx,dz]=DIRS[b.dir],out=grid.get(key(b.x+dx,b.z+dz));
+   const edge=edgeTile(b,b.dir),out=grid.get(key(edge.x,edge.z));
    const item=b.exportItem==='recipe'?
     Object.keys(RECIPES[out?.type]?.input??{}).find(item=>warehouseCanExport(b,item)&&canAcceptItem(s,out,item,b,1)):b.exportItem;
    if(item&&warehouseCanExport(b,item)&&accept(s,out,item,b,b.exportItem==='recipe'?1:4)){
@@ -985,7 +1002,7 @@ export function step(s,dt=STEP){
    }
   }
   const generator=GENERATORS[b.type];
-  if(generator&&s.resources[generator.fuel]>0){b.progress+=dt*(1+((b.level||1)-1)*.12);if(b.progress+1e-9>=generator.seconds){b.progress=Math.max(0,b.progress-generator.seconds);recordStockFlow(s,generator.fuel,-1);spendResource(s,generator.fuel,1);if(s.resources[generator.fuel]===0)updatePower(s);}}
+  if(generator&&s.resources[generator.fuel]>0){b.progress+=dt*(1+((b.level||1)-1)*.12)*footprintOutput(b.type);if(b.progress+1e-9>=generator.seconds){b.progress=Math.max(0,b.progress-generator.seconds);recordStockFlow(s,generator.fuel,-1);spendResource(s,generator.fuel,1);if(s.resources[generator.fuel]===0)updatePower(s);}}
   if(!b.active)continue;
   const extract=({drill:'ore',copperDrill:'copperOre',coalMine:'coal'})[b.type];
   if(extract||RECIPES[b.type]){
@@ -1010,7 +1027,7 @@ export function step(s,dt=STEP){
    b.progress+=dt*sawmillRate(s,b);
    if(b.progress+1e-9>=3){
     b.progress=Math.max(0,b.progress-3);
-    const [dx,dz]=DIRS[b.dir],target=grid.get(key(b.x+dx,b.z+dz));
+    const edge=edgeTile(b,b.dir),target=grid.get(key(edge.x,edge.z));
     let made;
     if(outputCount(b)+3<=OUTPUT_CAPACITY&&sawmillOutlet(b,target)){
      made=3;
@@ -1100,3 +1117,6 @@ function moveArea(s,p,cmd){
  updatePower(s);return null;
 }
 export function snapshot(s){return JSON.parse(JSON.stringify(s));}
+
+// Larger footprints cost proportionally more to build (see FOOTPRINTS).
+for(const [type,def] of Object.entries(TYPES)){const factor=FOOTPRINT_COST[footprint(type)];if(factor&&def.cost)for(const r of Object.keys(def.cost))def.cost[r]=Math.ceil(def.cost[r]*factor);}
