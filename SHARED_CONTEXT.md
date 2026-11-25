@@ -342,11 +342,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
-### 2026-11-25 — Claude Code — UI redesign prototype in the real game (proposal, awaiting owner approval)
+### 2026-11-25 — Claude Code — UI redesign theme in the real game (approved and merged)
 
-- After the rejected drawn mockup, the owner approved prototyping in the actual game, with approval based on real screenshots. **Not approved and not on `main`.** It lives on branch `ccr-6dd57fd4-9a8hab` only.
+- After the rejected drawn mockup, the owner approved prototyping in the actual game, with approval based on real screenshots.
 - `public/ui-theme.css` layers over `style.css` (body class `ih-theme`). It uses weathered steel plates with rivets, brass nameplate headers, recessed wells, an amber primary action, and embedded OFL fonts (Big Shoulders Display, IBM Plex Sans Condensed, IBM Plex Mono; licenses in `release/FONT-LICENSES.txt`; CSP gains `font-src data:`). The top bar now shows a net rate per minute next to every resource. Material icons stay on every cost. No element ids changed; 216/216 tests pass.
-- **Owner feedback (25 Nov 2026): "Det er meget bedre"** (much better). The visual direction is accepted. Merging to main has not been explicitly approved yet.
+- **Owner feedback (25 Nov 2026): "Det er meget bedre"** (much better). The visual direction is accepted, and the owner approved merging the theme to `main` on 25 Nov 2026. Next: layout restructure and the remaining screens, shown with before/after evidence.
 - Evidence: Linux Chromium renders of the built game (not Windows captures), before and after, in `docs/design/ui-redesign/compare-*.jpg`. The layout is mostly unchanged so far. Moving and restructuring panels is the next step if the owner approves this visual direction.
 
 ### 2026-11-25 — Claude Code — UI redesign mockup rejected
