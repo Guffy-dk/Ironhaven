@@ -303,6 +303,8 @@ function port(g,side,text,color){
  if(!portBadges.has(g))portBadges.set(g,[]);
  portBadges.get(g).push(label);g.add(label);
 }
+// Buildings that take or hand over belt cargo as a machine (not belts, hubs or barriers).
+const feedsMachine=b=>!!b&&b.type!=='belt'&&b.type!=='splitter'&&!isBarrier(b.type);
 export class View{
  constructor(canvas){
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0x172d31);this.scene.fog=new T.FogExp2(0x172d31,.011);
@@ -562,9 +564,9 @@ export class View{
   let structuresChanged=false;const ids=new Set(s.buildings.map(b=>b.id));for(const[id,g]of this.buildings)if(!ids.has(id)){structuresChanged=true;this.scene.remove(g);this.buildings.delete(id);this.renderer.shadowMap.needsUpdate=true;if(this.items.has(id)){this.scene.remove(this.items.get(id));this.items.delete(id);}}
   if(s.buildings.length*BELT_CAPACITY>this.beltItems.instanceMatrix.count){
    const belts=s.buildings.reduce((count,b)=>count+Number(b.type==='belt'),0);
-   this.reserveBeltCargo(belts*BELT_CAPACITY);
+   this.reserveBeltCargo(belts*BELT_CAPACITY+96);
   }
-  let cargoCount=0;
+  let cargoCount=0;const cargoTrack=new Map();
   this.dummy.rotation.set(0,0,0);this.dummy.scale.setScalar(1);
   for(const b of s.buildings){const inputs=b.type==='belt'?beltInputs(b,grid):isBarrier(b.type)?barricadeNeighbors(b,grid):b.type==='storage'&&b.exportItem?[0]:[],signature=[this.style,b.type,b.dir,b.level||1,...inputs].join(':');let g=this.buildings.get(b.id);if(g&&g.userData.signature!==signature){this.scene.remove(g);this.buildings.delete(b.id);g=null;}
    if(!g){
@@ -599,16 +601,37 @@ export class View{
     const draw=(cargo,t)=>{
      const rear=(b.dir+2)%4,side=DIRS[cargo.itemSide]&&cargo.itemSide!==b.dir?cargo.itemSide:rear;
      const [ix,iz]=DIRS[side],[ox,oz]=DIRS[b.dir],bend=side!==rear;
-     const enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5;
-     this.dummy.position.set(b.x+enter*ix+leave*ox,quarry?.255:.3,b.z+enter*iz+leave*oz);this.dummy.updateMatrix();
+     let enter=(bend?(1-t)**2:1-t)*.5,leave=(bend?t*t:t)*.5,size=1,rise=0;
+     // Presentation only: cargo emerges from a machine outlet and shrinks as it is fed into the next machine.
+     const source=grid.get(key(b.x+ix,b.z+iz)),target=grid.get(key(b.x+ox,b.z+oz));
+     if(feedsMachine(source)&&t<.35){const u=t/.35;size=.35+.65*u;enter+=(1-u)*.28;rise=(1-u)*.04;}
+     const intoMachine=feedsMachine(target);
+     if(intoMachine&&t>.72){const u=(t-.72)/.28;size*=1-.4*u;}
+     const x=b.x+enter*ix+leave*ox,z=b.z+enter*iz+leave*oz;
+     if(cargoCount>=this.beltItems.instanceMatrix.count)return;
+     this.dummy.position.set(x,(quarry?.255:.3)+rise,z);this.dummy.scale.setScalar(size);this.dummy.updateMatrix();
      this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
      this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
+     cargoTrack.set(b.id+':'+cargo.itemTick,{x,z,ox,oz,item:cargo.item,size,intoMachine});
     };
     if(motion)motion.drawBeltItems(b,draw);
     else if(b.item)for(const cargo of [b,...(b.beltQueue??[])])draw(cargo,conveyorProgress(b,cargo,s.tick));
    }else if(b.item){let item=this.items.get(b.id);if(!item){item=new T.Mesh(geometry('box',.21,.16,.21),mat(C.light));this.items.set(b.id,item);this.scene.add(item);}if(item.userData.type!==b.item){item.userData.type=b.item;item.material=mat(itemColors[b.item]||C.light);}item.position.set(b.x,.3,b.z);item.visible=true;}
    else if(this.items.has(b.id))this.items.get(b.id).visible=false;
   }
+  // Cargo that left a belt into a machine slides inside and disappears instead of vanishing at the edge.
+  this.cargoGhosts??=[];
+  for(const [id,last] of this.cargoTrack??[])if(!cargoTrack.has(id)&&last.intoMachine&&this.cargoGhosts.length<96)this.cargoGhosts.push({...last,age:0});
+  this.cargoTrack=cargoTrack;
+  this.cargoGhosts=this.cargoGhosts.filter(g=>(g.age+=Math.max(0,Math.min(.1,dt||0)))<.32);
+  for(const g of this.cargoGhosts){
+   if(cargoCount>=this.beltItems.instanceMatrix.count)break;
+   const u=g.age/.32;
+   this.dummy.position.set(g.x+g.ox*u*.42,(quarry?.255:.3)+u*.05,g.z+g.oz*u*.42);this.dummy.scale.setScalar(Math.max(.02,g.size*(1-u)));this.dummy.updateMatrix();
+   this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
+   this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[g.item]??C.light));
+  }
+  this.dummy.scale.setScalar(1);
   this.beltItems.count=cargoCount;
   if(cargoCount){this.beltItems.instanceMatrix.needsUpdate=true;this.beltItems.instanceColor.needsUpdate=true;}
   if(this.selected){const b=s.buildings.find(b=>b.id===this.selected);this.select(b);}
