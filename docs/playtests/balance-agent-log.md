@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 10.27 dansk tid
+
+- Kørsel `2026-11-25T10:27:27+01:00`, simulation `4c2d22d`, driver `43c9da6`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 4729 og 9533.
+- Blandt 15 par gik udfald fra 21 til 14 og underskudssekunder fra 9.480 til 4.712. Efter sejr og højeste swarm var 3 bedre, 3 dårligere og 9 lige.
+- Spilværdierne beholdes. Næste forsøg måler kortere, mere målrettet aflastning.
+- [Rapport](balance-2026-11-25-warning-response.md) · [Rådata](balance-2026-11-25-warning-response.json).
+
 ### 2026-11-25 kl. 07.27 dansk tid
 
 - Kørsel `2026-11-25T07:27:27+01:00`, simulation `51cd987`, driver `8652d18`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 5737 og 9181. 24/32 ordinære sejre og 29/29 matchede resultater.
