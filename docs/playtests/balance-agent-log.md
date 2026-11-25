@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 22.27 dansk tid
+
+- Kørsel `2026-11-25T22:27:16+01:00`, baseline `a8b056c`, driver `98464d9`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5171 og 9931, 19/19 matchede gentagelser.
+- Alle 11 harbor-forløb producerede firebricks. Medianlager ved swarm 25 var 200 firebricks og 0 Harbor Equipment. Ingen projekter blev tilgængelige med testspillerens delvise fabrik.
+- Spilværdierne beholdes. Næste prioritet er fysisk levering fra teglovnslinjen til switchgear og videre mod Harbor Equipment.
+- [Rapport](balance-2026-11-25-harbor-audit.md) · [Rådata](balance-2026-11-25-harbor-audit.json).
+
 ### 2026-11-25 kl. 19.29 dansk tid
 
 - Kørsel `2026-11-25T19:29:22+01:00`, baseline `f8f78a3`, driver `71d1067`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 4967 og 9803, 17/17 matchede gentagelser.

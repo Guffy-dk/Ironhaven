@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 22:27 Europe/Copenhagen — Codex — earned harbor progression audit
+
+- 35 campaigns on `a8b056c`, driver `98464d9`. All 11 harbor campaigns made firebricks and reached swarm 25, with median stock of 200 firebricks and no Harbor Equipment. The partial driver layout cannot commission a project; the prepared full-chain fixture is separate evidence.
+- Gameplay and release unchanged. Next route existing firebricks to switchgear and follow earned Harbor Equipment inputs. [Report](docs/playtests/balance-2026-11-25-harbor-audit.md).
+
 ### 2026-11-25 19:29 Europe/Copenhagen — Codex — reserve-based production restart
 
 - 35 campaigns on `f8f78a3`, driver `71d1067`. Reserve-based restart reduced measured defense outage episodes from 20 to 18 but increased deficit time from 2,436 to 3,122 seconds. Fourteen pairs tied on victory and highest swarm and one worsened.
