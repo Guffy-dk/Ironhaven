@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 07.27 dansk tid
+
+- Kørsel `2026-11-25T07:27:27+01:00`, simulation `51cd987`, driver `8652d18`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 5737 og 9181. 24/32 ordinære sejre og 29/29 matchede resultater.
+- Kampfilteret reducerede varslingsperioder uden udfald fra 224 til 134 og bevarede forspring ved alle 33 udfald. Tårnkravet sænkede medianforspringet fra 20 til 7 sekunder.
+- Næste prioritet er spillerafprøvning af et diskret, kampafgrænset varsel.
+- [Rapport](balance-2026-11-25-combat-lead.md) · [Rådata](balance-2026-11-25-combat-lead.json).
+
 ### 2026-11-25 kl. 04.27 dansk tid
 
 - Kørsel `2026-11-25T04:27:27+01:00`, simulation `da4f9e6`, driver `7fad7a7`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 4741 og 9257.
