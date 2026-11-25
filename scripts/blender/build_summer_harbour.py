@@ -12,7 +12,7 @@ os.makedirs(OUT, exist_ok=True)
 def reset():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
-def texture_material(name, surface, tint=(1, 1, 1, 1), scale=1.0, rough=None):
+def texture_material(name, surface, tint=(1, 1, 1, 1), scale=1.0, rough=None, metal=None):
     mat = bpy.data.materials.new(name); mat.use_nodes = True
     nt = mat.node_tree; bsdf = nt.nodes['Principled BSDF']
     base = os.path.join(CACHE, 'textures', surface)
@@ -31,7 +31,9 @@ def texture_material(name, surface, tint=(1, 1, 1, 1), scale=1.0, rough=None):
     nt.links.new(arm.outputs['Color'], sep.inputs['Color'])
     if rough is None: nt.links.new(sep.outputs['Green'], bsdf.inputs['Roughness'])
     else: bsdf.inputs['Roughness'].default_value = rough
-    nt.links.new(sep.outputs['Blue'], bsdf.inputs['Metallic'])
+    # Painted surfaces are dielectric even when the scan underneath is bare metal.
+    if metal is None: nt.links.new(sep.outputs['Blue'], bsdf.inputs['Metallic'])
+    else: bsdf.inputs['Metallic'].default_value = metal
     nrm = image('normal.jpg', False); nmap = nt.nodes.new('ShaderNodeNormalMap')
     nt.links.new(nrm.outputs['Color'], nmap.inputs['Color']); nt.links.new(nmap.outputs['Normal'], bsdf.inputs['Normal'])
     return mat
@@ -174,20 +176,27 @@ def materials():
         'red': texture_material('falu-red-timber', 'painted-wood', (0.55, 0.12, 0.08, 1), 1.1),
         'redboard': texture_material('falu-red-batten', 'painted-wood', (0.48, 0.1, 0.07, 1), 1.6),
         'ochre': texture_material('ochre-timber', 'painted-wood', (0.78, 0.55, 0.22, 1), 1.1),
-        'white': flat_material('white-trim', (0.78, 0.77, 0.72, 1), .55),
+        'white': texture_material('white-trim', 'painted-wood', (0.62, 0.6, 0.55, 1), 1.8),
         'brick': texture_material('harbour-brick', 'brick', scale=.9),
         'slate': texture_material('slate-roof', 'slate-roof', (0.42, 0.45, 0.5, 1), .9),
         'tin': texture_material('corrugated-roof', 'corrugated-iron', (0.62, 0.64, 0.64, 1), 1.0),
         # Type colours read from above (owner, 25 Nov 2026): every factory type has its own roof.
         'charcoal': texture_material('charcoal-slate', 'slate-roof', (0.09, 0.095, 0.11, 1), .9),
-        'greentin': texture_material('green-tin', 'corrugated-iron', (0.22, 0.42, 0.3, 1), 1.0),
-        'bluetin': texture_material('blue-tin', 'corrugated-iron', (0.3, 0.42, 0.55, 1), 1.0),
-        'mark': flat_material('level-paint', (0.92, 0.91, 0.86, 1), .45),
+        'greentin': texture_material('green-tin', 'corrugated-iron', (0.2, 0.32, 0.24, 1), 1.0, metal=0),
+        'bluetin': texture_material('blue-tin', 'corrugated-iron', (0.28, 0.36, 0.44, 1), 1.0, metal=0),
+        # Level bands are worn paint: still the brightest thing on a roof, but carrying the scan's grime.
+        'mark': texture_material('level-paint', 'concrete', (0.95, 0.92, 0.84, 1), 1.5),
+        'mineyellow': texture_material('mine-yellow', 'concrete', (0.86, 0.6, 0.1, 1), 1.4),
+        'plate': texture_material('galvanised-plate', 'steel-plate', (0.55, 0.57, 0.58, 1), 1.3),
+        'motorgrey': texture_material('motor-grey', 'concrete', (0.22, 0.24, 0.26, 1), 1.6),
+        'silo': texture_material('silo-grey', 'concrete', (0.5, 0.52, 0.53, 1), 1.2),
+        'chrome': flat_material('ram-chrome', (0.8, 0.8, 0.8, 1), .15, 1.0),
+        'rubber': flat_material('hose-rubber', (0.03, 0.03, 0.03, 1), .7),
         'stone': texture_material('granite-plinth', 'terrain-granite', (0.7, 0.68, 0.66, 1), .8),
         'timber': texture_material('tarred-timber', 'timber', (0.5, 0.42, 0.34, 1), 1.4),
         'steel': texture_material('painted-steel', 'steel-plate', (0.32, 0.36, 0.37, 1), 1.2),
         'rust': texture_material('rusted-iron', 'rust', scale=1.2),
-        'concrete': flat_material('lime-render', (0.8, 0.79, 0.75, 1), .7),
+        'concrete': texture_material('lime-render', 'concrete', (0.58, 0.57, 0.54, 1), .8),
         'redrender': flat_material('red-render', (0.5, 0.06, 0.04, 1), .6),
         'glass': flat_material('window-glass', (0.05, 0.07, 0.08, 1), .05, .2),
         'lit': flat_material('lamplit-glass', (0.08, 0.07, 0.05, 1), .1, 0, ((1.0, .62, .3, 1), .7)),
@@ -233,56 +242,68 @@ def smelter(level=1):
     export(f'smelter-{level}')
 
 def drill(level=1):
-    # Mine headframe (3x3 tiles) with a spoked sheave, cable, shaft collar and a board-clad winding house under blue tin.
-    # Level 2 enlarges the ore bin and adds a second sheave; level 3 rebuilds the headframe in steel, taller.
-    reset(); m = materials()
-    frame = m['steel'] if level >= 3 else m['timber']
-    bbox('collar', (1.6, 1.6, .25), (-.35, .35, .12), m['stone'], w=.04)
-    box('shaft', (.9, .9, .02), (-.35, .35, .26), flat_material('shaft-dark', (.02, .02, .02, 1), .9))
-    cx, cy, top = -.35, .35, 3.1 + (.6 if level >= 3 else 0)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            bbox(f'leg{sx}{sy}', (.13, .13, top + .05), (cx + sx * .52, cy + sy * .52, top / 2 + .05), frame, rot=(sy * .13, -sx * .13, 0), w=.015)
-    for k, h in enumerate((.9, 1.75, 2.5)):
-        r = .62 - h * .13
-        for a in range(4):
-            if a % 2 == 0: bbox(f'girt{k}{a}', (2 * r + .2, .09, .11), (cx, cy + (r if a == 0 else -r), h), frame, w=.01)
-            else: bbox(f'girt{k}{a}', (.09, 2 * r + .2, .11), (cx + (r if a == 1 else -r), cy, h), frame, w=.01)
-    for sx in (-1, 1):
-        bbox(f'diag{sx}', (.07, .07, 1.25), (cx, cy + sx * .55, 1.33), frame, rot=(0, .62, 0), w=.01)
-        bbox(f'diagb{sx}', (.07, .07, 1.25), (cx + sx * .55, cy, 1.33), frame, rot=(.62, 0, 0), w=.01)
-    bbox('head', (1.0, .9, .16), (cx, cy, top), frame, w=.02)
-    # Level bands painted round the head of the frame as well as on the winding-house roof.
-    for k in range(level): bbox(f'headband{k}', (1.06, .96, .07), (cx, cy, top - .18 - k * .16), m['mark'], w=.01)
+    # Ore drill rig (3x3 tiles), a low heavy machine sitting on the deposit (owner, 25 Nov 2026: "towers as drills look
+    # wrong"): concrete pad, steel skid and deck with handrails, mining-yellow drill housing with motor, gearbox and drill
+    # rod into the ground, hydraulic ram, operator cab, and an ore hopper with a chute towards +x (the belt side).
+    # Level 2 adds a second motor and a dust duct; level 3 a dust-collector silo. Level bands are worn paint on the cab roof.
+    reset(); m = materials(); y = m['mineyellow']; st = m['steel']
+    bbox('pad', (2.8, 2.8, .22), (0, 0, .11), m['concrete'], w=.03)
+    box('bore', (.7, .7, .02), (-.3, .2, .225), flat_material('bore-dark', (.03, .025, .02, 1), .95))
+    for sx in (-1, 1): bbox(f'skid{sx}', (.22, 2.5, .2), (sx * .95, 0, .32), st, w=.02)
+    for k in (-1, 0, 1): bbox(f'cross{k}', (2.1, .16, .14), (0, k * 1.0, .33), st, w=.015)
+    bbox('deck', (2.3, 2.3, .07), (0, 0, .45), m['plate'], w=.01)
+    # Drill unit: rod, collar, housing with flanges and bolts, gearbox, motor with cooling fins.
+    cx, cy = -.3, .2
+    cylinder('rod', .1, .9, (cx, cy, .2), st, 16)
+    cylinder('collar', .3, .12, (cx, cy, .52), st, 24)
+    cylinder('housing', .42, 1.0, (cx, cy, 1.0), y, 32)
+    for z in (.52, 1.5): cylinder(f'flange{z}', .48, .07, (cx, cy, z), y, 32)
+    for k in range(14):
+        a = k * math.tau / 14
+        for z in (.57, 1.55): cylinder(f'bolt{k}{z}', .025, .05, (cx + .45 * math.cos(a), cy + .45 * math.sin(a), z), st, 6)
+    bbox('gearbox', (.7, .55, .32), (cx, cy, 1.7), y, w=.03)
+    cylinder('motor', .26, .55, (cx + .05, cy, 2.13), m['motorgrey'], 24)
+    for k in range(12):
+        a = k * math.tau / 12
+        box(f'fin{k}', (.04, .1, .48), (cx + .05 + .29 * math.cos(a), cy + .29 * math.sin(a), 2.13), m['motorgrey'], rot=(0, 0, a))
+    cylinder('fan-cap', .2, .08, (cx + .05, cy, 2.44), st, 20)
+    # Hydraulic ram braced from the deck to the gearbox.
+    cylinder('ram', .06, 1.3, (cx + .55, cy - .45, 1.1), m['chrome'], 12, rot=(.35, -.35, 0))
+    cylinder('ram-body', .09, .7, (cx + .68, cy - .6, .8), y, 12, rot=(.35, -.35, 0))
+    cylinder('hose', .03, 1.2, (cx + .4, cy + .45, 1.05), m['rubber'], 8, rot=(-.4, .2, 0))
+    # Operator cab.
+    bbox('cab', (.72, .62, .7), (.62, .72, .83), y, w=.03)
+    bbox('cab-roof', (.82, .72, .06), (.62, .72, 1.21), m['plate'], w=.01)
+    box('cab-window', (.6, .02, .38), (.62, .405, .92), m['glass'])
+    box('cab-side', (.02, .45, .34), (.985, .72, .92), m['glass'])
+    for k in range(level): box(f'level{k}', (.7, .09, .012), (.62, .5 + k * .15, 1.245), m['mark'])
+    # Ore hopper and discharge chute on the +x side.
+    bpy.ops.mesh.primitive_cone_add(radius1=.55, radius2=.18, depth=.55, vertices=4, location=(.65, -.55, .95), rotation=(math.pi, 0, math.pi / 4))
+    o = bpy.context.object; o.name = 'hopper'; uv_box(o); o.data.materials.append(m['rust'])
+    bbox('hopper-rim', (.8, .8, .08), (.65, -.55, 1.24), y, w=.01)
+    bbox('chute', (.9, .32, .06), (1.15, -.55, .62), m['rust'], rot=(0, .42, 0), w=.01)
+    for sx in (-1, 1): bbox(f'chute-side{sx}', (.9, .03, .12), (1.15, -.55 + sx * .16, .67), m['rust'], rot=(0, .42, 0), w=.005)
+    # Walkway handrails along the open edges.
+    for k in range(6):
+        x = -1.1 + k * .44
+        cylinder(f'post-s{k}', .02, .55, (x, -1.12, .75), y, 6)
+    bbox('rail-s', (2.25, .04, .04), (0, -1.12, 1.02), y, w=.01); bbox('rail-s2', (2.25, .03, .03), (0, -1.12, .78), y, w=.01)
+    for k in range(4):
+        cylinder(f'post-w{k}', .02, .55, (-1.12, -1.1 + k * .5, .75), y, 6)
+    bbox('rail-w', (.04, 1.6, .04), (-1.12, -.35, 1.02), y, w=.01)
+    bbox('ladder', (.32, .05, .45), (0, -1.3, .25), st, rot=(.35, 0, 0), w=.01)
     if level >= 2:
-        cylinder('sheave2-rim', .36, .06, (cx + .32, cy, top + .4), m['steel'], 32, rot=(0, math.pi / 2, 0))
-        cylinder('sheave2-hub', .07, .14, (cx + .32, cy, top + .4), m['steel'], 12, rot=(0, math.pi / 2, 0))
-    cylinder('sheave-rim', .5, .07, (cx, cy, top + .52), m['steel'], 40, rot=(0, math.pi / 2, 0))
-    cylinder('sheave-hub', .09, .18, (cx, cy, top + .52), m['steel'], 16, rot=(0, math.pi / 2, 0))
-    for k in range(8):
-        a = k * math.pi / 4
-        bbox(f'spoke{k}', (.03, .03, .9), (cx, cy, top + .52), m['steel'], rot=(a, 0, 0), w=.005)
-    for sy in (-1, 1): bbox(f'bearing{sy}', (.14, .14, .5), (cx, cy + sy * .12, top + .28), m['steel'], w=.01)
-    # Cable down the shaft and across to the winding house.
-    cylinder('cable-down', .015, 2.9, (cx, cy - .5, 1.7), m['steel'], 6)
-    length = math.hypot(1.55, top + .5 - 1.0)
-    cylinder('cable-run', .015, length, (cx + .78, cy - .5 - .0, (top + .5 + 1.0) / 2), m['steel'], 6, rot=(0, -math.atan2(1.55, top + .5 - 1.0), 0))
-    # Winding house.
-    bpy.ops.object.select_all(action='DESELECT')
-    plinth('hplinth', 1.25, 1.05, .2, m['stone'])
-    for o in [o for o in bpy.data.objects if o.name.startswith('hplinth')]: o.location.x += .75; o.location.y -= .8
-    clad('house', 1.1, .9, .2, .85, m['red'], m['redboard'], .22)
-    for o in [o for o in bpy.data.objects if o.name.startswith('house')]: o.location.x += .75; o.location.y -= .8
-    roof('hroof', 1.1, .9, 1.05, .38, m['bluetin'], m['white'], .14, m['redboard'])
-    level_marks('hroof', 1.1, .9, 1.05, .38, level, m['mark'], .14)
-    for o in [o for o in bpy.data.objects if o.name.startswith('hroof')]: o.location.x += .75; o.location.y -= .8
-    window('hw', (.75, -1.27, .7), 'y', .34, .38, m['lit'], m['white'], (2, 1))
-    cylinder('stove', .05, .7, (1.05, -.6, 1.55), m['steel'], 12)
-    # Ore bin with chute beside the shaft.
-    bbox('bin', (.7, .6 + (.35 if level >= 2 else 0), .55 + (.25 if level >= 2 else 0)), (.85, .75 + (.15 if level >= 2 else 0), .85 + (.12 if level >= 2 else 0)), m['timber'], w=.02)
-    for sx in (-1, 1):
-        for sy in (-1, 1): bbox(f'binleg{sx}{sy}', (.08, .08, .6), (.85 + sx * .28, .75 + sy * .24, .3), m['timber'], w=.01)
-    bbox('binchute', (.45, .3, .06), (.85, .25, .62), m['rust'], rot=(.5, 0, 0), w=.01)
+        cylinder('motor2', .2, .45, (.15, -.2, .75), m['motorgrey'], 20, rot=(0, math.pi / 2, 0))
+        bbox('motor2-base', (.55, .4, .1), (.15, -.2, .52), st, w=.01)
+        cylinder('duct', .1, 1.4, (-.9, .3, 1.3), m['silo'], 12)
+        cylinder('duct-elbow', .1, .7, (-.62, .2, 1.98), m['silo'], 12, rot=(0, math.pi / 2, .3))
+    if level >= 3:
+        cylinder('silo', .36, 1.3, (-.85, -.6, 1.45), m['silo'], 24)
+        bpy.ops.mesh.primitive_cone_add(radius1=.36, radius2=.08, depth=.45, vertices=24, location=(-.85, -.6, .6), rotation=(math.pi, 0, 0))
+        o = bpy.context.object; uv_box(o); o.data.materials.append(m['silo'])
+        for sx in (-1, 1):
+            for sy in (-1, 1): bbox(f'silo-leg{sx}{sy}', (.05, .05, .9), (-.85 + sx * .27, -.6 + sy * .27, .9), st, w=.005)
+        for k in range(level): cylinder(f'silo-band{k}', .37, .06, (-.85, -.6, 2.0 - k * .14), m['mark'], 24)
     export(f'drill-{level}')
 
 def warehouse(level=1):
@@ -321,7 +342,7 @@ def warehouse(level=1):
 
 def lighthouse():
     # Rendered masonry tower in red and white bands with a gallery rail, glazed lantern, copper-green cap and keeper's cottage.
-    reset(); m = materials()
+    reset(); m = materials(); m['concrete'] = flat_material('lighthouse-white', (0.8, 0.79, 0.75, 1), .6)
     plinth('base', 2.6, 2.6, .5, m['stone'])
     for i in range(6):
         r0 = 1.0 - i * .09

@@ -50,11 +50,14 @@ test('the Electron package leaves raw model scans to the Godot build',async()=>{
 test('factory type and level read at a glance (owner, 25 Nov 2026)',async()=>{
  const blender=await readFile('scripts/blender/build_summer_harbour.py','utf8');
  const roofOf=type=>{const body=blender.slice(blender.indexOf(`def ${type}(level=1):`));return body.slice(0,body.indexOf('\ndef ',5)).match(/roof\('h?roof', [^)]*?m\['(\w+)'\]/)[1];};
- const roofs={smelter:roofOf('smelter'),drill:roofOf('drill'),warehouse:roofOf('warehouse')};
- assert.equal(new Set(Object.values(roofs)).size,3,`each type has its own roof colour: ${JSON.stringify(roofs)}`);
+ const roofs={smelter:roofOf('smelter'),warehouse:roofOf('warehouse')};
+ assert.notEqual(roofs.smelter,roofs.warehouse,'smelter and warehouse roofs differ');
+ const drillFn=blender.slice(blender.indexOf('def drill(level=1):'),blender.indexOf('def warehouse(level=1):'));
+ assert.match(drillFn,/m\['mineyellow'\]/,'the drill is a mining-yellow machine');
+ assert.doesNotMatch(drillFn,/headframe|sheave/i,'no headframe tower (owner, 25 Nov 2026)');
  for(const type of ['smelter','drill','warehouse']){
   const body=blender.slice(blender.indexOf(`def ${type}(level=1):`));const fn=body.slice(0,body.indexOf('\ndef ',5));
-  assert.match(fn,/level_marks\(/,`${type} paints its level on the roof`);
+  assert.match(fn,/level_marks\(|for k in range\(level\)/,`${type} paints its level`);
   assert.match(fn,/if level >= 2:|level - 1/,`${type} grows at level 2`);assert.match(fn,/level >= 3/,`${type} changes at level 3`);
   assert.match(fn,new RegExp(`export\\(f'${type}-\\{level\\}'\\)`));
  }
