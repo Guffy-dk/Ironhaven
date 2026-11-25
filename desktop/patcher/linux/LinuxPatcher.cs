@@ -30,7 +30,7 @@ internal sealed class PatcherApp : Application
     [STAThread]
     private static int Main(string[] args)
     {
-        return AppBuilder.Configure<PatcherApp>().UsePlatformDetect().WithInterFont().LogToTrace()
+        return AppBuilder.Configure<PatcherApp>().UsePlatformDetect().LogToTrace()
             .StartWithClassicDesktopLifetime(args);
     }
 }

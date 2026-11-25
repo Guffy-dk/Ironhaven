@@ -5,12 +5,13 @@ set -euo pipefail
 project="$(cd "$(dirname "$0")/.." && pwd)"
 release="$project/release"
 dotnet="${DOTNET:-dotnet}"
-export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 AVALONIA_TELEMETRY_OPTOUT=1
 cd "$project/desktop/patcher/linux"
 "$dotnet" run --project tests -c Release
 "$dotnet" publish IronhavenPatcher.csproj -c Release -o "$release/linux-patcher"
 cp "$release/linux-patcher/Ironhaven-Patcher" "$release/Ironhaven-Patcher-Linux"
 chmod 755 "$release/Ironhaven-Patcher-Linux"
+cat "$project/licenses/avalonia.txt" "$project/licenses/microcom.txt" "$project/licenses/tmds-dbus.txt" "$project/licenses/skiasharp-LICENSE.txt" "$project/licenses/dotnet-runtime.txt" "$project/licenses/skia-harfbuzz-THIRD-PARTY-NOTICES.txt" "$project/licenses/dotnet-runtime-notices.txt" > "$release/Ironhaven-Patcher-Linux-NOTICES.txt"
 if [[ -f "$release/Ironhaven-Linux-x64.tar.gz" ]]; then
   output="$("$dotnet" run --project tests -c Release -- --local "$release/Ironhaven-Linux-x64.tar.gz" "$release/Ironhaven-Linux-manifest.json")"
   echo "$output"

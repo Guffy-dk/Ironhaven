@@ -8,6 +8,10 @@ release="$project/release"
 runtime_version='45.3.3'
 runtime_hash='0a63ce0e2b6a69d6ced7194949934b8414a6dadeca82910f88dc8720a1433269'
 runtime_name="electron-v$runtime_version-linux-x64.zip"
+# Licence compliance: replace Chromium's media library with Electron's open-source ffmpeg build
+# (no patent-encumbered codecs such as H.264/AAC). Ironhaven only plays WebM/VP8-9.
+ffmpeg_hash='bbe133d31a7d86cdd47dda8804f96e04b53e85edc9c45d8265bf5bb96c0a67a5'
+ffmpeg_name="ffmpeg-v$runtime_version-linux-x64.zip"
 cache="$release/linux-cache"
 archive="$cache/$runtime_name"
 game_version="$(node -p "require('$project/package.json').version")"
@@ -27,6 +31,11 @@ echo "$runtime_hash  $archive" | sha256sum -c --status || { echo 'Electron runti
 rm -rf "$package_root"
 mkdir -p "$game_folder"
 unzip -q "$archive" -d "$game_folder"
+if [[ ! -f "$cache/$ffmpeg_name" ]] || ! echo "$ffmpeg_hash  $cache/$ffmpeg_name" | sha256sum -c --status; then
+  curl -fsSL "https://github.com/electron/electron/releases/download/v$runtime_version/$ffmpeg_name" -o "$cache/$ffmpeg_name"
+fi
+echo "$ffmpeg_hash  $cache/$ffmpeg_name" | sha256sum -c --status || { echo 'ffmpeg checksum mismatch.' >&2; exit 1; }
+unzip -q -o "$cache/$ffmpeg_name" libffmpeg.so -d "$game_folder"
 mv "$game_folder/electron" "$game_folder/Ironhaven"
 rm -f "$game_folder/resources/default_app.asar"
 app="$game_folder/resources/app"
@@ -34,7 +43,7 @@ mkdir -p "$app"
 cp desktop/game.cjs desktop/mod-loader.cjs release/Ironhaven.html release/Studio-Intro.html release/mod-base.json release/mod-worker.cjs "$app/"
 cp release/THIRD_PARTY_ASSETS.txt release/FENGARI-LICENSE.txt release/FONT-LICENSES.txt "$game_folder/"
 cp -R release/assets "$app/assets"
-cp release/assets/ASSET-LICENSES.txt "$game_folder/"
+cp release/assets/ASSET-LICENSES.txt release/THIRD-PARTY-NOTICES.txt "$game_folder/"
 cp desktop/linux/ironhaven.sh "$game_folder/ironhaven.sh"
 chmod 755 "$game_folder/ironhaven.sh" "$game_folder/Ironhaven"
 mkdir -p "$game_folder/Modding"

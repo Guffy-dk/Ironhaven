@@ -361,6 +361,17 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — licence compliance for a Steam sale
+
+- **Owner request:** the game will probably be sold on Steam, so it must be licence compliant. The register is `docs/LICENSING.md`, which lists each shipped component, its licence and how the obligation is met, plus rules for new content and the owner's Steam actions (AI content disclosure text, a name/trademark check, Steamworks SDK handling, repository visibility).
+- Fixes:
+  - Both builds replace Electron's default media library with Electron's pinned open-source ffmpeg build. It has no patent-encumbered H.264/AAC decoders and is LGPL, as a replaceable shared library. Verified on Linux: the new `libffmpeg.so` has no `h264_decoder` (2.8 MB, down from 4.5 MB), and the WebM studio intro still plays to the end.
+  - `scripts/write-notices.mjs` generates `THIRD-PARTY-NOTICES.txt` (Electron/Chromium, ffmpeg, three.js, Fengari and its dependencies, OFL fonts, Poly Haven CC0, Grab3D CC0 with the AI disclosure). It ships in both packages, and the build refuses runtime npm dependencies without notices.
+  - The Linux patcher: `licenses/` holds the MIT and notice texts for .NET, Avalonia, SkiaSharp/HarfBuzz, MicroCom and Tmds.DBus, which are combined into `Ironhaven-Patcher-Linux-NOTICES.txt`. The bundled Inter font was dropped (system fonts are used), and Avalonia build telemetry is turned off.
+- Tests: `test/licensing.test.mjs` (7) checks permissive licences for runtime dependencies and their dependencies, CC0 or recorded provenance for art, AI disclosure, notice coverage, the ffmpeg swap with hash checks, no MP4 video, patcher notices without bundled fonts, and that the register contains the Steam disclosure.
+- Owner actions still open: the Steam AI content survey, the name check, and repository visibility.
+- On the prototype branch the Linux package smoke tests still fail, because `scripts/windows-smoke-world.mjs` and the mod smoke use one-tile layouts (part of the legacy test rewrite).
+
 ### 2026-11-25 — Claude Code — Nordic summer harbour, phase A: asset pipeline and daylight
 
 - **Owner decisions (25 Nov 2026):** the game may be several GB. The minimal-size, code-drawn art is a browser-era leftover and must go. Theme: **Nordic summer harbour** (bright daylight, painted timber, darkness arrives with the swarms). Art is made with Blender. Codex notes that the editable creature models are on `main` (`docs/design/coastal-creatures.blend`) and that changes must be exported with `scripts/blender/build_coastal_assets.py` to `public/art/coastal-meshes.json` before they show in game. The owner says the monsters need some love.

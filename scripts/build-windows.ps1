@@ -5,6 +5,9 @@ $release = Join-Path $project 'release'
 $runtimeVersion = '45.3.3'
 $runtimeHash = '49dd2d3875944f08de03d34595cd30093c588b9edcabb41a0ac481028a3a5a8a'
 $runtimeName = "electron-v$runtimeVersion-win32-x64.zip"
+# Licence compliance: Electron's open-source ffmpeg build (no patent-encumbered codecs).
+$ffmpegHash = '9d1cf2881a823921da686b1796d3be7689c4d11b534a715dac954fb61fac2c52'
+$ffmpegName = "ffmpeg-v$runtimeVersion-win32-x64.zip"
 $cache = Join-Path $release 'windows-cache'
 $archive = Join-Path $cache $runtimeName
 $gameVersion = (Get-Content (Join-Path $project 'package.json') -Raw | ConvertFrom-Json).version
@@ -26,6 +29,13 @@ try {
 
   tar.exe -xf $archive -C $gameFolder
   if ($LASTEXITCODE -ne 0) { throw 'Electron runtime extraction failed.' }
+  $ffmpegArchive = Join-Path $cache $ffmpegName
+  if (!(Test-Path -LiteralPath $ffmpegArchive) -or (Get-FileHash -LiteralPath $ffmpegArchive).Hash -ine $ffmpegHash) {
+    Invoke-WebRequest -Uri "https://github.com/electron/electron/releases/download/v$runtimeVersion/$ffmpegName" -OutFile $ffmpegArchive
+  }
+  if ((Get-FileHash -LiteralPath $ffmpegArchive).Hash -ine $ffmpegHash) { throw 'ffmpeg checksum mismatch.' }
+  tar.exe -xf $ffmpegArchive -C $gameFolder ffmpeg.dll
+  if ($LASTEXITCODE -ne 0) { throw 'ffmpeg replacement failed.' }
   $executable = Join-Path $gameFolder 'Ironhaven.exe'
   Move-Item -LiteralPath (Join-Path $gameFolder 'electron.exe') -Destination $executable -Force
   Copy-Item -LiteralPath 'release/THIRD_PARTY_ASSETS.txt' -Destination $gameFolder -Force
@@ -36,7 +46,7 @@ try {
   New-Item -ItemType Directory -Force -Path $game | Out-Null
   Copy-Item -LiteralPath 'desktop/game.cjs', 'desktop/mod-loader.cjs', 'release/Ironhaven.html', 'release/Studio-Intro.html', 'release/mod-base.json', 'release/mod-worker.cjs' -Destination $game -Force
   Copy-Item -LiteralPath 'release/assets' -Destination (Join-Path $game 'assets') -Recurse -Force
-  Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt', 'release/FONT-LICENSES.txt', 'release/assets/ASSET-LICENSES.txt' -Destination $gameFolder -Force
+  Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt', 'release/FONT-LICENSES.txt', 'release/assets/ASSET-LICENSES.txt', 'release/THIRD-PARTY-NOTICES.txt' -Destination $gameFolder -Force
   $modding = Join-Path $gameFolder 'Modding'
   New-Item -ItemType Directory -Force -Path $modding | Out-Null
   Copy-Item -LiteralPath 'docs/MODDING.md' -Destination $modding -Force

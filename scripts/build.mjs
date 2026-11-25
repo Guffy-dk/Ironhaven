@@ -6,6 +6,7 @@ import {validateRelease,releaseMarkdown} from './release-metadata.mjs';
 import {compileIndustry} from './compile-industry.mjs';
 import {catalogSeed} from '../sdk/catalog-seed.mjs';
 import {fetchAssets,CACHE} from './fetch-assets.mjs';
+import {noticeText} from './write-notices.mjs';
 await compileIndustry();
 // High-resolution CC0 art ships as files next to the game (see assets/manifest.json).
 await fetchAssets({log:()=>{}});
@@ -55,4 +56,5 @@ await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
 await cp('docs/design/THIRD_PARTY_ASSETS.txt','release/THIRD_PARTY_ASSETS.txt');
 await rm('release/assets',{recursive:true,force:true});await cp(CACHE,'release/assets',{recursive:true});
 await writeFile('release/FONT-LICENSES.txt',`Big Shoulders Display\n\n${await readFile('public/art/fonts/OFL-BigShoulders.txt','utf8')}\n\nIBM Plex Sans Condensed and IBM Plex Mono\n\n${await readFile('public/art/fonts/OFL-IBMPlex.txt','utf8')}`);
+await writeFile('release/THIRD-PARTY-NOTICES.txt',await noticeText());
 console.log(`Built embedded desktop resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);
