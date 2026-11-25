@@ -44,7 +44,7 @@ async function prepareGameDocument() {
   const hash = createHash('sha256').update(script.replace(/\r\n?/g, '\n')).digest('base64');
   const headers = {
     'Content-Type': 'text/html; charset=utf-8',
-    'Content-Security-Policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src data:; object-src 'none'; base-uri 'none'`,
   };
   return { html, headers };
 }

@@ -15,7 +15,13 @@ await cp('node_modules/three/LICENSE','public/vendor/THREE-LICENSE.txt');
 await rm('dist',{recursive:true,force:true});
 const result=await build({entryPoints:['public/app.js'],bundle:true,minify:true,format:'iife',target:['es2022'],write:false,legalComments:'inline',plugins:[{name:'shared-three',setup(b){b.onResolve({filter:/^three$/},()=>({path:resolve('public/vendor/three.module.js')}));}}]});
 const materials=await readFile('public/art/material-icons.webp');
-const css=(await readFile('public/style.css','utf8')).replace('./art/material-icons.webp',`data:image/webp;base64,${materials.toString('base64')}`);
+// The UI theme layers over the legacy stylesheet; its fonts are embedded so the desktop game needs no network.
+let theme=await readFile('public/ui-theme.css','utf8');
+for(const match of [...new Set(theme.match(/\.\/art\/fonts\/[A-Za-z0-9-]+\.woff2/g)??[])]){
+ const font=await readFile('public/'+match.slice(2));
+ theme=theme.replaceAll(match,`data:font/woff2;base64,${font.toString('base64')}`);
+}
+const css=((await readFile('public/style.css','utf8'))+'\n'+theme).replaceAll('./art/material-icons.webp',`data:image/webp;base64,${materials.toString('base64')}`);
 const threeLicense=await readFile('node_modules/three/LICENSE','utf8');
 let source=await readFile('public/index.html','utf8');
 for(const [asset,mime] of [['crab-color.png','image/png'],['crab-normal.png','image/png'],['horror-color.png','image/png'],['horror-normal.png','image/png'],['coastal-surfaces.png','image/png'],['quarry-materials.jpg','image/jpeg'],['quarry-spruce.png','image/png']]){
@@ -44,4 +50,5 @@ for(const [name,file]of [['fengari','LICENSE'],['readline-sync','LICENSE'],['spr
 await writeFile('release/FENGARI-LICENSE.txt',notices.join('\n\n'));
 await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
 await cp('docs/design/THIRD_PARTY_ASSETS.txt','release/THIRD_PARTY_ASSETS.txt');
+await writeFile('release/FONT-LICENSES.txt',`Big Shoulders Display\n\n${await readFile('public/art/fonts/OFL-BigShoulders.txt','utf8')}\n\nIBM Plex Sans Condensed and IBM Plex Mono\n\n${await readFile('public/art/fonts/OFL-IBMPlex.txt','utf8')}`);
 console.log(`Built embedded desktop resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);

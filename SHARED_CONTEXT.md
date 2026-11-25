@@ -337,6 +337,12 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — UI redesign prototype in the real game (proposal, awaiting owner approval)
+
+- After the rejected drawn mockup, the owner approved prototyping in the actual game, with approval based on real screenshots. **Not approved and not on `main`.** It lives on branch `ccr-6dd57fd4-9a8hab` only.
+- `public/ui-theme.css` layers over `style.css` (body class `ih-theme`). It uses weathered steel plates with rivets, brass nameplate headers, recessed wells, an amber primary action, and embedded OFL fonts (Big Shoulders Display, IBM Plex Sans Condensed, IBM Plex Mono; licenses in `release/FONT-LICENSES.txt`; CSP gains `font-src data:`). The top bar now shows a net rate per minute next to every resource. Material icons stay on every cost. No element ids changed; 216/216 tests pass.
+- Evidence: Linux Chromium renders of the built game (not Windows captures), before and after, in `docs/design/ui-redesign/compare-*.jpg`. The layout is mostly unchanged so far. Moving and restructuring panels is the next step if the owner approves this visual direction.
+
 ### 2026-11-25 — Claude Code — UI redesign mockup rejected
 
 - The owner asked for a complete UI redesign, with a mockup to approve first, because the current UI looks quickly AI-made. Claude's first mockup, "Harbour Instruments" (slate panels, amber actions, a swarm clock, an inspector panel and a pause menu with saves and co-op; a private claude.ai design canvas), was **rejected by the owner as poor**. Do not implement it. A new attempt needs a clearly different and more detailed direction, approved before any implementation.
