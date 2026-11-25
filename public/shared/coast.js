@@ -33,15 +33,17 @@ export function establishIsland(state){
  terrain.coast={kind:'island',x:0,z:0,rx:168,rz:156,seed};
  const core=state.buildings.find(b=>b.type==='hq');core.x=0;core.z=0;core.islandBeacon=true;core.lighthouseAuto=true;
  const occupied=new Set();
- const deposit=(name,cx,cz,r)=>{for(let x=cx-r;x<=cx+r;x++)for(let z=cz-r;z<=cz+r;z++){
-  const key=x+','+z;if((x-cx)**2+(z-cz)**2>r*r+1||occupied.has(key)||!coastalLand(terrain,x,z,5))continue;
+ // Deposits are sized for rows of 3×3 drills and have irregular, natural outlines.
+ const deposit=(name,cx,cz,r)=>{const phase=(cx*7+cz*13)%17;for(let x=cx-r-3;x<=cx+r+3;x++)for(let z=cz-r-3;z<=cz+r+3;z++){
+  const a=Math.atan2(z-cz,x-cx),edge=r*(.86+.16*Math.sin(3*a+phase)+.1*Math.cos(5*a-phase*.7));
+  const key=x+','+z;if((x-cx)**2+(z-cz)**2>edge*edge+1||occupied.has(key)||!coastalLand(terrain,x,z,5))continue;
   terrain[name].push({x,z});occupied.add(key);
  }};
  for(const name of ['ore','copper','coal'])terrain[name]=[];
- deposit('ore',8,9,4);deposit('ore',-20,-11,5);deposit('copper',21,-15,5);deposit('coal',-21,20,5);
+ deposit('ore',7,14,6);deposit('ore',-24,-13,9);deposit('copper',26,-18,9);deposit('coal',-25,24,9);
  for(let ring=0;ring<3;ring++)for(let i=0;i<10;i++){
-  const angle=i*Math.PI/5+ring*.31+seed*.1,r=52+ring*38;
-  deposit(['ore','copper','coal'][(i+ring)%3],Math.round(Math.sin(angle)*r),Math.round(Math.cos(angle)*r),5+(i%3===0?2:0));
+  const angle=i*Math.PI/5+ring*.31+seed*.1,r=58+ring*40;
+  deposit(['ore','copper','coal'][(i+ring)%3],Math.round(Math.sin(angle)*r),Math.round(Math.cos(angle)*r),9+(i%3===0?3:0));
  }
  for(const name of ['trees','rocks'])terrain[name]=terrain[name].filter(p=>coastalLand(terrain,p.x,p.z,4)&&!occupied.has(p.x+','+p.z)&&Math.hypot(p.x,p.z)>30);
  // Keep the tutorial sawmill grove; open corridors separate the outer groves.
