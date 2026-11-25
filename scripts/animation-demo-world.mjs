@@ -20,8 +20,11 @@ export function animationDemoWorld(){
  state.enemies=[];state.paused=false;state.nextWave=state.time+99999;
  // Let the production line run so belts carry cargo into and out of machines.
  for(let i=0;i<900;i++)step(state);
- for(let i=0;i<12;i++){const base=template[i%template.length];state.enemies.push({...base,id:state.nextId++,x:-5+i*.9,z:13+(i%3)*1.4,speed:base.kind==='walker'?.62:1});}
+ for(let i=0;i<12;i++){const base=template[i%template.length];state.enemies.push({...base,id:state.nextId++,x:-5+i*.9,z:17+(i%3)*1.4,speed:base.kind==='walker'?.62:1});}
+ // Review fixture only: sturdier hostiles keep the fight on screen long enough to see hits, lunges and falls.
+ state.enemies.forEach((e,i)=>{e.maxHp=e.hp=Math.round(e.hp*(4+(i%4)*3));});
  for(const b of state.buildings)if(['turret','gunTurret','mortar','pulseTurret'].includes(b.type))b.cooldown=0;
+ // The swarm starts further out because the game keeps simulating while a review capture loads.
  return world;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href&&process.argv[2]){
