@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 04.27 dansk tid
+
+- Kørsel `2026-11-25T04:27:27+01:00`, simulation `da4f9e6`, driver `7fad7a7`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 4741 og 9257.
+- 24/32 ordinære sejre. I matchede ordinære scenarier steg sejre fra 1/13 til 8/13 efter den mergede sværhedsjustering.
+- Reserveindikatoren gik forud for 35/35 målte forsvarsudfald med 20 sekunders medianforspring. 217 varslingsperioder sluttede uden registreret forsvarsudfald. Næste fokus er et mere målrettet kampvarsel.
+- [Rapport](balance-2026-11-25-reserve-lead.md) · [Rådata](balance-2026-11-25-reserve-lead.json).
+
 ### 2026-11-25 dansk tid — Claude Code — sværhedsgrad efter ejerens ønske
 
 - Ejeren bad om balancering, så spillet ikke er for svært til at være sjovt. Kilde `0d91842` plus ændringerne i samme commit. Driver: standardmatrix med 4 workers og nye holdouts 3301 og 5557.
