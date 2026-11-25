@@ -49,7 +49,7 @@ public partial class HarbourSlice : Node3D
 			VolumetricFogDensity = dusk ? 0.022f : 0.004f,
 			VolumetricFogAlbedo = dusk ? new Color(0.62f, 0.66f, 0.72f) : new Color(0.88f, 0.92f, 0.96f),
 			VolumetricFogAnisotropy = 0.6f,
-			AdjustmentEnabled = true, AdjustmentSaturation = dusk ? 0.85f : 1.12f, AdjustmentContrast = 1.06f,
+			AdjustmentEnabled = true, AdjustmentSaturation = dusk ? 0.85f : 0.96f, AdjustmentContrast = 1.04f,
 		};
 		env.SkyRotation = new Vector3(0, Mathf.DegToRad(140), 0);
 		if (dusk) env.BackgroundEnergyMultiplier = 0.35f;
@@ -148,32 +148,35 @@ public partial class HarbourSlice : Node3D
 		var lantern = new OmniLight3D { LightColor = new Color(1, 0.86f, 0.6f), LightEnergy = dusk ? 4 : 0.6f, OmniRange = 6, Position = Vector3.Zero };
 		beamHost.AddChild(lantern);
 
-		// Iron field west of the lighthouse with drills either side of a collector belt.
-		var rust = Surface("terrain-granite", new Color(0.78f, 0.42f, 0.26f), 0.6f);
-		for (int k = 0; k < 140; k++)
+		// Iron field west of the lighthouse: scanned rock carrying a rust-red iron stain, so ore reads at a glance.
+		var ironStone = Surface("rust", new Color(0.86f, 0.5f, 0.36f), 0.5f);
+		var outcrops = new List<Transform3D>(); var pebbles = new List<Transform3D>();
+		for (int k = 0; k < 60; k++)
 		{
 			float x = -26 + rng.RandfRange(-7, 7), z = -6 + rng.RandfRange(-10, 10);
-			var rock = new MeshInstance3D { Mesh = new SphereMesh { Radius = 0.5f, Height = 0.7f, RadialSegments = 10, Rings = 6 }, MaterialOverride = rust };
-			rock.Position = new Vector3(x, Height(x, z) + 0.05f, z); rock.Scale = new Vector3(rng.RandfRange(.4f, 1.1f), rng.RandfRange(.3f, .8f), rng.RandfRange(.4f, 1.1f));
-			rock.RotationDegrees = new Vector3(rng.RandfRange(-20, 20), rng.RandfRange(0, 360), 0); AddChild(rock);
+			if (Mathf.Abs(x + 26) < 1.6f) continue;
+			outcrops.Add(Placed(x, z, rng.RandfRange(0.35f, 0.7f), 0.15f));
 		}
+		for (int k = 0; k < 160; k++) { float x = -26 + rng.RandfRange(-8, 8), z = -6 + rng.RandfRange(-11, 11); pebbles.Add(Placed(x, z, rng.RandfRange(0.15f, 0.3f), 0.05f)); }
+		Scatter("nature-boulder_01", outcrops, null, ironStone);
+		Scatter("nature-rock_moss_set_01", pebbles, null, ironStone);
 		foreach (var z in new[] { -13f, -6f, 1f }) { Model("drill", new Vector3(-30, 0, z), 0); Model("drill", new Vector3(-22, 0, z), 180); }
-		AddBelt(new Vector3(-26, 0, -15), new Vector3(-26, 0, 6), 3.4f, new Color(0.62f, 0.66f, 0.7f));
+		AddBelt(new Vector3(-26, 0, -15), new Vector3(-26, 0, 6), 3.4f, new Color(0.75f, 0.45f, 0.33f));
 		// Smelter column fed from the collector, plates to two warehouses.
-		AddBelt(new Vector3(-26, 0, 6), new Vector3(-12, 0, 6), 3.4f, new Color(0.62f, 0.66f, 0.7f));
+		AddBelt(new Vector3(-26, 0, 6), new Vector3(-12, 0, 6), 3.4f, new Color(0.75f, 0.45f, 0.33f));
 		for (int i = 0; i < 3; i++)
 		{
 			float x = -18 + i * 4.2f;
 			Model("smelter", new Vector3(x, 0, 2.2f), 0);
 			Model("smelter", new Vector3(x, 0, 9.8f), 180);
 		}
-		AddBelt(new Vector3(-12, 0, 6), new Vector3(-6, 0, 6), 2.6f, new Color(0.86f, 0.86f, 0.84f));
+		AddBelt(new Vector3(-12, 0, 6), new Vector3(-6, 0, 6), 2.6f, new Color(0.7f, 0.72f, 0.74f), true);
 		Model("warehouse", new Vector3(-6.5f, 0, 13.5f), 180);
 		Model("warehouse", new Vector3(-6.5f, 0, -1.8f), 0);
-		AddBelt(new Vector3(-6, 0, 6), new Vector3(-6, 0, 10.8f), 2.6f, new Color(0.86f, 0.86f, 0.84f));
+		AddBelt(new Vector3(-6, 0, 6), new Vector3(-6, 0, 10.8f), 2.6f, new Color(0.7f, 0.72f, 0.74f), true);
 	}
 
-	void AddBelt(Vector3 from, Vector3 to, float speed, Color cargo)
+	void AddBelt(Vector3 from, Vector3 to, float speed, Color cargo, bool plates = false)
 	{
 		var dir = (to - from); float length = dir.Length(); var mid = (from + to) / 2;
 		float yaw = Mathf.Atan2(dir.X, dir.Z);
@@ -186,29 +189,32 @@ public partial class HarbourSlice : Node3D
 			frame.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(0.08f, 0.18f, length) }, MaterialOverride = steel, Position = new Vector3(s, 0.02f, 0) });
 		for (float d = -length / 2 + 0.5f; d < length / 2; d += 1.2f)
 			frame.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(0.9f, 0.1f, 0.1f) }, MaterialOverride = steel, Position = new Vector3(0, -0.18f, d) });
-		var cargoMat = Surface("rust", cargo, 3f);
+		var cargoMat = plates ? Surface("steel-plate", cargo, 3f) : Surface("rust", cargo, 3f);
 		var belt = new Belt { Frame = frame, Length = length, Speed = speed };
 		for (float d = 0; d < length; d += 0.55f)
 		{
-			var item = new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(0.32f, 0.2f, 0.32f) }, MaterialOverride = cargoMat };
+			var item = new MeshInstance3D { Mesh = plates ? new BoxMesh { Size = new Vector3(0.36f, 0.05f, 0.36f) } : new SphereMesh { Radius = 0.14f, Height = 0.2f, RadialSegments = 7, Rings = 4 }, MaterialOverride = cargoMat };
+			if (!plates) item.Scale = new Vector3(rng.RandfRange(.8f, 1.3f), 1, rng.RandfRange(.8f, 1.3f));
 			frame.AddChild(item); belt.Items.Add(item); belt.Offsets.Add(d);
 		}
 		belts.Add(belt);
 	}
 
 	// Instanced CC0 scenery (Poly Haven, decimated in Blender): every mesh of a model becomes one MultiMesh.
-	void Scatter(string model, List<Transform3D> where)
+	// `part` picks one variant out of a multi-variant scan (e.g. fir_tree_01 _b_) and re-centres it.
+	void Scatter(string model, List<Transform3D> where, string part = null, Material material = null)
 	{
 		if (where.Count == 0) return;
 		var scene = GD.Load<PackedScene>($"res://assets/models/{model}.glb").Instantiate<Node3D>();
 		void Visit(Node node, Transform3D parent)
 		{
 			var local = node is Node3D n3 ? parent * n3.Transform : parent;
-			if (node is MeshInstance3D mi && mi.Mesh != null)
+			if (part != null && node is MeshInstance3D) local.Origin = new Vector3(0, local.Origin.Y, 0);
+			if (node is MeshInstance3D mi && mi.Mesh != null && (part == null || mi.Name.ToString().Contains(part)))
 			{
 				var mm = new MultiMesh { TransformFormat = MultiMesh.TransformFormatEnum.Transform3D, Mesh = mi.Mesh, InstanceCount = where.Count };
 				for (int i = 0; i < where.Count; i++) mm.SetInstanceTransform(i, where[i] * local);
-				AddChild(new MultiMeshInstance3D { Multimesh = mm, CastShadow = GeometryInstance3D.ShadowCastingSetting.On });
+				AddChild(new MultiMeshInstance3D { Multimesh = mm, CastShadow = GeometryInstance3D.ShadowCastingSetting.On, MaterialOverride = material });
 			}
 			foreach (var child in node.GetChildren()) Visit(child, local);
 		}
@@ -227,24 +233,35 @@ public partial class HarbourSlice : Node3D
 	void BuildGroves()
 	{
 		var firs = new List<Transform3D>(); var pines = new List<Transform3D>(); var ferns = new List<Transform3D>();
-		var shrubs = new List<Transform3D>(); var rocks = new List<Transform3D>(); var boulders = new List<Transform3D>(); var stumps = new List<Transform3D>();
+		var shrubs = new List<Transform3D>(); var shrubs2 = new List<Transform3D>(); var saplings = new List<Transform3D>(); var grass = new List<Transform3D>(); var rocks = new List<Transform3D>(); var boulders = new List<Transform3D>(); var stumps = new List<Transform3D>();
 		for (int k = 0; k < 9000; k++)
 		{
 			float x = rng.RandfRange(-62, 62), z = rng.RandfRange(-62, 62), y = Height(x, z);
 			if (y < 0.35f || !Clear(x, z)) continue;
 			float forest = Noise(x * 0.05f + 11, z * 0.05f);
-			if (forest > 0.56f && firs.Count + pines.Count < 900)
+			if (forest > 0.56f && firs.Count + pines.Count < 520)
 			{
-				if (rng.Randf() < 0.65f) firs.Add(Placed(x, z, rng.RandfRange(2.2f, 3.6f))); else pines.Add(Placed(x, z, rng.RandfRange(1.6f, 2.6f)));
+				if (rng.Randf() < 0.6f) firs.Add(Placed(x, z, rng.RandfRange(0.42f, 0.62f))); else pines.Add(Placed(x, z, rng.RandfRange(0.4f, 0.58f)));
+				if (rng.Randf() < 0.4f) saplings.Add(Placed(x + rng.RandfRange(-2.5f, 2.5f), z + rng.RandfRange(-2.5f, 2.5f), rng.RandfRange(0.8f, 1.4f)));
 				if (rng.Randf() < 0.5f) ferns.Add(Placed(x + rng.RandfRange(-1.5f, 1.5f), z + rng.RandfRange(-1.5f, 1.5f), rng.RandfRange(1.2f, 2f)));
 			}
-			else if (forest > 0.48f && rng.Randf() < 0.25f) shrubs.Add(Placed(x, z, rng.RandfRange(1.1f, 1.8f)));
+			else if (forest > 0.48f && rng.Randf() < 0.25f) (rng.Randf() < .5f ? shrubs : shrubs2).Add(Placed(x, z, rng.RandfRange(0.6f, 1.1f)));
+			else if (rng.Randf() < 0.5f && grass.Count < 4000) grass.Add(Placed(x, z, rng.RandfRange(3f, 5f)));
 			else if (Noise(x * 0.09f + 3, z * 0.09f) > 0.7f && rng.Randf() < 0.3f) rocks.Add(Placed(x, z, rng.RandfRange(0.8f, 1.6f), 0.1f));
 			else if (rng.Randf() < 0.004f) boulders.Add(Placed(x, z, rng.RandfRange(0.8f, 1.4f), 0.2f));
 			else if (forest > 0.5f && rng.Randf() < 0.02f) stumps.Add(Placed(x, z, rng.RandfRange(1f, 1.4f)));
 		}
-		Scatter("nature-fir_sapling", firs); Scatter("nature-pine_sapling_small", pines); Scatter("nature-fern_02", ferns);
-		Scatter("nature-shrub_04", shrubs); Scatter("nature-rock_moss_set_01", rocks); Scatter("nature-boulder_01", boulders); Scatter("nature-tree_stump_01", stumps);
+		// Scanned full-size spruce and pine (1 unit ≈ 2 m), three variants each; saplings as undergrowth.
+		var variants = new[] { "_a_", "_b_", "_c_" };
+		for (int v = 0; v < 3; v++)
+		{
+			Scatter("nature-fir_tree_01", firs.FindAll(t => firs.IndexOf(t) % 3 == v), variants[v]);
+			Scatter("nature-pine_tree_01", pines.FindAll(t => pines.IndexOf(t) % 3 == v), variants[v]);
+		}
+		Scatter("nature-fir_sapling", saplings); Scatter("nature-fern_02", ferns);
+		Scatter("nature-shrub_04", shrubs); Scatter("nature-shrub_02", shrubs2); Scatter("nature-rock_moss_set_01", rocks); Scatter("nature-boulder_01", boulders); Scatter("nature-tree_stump_01", stumps);
+		var tufts = new[] { "tall_a", "tall_b", "mid_a", "large_a", "large_b" };
+		for (int v = 0; v < tufts.Length; v++) Scatter("nature-grass_medium_01", grass.FindAll(t => grass.IndexOf(t) % tufts.Length == v), tufts[v]);
 		// Harbour clutter around the warehouses.
 		var crates = new List<Transform3D>(); var barrels = new List<Transform3D>();
 		foreach (var (x, z) in new[] { (-3.2f, 12.2f), (-3.4f, 15.2f), (-3.1f, -0.6f), (-9.6f, -3.2f) })
@@ -253,6 +270,30 @@ public partial class HarbourSlice : Node3D
 			barrels.Add(Placed(x - 0.2f, z + 1.4f, 1.0f));
 		}
 		Scatter("nature-wooden_crate_01", crates); Scatter("nature-wooden_barrels_01", barrels);
+		BuildHarbour();
+	}
+
+	// Pier, boats and a channel marker on the east shore; scanned coast rock around the island.
+	void BuildHarbour()
+	{
+		float shore = 30; for (float x = 10; x < 80; x += 0.5f) if (Height(x, 18) < 0) { shore = x; break; }
+		for (int i = 0; i < 2; i++) Model("nature-modular_wooden_pier", new Vector3(shore - 2 + i * 6f, -Height(shore - 2 + i * 6f, 18) + 0.4f, 18), 90, 0.5f);
+		Model("nature-ship_pinnace", new Vector3(shore + 14, -Height(shore + 14, 27) - 1.2f, 27), 75, 0.45f);
+		Model("nature-dutch_ship_medium", new Vector3(shore + 10, -Height(shore + 10, 9) - 0.8f, 9), 200, 0.42f);
+		Model("nature-lateral_sea_marker", new Vector3(shore + 24, -Height(shore + 24, 14) - 1f, 14), 0, 0.5f);
+		Model("nature-ocean_buoy", new Vector3(shore + 20, -Height(shore + 20, 32) - 0.4f, 32), 0, 0.6f);
+		var coast = new List<Transform3D>(); var coast2 = new List<Transform3D>();
+		for (int k = 0; k < 14; k++)
+		{
+			float a = k * Mathf.Tau / 14 + 0.2f; if (Mathf.Abs(Mathf.Wrap(a - 0.25f, -Mathf.Pi, Mathf.Pi)) < 0.35f) continue;
+			float r = IslandRadius - 2; var at = new Vector3(Mathf.Cos(a) * r, -0.6f, Mathf.Sin(a) * r);
+			var basis = new Basis(Vector3.Up, -a + Mathf.Pi / 2).Scaled(Vector3.One * rng.RandfRange(0.3f, 0.4f));
+			(k % 2 == 0 ? coast : coast2).Add(new Transform3D(basis, at));
+		}
+		Scatter("nature-coast_rocks_01", coast); Scatter("nature-coast_line_01", coast2);
+		var lamps = new List<Transform3D>();
+		foreach (var (x, z) in new[] { (-12f, 4f), (-12f, 8f), (-3f, 6f), (6f, 14f), (12f, 16f) }) lamps.Add(new Transform3D(Basis.Identity.Scaled(Vector3.One * 0.55f), new Vector3(x, Height(x, z), z)));
+		Scatter("nature-street_lamp_01", lamps);
 	}
 
 	void BuildHostiles()
@@ -270,7 +311,8 @@ public partial class HarbourSlice : Node3D
 
 	void BuildCamera()
 	{
-		camera = new Camera3D { Fov = 32, Far = 900, Attributes = new CameraAttributesPractical { DofBlurFarEnabled = true, DofBlurFarDistance = 160, DofBlurFarTransition = 80, DofBlurAmount = 0.03f } };
+		// No depth-of-field: far blur on a high camera is the tilt-shift "miniature" look the owner rejected.
+		camera = new Camera3D { Fov = 38, Far = 900 };
 		AddChild(camera);
 		Frame(new Vector3(-14, 0, 4), 58, 40, 200);
 	}

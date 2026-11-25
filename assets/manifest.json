@@ -716,6 +716,1094 @@
      "md5": "987a672e598f9dc04b6d23cb8f36d697"
     }
    }
+  },
+  {
+   "id": "coast_rocks_01",
+   "source": "https://polyhaven.com/a/coast_rocks_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "coast_rocks_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/coast_rocks_01/coast_rocks_01_2k.gltf",
+     "size": 2810,
+     "md5": "d763b6ff59061342a2e0b85c43abecf6"
+    },
+    "coast_rocks_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coast_rocks_01/coast_rocks_01.bin",
+     "size": 19320352,
+     "md5": "4cf9d5009388434a0520e1643127a725"
+    },
+    "textures/coast_rocks_01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_01/coast_rocks_01_diff_2k.jpg",
+     "size": 3153413,
+     "md5": "3f00b2ef63ccea7952236f1c6e32fa58"
+    },
+    "textures/coast_rocks_01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_01/coast_rocks_01_arm_2k.jpg",
+     "size": 2284440,
+     "md5": "e29f84556de4da79f3c08ddee3b7ad42"
+    },
+    "textures/coast_rocks_01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_01/coast_rocks_01_nor_gl_2k.jpg",
+     "size": 3846383,
+     "md5": "1a06be557b5709d355e20a3fea390c2a"
+    }
+   }
+  },
+  {
+   "id": "coast_rocks_02",
+   "source": "https://polyhaven.com/a/coast_rocks_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "coast_rocks_02.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/coast_rocks_02/coast_rocks_02_2k.gltf",
+     "size": 2810,
+     "md5": "d24256d45f6853dc16fb3440b3e0ceab"
+    },
+    "textures/coast_rocks_02_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_02/coast_rocks_02_arm_2k.jpg",
+     "size": 2907204,
+     "md5": "7cbf3d0da327b7aa2bcc45f6136d250a"
+    },
+    "textures/coast_rocks_02_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_02/coast_rocks_02_nor_gl_2k.jpg",
+     "size": 4117409,
+     "md5": "0128f9260d57b46ac907d16424d47d26"
+    },
+    "textures/coast_rocks_02_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_rocks_02/coast_rocks_02_diff_2k.jpg",
+     "size": 3237390,
+     "md5": "37ca68208844a60a5db2c3db43950fc9"
+    },
+    "coast_rocks_02.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coast_rocks_02/coast_rocks_02.bin",
+     "size": 35867060,
+     "md5": "0b9c2ab72446e40154681e87e0916272"
+    }
+   }
+  },
+  {
+   "id": "coast_land_rocks_02",
+   "source": "https://polyhaven.com/a/coast_land_rocks_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "coast_land_rocks_02.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/coast_land_rocks_02/coast_land_rocks_02_2k.gltf",
+     "size": 2851,
+     "md5": "1037125c41dfd454d51120d7da84e04c"
+    },
+    "textures/coast_land_rocks_02_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_land_rocks_02/coast_land_rocks_02_diff_2k.jpg",
+     "size": 3236496,
+     "md5": "1ea7931f92ae9cd9db4c5f886270a8d9"
+    },
+    "coast_land_rocks_02.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coast_land_rocks_02/coast_land_rocks_02.bin",
+     "size": 36700376,
+     "md5": "bdb0028f3b0d57deadab130fc34135a3"
+    },
+    "textures/coast_land_rocks_02_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_land_rocks_02/coast_land_rocks_02_arm_2k.jpg",
+     "size": 2946981,
+     "md5": "62722e6fa0d54f7e50a8d702fcf3771c"
+    },
+    "textures/coast_land_rocks_02_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_land_rocks_02/coast_land_rocks_02_nor_gl_2k.jpg",
+     "size": 4651001,
+     "md5": "695217c8729de25609c71433c4228c24"
+    }
+   }
+  },
+  {
+   "id": "coast_line_01",
+   "source": "https://polyhaven.com/a/coast_line_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "coast_line_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/coast_line_01/coast_line_01_2k.gltf",
+     "size": 2820,
+     "md5": "bae8b0b77271b1d3c9cc50a710fbce02"
+    },
+    "textures/coast_line_01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_line_01/coast_line_01_nor_gl_2k.jpg",
+     "size": 4118881,
+     "md5": "03a6f2d453ee92b2d42b9781f8d31e80"
+    },
+    "textures/coast_line_01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_line_01/coast_line_01_arm_2k.jpg",
+     "size": 2971370,
+     "md5": "ce69b67920b01875421c8e67e28f0012"
+    },
+    "coast_line_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coast_line_01/coast_line_01.bin",
+     "size": 15197348,
+     "md5": "ce691184592e23391d202f37a13c9b97"
+    },
+    "textures/coast_line_01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coast_line_01/coast_line_01_diff_2k.jpg",
+     "size": 2788979,
+     "md5": "cc178fb4bcca93110b98037c4c55d5c4"
+    }
+   }
+  },
+  {
+   "id": "modular_wooden_pier",
+   "source": "https://polyhaven.com/a/modular_wooden_pier",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "modular_wooden_pier.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/modular_wooden_pier/modular_wooden_pier_2k.gltf",
+     "size": 21127,
+     "md5": "90a45abef7245cd0b54dc8cada94d3a3"
+    },
+    "modular_wooden_pier.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_wooden_pier/modular_wooden_pier.bin",
+     "size": 2651092,
+     "md5": "dbdbeca4676a3012a64b4daa75d1f97c"
+    },
+    "textures/modular_wooden_pier_planks_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_planks_arm_2k.jpg",
+     "size": 2718602,
+     "md5": "7f685bf8bd9cbb8e83e8546d60776873"
+    },
+    "textures/modular_wooden_pier_planks_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_planks_nor_gl_2k.jpg",
+     "size": 4272628,
+     "md5": "21a821d3a0d6f484c19c199853a1bbef"
+    },
+    "textures/modular_wooden_pier_planks_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_planks_diff_2k.jpg",
+     "size": 2886320,
+     "md5": "636da8df2fc13ca85e3f96fe2fa0d527"
+    },
+    "textures/modular_wooden_pier_poles_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_poles_arm_2k.jpg",
+     "size": 3156282,
+     "md5": "eedd38da6254c68aff47d93099b4ae8b"
+    },
+    "textures/modular_wooden_pier_poles_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_poles_nor_gl_2k.jpg",
+     "size": 4033427,
+     "md5": "9cdef0bc0587c64f5ba52432a986229e"
+    },
+    "textures/modular_wooden_pier_poles_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_wooden_pier/modular_wooden_pier_poles_diff_2k.jpg",
+     "size": 3319026,
+     "md5": "1a73fa4ad5d6bf82931a4c3b387b76f4"
+    }
+   }
+  },
+  {
+   "id": "modular_factory_facade",
+   "source": "https://polyhaven.com/a/modular_factory_facade",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "modular_factory_facade.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/modular_factory_facade/modular_factory_facade_2k.gltf",
+     "size": 372666,
+     "md5": "a62391e18db2708ad5ada4536fe5db08"
+    },
+    "textures/modular_factory_facade_trim_01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_trim_01_diff_2k.jpg",
+     "size": 2537009,
+     "md5": "8cb3a127e8b4856602f7ee8765f72c0f"
+    },
+    "textures/modular_factory_facade_brick_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_brick_nor_gl_2k.jpg",
+     "size": 3471100,
+     "md5": "8cfd8766355b8fb0f0d62ec43f4fd3cb"
+    },
+    "textures/modular_factory_facade_doors_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_doors_nor_gl_2k.jpg",
+     "size": 2099914,
+     "md5": "2df739e72f6915fa9ca6cf9db09b9f18"
+    },
+    "textures/modular_factory_facade_garage_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_garage_nor_gl_2k.jpg",
+     "size": 3235785,
+     "md5": "d3329280f8ba1d699ef6ece5a2c253ca"
+    },
+    "textures/modular_factory_facade_trim_01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_trim_01_arm_2k.jpg",
+     "size": 3129201,
+     "md5": "3e1832783c806c04e4fdef255a7eee45"
+    },
+    "textures/modular_factory_facade_garage_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_garage_diff_2k.jpg",
+     "size": 2189076,
+     "md5": "90b0cb878fc30794dcd62525128b8811"
+    },
+    "textures/modular_factory_facade_trim_01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_trim_01_nor_gl_2k.jpg",
+     "size": 3717593,
+     "md5": "c52a2c5e4dcbe12372067b3cdf2fe36c"
+    },
+    "textures/modular_factory_facade_brick_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_brick_arm_2k.jpg",
+     "size": 2567917,
+     "md5": "4ac18c9b094ded66e0638f6563599574"
+    },
+    "textures/modular_factory_facade_windows_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_windows_nor_gl_2k.jpg",
+     "size": 2675074,
+     "md5": "fa9a037f50c56cce1416ea27b99609ad"
+    },
+    "textures/modular_factory_facade_garage_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_garage_arm_2k.jpg",
+     "size": 2542492,
+     "md5": "72dbb1e5a6f2697b9eab3b4625cd70f2"
+    },
+    "textures/modular_factory_facade_windows_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_windows_diff_2k.jpg",
+     "size": 2316599,
+     "md5": "121d76deede671d436ef38a1dfd9a5db"
+    },
+    "textures/modular_factory_facade_doors_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_doors_arm_2k.jpg",
+     "size": 2628673,
+     "md5": "129e4e40a329c984c7129959243f1dcb"
+    },
+    "textures/modular_factory_facade_windows_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_windows_arm_2k.jpg",
+     "size": 3333067,
+     "md5": "f0b8598915f3fd4def4c7cce659a4239"
+    },
+    "textures/modular_factory_facade_doors_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_doors_diff_2k.jpg",
+     "size": 2081334,
+     "md5": "666740bd7e05a98135b00bc17d54571c"
+    },
+    "modular_factory_facade.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_factory_facade/modular_factory_facade.bin",
+     "size": 6269260,
+     "md5": "225eee006759007851584344b0b22847"
+    },
+    "textures/modular_factory_facade_brick_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_factory_facade/modular_factory_facade_brick_diff_2k.jpg",
+     "size": 4421090,
+     "md5": "1b64dc2c47a30a818f71350ddaafaf46"
+    }
+   }
+  },
+  {
+   "id": "modular_industrial_pipes_01",
+   "source": "https://polyhaven.com/a/modular_industrial_pipes_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "modular_industrial_pipes_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_2k.gltf",
+     "size": 15014,
+     "md5": "bbebab7237a94e81b515705590912085"
+    },
+    "textures/modular_industrial_pipes_01_group01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group01_nor_gl_2k.jpg",
+     "size": 2788490,
+     "md5": "99560301689fdf0a73c11c556b6d1007"
+    },
+    "textures/modular_industrial_pipes_01_group01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group01_arm_2k.jpg",
+     "size": 3197008,
+     "md5": "d08cbdc8251a683bd13e4a8647c18b3d"
+    },
+    "modular_industrial_pipes_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_industrial_pipes_01/modular_industrial_pipes_01.bin",
+     "size": 515160,
+     "md5": "a18d063dc719e19b9c20d2f8c0a8bec4"
+    },
+    "textures/modular_industrial_pipes_01_group02_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group02_nor_gl_2k.jpg",
+     "size": 2840017,
+     "md5": "abdd30e0897de12a41860d242f395ab2"
+    },
+    "textures/modular_industrial_pipes_01_group02_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group02_arm_2k.jpg",
+     "size": 3302784,
+     "md5": "4f158e99ce400d82fd73f598cbf3581d"
+    },
+    "textures/modular_industrial_pipes_01_group02_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group02_diff_2k.jpg",
+     "size": 2024502,
+     "md5": "eb892cae76bb2ddee13128c365f3b61e"
+    },
+    "textures/modular_industrial_pipes_01_group01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_industrial_pipes_01/modular_industrial_pipes_01_group01_diff_2k.jpg",
+     "size": 1934173,
+     "md5": "a0e9a3734c94e78233be0e594b193d37"
+    }
+   }
+  },
+  {
+   "id": "overhead_crane",
+   "source": "https://polyhaven.com/a/overhead_crane",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "overhead_crane.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/overhead_crane/overhead_crane_2k.gltf",
+     "size": 9310,
+     "md5": "bb56d6c9d56bde407857e781a01876af"
+    },
+    "textures/overhead_crane_trim_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_trim_nor_gl_2k.jpg",
+     "size": 3264905,
+     "md5": "141255bf82b693466bdf7710723b8587"
+    },
+    "textures/overhead_crane_trim_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_trim_diff_2k.jpg",
+     "size": 1884375,
+     "md5": "879d5f98e248b37d735f6826cf03b570"
+    },
+    "textures/overhead_crane_trim_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_trim_arm_2k.jpg",
+     "size": 2993980,
+     "md5": "328d01288b062b8af906df30a7ddf1dd"
+    },
+    "textures/overhead_crane_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_nor_gl_2k.jpg",
+     "size": 3246311,
+     "md5": "cfcc1b177480ecfaf8d2f60add4a1ac4"
+    },
+    "textures/overhead_crane_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_diff_2k.jpg",
+     "size": 2244557,
+     "md5": "3aaf3bbf8072745a8c02ad569409b44a"
+    },
+    "textures/overhead_crane_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/overhead_crane/overhead_crane_arm_2k.jpg",
+     "size": 2767592,
+     "md5": "167de1c8f5abe066cd0659382fb7a7d6"
+    },
+    "overhead_crane.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/overhead_crane/overhead_crane.bin",
+     "size": 3022220,
+     "md5": "5bb23b84cbd931824b458c87f587400b"
+    }
+   }
+  },
+  {
+   "id": "modular_electricity_poles",
+   "source": "https://polyhaven.com/a/modular_electricity_poles",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "modular_electricity_poles.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/modular_electricity_poles/modular_electricity_poles_2k.gltf",
+     "size": 149324,
+     "md5": "516ec7ea60f1b090d89e9981c4182c50"
+    },
+    "textures/modular_electricity_poles_pieces_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_pieces_nor_gl_2k.jpg",
+     "size": 2923685,
+     "md5": "8af39af86c2cedad5c5af00f740a6774"
+    },
+    "textures/modular_electricity_poles_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_diff_2k.jpg",
+     "size": 2652895,
+     "md5": "587fdf3b7bc5091a0cb3da26ff1fb944"
+    },
+    "textures/modular_electricity_poles_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_arm_2k.jpg",
+     "size": 2938395,
+     "md5": "5e56d1623e4f2a994c9d1491e3a422ab"
+    },
+    "modular_electricity_poles.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_electricity_poles/modular_electricity_poles.bin",
+     "size": 7215652,
+     "md5": "c6214884e3bd6ea4a2ea20b795c648f4"
+    },
+    "textures/modular_electricity_poles_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_nor_gl_2k.jpg",
+     "size": 3833235,
+     "md5": "da2926aeb305161afff30713eb723c31"
+    },
+    "textures/modular_electricity_poles_pieces_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_pieces_arm_2k.jpg",
+     "size": 3534574,
+     "md5": "5c66eee5c89f8a1c157217eb9157a81e"
+    },
+    "textures/modular_electricity_poles_pieces_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_electricity_poles/modular_electricity_poles_pieces_diff_2k.jpg",
+     "size": 2671327,
+     "md5": "1011f233d60e66467bfb40a3de2d5f24"
+    }
+   }
+  },
+  {
+   "id": "ship_pinnace",
+   "source": "https://polyhaven.com/a/ship_pinnace",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "ship_pinnace.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/ship_pinnace/ship_pinnace_2k.gltf",
+     "size": 17175,
+     "md5": "fa46bd69709260a917caee488d9a112e"
+    },
+    "textures/ship_pinnace_hull_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_hull_arm_2k.jpg",
+     "size": 2675855,
+     "md5": "f3f3252c83ee9b7d9bd49f13bfa682e2"
+    },
+    "textures/ship_pinnace_details_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_details_diff_2k.jpg",
+     "size": 2200920,
+     "md5": "6148d5eda39610a75b16116bf92fc482"
+    },
+    "textures/ship_pinnace_details_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_details_arm_2k.jpg",
+     "size": 3398274,
+     "md5": "84ea961ad4a3998fde1ac80776752f7d"
+    },
+    "textures/ship_pinnace_interior_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_interior_diff_2k.jpg",
+     "size": 2722014,
+     "md5": "9b1a8503a95d9e48afe047e6a6ed8f8b"
+    },
+    "textures/ship_pinnace_hull_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_hull_diff_2k.jpg",
+     "size": 2131324,
+     "md5": "74a3fa35813811bb080577b6a9e68d24"
+    },
+    "textures/ship_pinnace_aft_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_aft_diff_2k.jpg",
+     "size": 2329237,
+     "md5": "a60d05a200ea8b06e167092ca33c99e2"
+    },
+    "ship_pinnace.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ship_pinnace/ship_pinnace.bin",
+     "size": 7127428,
+     "md5": "154e557f7ecc84a31a213bf176581801"
+    },
+    "textures/ship_pinnace_interior_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_interior_nor_gl_2k.jpg",
+     "size": 1753161,
+     "md5": "c65735aaebd5a1a5afe05da9f36696dd"
+    },
+    "textures/ship_pinnace_aft_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_aft_nor_gl_2k.jpg",
+     "size": 2632186,
+     "md5": "73f120384d51a7ff8e7fa1b1f8197fb1"
+    },
+    "textures/ship_pinnace_details_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_details_nor_gl_2k.jpg",
+     "size": 2502873,
+     "md5": "703d975cf7bcd5cc09af0922f1045e48"
+    },
+    "textures/ship_pinnace_deck_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_deck_arm_2k.jpg",
+     "size": 3135239,
+     "md5": "7c4e114c77884eca07ce8482ebca7326"
+    },
+    "textures/ship_pinnace_deck_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_deck_nor_gl_2k.jpg",
+     "size": 1705580,
+     "md5": "cc01b85d576e51b2f9f182763b181f5d"
+    },
+    "textures/ship_pinnace_deck_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_deck_diff_2k.jpg",
+     "size": 3035662,
+     "md5": "5c0fc40dec5cb09651879a468f349d5b"
+    },
+    "textures/ship_pinnace_aft_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_aft_arm_2k.jpg",
+     "size": 1809290,
+     "md5": "cfe9cad8a153b7bb7daa1f57681d79d2"
+    },
+    "textures/ship_pinnace_rigging_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_rigging_diff_2k.jpg",
+     "size": 2623891,
+     "md5": "f2d27dda25c0de69000bbe9cd63397ba"
+    },
+    "textures/ship_pinnace_sails_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_sails_diff_2k.jpg",
+     "size": 2714575,
+     "md5": "5f305edeeba953a1dc17f27af942bf36"
+    },
+    "textures/ship_pinnace_sails_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_sails_arm_2k.jpg",
+     "size": 2513397,
+     "md5": "0c9c3ce8b9bc23fd9d10da1ce5ffb80c"
+    },
+    "textures/ship_pinnace_rigging_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_rigging_nor_gl_2k.jpg",
+     "size": 3000379,
+     "md5": "65dff002a8c92c3891b3356e7f5b6b38"
+    },
+    "textures/ship_pinnace_sails_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_sails_nor_gl_2k.jpg",
+     "size": 3313641,
+     "md5": "7dd8690cc40a2c53d66b96dd8d9016c9"
+    },
+    "textures/ship_pinnace_hull_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_hull_nor_gl_2k.jpg",
+     "size": 2408241,
+     "md5": "ba2e3a660d6f16b0d1d48c82d9f23b63"
+    },
+    "textures/ship_pinnace_interior_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_interior_arm_2k.jpg",
+     "size": 2711026,
+     "md5": "a8158967c0da2e649a308d5fccf1ac52"
+    },
+    "textures/ship_pinnace_rigging_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ship_pinnace/ship_pinnace_rigging_arm_2k.jpg",
+     "size": 2711138,
+     "md5": "49bf586ac8d8e814f5ce8b67cd9a4e77"
+    }
+   }
+  },
+  {
+   "id": "dutch_ship_medium",
+   "source": "https://polyhaven.com/a/dutch_ship_medium",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "dutch_ship_medium.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/dutch_ship_medium/dutch_ship_medium_2k.gltf",
+     "size": 7494,
+     "md5": "55813b7ee04c49f7bc703277dc6691f8"
+    },
+    "textures/dutch_ship_medium_rigging_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_rigging_nor_gl_2k.jpg",
+     "size": 1926834,
+     "md5": "601ee50212a629c6762b3826ac79b1f6"
+    },
+    "dutch_ship_medium.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/dutch_ship_medium/dutch_ship_medium.bin",
+     "size": 2480380,
+     "md5": "f73e0108855bc3aef1a65a737a37f575"
+    },
+    "textures/dutch_ship_medium_hull_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_hull_diff_2k.jpg",
+     "size": 2945586,
+     "md5": "af0fd1ca5255e1671345ddb3d9e07c73"
+    },
+    "textures/dutch_ship_medium_hull_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_hull_nor_gl_2k.jpg",
+     "size": 3666864,
+     "md5": "0c68896a86bf25c8469bfc18e9a3fa0b"
+    },
+    "textures/dutch_ship_medium_rigging_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_rigging_arm_2k.jpg",
+     "size": 2058601,
+     "md5": "c4d84f67e2a0f67ff8ee17546c3d7818"
+    },
+    "textures/dutch_ship_medium_rigging_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_rigging_diff_2k.jpg",
+     "size": 2198962,
+     "md5": "3e7756baa30b638788e494d6c51b57b1"
+    },
+    "textures/dutch_ship_medium_sails_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_sails_nor_gl_2k.jpg",
+     "size": 3334525,
+     "md5": "38100504cb72662f531dd1bd5e8a821b"
+    },
+    "textures/dutch_ship_medium_hull_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_hull_arm_2k.jpg",
+     "size": 3901702,
+     "md5": "27b7637fe58293ca2c6d70e1176c9abd"
+    },
+    "textures/dutch_ship_medium_sails_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_sails_arm_2k.jpg",
+     "size": 2506529,
+     "md5": "1de6299082cd847e8b0958b53f74c64f"
+    },
+    "textures/dutch_ship_medium_sails_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/dutch_ship_medium/dutch_ship_medium_sails_diff_2k.jpg",
+     "size": 2656547,
+     "md5": "49842bd4280188ecf405caf474f51b9a"
+    }
+   }
+  },
+  {
+   "id": "lateral_sea_marker",
+   "source": "https://polyhaven.com/a/lateral_sea_marker",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "lateral_sea_marker.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/lateral_sea_marker/lateral_sea_marker_2k.gltf",
+     "size": 2735,
+     "md5": "e41143e69cf597a1fc1ffcf29dde59bf"
+    },
+    "textures/lateral_sea_marker_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/lateral_sea_marker/lateral_sea_marker_arm_2k.jpg",
+     "size": 2680571,
+     "md5": "816adfcb1e36f9833fb25aabbb801419"
+    },
+    "textures/lateral_sea_marker_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/lateral_sea_marker/lateral_sea_marker_nor_gl_2k.jpg",
+     "size": 1962916,
+     "md5": "7b28064b485d660559ea4f73be90389c"
+    },
+    "lateral_sea_marker.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/lateral_sea_marker/lateral_sea_marker.bin",
+     "size": 453348,
+     "md5": "f6ed9426a3ac79b5f48c3a7b295c5a6f"
+    },
+    "textures/lateral_sea_marker_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/lateral_sea_marker/lateral_sea_marker_diff_2k.jpg",
+     "size": 2466852,
+     "md5": "b12f5d44814dc44851ad616e32060722"
+    }
+   }
+  },
+  {
+   "id": "ocean_buoy",
+   "source": "https://polyhaven.com/a/ocean_buoy",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "ocean_buoy.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/ocean_buoy/ocean_buoy_2k.gltf",
+     "size": 3228,
+     "md5": "8748d958751c37523e485a22918d9038"
+    },
+    "textures/ocean_buoy_emission_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ocean_buoy/ocean_buoy_emission_2k.jpg",
+     "size": 106319,
+     "md5": "9c1c6b6463267cee3f354a3c48cef000"
+    },
+    "textures/ocean_buoy_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ocean_buoy/ocean_buoy_nor_gl_2k.jpg",
+     "size": 3100837,
+     "md5": "b3276e0d1f5a6bd47975684721b98d8f"
+    },
+    "textures/ocean_buoy_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ocean_buoy/ocean_buoy_diff_2k.jpg",
+     "size": 3220162,
+     "md5": "38541dce79b06a600b5dd496462c9e67"
+    },
+    "textures/ocean_buoy_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ocean_buoy/ocean_buoy_arm_2k.jpg",
+     "size": 3633729,
+     "md5": "fb0208fb47ee33895f5dfe0fd894c3ef"
+    },
+    "ocean_buoy.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/ocean_buoy/ocean_buoy.bin",
+     "size": 426240,
+     "md5": "fefe553dc26d2657aaea8d5b8455a137"
+    }
+   }
+  },
+  {
+   "id": "grass_medium_01",
+   "source": "https://polyhaven.com/a/grass_medium_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "grass_medium_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/grass_medium_01/grass_medium_01_2k.gltf",
+     "size": 27110,
+     "md5": "784c287f7828f8e30c4d28ebcbd90f6e"
+    },
+    "textures/grass_medium_01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_nor_gl_2k.jpg",
+     "size": 3530394,
+     "md5": "7c75ce52a121de1fc00422672584f757"
+    },
+    "textures/grass_medium_01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_diff_2k.jpg",
+     "size": 1166527,
+     "md5": "000814eb2149add70695cf71bfb52c4b"
+    },
+    "textures/grass_medium_01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_arm_2k.jpg",
+     "size": 2256355,
+     "md5": "a530c693ba3d08be15fcbce33dc5dabe"
+    },
+    "grass_medium_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/grass_medium_01/grass_medium_01.bin",
+     "size": 1006632,
+     "md5": "e0527a0561c2dae5b7b5c1b478d8c6bf"
+    }
+   }
+  },
+  {
+   "id": "shrub_02",
+   "source": "https://polyhaven.com/a/shrub_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "shrub_02.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/shrub_02/shrub_02_2k.gltf",
+     "size": 8083,
+     "md5": "bbfba4bf08416fe5f61b827be9474cd6"
+    },
+    "shrub_02.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_02/shrub_02.bin",
+     "size": 758692,
+     "md5": "683b5475238310899eac1458520903e6"
+    },
+    "textures/shrub_02_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/shrub_02/shrub_02_arm_2k.jpg",
+     "size": 1039322,
+     "md5": "24991af167d016ff6c71a59c140b22e7"
+    },
+    "textures/shrub_02_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/shrub_02/shrub_02_nor_gl_2k.jpg",
+     "size": 1667532,
+     "md5": "056418e8291602db325a5741ace9b14e"
+    },
+    "textures/shrub_02_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/shrub_02/shrub_02_diff_2k.jpg",
+     "size": 1319985,
+     "md5": "c236bcd930367aa3a96efa01e0e503be"
+    }
+   }
+  },
+  {
+   "id": "street_lamp_01",
+   "source": "https://polyhaven.com/a/street_lamp_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "street_lamp_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/street_lamp_01/street_lamp_01_2k.gltf",
+     "size": 6419,
+     "md5": "c3f9bdf69e98a0dc325aef79f9aca17c"
+    },
+    "textures/street_lamp_01_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/street_lamp_01/street_lamp_01_nor_gl_2k.jpg",
+     "size": 1827395,
+     "md5": "b847bb892a00d30f516176fcfef54cb6"
+    },
+    "textures/street_lamp_01_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/street_lamp_01/street_lamp_01_diff_2k.jpg",
+     "size": 993834,
+     "md5": "7487f2ca1deee8f1fcaaaaadaa6dade0"
+    },
+    "textures/street_lamp_01_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/street_lamp_01/street_lamp_01_arm_2k.jpg",
+     "size": 2332682,
+     "md5": "f13fca31be6fda9b1444e36a866c0860"
+    },
+    "street_lamp_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/street_lamp_01/street_lamp_01.bin",
+     "size": 748908,
+     "md5": "324bc6295e3962322514ddcfc7037b23"
+    }
+   }
+  },
+  {
+   "id": "rollershutter_door",
+   "source": "https://polyhaven.com/a/rollershutter_door",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "rollershutter_door.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/rollershutter_door/rollershutter_door_2k.gltf",
+     "size": 5378,
+     "md5": "0b4c5a09d0abfcb2249b3eaa8f7ddaf9"
+    },
+    "rollershutter_door.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rollershutter_door/rollershutter_door.bin",
+     "size": 46192,
+     "md5": "9df2ea3372b84dca7959d81cd5818d29"
+    },
+    "textures/rollershutter_door_graffiti_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rollershutter_door/rollershutter_door_graffiti_diff_2k.jpg",
+     "size": 2536479,
+     "md5": "78d7e5798da1e8e62d13084e4dda2962"
+    },
+    "textures/rollershutter_door_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rollershutter_door/rollershutter_door_diff_2k.jpg",
+     "size": 2321049,
+     "md5": "6c85c2341fdf020e36c5b2ca07846bc0"
+    },
+    "textures/rollershutter_door_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rollershutter_door/rollershutter_door_nor_gl_2k.jpg",
+     "size": 1471465,
+     "md5": "b56d9639a89f08c93cf0096371613fc5"
+    },
+    "textures/rollershutter_door_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rollershutter_door/rollershutter_door_arm_2k.jpg",
+     "size": 2284955,
+     "md5": "da0f9ec575f447db858c311fa3c5ec6d"
+    }
+   }
+  },
+  {
+   "id": "metal_jerrycan",
+   "source": "https://polyhaven.com/a/metal_jerrycan",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "metal_jerrycan.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/metal_jerrycan/metal_jerrycan_2k.gltf",
+     "size": 2793,
+     "md5": "a03b7bc0d5bc5a727cfce06f2d2ee9e3"
+    },
+    "textures/metal_jerrycan_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/metal_jerrycan/metal_jerrycan_nor_gl_2k.jpg",
+     "size": 3784121,
+     "md5": "c610486abcccea65643d6608388ccd85"
+    },
+    "textures/metal_jerrycan_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/metal_jerrycan/metal_jerrycan_diff_2k.jpg",
+     "size": 2607406,
+     "md5": "a78ee7baa9fb7029421c4a859eb91b9a"
+    },
+    "textures/metal_jerrycan_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/metal_jerrycan/metal_jerrycan_arm_2k.jpg",
+     "size": 3708196,
+     "md5": "5ca568ab847bf7ee819eb849cf971a2b"
+    },
+    "metal_jerrycan.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/metal_jerrycan/metal_jerrycan.bin",
+     "size": 484676,
+     "md5": "10b2255555debf5e8e0effb5735b2a39"
+    }
+   }
+  },
+  {
+   "id": "propane_tank",
+   "source": "https://polyhaven.com/a/propane_tank",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "propane_tank.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/propane_tank/propane_tank_2k.gltf",
+     "size": 2733,
+     "md5": "2b66472a1e9bd2cb30b03eacedf8943e"
+    },
+    "textures/propane_tank_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/propane_tank/propane_tank_nor_gl_2k.jpg",
+     "size": 2819806,
+     "md5": "f96a3d971d77c219d2b992ce21c34bfe"
+    },
+    "textures/propane_tank_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/propane_tank/propane_tank_diff_2k.jpg",
+     "size": 2550827,
+     "md5": "5701162e5479f5e798259cb524e031d6"
+    },
+    "textures/propane_tank_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/propane_tank/propane_tank_arm_2k.jpg",
+     "size": 2348376,
+     "md5": "b12749e5f02bc280a3afac93e12106ef"
+    },
+    "propane_tank.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/propane_tank/propane_tank.bin",
+     "size": 174180,
+     "md5": "bb8e4a72c3f655bfa3dec7456a343451"
+    }
+   }
+  },
+  {
+   "id": "modular_metal_gutter",
+   "source": "https://polyhaven.com/a/modular_metal_gutter",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "modular_metal_gutter.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/modular_metal_gutter/modular_metal_gutter_2k.gltf",
+     "size": 20545,
+     "md5": "0da4077a854d501e175a17ba8cd9bd73"
+    },
+    "textures/modular_metal_gutter_diff_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_metal_gutter/modular_metal_gutter_diff_2k.jpg",
+     "size": 1806224,
+     "md5": "55c59be1ac460ee3561ba0d978e8238a"
+    },
+    "textures/modular_metal_gutter_arm_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_metal_gutter/modular_metal_gutter_arm_2k.jpg",
+     "size": 2250769,
+     "md5": "5dbbc26569f501b84c67cdff942fe53e"
+    },
+    "textures/modular_metal_gutter_nor_gl_2k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/modular_metal_gutter/modular_metal_gutter_nor_gl_2k.jpg",
+     "size": 1821842,
+     "md5": "54d22b1a063a1e3a76ad0205c3fed2ff"
+    },
+    "modular_metal_gutter.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/modular_metal_gutter/modular_metal_gutter.bin",
+     "size": 469948,
+     "md5": "61175678f23d8247a3b2db3926654b03"
+    }
+   }
+  },
+  {
+   "id": "fir_tree_01",
+   "source": "https://polyhaven.com/a/fir_tree_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "fir_tree_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_tree_01/fir_tree_01_1k.gltf",
+     "size": 30279,
+     "md5": "0a184431efdba9e4bf76900d8d56504d"
+    },
+    "textures/fir_tree_01_bark_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_bark_nor_gl_1k.jpg",
+     "size": 1137533,
+     "md5": "978d32ec721696e45b38a72411c4edf4"
+    },
+    "textures/fir_tree_01_bark_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_bark_diff_1k.jpg",
+     "size": 776567,
+     "md5": "93265c0d9fbd3cf17deabdb68aa8b5e9"
+    },
+    "textures/fir_tree_01_bark_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_bark_arm_1k.jpg",
+     "size": 789264,
+     "md5": "4e48a7fa876a1ad47401fe86277a4373"
+    },
+    "textures/fir_tree_01_trunk_a_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_a_nor_gl_1k.jpg",
+     "size": 997355,
+     "md5": "41b92112b3b9a48eb2e1b4b3562dd937"
+    },
+    "textures/fir_tree_01_trunk_a_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_a_diff_1k.jpg",
+     "size": 789806,
+     "md5": "304f688bc8212f90a39a3b77f6065ee5"
+    },
+    "textures/fir_tree_01_trunk_a_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_a_arm_1k.jpg",
+     "size": 788967,
+     "md5": "e68adf3bf077b1552b5acff7f9d7bebf"
+    },
+    "textures/fir_tree_01_twig_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_nor_gl_1k.jpg",
+     "size": 472604,
+     "md5": "1ef6c0d7c2dc74cc073a8c33f58f3795"
+    },
+    "textures/fir_tree_01_twig_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_diff_1k.jpg",
+     "size": 371741,
+     "md5": "d267b1117a5d6dbbbd620bd997fb498e"
+    },
+    "textures/fir_tree_01_twig_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_arm_1k.jpg",
+     "size": 407309,
+     "md5": "b0d09189350cb716533c1590fec8f8a4"
+    },
+    "textures/fir_tree_01_trunk_b_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_b_nor_gl_1k.jpg",
+     "size": 915273,
+     "md5": "310666823cba305dd25d1494fbe73877"
+    },
+    "textures/fir_tree_01_trunk_b_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_b_diff_1k.jpg",
+     "size": 687662,
+     "md5": "00ad0c0643a4e6b34914b8ac05cc28cb"
+    },
+    "textures/fir_tree_01_trunk_b_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_trunk_b_arm_1k.jpg",
+     "size": 732269,
+     "md5": "2bd8df9326c28b68d8ace5d52adfd4f4"
+    },
+    "fir_tree_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fir_tree_01/fir_tree_01.bin",
+     "size": 478462204,
+     "md5": "26d2bf6d4d2e32d3524e8fa3760f643f"
+    }
+   }
+  },
+  {
+   "id": "pine_tree_01",
+   "source": "https://polyhaven.com/a/pine_tree_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "model",
+   "files": {
+    "pine_tree_01.gltf": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_tree_01/pine_tree_01_1k.gltf",
+     "size": 30596,
+     "md5": "9bc0153071011411957a74e473d24858"
+    },
+    "textures/pine_tree_01_bark_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_bark_nor_gl_1k.jpg",
+     "size": 1016849,
+     "md5": "bb6e3a6eea777d992cef48fabfdc538c"
+    },
+    "textures/pine_tree_01_bark_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_bark_diff_1k.jpg",
+     "size": 725265,
+     "md5": "7d3a558ed614c7e75594c7be3bf80311"
+    },
+    "textures/pine_tree_01_bark_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_bark_arm_1k.jpg",
+     "size": 801278,
+     "md5": "21d1abd15e40951825a4f3da110b20ea"
+    },
+    "textures/pine_tree_01_trunk_a_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_a_nor_gl_1k.jpg",
+     "size": 997355,
+     "md5": "41b92112b3b9a48eb2e1b4b3562dd937"
+    },
+    "textures/pine_tree_01_trunk_a_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_a_diff_1k.jpg",
+     "size": 789806,
+     "md5": "304f688bc8212f90a39a3b77f6065ee5"
+    },
+    "textures/pine_tree_01_trunk_a_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_a_arm_1k.jpg",
+     "size": 788967,
+     "md5": "03e83e31fb6ef8e4c759017bf059149b"
+    },
+    "textures/pine_tree_01_twig_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_nor_gl_1k.jpg",
+     "size": 797935,
+     "md5": "972d28f52f07ea271792b5bfbb8a3286"
+    },
+    "textures/pine_tree_01_twig_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_diff_1k.jpg",
+     "size": 510932,
+     "md5": "b6e5f4e8c228c275e5ff75cb165c2e1f"
+    },
+    "textures/pine_tree_01_twig_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_arm_1k.jpg",
+     "size": 474787,
+     "md5": "4623cfe77824b66098cdff4f2213ef10"
+    },
+    "textures/pine_tree_01_trunk_b_nor_gl_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_b_nor_gl_1k.jpg",
+     "size": 915273,
+     "md5": "310666823cba305dd25d1494fbe73877"
+    },
+    "textures/pine_tree_01_trunk_b_diff_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_b_diff_1k.jpg",
+     "size": 687662,
+     "md5": "00ad0c0643a4e6b34914b8ac05cc28cb"
+    },
+    "textures/pine_tree_01_trunk_b_arm_1k.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_b_arm_1k.jpg",
+     "size": 732269,
+     "md5": "4275bc6e1f13b5195b64e9e3b63cf5a2"
+    },
+    "pine_tree_01.bin": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/pine_tree_01/pine_tree_01.bin",
+     "size": 948849556,
+     "md5": "3079e56cc48c57d8ba530d005e86bae6"
+    }
+   }
   }
  ]
 }

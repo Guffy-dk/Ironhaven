@@ -54,7 +54,8 @@ for(const [name,file]of [['fengari','LICENSE'],['readline-sync','LICENSE'],['spr
 await writeFile('release/FENGARI-LICENSE.txt',notices.join('\n\n'));
 await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
 await cp('docs/design/THIRD_PARTY_ASSETS.txt','release/THIRD_PARTY_ASSETS.txt');
-await rm('release/assets',{recursive:true,force:true});await cp(CACHE,'release/assets',{recursive:true});
+// Raw model scans are Blender input for the Godot build only; the Electron game ships textures and sky.
+await rm('release/assets',{recursive:true,force:true});await cp(CACHE,'release/assets',{recursive:true,filter:src=>!src.startsWith(`${CACHE}/models`)});
 await writeFile('release/FONT-LICENSES.txt',`Big Shoulders Display\n\n${await readFile('public/art/fonts/OFL-BigShoulders.txt','utf8')}\n\nIBM Plex Sans Condensed and IBM Plex Mono\n\n${await readFile('public/art/fonts/OFL-IBMPlex.txt','utf8')}`);
 await writeFile('release/THIRD-PARTY-NOTICES.txt',await noticeText());
 console.log(`Built embedded desktop resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);

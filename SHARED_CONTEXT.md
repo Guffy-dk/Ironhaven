@@ -361,6 +361,14 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — Godot slice: scanned art instead of toy shapes
+
+- **Owner feedback (25 Nov 2026):** the Godot slice "looks like a cartoon for one-year-olds". Rejected: primitive box-and-cone buildings, sphere ore, cone trees, and the far depth-of-field blur, which turns a high camera into a tilt-shift miniature.
+- **Buildings** (`scripts/blender/build_summer_harbour.py`): a detail kit with bevelled edges, board-and-batten cladding, dressed granite plinth blocks, framed windows with glazing bars and sills, roofs with ridge caps, bargeboards, fascia, gutters and downpipes, gable ends in the wall finish, and corbelled chimneys. Smelter (brick, furnace mouth, ore hopper), drill (braced timber headframe, spoked sheave, cable, winding house, ore bin), warehouse (Falu-red store, Z-braced doors, loft hoist, loading dock) and lighthouse (rendered bands, gallery rail, glazed lantern, verdigris cap, keeper's cottage) are rebuilt. White trim and render are flat paint, because the painted-wood scan went muddy. The slate is darkened. A Cycles review render confirmed the change.
+- **Scenery:** 24 more CC0 Poly Haven scans are pinned in `assets/manifest.json` via the new `scripts/add-polyhaven-models.mjs`. They include full-size spruce and pine (three variants each), coast rock and coastline, a wooden pier, a pinnace and a Dutch ship, a sea marker, a buoy, grass tufts, street lamps and industrial props. All are decimated to per-model budgets in Blender. The slice places them with MultiMesh (`Scatter` can pick one variant and re-centre it). Ore is scanned rock with a rust-iron surface. Belt cargo is ore lumps and steel plates. The camera has no depth-of-field, a 38° lens and neutral saturation.
+- The raw scans are about 1.6 GB of Blender input. `scripts/build.mjs` keeps them out of the Electron package.
+- Tests: `test/polyhaven-models.test.mjs` covers the manifest entries, no duplicates, budgets for each scan, the slice using scans with no tilt-shift and no sphere ore, at least 12 detailed parts per building, and the Electron exclusion.
+
 ### 2026-11-25 — Claude Code — Godot preview channel and CC0 scenery
 
 - **Owner answer:** publish the Godot slice as a **preview beside the game**. The playable 0.22 stays latest.
