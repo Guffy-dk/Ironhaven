@@ -8,6 +8,7 @@ import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {ColorGradeShader} from './color-grade.js';
+import {CoastalMist} from './coastal-mist.js';
 import {outlineBuilding,outlineMaterial} from './building-outlines.js';
 import {levelPlaque} from './building-levels.js';
 import {conveyorSurface} from './conveyor-surface.js';
@@ -340,6 +341,7 @@ export class View{
   this.composer.addPass(new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.35,.42,2.2));this.composer.addPass(new OutputPass());
   this.colorGrade=new ShaderPass(ColorGradeShader);this.composer.addPass(this.colorGrade);
   this.lighthouseFog=new LighthouseFog(SIZE+24);this.scene.add(this.lighthouseFog.object);
+  this.coastalMist=new CoastalMist(SIZE+160);this.scene.add(this.coastalMist.object);
   this.actorHeading=new Map();
   this.coastalHostiles=new CoastalHostiles(this.scene);this.depositHighlights=new Map();
   this.reserveBeltCargo(256);
@@ -576,6 +578,7 @@ export class View{
   const core=s.buildings.find(b=>b.type==='hq'),heading=motion?.lighthouseAngle??lighthouseHeading(core);
   const beam=lighthouseBeam(core,heading);
   this.lighthouseFog.sync(beam,time,s.enemies.length?1:0,!this.renderer.shadowMap.enabled);
+  this.coastalMist.sync(time,quarry&&!!s.terrain.coast&&this.renderer.shadowMap.enabled);
   this.lighthouseLight.sync(core,beam,time,!this.renderer.shadowMap.enabled);
   this.coastalWater.sync(s.terrain,time,beam);this.baseLampLights.sync(s.buildings,this.center,this.zoom,!this.renderer.shadowMap.enabled);
   if(this.terrainKey!==`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`)this.staticTerrain(s);

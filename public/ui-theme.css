@@ -323,3 +323,11 @@ html body.ih-theme details[open]>:not(summary){animation:ih-rise .22s ease-out}
 html body.ih-theme .bottom-ui{width:min(1000px,calc(100vw - 512px))}
 html body.ih-theme .hotbar{grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:5px}
 @media(max-width:1400px){html body.ih-theme .build-btn{min-height:108px}html body.ih-theme .build-btn .build-symbol{width:40px;height:40px}html body.ih-theme .build-btn .build-name{font-size:12px}html body.ih-theme .tabs button{padding:0 9px;font-size:14px}}
+
+/* ---------- in-world labels: quiet tags that support, not cover, the models ---------- */
+html body.ih-theme .world-kind{padding:3px 6px;gap:4px;border-radius:3px;border:1px solid rgba(0,0,0,.55);background:rgba(14,19,21,.72);box-shadow:inset 0 1px 0 rgba(255,238,205,.06);color:color-mix(in srgb,var(--building-accent) 70%,#c9c3b4);font:600 10px/1 var(--ih-text);letter-spacing:.08em;opacity:.88}
+html body.ih-theme .world-kind.compact{padding:2px 3px;opacity:.72}
+html body.ih-theme .world-kind svg{width:12px;height:12px}
+html body.ih-theme .world-kind .type-level,html body.ih-theme .world-upgrades{font:600 10px/1 var(--ih-mono);color:var(--ih-ink)}
+html body.ih-theme .building-label::after{opacity:.3}
+html body.ih-theme .world-ammo{font:700 10px/1 var(--ih-text);letter-spacing:.08em;padding:3px 6px;border-radius:3px;background:rgba(80,26,18,.88);color:#ffd9cc;border:1px solid rgba(236,107,78,.5)}
