@@ -108,7 +108,7 @@ test('lighthouse training requires aiming, sustained illumination and a real ext
  command(s,p.id,{type:'aimLighthouse',x:4,z:-11});for(let i=0;i<140&&s.tutorialStep===9;i++)step(s);
  assert.equal(s.tutorialStep,10);assert.equal(s.enemies.filter(e=>e.training).length,0);assert.equal(s.totalKills,0);
  assert.equal(core.hp,hp);assert.equal(s.wave,0);
- assert.equal(command(s,p.id,{type:'finishTutorial'}),null);assert.equal(s.nextWave-s.time,100);
+ assert.equal(command(s,p.id,{type:'finishTutorial'}),null);assert.equal(s.nextWave-s.time,120);
 });
 test('skipping a light lesson removes every harmless practice creature',()=>{
  const {s,p}=fixture();s.tutorialStep=8;step(s);assert.ok(s.enemies.some(e=>e.training));

@@ -6,9 +6,11 @@ Run `node scripts/check-balance.mjs` to reproduce the simulation scenarios. The 
 
 | Preset | Enemy count | Enemy HP | Attack damage | Initial preparation | Between waves |
 |---|---:|---:|---:|---:|---:|
-| Relaxed | 0.72× | 0.85× | 0.75× | 140 s | 115 s |
-| Standard | 1.00× | 1.00× | 1.00× | 100 s | 95 s |
-| Veteran | 1.22× | 1.12× | 1.15× | 100 s | 95 s |
+| Relaxed | 0.72× | 0.85× | 0.75× | 160 s | 135 s |
+| Standard | 1.00× | 1.00× | 1.00× | 120 s | 110 s |
+| Veteran | 1.15× | 1.08× | 1.10× | 120 s | 110 s |
+
+Values as of 25 November 2026. Swarm count grows with `10 + 2.8·wave + wave^1.45`, HP by 3% per wave and late damage (from swarm 8) by `1.05 + 0.01·(wave−8)`. The first Abyss walker (swarm 5) has 60% HP. See the [difficulty report](playtests/balance-2026-11-25-difficulty.md).
 
 Each connected guest adds 10% to the wave count at spawn. Co-op does not add extra HP. The forecast shows the actual upcoming count and edges. Brutes have twice ordinary HP and slower movement. Counts are capped at 480, within the existing 500-enemy render pool.
 

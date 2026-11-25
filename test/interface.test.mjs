@@ -186,7 +186,7 @@ test('normal drag locks to the belt direction, previews turns, and builds only o
  }finally{await h.close();}
 });
 test('damage bars hide at full health; empty ammo and the final 20-second warning are visible',async()=>{
- const state=createGame(),p=addPlayer(state);state.time=80;state.resources.gear=0;const core=state.buildings[0];core.hp=2000;const turret=state.buildings.find(b=>b.type==='turret');turret.type='gunTurret';turret.ammo=0;
+ const state=createGame(),p=addPlayer(state);state.time=100;state.resources.gear=0;const core=state.buildings[0];core.hp=2000;const turret=state.buildings.find(b=>b.type==='turret');turret.type='gunTurret';turret.ammo=0;
  const h=harness({state,playerId:p.id});try{
   h.$('resume').click();h.frame(1000);assert.ok(h.$('wave-panel').classList.contains('imminent'));assert.equal(h.$('ammo-alert').hidden,false);assert.match(h.$('ammo-alert').textContent,/AMMO EMPTY/);assert.ok(h.$('building-'+core.id).querySelector('.world-health'));assert.match(h.$('building-'+turret.id).textContent,/NO AMMO/);
   h.tool('repair');h.point('pointerdown',0,0);h.point('pointerdown',0,0);h.frame(1400);assert.equal(h.save().buildings[0].hp,maxHp(core));assert.equal(h.$('building-'+core.id),null);
@@ -371,7 +371,7 @@ test('field training advances through actual movement, placement and deliveries'
   assert.equal(h.save().tutorialStep,TUTORIAL_STEPS.length-1);assert.ok(!h.$('tutorial-finish').hidden);
   h.$('tutorial-finish').click();const finished=h.save();
   assert.equal(finished.tutorialStep,undefined);assert.ok(h.$('tutorial-guide').hidden);
-  assert.equal(finished.nextWave-finished.time,100);
+  assert.equal(finished.nextWave-finished.time,120);
  }finally{await h.close();}
 });
 test('skipping training gives the full kit and restoring a training save keeps its task',async()=>{

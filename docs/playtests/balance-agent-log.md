@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 dansk tid — Claude Code — sværhedsgrad efter ejerens ønske
+
+- Ejeren bad om balancering, så spillet ikke er for svært til at være sjovt. Kilde `0d91842` plus ændringerne i samme commit. Driver: standardmatrix med 4 workers og nye holdouts 3301 og 5557.
+- Før: 4 sejre i 27 almindelige Standard- og Veteran-kampagner. De fleste fulde strategier tabte i swarm 25.
+- Ændret: længere forberedelse og pauser, blødere vækst i antal, HP og sen skade, mildere Veteran og første Abyss walker med 60 % HP. Efter: alle fulde Standard-strategier 21/21, Veteran 3/4 og holdouts 14/14. Enkelt-kanon og strategien uden artilleri taber stadig.
+- [Rapport](balance-2026-11-25-difficulty.md) · [Rådata](balance-2026-11-25-difficulty.json). Næste skridt er menneskelig playtest af Standard.
+
 ### 2026-11-24 kl. 22.27 dansk tid
 
 - Kørsel `2026-11-24T22:27:27+01:00`, simulation `8cf1b9f`, driver `af38083`, eksisterende build `0.21.2.3`.

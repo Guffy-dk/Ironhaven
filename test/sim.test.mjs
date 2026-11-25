@@ -12,7 +12,7 @@ test('field training defers swarms until the host finishes or skips',()=>{
  assert.equal(state.wave,0);
  assert.equal(state.tutorialStep,0);
  assert.equal(command(state,playerId,{type:'finishTutorial',skip:true}),null);
- assert.equal(state.nextWave,state.time+140);
+ assert.equal(state.nextWave,state.time+160);
  assert.equal(state.tutorialStep,undefined);
 });
 test('starter belts deliver both plates and gears; production is deterministic',()=>{

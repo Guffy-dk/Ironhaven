@@ -47,7 +47,7 @@ test('swarm health scales smoothly and late runners survive a level-30 mortar hi
   return s.enemies.find(e=>e.kind==='runner'&&!e.coreHunter&&!e.mutation);
  };
  const seventh=normalEnemy(7),eighth=normalEnemy(8),last=normalEnemy(FINAL_WAVE);
- assert.equal(seventh.maxHp,90);
+ assert.equal(seventh.maxHp,88);
  assert.equal(seventh.damage,(1+.018*6)*.8);
  assert.ok(last.maxHp>turretStats({type:'mortar',level:30}).damage);assert.ok(eighth.maxHp<seventh.maxHp*1.2);
  assert.ok(eighth.damage>seventh.damage);

@@ -15,19 +15,19 @@ export {BUILD_EDGE};
 export const DIRS = [[1,0],[0,1],[-1,0],[0,-1]];
 export const SWARM_DIRECTIONS=['West','North','East','South','Northeast','Southeast','Southwest','Northwest'];
 export const DIFFICULTIES={
- relaxed:{name:'Relaxed',count:.72,health:.85,damage:.75,production:1.15,prep:140,interval:115},
- standard:{name:'Standard',count:1,health:1,damage:1,production:1,prep:100,interval:95},
- veteran:{name:'Veteran',count:1.22,health:1.12,damage:1.15,production:1,prep:100,interval:95}
+ relaxed:{name:'Relaxed',count:.72,health:.85,damage:.75,production:1.15,prep:160,interval:135},
+ standard:{name:'Standard',count:1,health:1,damage:1,production:1,prep:120,interval:110},
+ veteran:{name:'Veteran',count:1.15,health:1.08,damage:1.1,production:1,prep:120,interval:110}
 };
 export const isPostVictory=s=>s.survived===true;
 export const canSpawnSwarm=s=>s.wave<FINAL_WAVE||isPostVictory(s);
 export function waveForecast(s,wave=s.wave+1){
  const d=DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard,guests=Math.max(0,s.players.length-1);
  const random=rng(Math.imul(s.swarmSeed??s.seed,0x85ebca6b)^Math.imul(wave,0x9e3779b9));
- const count=Math.min(420,Math.round((10+wave*2.8+wave**1.55)*d.count*(1+guests*.08)));
+ const count=Math.min(420,Math.round((10+wave*2.8+wave**1.45)*d.count*(1+guests*.08)));
  const lateWave=Math.min(wave,FINAL_WAVE)-8;
- const health=d.health*(1+.035*(wave-1));
- const damage=d.damage*(1+.018*(wave-1))*(lateWave<0?1:1.1+.015*lateWave);
+ const health=d.health*(1+.03*(wave-1));
+ const damage=d.damage*(1+.018*(wave-1))*(lateWave<0?1:1.05+.01*lateWave);
  return {wave,count,side:Math.floor(random()*SWARM_DIRECTIONS.length),health,damage,bonus:roundBonus(wave)};
 }
 export const TYPES = {
@@ -903,7 +903,9 @@ function spawnWave(s){
   const coreHunter=i<coreHunters;
   const mutation=!coreHunter&&waveMutation&&random()<.22?waveMutation:null;
   const kind=coreHunter?'drowned':waveKind(s.wave,i,count),species=HOSTILES[kind];
-  const hp=Math.round(species.health*(35+s.wave*5+.09*s.wave**2)*forecast.health*(mutation==='armored'?1.5:1));
+  // The first abyss walker teaches the boss threat without ending an early colony outright.
+  const firstBoss=kind==='walker'&&s.wave<10?.6:1;
+  const hp=Math.round(species.health*(35+s.wave*5+.09*s.wave**2)*forecast.health*(mutation==='armored'?1.5:1)*firstBoss);
   const damage=forecast.damage*(mutation==='frenzied'?1.35:1),speed=(1.0+(i%4)*.12+s.wave*.015)*(mutation==='swift'?1.4:1);
   s.enemies.push({id:s.nextId++,kind,x,z,hp,maxHp:hp,damage:damage*species.damage,speed:speed*species.speed,cooldown:0,brute:kind==='guard',coreHunter:coreHunter||kind==='walker',mutation});
  }s.nextWave=s.time+(DIFFICULTIES[s.difficulty]||DIFFICULTIES.standard).interval;updatePower(s);

@@ -5,3 +5,10 @@ Append an instruction as a new Markdown section headed `## IH-YYYYMMDD-short-slu
 Results and run links are recorded in `codex-output`. Read `SHARED_CONTEXT.md` first for the current decisions and project history.
 
 This repository is public. Include only project information suitable for GitHub. Use a normal push or merge so GitHub Actions can see it.
+
+## IH-20261125-difficulty-review
+
+Mål: Gennemgå sværhedsjusteringen fra 25. november 2026 mod tidligere ejerbeslutninger og projektets historik. Rapportér eventuelle konflikter eller oversete konsekvenser.
+Kontekst: Ejeren bad om, at spillet ikke må være så svært, at det ikke er sjovt at spille. Ændringen ligger på branch `ccr-6dd57fd4-9a8hab` i `public/shared/sim.js` (DIFFICULTIES, waveForecast og HP for første Abyss walker). Den er beskrevet i `docs/playtests/balance-2026-11-25-difficulty.md` og i SHARED_CONTEXT-posten fra 2026-11-25. Tidligere balancekørsler beholdt bevidst spilværdierne. Release-noten for 0.4 i `public/shared/releases.js` siger, at Veteran ikke forkorter Standards forberedelsestid, og det gælder stadig.
+Afgrænsning: Undersøg og foreslå. Implementér ikke, og lav ingen release, tag eller patcher-ændring.
+Godkendelseskriterier: codex-output skal angive, om nogen tidligere ejerbeslutning, nogen test, nogen tutorial- eller UI-tekst eller noget save- eller co-op-flow afhænger af de gamle værdier (forberedelse 100/140 s, pauser 95/115 s, Veteran 1.22/1.12/1.15). Hvert fund skal have en fil- eller commit-reference. Bekræft, at `npm test` passerer på branchen, og foreslå eventuelle opfølgende tests.

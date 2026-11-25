@@ -165,7 +165,7 @@ The owner requested about **35 genuinely different automated playthroughs per sc
 
 Tests record seed, strategy, horizon, difficulty, milestones, resources, losses, repairs, upgrades and power/ammunition-related telemetry. Resume reports only with matching scenario **and verified matching source**; metadata matching alone does not establish code identity. Save raw results and detailed reports in the established locations. Treat bot recovery logic as a possible confounder.
 
-Most recent checked report: [20 Nov 12:27](docs/playtests/balance-2026-11-20-122727.md), source `0242bf6`, driver `d096d45`, committed summary `2b9d151`:
+Latest difficulty change: [25 Nov difficulty pass](docs/playtests/balance-2026-11-25-difficulty.md) (supersedes the unchanged values below). Most recent checked report before that: [20 Nov 12:27](docs/playtests/balance-2026-11-20-122727.md), source `0242bf6`, driver `d096d45`, committed summary `2b9d151`:
 
 - 46 completed automated runs: 35 scenarios plus 11 reserve retests; two workers.
 - 26 ordinary campaigns: 4 victories, 21 defeats, 1 horizon limit.
@@ -317,6 +317,13 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
+
+### 2026-11-25 — Claude Code — difficulty pass for enjoyment
+
+- **Owner request:** balance the game so it is not too hard to be enjoyable; Windows-only, no browser product. This supersedes the earlier balance runs' practice of always keeping game values unchanged.
+- **Implemented on branch `ccr-6dd57fd4-9a8hab` (not on `main` at the time of writing):** Standard preparation 120 s and 110 s between swarms. Relaxed 160/135 s. Veteran keeps Standard timing and changes to 1.15×/1.08×/1.10×. The count exponent is now 1.45 (was 1.55), HP grows 3%/swarm (was 3.5%) and the late damage multiplier is `1.05+0.01·(w−8)`. The first Abyss walker (swarms 5–9) has 60% HP.
+- **Verified (scripted bots, not humans):** default matrix with 4 victories in 27 ordinary Standard/Veteran campaigns before the change. After it, all full Standard strategies win 21/21 and Veteran wins 3/4. Holdouts 3301/5557 won 14/14 full strategies. Single gun and no_artillery still lose. 215/215 tests, build and render checks passed. [Report](docs/playtests/balance-2026-11-25-difficulty.md).
+- **Unresolved:** human playtest of Standard. If it is too easy, adjust the count exponent first. No Windows build or patcher release was requested. Codex review requested as `IH-20261125-difficulty-review`.
 
 ### 2026-11-24 — Codex — 0.21.3 patcher release
 
