@@ -352,7 +352,7 @@ public partial class HarbourSlice : Node3D
 		foreach (var s in shots)
 		{
 			Frame(s.target, s.distance, s.pitch, s.yaw);
-			for (int f = 0; f < 40; f++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			for (int f = 0; f < 16; f++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 			var image = GetViewport().GetTexture().GetImage();
 			image.SavePng($"{dir}/{(dusk ? "dusk-" : "")}{s.name}.png");
 			GD.Print($"captured {s.name}");
