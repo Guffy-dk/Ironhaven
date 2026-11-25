@@ -337,10 +337,14 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — UI redesign mockup rejected
+
+- The owner asked for a complete UI redesign, with a mockup to approve first, because the current UI looks quickly AI-made. Claude's first mockup, "Harbour Instruments" (slate panels, amber actions, a swarm clock, an inspector panel and a pause menu with saves and co-op; a private claude.ai design canvas), was **rejected by the owner as poor**. Do not implement it. A new attempt needs a clearly different and more detailed direction, approved before any implementation.
+
 ### 2026-11-25 — Claude Code — Windows and Linux desktop, internet co-op, two-platform patcher
 
 - **Owner decisions:** build for Windows and Linux, not macOS. Co-op must work without NAT/port configuration. Make a patcher for Windows and Linux now; Steam comes later. Remove browser-era leftovers.
-- **Implemented on branch `ccr-6dd57fd4-9a8hab`:**
+- **Implemented and merged to `main` with owner approval (25 Nov 2026):**
   - Linux package: `scripts/build-linux.sh` produces `Ironhaven-Linux-x64.tar.gz` and its manifest. The launcher `desktop/linux/ironhaven.sh` disables Chromium's OS sandbox only when the system blocks both unprivileged user namespaces and a root-owned setuid helper, or when running as root. The page keeps context isolation, CSP and no Node access.
   - Co-op: `public/network.js` uses public STUN servers. The invitation and answer codes are unchanged. `scripts/check-coop-stun.mjs` checks for a public address in CI (`continue-on-error`).
   - Patcher: the shared logic in `desktop/patcher/Updates.cs` is platform-neutral. `PlatformWindows.cs` keeps the published ZIP/.NET Framework behaviour. `PlatformLinux.cs` (.NET 8) installs tar.gz, keeps execute bits and strips setuid, and rejects links and paths outside the game folder. The Linux UI is Avalonia (`desktop/patcher/linux`), built by `scripts/build-linux-patcher.sh` as `Ironhaven-Patcher-Linux`.
