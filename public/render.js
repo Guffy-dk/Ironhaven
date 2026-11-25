@@ -610,10 +610,10 @@ export class View{
      if(intoMachine&&t>.66){const u=smooth((t-.66)/.34);size*=1-.35*u;rise-=u*.015;}
      const x=b.x+enter*ix+leave*ox,z=b.z+enter*iz+leave*oz;
      if(cargoCount>=this.beltItems.instanceMatrix.count)return;
-     // Ride over the rollers and face the direction of travel.
+     // Face the direction of travel, turning smoothly through corners.
      const heading=Math.atan2(bend?ox*t-ix*(1-t):ox,bend?oz*t-iz*(1-t):oz);
      this.dummy.rotation.set(0,heading,0);
-     this.dummy.position.set(x,(quarry?.255:.3)+rise+Math.abs(Math.sin((t+b.x*.37+b.z*.61)*Math.PI*4))*.006,z);this.dummy.scale.setScalar(size);this.dummy.updateMatrix();
+     this.dummy.position.set(x,(quarry?.255:.3)+rise,z);this.dummy.scale.setScalar(size);this.dummy.updateMatrix();
      this.beltItems.setMatrixAt(cargoCount,this.dummy.matrix);
      this.beltItems.setColorAt(cargoCount++,this.enemyColor.setHex(itemColors[cargo.item]??C.light));
      cargoTrack.set(b.id+':'+cargo.itemTick,{x,z,ox,oz,item:cargo.item,size,heading,intoMachine});

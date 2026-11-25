@@ -12,9 +12,9 @@ export function animationDemoWorld(){
  const clear=(x,z)=>{for(const field of ['trees','rocks'])state.terrain[field]=state.terrain[field].filter(t=>t.x!==x||t.z!==z);};
  const build=(type,x,z,dir=0)=>{clear(x,z);const error=command(state,p.id,{type:'build',building:type,x,z,dir});if(error)throw Error(`${type} ${x},${z}: ${error}`);return state.buildings.find(b=>b.x===x&&b.z===z);};
  for(const [z,ore,drill] of [[6,'ore','drill'],[8,'copper','copperDrill']]){
-  clear(-9,z);for(const field of ['ore','copper','coal'])state.terrain[field]=state.terrain[field].filter(t=>t.x!==-9||t.z!==z);state.terrain[ore].push({x:-9,z});const d=build(drill,-9,z,0);for(let i=0;i<9;i++)command(state,p.id,{type:'upgrade',x:d.x,z:d.z});
+  clear(-9,z);for(const field of ['ore','copper','coal'])state.terrain[field]=state.terrain[field].filter(t=>t.x!==-9||t.z!==z);state.terrain[ore].push({x:-9,z});const d=build(drill,-9,z,0);for(let i=0;i<7;i++)command(state,p.id,{type:'upgrade',x:d.x,z:d.z});
   for(let x=-8;x<=-4;x++)build('belt',x,z,0);
-  build('smelter',-3,z,0);for(let x=-2;x<=1;x++)build('belt',x,z,0);build('storage',2,z,0);
+  const smelter=build('smelter',-3,z,0);for(let i=0;i<9;i++)command(state,p.id,{type:'upgrade',x:smelter.x,z:smelter.z});for(let x=-2;x<=1;x++)build('belt',x,z,0);build('storage',2,z,0);
  }
  for(const r of RESOURCE_KEYS)state.resources[r]=35;
  state.enemies=[];state.paused=false;state.nextWave=state.time+99999;
