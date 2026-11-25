@@ -24,6 +24,10 @@ The owner approved an event trigger for [`claude-input`](claude-input) on `main`
 
 Codex independently reviewed Claude’s difficulty candidate `8ccd033` as `IH-20261125-difficulty-review`. The branch passed 215/215 tests. The compatibility review and follow-up tests are recorded in [`codex-output`](codex-output).
 
+### Standing owner rule: tests, log, push (25 Nov 2026)
+
+Every change needs automated tests covering it, an entry in this log (decisions, implementation, test evidence, open issues), and a push to GitHub. This applies to visual and presentation work too. Test what the player sees (render objects, DOM, animation state), not just simulation numbers. A change is not done until all three are in place.
+
 ### Precedence and contradictory historical notes
 
 Newest owner instructions take precedence over this document; this document records the current reconciliation; code establishes what is implemented, not necessarily what the owner wants. Older handoffs are historical references. In particular, `docs/PROJECT_HANDOFF.md` describes browser releases, old version rules, evacuation and transfer relays that are no longer the current direction. Do not implement those merely because they appear there. Some older art/playtest notes describe Roman UI levels; current UI levels use ordinary numbers.
@@ -356,6 +360,13 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
+
+### 2026-11-25 — Claude Code — test coverage for recent work
+
+- `test/footprints.test.mjs` (10 tests): footprint sizes; every cell maps to its building for lookups and commands; whole-area placement; drills need a deposit cell under them; output at the edge-tile; work rate and cost scale with size; a minimal drill → smelter → warehouse chain delivers; island and starter deposits fit rows of 3×3 drills; the review factory places with no errors and stocks its warehouses; the rebuilt starter chains deliver plates and gears.
+- `test/presentation.test.mjs` (7 tests): removed hostiles fall and then vanish; a mass removal spawns no bodies; a hit recoils, flashes and settles (this exposed a weak first-frame flash, now a linear fade); the walk cycle follows distance covered; coastal mist layer; the colour grade's strength mix; roof trade signs on factories only.
+- `test/interface.test.mjs` (+3 tests): net rate per minute in the resource bar; recipes and upgrade prices with material icons; the theme is active and co-op is offered without port forwarding.
+- The legacy tests that assume one-tile buildings still fail on the prototype branch and are being rewritten next.
 
 ### 2026-11-25 — Claude Code — multi-tile buildings and a larger map (prototype on branch)
 

@@ -523,3 +523,36 @@ test('Fabrication exposes Harbor Works and the lighthouse commissions stored pro
   assert.equal(state.resources.harborKit,0);
  }finally{await h.close();}
 });
+
+test('the resource bar shows each material with its net rate per minute',async()=>{
+ const h=harness(starterWorld());try{
+  h.$('resume').click();h.frame(1000);
+  const rates=[...h.$('resources').querySelectorAll('.stock-rate')];
+  assert.ok(rates.length>=8,'every material has a rate');
+  assert.ok(rates.every(r=>/^[+−±]\d+$/.test(r.textContent)),rates.map(r=>r.textContent).join(' '));
+  assert.ok(rates.every(r=>/per minute/.test(r.getAttribute('aria-label'))));
+ }finally{await h.close();}
+});
+
+test('recipes and upgrade prices show material icons with the quantities',async()=>{
+ const saved=starterWorld(),machine=saved.state.buildings.find(b=>b.type==='smelter');
+ const h=harness(saved);try{
+  h.$('resume').click();h.dom.__view.zoom=10;h.frame(1000);
+  h.point('pointerdown',machine.x,machine.z);h.frame(1100);
+  const chips=h.$('recipe').querySelectorAll('.recipe-chip');
+  if(chips.length){assert.ok([...chips].every(c=>c.querySelector('.item-icon')&&c.querySelector('b')));}
+  else assert.match(h.$('recipe').textContent,/ore/i);
+  const price=h.$('upgrade-turret').querySelector('.upgrade-price');
+  assert.ok(price,'the upgrade button carries a price row');
+  assert.ok(price.querySelectorAll('.material-price .item-icon').length>=1);
+  assert.match(h.$('upgrade-turret').textContent,/Upgrade to 2/);
+ }finally{await h.close();}
+});
+
+test('the harbour-steel theme is active and co-op is offered over the internet',async()=>{
+ const h=harness();try{
+  assert.ok(h.dom.document.body.classList.contains('ih-theme'));
+  assert.match(h.$('start-lan').textContent,/^Co-op/);
+  assert.match(h.$('lan-dialog').textContent,/No port forwarding needed/);
+ }finally{await h.close();}
+});

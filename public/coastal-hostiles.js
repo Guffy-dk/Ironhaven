@@ -125,7 +125,7 @@ export class CoastalHostiles{
     pitch:move*Math.min(.11,gait.speed*.06)+lunge*.22-hit*.12,
     roll:move*Math.sin(phase)*.04*heavy,
     wide:1+Math.max(0,hit)*.05+move*(1-footfall)*.015,tall:(1-Math.max(0,hit)*.1)*(1-move*(1-footfall)*.02)*(1+(1-move)*breath*.012),
-    tint:(visible?1.03:.9)+Math.max(0,hit)*.5});
+    tint:(visible?1.03:.9)+flinch/.3*.45});
    this.lastHp.set(e.id,e.hp);seen.set(e.id,{kind,at:{x:at.x,z:at.z},angle,phase,tint:visible?1.03:.9});
   }
   // Shadow updates follow living hostiles; a falling body fades without forcing shadow re-renders.
