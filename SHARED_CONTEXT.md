@@ -352,6 +352,13 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — readability over realism (playtest feedback)
+
+- Owner reminder: playtesters found the factories hard to tell apart by appearance during play, and ore deposits hard to locate and outline. **Readability takes precedence over realism** in the visual overhaul.
+- Deposits now sit on mineral-stained ground: rounded, mottled, merging patches (`depositStain` in `public/render.js`) in rust (iron), verdigris (copper) and coal black under the outcrops. This gives a clear location and outline at play zoom while staying natural; the outcrops regained some colour.
+- Factories carry a painted trade sign on the roof (`tradeSign` in `public/building-levels.js`) with the building's own pictogram and accent from `BUILDING_IDENTITIES` (shared via `iconPath` in `public/icons.js`). It is lit like the roof and readable at default zoom. Harbour and Lua-mod buildings without `ROOF_HEIGHTS` entries have no sign yet.
+- An earlier step in this overhaul hid the HTML type tags at default zoom. The roof signs now carry that recognition in the world itself.
+
 ### 2026-11-25 — Claude Code — owner-authorised visual overhaul (in progress)
 
 - **Owner decision (25 Nov 2026):** Claude has full authority to change the look of the whole game and must fix what makes it tiresome to look at: the uniform ground, toy-like boxes without scale, saturated mineral blobs, badge and arrow noise, flat lighting and no wetness, mist or warm window light. The recommended direction is North Atlantic harbour industry, 1890–1940: timber and tar, then brick and riveted iron, then concrete and steel, used as visual progression. Releases still need an explicit owner request.

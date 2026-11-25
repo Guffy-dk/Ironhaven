@@ -35,7 +35,9 @@ const paths={
  sound:'M3 10h4l5-5v16l-5-5H3v-6Zm13-2c4 3 4 7 0 10m3-13c6 5 6 12 0 16',
  mute:'M3 10h4l5-5v16l-5-5H3v-6Zm13 0 6 6m0-6-6 6'
 };
-export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths[({gunTurret:'turret',coalMine:'drill',coalGenerator:'generator',copperDrill:'drill',foundry:'steel',circuitLab:'circuit',componentFactory:'module'})[name]]||paths.hq}"/></svg>`;}
+// The same 24-unit pictogram path for HTML icons and painted in-world signs.
+export function iconPath(name){return paths[name]||paths[({gunTurret:'turret',coalMine:'drill',coalGenerator:'generator',copperDrill:'drill',foundry:'steel',circuitLab:'circuit',componentFactory:'module'})[name]]||paths.hq;}
+export function icon(name,size=24){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${iconPath(name)}"/></svg>`;}
 export const RESOURCE_NAMES={wood:'WOOD',plate:'IRON PLATES',gear:'GEARS',copper:'COPPER',steel:'STEEL',circuit:'CIRCUITS',module:'COMPONENTS',coal:'COAL',power:'POWER'};
 for(const [name,item]of Object.entries(CONTENT.items))if(!Object.hasOwn(RESOURCE_NAMES,name)){
  RESOURCE_NAMES[name]=item.name.toUpperCase();paths[name]=paths[item.icon]||paths.module;

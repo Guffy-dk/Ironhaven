@@ -10,7 +10,9 @@ import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {ColorGradeShader} from './color-grade.js';
 import {CoastalMist} from './coastal-mist.js';
 import {outlineBuilding,outlineMaterial} from './building-outlines.js';
-import {levelPlaque} from './building-levels.js';
+import {levelPlaque,tradeSign} from './building-levels.js';
+import {BUILDING_IDENTITIES} from './shared/building-identity.js';
+import {iconPath} from './icons.js';
 import {conveyorSurface} from './conveyor-surface.js';
 import {coastalHeight,coastalLand} from './shared/coast.js';
 import {BaseLampLights,makeLampModel} from './base-lamps.js';
@@ -145,7 +147,7 @@ export function makeModel(type,dir=0,inputs=[],level=1,style='classic',templateO
    if(type!=='drill'&&type!=='sawmill')for(const side of [1,2,3])port(model,side,'IN',cyan);
   }
   if(DIRECTIONAL.includes(originalType))model.rotation.y=-dir*Math.PI/2;
-  batchQuarryModel(model,`${originalType}:${level}`);levelPlaque(model,originalType,level);outlineBuilding(model);
+  batchQuarryModel(model,`${originalType}:${level}`);levelPlaque(model,originalType,level);tradeSign(model,originalType,BUILDING_IDENTITIES[originalType],iconPath(BUILDING_IDENTITIES[originalType]?.icon||originalType));outlineBuilding(model);
   return model;
  }
  if(type==='inserter'){
@@ -511,9 +513,14 @@ export class View{
   if(quarry){
    // Natural outcrops: weathered bedrock with a restrained mineral cast. Iron shows rust,
    // copper a verdigris bloom and coal a black seam, readable without saturated colour blobs.
-   this.quarryDeposit(s.terrain.ore,0x8e5f49,0x67635b,rand);
-   this.quarryDeposit(s.terrain.copper??[],0x5f9c88,0x6a655b,rand);
-   this.quarryDeposit(s.terrain.coal??[],0x141517,0x45433f,rand);
+   // Readable deposits (playtest feedback): mineral-stained ground marks location and outline,
+   // with weathered outcrops on top. Iron rust, copper verdigris, coal dust.
+   this.depositStain(s.terrain.ore,0x9a5534);
+   this.depositStain(s.terrain.copper??[],0x3f8a72);
+   this.depositStain(s.terrain.coal??[],0x0d0e10);
+   this.quarryDeposit(s.terrain.ore,0xb0623c,0x6c645a,rand);
+   this.quarryDeposit(s.terrain.copper??[],0x55ad8d,0x6a675d,rand);
+   this.quarryDeposit(s.terrain.coal??[],0x111214,0x45433f,rand);
   }else{
    const ores=new T.InstancedMesh(geometry('ico',.32),mat(0x75a7aa),s.terrain.ore.length*3);i=0;for(const v of s.terrain.ore)for(let k=0;k<3;k++){this.dummy.position.set(v.x+(rand()-.5)*.6,.15,v.z+(rand()-.5)*.6);this.dummy.rotation.set(rand(),rand(),rand());this.dummy.scale.set(1,.6+rand()*.4,1);this.dummy.updateMatrix();ores.setMatrixAt(i++,this.dummy.matrix);}ores.castShadow=true;this.terrain.add(ores);
    if(s.terrain.copper?.length){const copper=new T.InstancedMesh(geometry('ico',.36),mat(0xcc9267),s.terrain.copper.length);s.terrain.copper.forEach((v,i)=>{this.dummy.position.set(v.x,.13,v.z);this.dummy.scale.set(.9,.6,.9);this.dummy.rotation.set(.2,rand()*6,.1);this.dummy.updateMatrix();copper.setMatrixAt(i,this.dummy.matrix);});copper.castShadow=true;this.terrain.add(copper);}
@@ -527,6 +534,24 @@ export class View{
    this.dummy.rotation.set(0,rand()*6,0);this.dummy.updateMatrix();rocks.setMatrixAt(i,this.dummy.matrix);
   });
   rocks.castShadow=true;this.terrain.add(rocks);
+ }
+ depositStain(tiles,color){
+  if(!tiles.length)return;
+  if(!this.stainTexture){
+   const size=96,data=new Uint8Array(size*size*4),noise=(x,y)=>{const n=Math.sin(x*12.9898+y*78.233)*43758.5453;return n-Math.floor(n);};
+   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+    const i=(y*size+x)*4,u=(x-47.5)/47.5,v=(y-47.5)/47.5,r=Math.hypot(u,v);
+    // Rounded, mottled stain: solid centre, soft irregular rim so neighbouring tiles merge into one patch.
+    const mottle=.75+.25*(noise(Math.floor(x/3),Math.floor(y/3))*.6+noise(Math.floor(x/7),Math.floor(y/7))*.4);
+    const body=Math.min(1,Math.max(0,(1.02-r)/.42));
+    data[i]=data[i+1]=data[i+2]=255;data[i+3]=Math.round(255*body*mottle);
+   }
+   this.stainTexture=new T.DataTexture(data,size,size);this.stainTexture.magFilter=T.LinearFilter;this.stainTexture.needsUpdate=true;
+  }
+  const stain=new T.InstancedMesh(new T.PlaneGeometry(1.32,1.32).rotateX(-Math.PI/2),new T.MeshStandardMaterial({color,map:this.stainTexture,transparent:true,opacity:.5,roughness:.95,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),tiles.length);
+  const random=rng(tiles.length*7919+Math.round(tiles[0].x*31+tiles[0].z*17));
+  tiles.forEach((p,i)=>{this.dummy.position.set(p.x+(random()-.5)*.25,.008,p.z+(random()-.5)*.25);this.dummy.rotation.set(0,random()*6.28,0);const k=1.25+random()*.4;this.dummy.scale.set(k,1,k*(.85+random()*.3));this.dummy.updateMatrix();stain.setMatrixAt(i,this.dummy.matrix);});
+  stain.receiveShadow=true;stain.renderOrder=1;this.terrain.add(stain);
  }
  quarryDeposit(tiles,vein,bedrock,random){
   const chunks=new Map();
