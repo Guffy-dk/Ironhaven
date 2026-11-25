@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 19:29 Europe/Copenhagen — Codex — reserve-based production restart
+
+- 35 campaigns on `f8f78a3`, driver `71d1067`. Reserve-based restart reduced measured defense outage episodes from 20 to 18 but increased deficit time from 2,436 to 3,122 seconds. Fourteen pairs tied on victory and highest swarm and one worsened.
+- No gameplay or release changes. End-of-combat restoration remains the experimental control. Next measure harbor progression after swarm 25. [Report](docs/playtests/balance-2026-11-25-reserve-restart.md).
+
 ### 2026-11-25 16:28 Europe/Copenhagen — Codex — capped power response duration
 
 - 35 campaigns on `30d76c9`, driver `85cfe01`. Holding the same two-machine limit until the end of combat reduced outages from 25 to 20 against a 30-second timeout. Outcomes ranked two better, one worse and 12 tied. The endurance holdout lost a swarm with the later restart.
