@@ -9,7 +9,14 @@ The balance agent records each completed or blocked run here. New entries go abo
 - Ejeren bad om balancering, så spillet ikke er for svært til at være sjovt. Kilde `0d91842` plus ændringerne i samme commit. Driver: standardmatrix med 4 workers og nye holdouts 3301 og 5557.
 - Før: 4 sejre i 27 almindelige Standard- og Veteran-kampagner. De fleste fulde strategier tabte i swarm 25.
 - Ændret: længere forberedelse og pauser, blødere vækst i antal, HP og sen skade, mildere Veteran og første Abyss walker med 60 % HP. Efter: alle fulde Standard-strategier 21/21, Veteran 3/4 og holdouts 14/14. Enkelt-kanon og strategien uden artilleri taber stadig.
-- [Rapport](balance-2026-11-25-difficulty.md) · [Rådata](balance-2026-11-25-difficulty.json). Næste skridt er menneskelig playtest af Standard.
+- [Rapport](balance-2026-11-25-difficulty.md) · [Rådata](balance-2026-11-25-difficulty.json). Næste skridt er menneskelig playtest af Standard. Baggrundskørslen kl. 01.27 nedenfor brugte de gamle værdier.
+
+### 2026-11-25 kl. 01.27 dansk tid
+
+- Kørsel `2026-11-25T01:27:27+01:00`, simulation `c7efa80`, testdriver `7cee0bd`, eksisterende build `0.21.2.3`. 35/35 forløb med holdouts 3583 og 8363.
+- Genopbygningsprioriteten gav 0 bedre, 0 dårligere og 15 lige kampagner målt på sejr og højeste swarm. 15/15 gentog alle seks mål. Forsøget gennemførte 3 prioriterede genopbygninger i 1 af 15 par.
+- Spilværdierne beholdes. Næste forsøg måler underskuddet før tårnene falder ud.
+- [Rapport](balance-2026-11-25-power-origin.md) · [Rådata](balance-2026-11-25-power-origin.json).
 
 ### 2026-11-24 kl. 22.27 dansk tid
 

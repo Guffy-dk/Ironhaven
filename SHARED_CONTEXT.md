@@ -308,6 +308,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 01:27 Europe/Copenhagen — Codex — outage onset and rebuild priority
+
+- 35 earned-resource simulations on `c7efa80` with driver `7cee0bd`. At 29 of 30 recorded defense outages in controls, load already exceeded production at the preceding sample. Rebuild priority changed none of six outcome metrics in 15 pairs. It executed three builds in one pair, with identical observed shortage time.
+- No gameplay or release changes. Next measure when the power reserve starts falling, before defenses stop. [Report](docs/playtests/balance-2026-11-25-power-origin.md).
+
 ### 2026-11-24 22:27 Europe/Copenhagen — Codex — power recovery telemetry
 
 - 35 earned-resource simulations on `8cf1b9f`, driver `af38083`. The optional meter recorded 59 defense outages and 35 recoveries, with distinct observations for empty fuel and unaffordable reinstatement on former generator sites.
@@ -321,9 +326,9 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 ### 2026-11-25 — Claude Code — difficulty pass for enjoyment
 
 - **Owner request:** balance the game so it is not too hard to be enjoyable; Windows-only, no browser product. This supersedes the earlier balance runs' practice of always keeping game values unchanged.
-- **Implemented on branch `ccr-6dd57fd4-9a8hab` (not on `main` at the time of writing):** Standard preparation 120 s and 110 s between swarms. Relaxed 160/135 s. Veteran keeps Standard timing and changes to 1.15×/1.08×/1.10×. The count exponent is now 1.45 (was 1.55), HP grows 3%/swarm (was 3.5%) and the late damage multiplier is `1.05+0.01·(w−8)`. The first Abyss walker (swarms 5–9) has 60% HP.
+- **Implemented and merged to `main` with explicit owner approval on 25 Nov 2026:** Standard preparation 120 s and 110 s between swarms. Relaxed 160/135 s. Veteran keeps Standard timing and changes to 1.15×/1.08×/1.10×. The count exponent is now 1.45 (was 1.55), HP grows 3%/swarm (was 3.5%) and the late damage multiplier is `1.05+0.01·(w−8)`. The first Abyss walker (swarms 5–9) has 60% HP.
 - **Verified (scripted bots, not humans):** default matrix with 4 victories in 27 ordinary Standard/Veteran campaigns before the change. After it, all full Standard strategies win 21/21 and Veteran wins 3/4. Holdouts 3301/5557 won 14/14 full strategies. Single gun and no_artillery still lose. 215/215 tests, build and render checks passed. [Report](docs/playtests/balance-2026-11-25-difficulty.md).
-- **Unresolved:** human playtest of Standard. If it is too easy, adjust the count exponent first. No Windows build or patcher release was requested. Codex review requested as `IH-20261125-difficulty-review`.
+- **Unresolved:** human playtest of Standard. If it is too easy, adjust the count exponent first. No Windows build or patcher release was requested. Codex review was requested as `IH-20261125-difficulty-review`, but the GitHub workflow stopped because the `OPENAI_API_KEY` secret is missing. The owner approved the merge without waiting for it. The balance agent's 25 Nov 01:27 run measured the old values; later runs measure the new ones and are not comparable to earlier controls.
 
 ### 2026-11-24 — Codex — 0.21.3 patcher release
 
