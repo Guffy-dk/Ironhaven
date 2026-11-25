@@ -43,6 +43,10 @@ jobs:
             : > "$RUNNER_TEMP/claim-outputs"
             GITHUB_OUTPUT="$RUNNER_TEMP/claim-outputs" python3 scripts/codex-inbox.py prepare "$RUNNER_TEMP/prompt.md" "$RUN_URL"
             if git diff --quiet -- codex-output; then
+              echo "No new instructions. Codex skipped." >> "$GITHUB_STEP_SUMMARY"
+              if [[ "$API_ENABLED" != true ]]; then
+                echo "Set the OPENAI_API_KEY repository secret before submitting work." >> "$GITHUB_STEP_SUMMARY"
+              fi
               exit 0
             fi
             if [[ "$API_ENABLED" != true ]]; then
