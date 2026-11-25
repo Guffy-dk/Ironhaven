@@ -395,6 +395,10 @@ def conifer(pid, cards_per_tree=2600, card_size=(.7, 1.15)):
     w = bpy.data.worlds.new('bake'); sc.world = w; w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Strength'].default_value = 1.1
     card_png = os.path.join(OUT, f'{pid}-needles.png'); sc.render.filepath = card_png; sc.render.image_settings.color_mode = 'RGBA'
     bpy.ops.render.render(write_still=True)
+    # The albedo bake reads pale once lit from the sky; darken and enrich to a living spruce green.
+    shot = bpy.data.images.load(card_png); px = np.empty(len(shot.pixels), 'f4'); shot.pixels.foreach_get(px); px = px.reshape(-1, 4)
+    grey = px[:, :3].mean(axis=1, keepdims=True); px[:, :3] = np.clip((grey + (px[:, :3] - grey) * 1.35) * .62, 0, 1)
+    shot.pixels.foreach_set(px.ravel()); shot.filepath_raw = card_png; shot.file_format = 'PNG'; shot.save(); bpy.data.images.remove(shot)
     # 2. Cards on the scanned twig surface, area-weighted, facing between the surface normal and the sky.
     img = bpy.data.images.load(card_png); img.alpha_mode = 'STRAIGHT'
     mat = bpy.data.materials.new(f'{pid}-needles'); mat.use_nodes = True; nt = mat.node_tree; bsdf = nt.nodes['Principled BSDF']
@@ -437,9 +441,9 @@ def nature():
               'wooden_barrels_01': 4000, 'boulder_01': 4000, 'tree_stump_01': 3000, 'shrub_04': 4000,
               # Full-size scanned trees, coast rock and the harbour kit (owner: "no toy art", 25 Nov 2026).
               'coast_rocks_01': 8000, 'coast_rocks_02': 8000, 'coast_land_rocks_02': 8000,
-              'coast_line_01': 12000, 'modular_wooden_pier': 30000, 'modular_factory_facade': 40000, 'modular_industrial_pipes_01': 20000,
+              'modular_wooden_pier': 30000, 'modular_factory_facade': 40000, 'modular_industrial_pipes_01': 20000,
               'overhead_crane': 20000, 'modular_electricity_poles': 12000, 'ship_pinnace': 30000, 'dutch_ship_medium': 40000,
-              'lateral_sea_marker': 4000, 'ocean_buoy': 4000, 'grass_medium_01': 1500, 'shrub_02': 4000, 'street_lamp_01': 4000,
+              'lateral_sea_marker': 4000, 'ocean_buoy': 4000, 'shrub_02': 4000, 'street_lamp_01': 4000,
               'rollershutter_door': 4000, 'metal_jerrycan': 1500, 'propane_tank': 2000, 'modular_metal_gutter': 4000}
     for pid, target in budget.items():
         reset()

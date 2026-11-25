@@ -22,7 +22,7 @@ test('the harbour uses scanned trees, coast rock, pier and boats, each decimated
  const manifest=JSON.parse(await readFile('assets/manifest.json','utf8'));
  const ids=new Set(manifest.assets.map(a=>a.id));
  const blender=await readFile('scripts/blender/build_summer_harbour.py','utf8');
- for(const id of ['coast_rocks_01','coast_line_01','modular_wooden_pier','ship_pinnace','dutch_ship_medium','grass_medium_01']){
+ for(const id of ['coast_rocks_01','modular_wooden_pier','ship_pinnace','dutch_ship_medium']){
   assert.ok(ids.has(id),id);assert.match(blender,new RegExp(`'${id}': \\d+`),`${id} has a polygon budget`);
  }
  assert.ok(ids.has('fir_tree_01'));assert.match(blender,/def fir\(\): conifer\('fir_tree_01'\)/,'spruce needles are baked to cards, not decimated');

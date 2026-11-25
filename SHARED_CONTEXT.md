@@ -375,6 +375,12 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
   - Models are exported as `smelter-1..3`, `drill-1..3` and `warehouse-1..3`. The slice shows mixed levels side by side.
   - A Cycles review from the gameplay angle confirmed that types and levels can be told apart.
   - Test: `factory type and level read at a glance` checks three distinct roof materials, painted level marks, growth at levels 2 and 3, the exports, and their use in the slice.
+- **First in-game Godot frames (lavapipe) after the rework:** buildings and levels read clearly, and the scanned spruce forest, pier and ships are in place. Fixed after review:
+  - The ore pebbles looked like orange confetti. Now there are fewer, deeper rust-brown stones from the boulder scan.
+  - Grass tufts rendered as black dots, so they were removed along with the grass scan.
+  - Coast rocks were huge and inland, and the coastline scan left square shallows. Now small coast_rocks_01 pieces sit at the waterline, found along each bearing, and the coastline scan was removed.
+  - The spruce cards were pale. The baked needle albedo is now darkened (×0.62) and saturated (×1.35).
+  - A Godot/.NET crash at exit sometimes costs the last capture. This is not a scene error.
 - Tests: `test/polyhaven-models.test.mjs` covers the manifest entries, no duplicates, budgets for each scan, the slice using scans with no tilt-shift and no sphere ore, at least 12 detailed parts per building, and the Electron exclusion.
 
 ### 2026-11-25 — Claude Code — Godot preview channel and CC0 scenery

@@ -149,7 +149,7 @@ public partial class HarbourSlice : Node3D
 		beamHost.AddChild(lantern);
 
 		// Iron field west of the lighthouse: scanned rock carrying a rust-red iron stain, so ore reads at a glance.
-		var ironStone = Surface("rust", new Color(0.86f, 0.5f, 0.36f), 0.5f);
+		var ironStone = Surface("rust", new Color(0.58f, 0.3f, 0.22f), 0.5f);
 		var outcrops = new List<Transform3D>(); var pebbles = new List<Transform3D>();
 		for (int k = 0; k < 60; k++)
 		{
@@ -157,9 +157,9 @@ public partial class HarbourSlice : Node3D
 			if (Mathf.Abs(x + 26) < 1.6f) continue;
 			outcrops.Add(Placed(x, z, rng.RandfRange(0.35f, 0.7f), 0.15f));
 		}
-		for (int k = 0; k < 160; k++) { float x = -26 + rng.RandfRange(-8, 8), z = -6 + rng.RandfRange(-11, 11); pebbles.Add(Placed(x, z, rng.RandfRange(0.15f, 0.3f), 0.05f)); }
+		for (int k = 0; k < 70; k++) { float x = -26 + rng.RandfRange(-8, 8), z = -6 + rng.RandfRange(-11, 11); if (Mathf.Abs(x + 26) > 1.2f) pebbles.Add(Placed(x, z, rng.RandfRange(0.12f, 0.22f), 0.04f)); }
 		Scatter("nature-boulder_01", outcrops, null, ironStone);
-		Scatter("nature-rock_moss_set_01", pebbles, null, ironStone);
+		Scatter("nature-boulder_01", pebbles, null, ironStone);
 		// Levels 1-3 side by side: type reads from silhouette and roof colour, level from painted roof bands and growth.
 		int lv = 0;
 		foreach (var z in new[] { -13f, -6f, 1f }) { Model($"drill-{1 + lv % 3}", new Vector3(-30, 0, z), 0); Model($"drill-{1 + (lv + 1) % 3}", new Vector3(-22, 0, z), 180); lv++; }
@@ -235,7 +235,7 @@ public partial class HarbourSlice : Node3D
 	void BuildGroves()
 	{
 		var firs = new List<Transform3D>(); var pines = new List<Transform3D>(); var ferns = new List<Transform3D>();
-		var shrubs = new List<Transform3D>(); var shrubs2 = new List<Transform3D>(); var saplings = new List<Transform3D>(); var grass = new List<Transform3D>(); var rocks = new List<Transform3D>(); var boulders = new List<Transform3D>(); var stumps = new List<Transform3D>();
+		var shrubs = new List<Transform3D>(); var shrubs2 = new List<Transform3D>(); var saplings = new List<Transform3D>(); var rocks = new List<Transform3D>(); var boulders = new List<Transform3D>(); var stumps = new List<Transform3D>();
 		for (int k = 0; k < 9000; k++)
 		{
 			float x = rng.RandfRange(-62, 62), z = rng.RandfRange(-62, 62), y = Height(x, z);
@@ -248,7 +248,6 @@ public partial class HarbourSlice : Node3D
 				if (rng.Randf() < 0.5f) ferns.Add(Placed(x + rng.RandfRange(-1.5f, 1.5f), z + rng.RandfRange(-1.5f, 1.5f), rng.RandfRange(1.2f, 2f)));
 			}
 			else if (forest > 0.48f && rng.Randf() < 0.25f) (rng.Randf() < .5f ? shrubs : shrubs2).Add(Placed(x, z, rng.RandfRange(0.6f, 1.1f)));
-			else if (rng.Randf() < 0.5f && grass.Count < 4000) grass.Add(Placed(x, z, rng.RandfRange(3f, 5f)));
 			else if (Noise(x * 0.09f + 3, z * 0.09f) > 0.7f && rng.Randf() < 0.3f) rocks.Add(Placed(x, z, rng.RandfRange(0.8f, 1.6f), 0.1f));
 			else if (rng.Randf() < 0.004f) boulders.Add(Placed(x, z, rng.RandfRange(0.8f, 1.4f), 0.2f));
 			else if (forest > 0.5f && rng.Randf() < 0.02f) stumps.Add(Placed(x, z, rng.RandfRange(1f, 1.4f)));
@@ -262,8 +261,6 @@ public partial class HarbourSlice : Node3D
 		}
 		Scatter("nature-fir_sapling", saplings); Scatter("nature-fern_02", ferns);
 		Scatter("nature-shrub_04", shrubs); Scatter("nature-shrub_02", shrubs2); Scatter("nature-rock_moss_set_01", rocks); Scatter("nature-boulder_01", boulders); Scatter("nature-tree_stump_01", stumps);
-		var tufts = new[] { "tall_a", "tall_b", "mid_a", "large_a", "large_b" };
-		for (int v = 0; v < tufts.Length; v++) Scatter("nature-grass_medium_01", grass.FindAll(t => grass.IndexOf(t) % tufts.Length == v), tufts[v]);
 		// Harbour clutter around the warehouses.
 		var crates = new List<Transform3D>(); var barrels = new List<Transform3D>();
 		foreach (var (x, z) in new[] { (-3.2f, 12.2f), (-3.4f, 15.2f), (-3.1f, -0.6f), (-9.6f, -3.2f) })
@@ -284,15 +281,17 @@ public partial class HarbourSlice : Node3D
 		Model("nature-dutch_ship_medium", new Vector3(shore + 10, -Height(shore + 10, 9) - 0.8f, 9), 200, 0.42f);
 		Model("nature-lateral_sea_marker", new Vector3(shore + 24, -Height(shore + 24, 14) - 1f, 14), 0, 0.5f);
 		Model("nature-ocean_buoy", new Vector3(shore + 20, -Height(shore + 20, 32) - 0.4f, 32), 0, 0.6f);
-		var coast = new List<Transform3D>(); var coast2 = new List<Transform3D>();
-		for (int k = 0; k < 14; k++)
+		// Scanned coast rock at the waterline: find the shore along each bearing and set the rock half in the water.
+		var coast = new List<Transform3D>();
+		for (int k = 0; k < 40; k++)
 		{
-			float a = k * Mathf.Tau / 14 + 0.2f; if (Mathf.Abs(Mathf.Wrap(a - 0.25f, -Mathf.Pi, Mathf.Pi)) < 0.35f) continue;
-			float r = IslandRadius - 2; var at = new Vector3(Mathf.Cos(a) * r, -0.6f, Mathf.Sin(a) * r);
-			var basis = new Basis(Vector3.Up, -a + Mathf.Pi / 2).Scaled(Vector3.One * rng.RandfRange(0.3f, 0.4f));
-			(k % 2 == 0 ? coast : coast2).Add(new Transform3D(basis, at));
+			float a = k * Mathf.Tau / 40 + rng.RandfRange(-.05f, .05f); if (Mathf.Abs(Mathf.Wrap(a - 0.25f, -Mathf.Pi, Mathf.Pi)) < 0.3f) continue;
+			float r = 30; while (r < 90 && Height(Mathf.Cos(a) * r, Mathf.Sin(a) * r) > 0.05f) r += 0.25f;
+			var at = new Vector3(Mathf.Cos(a) * r, -0.25f, Mathf.Sin(a) * r);
+			var basis = new Basis(Vector3.Up, -a + Mathf.Pi / 2 + rng.RandfRange(-.4f, .4f)).Scaled(Vector3.One * rng.RandfRange(0.06f, 0.1f));
+			coast.Add(new Transform3D(basis, at));
 		}
-		Scatter("nature-coast_rocks_01", coast); Scatter("nature-coast_line_01", coast2);
+		Scatter("nature-coast_rocks_01", coast);
 		var lamps = new List<Transform3D>();
 		foreach (var (x, z) in new[] { (-12f, 4f), (-12f, 8f), (-3f, 6f), (6f, 14f), (12f, 16f) }) lamps.Add(new Transform3D(Basis.Identity.Scaled(Vector3.One * 0.55f), new Vector3(x, Height(x, z), z)));
 		Scatter("nature-street_lamp_01", lamps);
