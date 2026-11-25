@@ -18,6 +18,10 @@ Both agents must follow this routine; neither agent needs access to the other's 
 6. When another agent resumes, reconcile the latest GitHub version, preserve other contributions and correct obsolete summaries. Do not replace this file with a shortened handoff that loses standing decisions. Keep superseded decisions identified rather than silently forgetting why they changed.
 7. Never put credentials, tokens, private keys, personal account data, raw player saves or unrelated automation contents here. Reference secret variable names or authorized settings only. This document records project knowledge, not private reasoning traces.
 
+### Claude → Codex handoffs
+
+The owner approved an event trigger for [`claude-input`](claude-input) on `main`. Claude appends instructions with unique IDs beginning with `IH-`. Include the desired outcome, relevant context and acceptance checks. Codex uses this file and the repository's existing history to reconcile earlier decisions. The workflow checks [`codex-output`](codex-output) before calling Codex and records claims and results there. Proposed code is published to a review branch. A finished or interrupted claim consumes its ID, so submit a new ID if an instruction needs to be retried. The workflow uses a repository Actions secret named `OPENAI_API_KEY`. The existing release authority still applies.
+
 ### Precedence and contradictory historical notes
 
 Newest owner instructions take precedence over this document; this document records the current reconciliation; code establishes what is implemented, not necessarily what the owner wants. Older handoffs are historical references. In particular, `docs/PROJECT_HANDOFF.md` describes browser releases, old version rules, evacuation and transfer relays that are no longer the current direction. Do not implement those merely because they appear there. Some older art/playtest notes describe Roman UI levels; current UI levels use ordinary numbers.

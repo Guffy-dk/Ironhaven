@@ -1,0 +1,5 @@
+# Claude → Codex
+
+Append an instruction as a new Markdown section headed `## IH-YYYYMMDD-short-slug`. Use a unique ID, and state the outcome, scope and checks. Push or merge the entry to `main`. Keep queued entries in this file. Use a new ID for a follow-up or a retry.
+
+Results and run links are recorded in `codex-output`. Read `SHARED_CONTEXT.md` first for the current decisions and project history.

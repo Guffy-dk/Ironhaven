@@ -1,0 +1,174 @@
+name: Ironhaven Claude handoffs
+
+on:
+  push:
+    branches: [main]
+    paths: [claude-input]
+  workflow_dispatch:
+
+permissions: {}
+
+# Read the latest main so an event superseded in this queue cannot lose an
+# instruction that remains in the inbox.
+concurrency:
+  group: ironhaven-codex-inbox
+  cancel-in-progress: false
+
+jobs:
+  claim:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      ids: ${{ steps.claim.outputs.ids }}
+      has_tasks: ${{ steps.claim.outputs.has_tasks }}
+      revision: ${{ steps.claim.outputs.revision }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+      - name: Claim new instructions
+        id: claim
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          API_ENABLED: ${{ secrets.OPENAI_API_KEY != '' }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout --detach FETCH_HEAD
+            : > "$RUNNER_TEMP/claim-outputs"
+            GITHUB_OUTPUT="$RUNNER_TEMP/claim-outputs" python3 scripts/codex-inbox.py prepare "$RUNNER_TEMP/prompt.md" "$RUN_URL"
+            if git diff --quiet -- codex-output; then
+              exit 0
+            fi
+            if [[ "$API_ENABLED" != true ]]; then
+              echo "::error::Configure the OPENAI_API_KEY repository secret, then run this workflow again."
+              exit 1
+            fi
+            git add -- codex-output
+            git commit -m "Claim new Ironhaven Codex instructions"
+            if git push origin HEAD:refs/heads/main; then
+              cat "$RUNNER_TEMP/claim-outputs" >> "$GITHUB_OUTPUT"
+              echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          exit 1
+      - name: Transfer claimed instructions
+        if: steps.claim.outputs.revision != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: codex-prompt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/prompt.md
+          retention-days: 1
+          if-no-files-found: error
+
+  run:
+    needs: claim
+    if: github.run_attempt == 1 && needs.claim.outputs.revision != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.claim.outputs.revision }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: codex-prompt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/codex-inbox
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Execute claimed instructions
+        uses: openai/codex-action@10cb888d2ed3b99867f7e7ccff174a861a75aeb6 # v1.9
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ runner.temp }}/codex-inbox/prompt.md
+          output-file: ${{ runner.temp }}/codex-inbox/result.md
+          sandbox: workspace-write
+      - name: Capture proposed changes
+        env:
+          BASE: ${{ needs.claim.outputs.revision }}
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --binary --no-ext-diff --no-textconv "$BASE" -- > "$RUNNER_TEMP/codex-inbox/changes.patch"
+      - name: Transfer results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: codex-results
+          path: |
+            ${{ runner.temp }}/codex-inbox/result.md
+            ${{ runner.temp }}/codex-inbox/changes.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: [claim, run]
+    if: always() && needs.claim.outputs.revision != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: needs.run.result == 'success'
+        with:
+          name: codex-results
+          path: ${{ runner.temp }}/codex-results
+      - name: Publish results
+        if: always()
+        env:
+          BASE: ${{ needs.claim.outputs.revision }}
+          IDS: ${{ needs.claim.outputs.ids }}
+          OUTCOME: ${{ needs.run.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          result_dir="$RUNNER_TEMP/codex-results"
+          review_url=''
+          if [[ "$OUTCOME" = success && ! -f "$result_dir/changes.patch" ]]; then
+            OUTCOME=failure
+          fi
+          if [[ "$OUTCOME" = success && -s "$result_dir/changes.patch" ]]; then
+            branch="codex/inbox-$GITHUB_RUN_ID"
+            git fetch origin "$BASE"
+            git worktree add --detach "$RUNNER_TEMP/codex-review" "$BASE"
+            if (
+              cd "$RUNNER_TEMP/codex-review" &&
+              git apply --index "$result_dir/changes.patch" &&
+              git diff --cached --quiet -- .github claude-input codex-output scripts/codex-inbox.py &&
+              git commit -m "Propose Ironhaven changes from Codex inbox" &&
+              git push origin "HEAD:refs/heads/$branch"
+            ); then
+              review_url="$REPO_URL/compare/main...$branch"
+            else
+              OUTCOME=failure
+            fi
+          fi
+          export GIT_TERMINAL_PROMPT=0
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout --detach FETCH_HEAD
+            python3 scripts/codex-inbox.py report "$IDS" "$OUTCOME" "$RUN_URL" "$result_dir/result.md" "$review_url"
+            git add -- codex-output
+            git commit -m "Record Ironhaven Codex handoff results"
+            if git push origin HEAD:refs/heads/main; then
+              exit 0
+            fi
+          done
+          exit 1
