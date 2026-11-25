@@ -243,3 +243,57 @@ html body.ih-theme .resources .resource strong .resource-limit{font-size:11px}
 html body.ih-theme .resources .resource small{font-size:9px;letter-spacing:.08em}
 html body.ih-theme .build-btn .build-cost{font-size:13px;gap:3px 8px}
 html body.ih-theme .build-btn .build-cost .item-icon{--item-size:20px}
+
+/* ---------- layout: swarm watch top-centre, light controls by the chart ---------- */
+html body.ih-theme .left-panel{left:50%;top:84px;width:640px;transform:translateX(-50%)}
+html body.ih-theme .left-panel .wave-panel{display:grid;grid-template-columns:210px minmax(0,1fr) auto;grid-template-areas:"label label foot" "line track foot";column-gap:16px;row-gap:6px;align-items:center;padding:10px 14px 12px}
+html body.ih-theme .left-panel .wave-label{grid-area:label}
+html body.ih-theme .left-panel .wave-line{grid-area:line;margin:0;font-size:20px}
+html body.ih-theme .left-panel .wave-line strong{font-size:28px}
+html body.ih-theme .left-panel .track{grid-area:track;height:12px}
+html body.ih-theme .left-panel .wave-foot{grid-area:foot;flex-direction:column;align-items:flex-end;justify-content:center;gap:8px;margin:0;padding-left:14px;border-left:1px solid rgba(0,0,0,.55);box-shadow:inset 1px 0 0 var(--ih-rim);align-self:stretch}
+html body.ih-theme .left-panel details{padding:8px 14px 10px}
+html body.ih-theme .swarm-hud{top:212px}
+html body.ih-theme #right-dock>.intel{flex:0 1 auto;max-height:calc(100vh - 84px - 344px)}
+html body.ih-theme .camera-tools{left:auto;right:8px;bottom:252px;width:236px;grid-template-columns:1fr 1fr 40px 40px;padding:5px}
+html body.ih-theme .camera-tools #auto-light,html body.ih-theme .camera-tools #aim-light{grid-column:auto;padding:0 8px;text-align:center;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- inspector detail ---------- */
+html body.ih-theme #right-dock>.intel .recipe{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;font:600 12px/1.2 var(--ih-text);letter-spacing:.02em;text-transform:none}
+html body.ih-theme .recipe-chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px 0 5px;border-radius:14px;background:#1d2629;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px #050708;color:var(--ih-ink);text-transform:capitalize}
+html body.ih-theme .recipe-chip .item-icon{--item-size:20px}
+html body.ih-theme .recipe-chip b{font:600 13px/1 var(--ih-mono);color:var(--ih-brass-hi)}
+html body.ih-theme .recipe-plus{color:var(--ih-dim);font-weight:600}
+html body.ih-theme .recipe-arrow{color:var(--ih-signal);font:700 16px/1 var(--ih-text);padding:0 2px}
+html body.ih-theme .recipe-time{font:500 11px/1 var(--ih-mono);color:var(--ih-dim);margin-left:auto}
+html body.ih-theme #upgrade-turret{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:10px 12px}
+html body.ih-theme #upgrade-turret .upgrade-title{font:700 16px/1 var(--ih-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ih-brass-hi)}
+html body.ih-theme #upgrade-turret .upgrade-price{display:flex;flex-wrap:wrap;gap:4px 10px;font:600 13px/1 var(--ih-mono)}
+html body.ih-theme #upgrade-turret .material-price{display:inline-flex;align-items:center;gap:4px}
+html body.ih-theme #upgrade-turret .material-price .item-icon{--item-size:20px}
+html body.ih-theme #upgrade-turret .material-price.missing{color:var(--ih-danger)}
+html body.ih-theme .stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.45);box-shadow:0 1px 0 var(--ih-rim);font:500 13px/1.2 var(--ih-text);color:var(--ih-muted)}
+html body.ih-theme .stat-row span:last-child{font:600 13px/1.2 var(--ih-mono);color:var(--ih-ink)}
+html body.ih-theme .stat-row .ok,html body.ih-theme .stat-row.ok span:last-child{color:var(--ih-sea)}
+html body.ih-theme .stat-row .bad,html body.ih-theme .stat-row.bad span:last-child{color:var(--ih-danger)}
+html body.ih-theme .hp-bar{height:8px;margin:4px 0 6px;border-radius:2px;background:var(--ih-well);box-shadow:inset 0 1px 3px rgba(0,0,0,.8);overflow:hidden}
+html body.ih-theme .hp-bar i{display:block;height:100%;background:linear-gradient(180deg,#a8dccf,#5f9e90)}
+
+/* ---------- remaining dialogs ---------- */
+html body.ih-theme dialog label:not(.field-label){font:500 14px/1.4 var(--ih-text);color:var(--ih-ink)}
+html body.ih-theme dialog table{border-collapse:collapse;font:500 13px/1.3 var(--ih-text)}
+html body.ih-theme dialog th{font:600 11px/1 var(--ih-text);letter-spacing:.12em;text-transform:uppercase;color:var(--ih-muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--ih-brass-lo)}
+html body.ih-theme dialog td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.45);font-family:var(--ih-mono);font-size:12px}
+html body.ih-theme dialog fieldset{border:1px solid rgba(0,0,0,.55);box-shadow:inset 0 1px 0 var(--ih-rim);border-radius:4px;padding:12px}
+html body.ih-theme dialog legend{font:700 14px/1 var(--ih-display);letter-spacing:.12em;text-transform:uppercase;color:var(--ih-brass-hi);padding:0 6px}
+html body.ih-theme .lan-tabs button{font:700 16px/1 var(--ih-display);letter-spacing:.1em;text-transform:uppercase;color:var(--ih-muted);border-radius:0;border-bottom:2px solid transparent}
+html body.ih-theme .lan-tabs button.active{color:var(--ih-brass-hi);border-bottom-color:var(--ih-signal)}
+html body.ih-theme dialog .notice{padding:10px 12px;border-radius:4px;background:rgba(140,196,183,.07);border:1px solid rgba(140,196,183,.25);font:400 13px/1.45 var(--ih-text);color:var(--ih-muted)}
+html body.ih-theme .copy-btn,html body.ih-theme dialog button.secondary,html body.ih-theme dialog .wide.secondary{height:40px;border-radius:4px;font:600 14px/1 var(--ih-text);color:var(--ih-ink);background:linear-gradient(180deg,#2b363a,#1a2124);border:1px solid var(--ih-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+html body.ih-theme .left-panel,html body.ih-theme #right-dock,html body.ih-theme .camera-tools,html body.ih-theme .bottom-ui{z-index:6}
+html body.ih-theme .camera-tools{grid-template-columns:1fr 1fr;bottom:252px}
+html body.ih-theme .camera-tools #auto-light,html body.ih-theme .camera-tools #aim-light{font-size:12px}
+html body.ih-theme #upgrade-turret .upgrade-title{font:600 14px/1 var(--ih-text);letter-spacing:.04em;text-transform:none}
+html body.ih-theme .recipe-time{margin-left:4px}
+html body.ih-theme .swarm-hud{top:240px;z-index:6}
+html body.ih-theme .camera-tools #auto-light,html body.ih-theme .camera-tools #aim-light{font-size:11px;letter-spacing:0;padding:0 6px}
