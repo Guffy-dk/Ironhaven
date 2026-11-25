@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 16.28 dansk tid
+
+- Kørsel `2026-11-25T16:28:18+01:00`, baseline `30d76c9`, driver `85cfe01`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 4933 og 9743, 17/17 matchede gentagelser.
+- Genstart efter kampen med højst to maskiner gav 20 forsvarsudfald mod 25 ved 30 sekunder. I 15 par var to bedre, ét dårligere og 12 lige.
+- Spilværdierne beholdes. Næste forsøg måler tidligere genstart baseret på strømreserve.
+- [Rapport](balance-2026-11-25-capped-response.md) · [Rådata](balance-2026-11-25-capped-response.json).
+
 ### 2026-11-25 kl. 14.01 dansk tid
 
 - Kørsel `2026-11-25T14:01:18+01:00`, baseline `139a43e`, driver `ef8755b`, eksisterende build `0.21.2.3`. 35/35 forløb og holdouts 4817 og 9623.

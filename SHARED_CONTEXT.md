@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 16:28 Europe/Copenhagen — Codex — capped power response duration
+
+- 35 campaigns on `30d76c9`, driver `85cfe01`. Holding the same two-machine limit until the end of combat reduced outages from 25 to 20 against a 30-second timeout. Outcomes ranked two better, one worse and 12 tied. The endurance holdout lost a swarm with the later restart.
+- Gameplay and release unchanged. Next evaluate restoration when the reserve can sustain resumed loads. [Report](docs/playtests/balance-2026-11-25-capped-response.md).
+
 ### 2026-11-25 14:01 Europe/Copenhagen — Codex — short production shedding
 
 - 35 campaigns on `139a43e`, driver `ef8755b`. Limiting the response to two machines per swarm for 30 seconds cut production pauses from 167 to 72 and increased recorded defense outages from 15 to 21. One pair ranked better, three worse and 11 tied.
