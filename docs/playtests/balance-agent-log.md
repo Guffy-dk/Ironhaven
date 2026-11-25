@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-25 kl. 19.29 dansk tid
+
+- Kørsel `2026-11-25T19:29:22+01:00`, baseline `f8f78a3`, driver `71d1067`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 4967 og 9803, 17/17 matchede gentagelser.
+- Reservebaseret genstart gav 18 forsvarsudfald mod 20, men 3.122 underskudssekunder mod 2.436 og ét dårligere par. De resterende 14 par var lige på sejr og højeste swarm.
+- Spilværdierne beholdes. Næste prioritet er progression og havneprojekter efter swarm 25.
+- [Rapport](balance-2026-11-25-reserve-restart.md) · [Rådata](balance-2026-11-25-reserve-restart.json).
+
 ### 2026-11-25 kl. 16.28 dansk tid
 
 - Kørsel `2026-11-25T16:28:18+01:00`, baseline `30d76c9`, driver `85cfe01`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 4933 og 9743, 17/17 matchede gentagelser.
