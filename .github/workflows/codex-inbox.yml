@@ -32,7 +32,7 @@ jobs:
         id: claim
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          API_ENABLED: ${{ secrets.OPENAI_API_KEY != '' }}
+          IDENTITY_ENABLED: ${{ vars.OPENAI_FEDERATION_RULE_ID != '' }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -44,13 +44,13 @@ jobs:
             GITHUB_OUTPUT="$RUNNER_TEMP/claim-outputs" python3 scripts/codex-inbox.py prepare "$RUNNER_TEMP/prompt.md" "$RUN_URL"
             if git diff --quiet -- codex-output; then
               echo "No new instructions. Codex skipped." >> "$GITHUB_STEP_SUMMARY"
-              if [[ "$API_ENABLED" != true ]]; then
-                echo "Set the OPENAI_API_KEY repository secret before submitting work." >> "$GITHUB_STEP_SUMMARY"
+              if [[ "$IDENTITY_ENABLED" != true ]]; then
+                echo "Configure the ChatGPT federation rule before submitting work." >> "$GITHUB_STEP_SUMMARY"
               fi
               exit 0
             fi
-            if [[ "$API_ENABLED" != true ]]; then
-              echo "::error::Configure the OPENAI_API_KEY repository secret, then run this workflow again."
+            if [[ "$IDENTITY_ENABLED" != true ]]; then
+              echo "::error::Configure OPENAI_FEDERATION_RULE_ID, then run this workflow again."
               exit 1
             fi
             git add -- codex-output
@@ -78,6 +78,7 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -91,14 +92,19 @@ jobs:
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version: '24'
-      - run: npm ci
-      - name: Execute claimed instructions
-        uses: openai/codex-action@10cb888d2ed3b99867f7e7ccff174a861a75aeb6 # v1.9
-        with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          prompt-file: ${{ runner.temp }}/codex-inbox/prompt.md
-          output-file: ${{ runner.temp }}/codex-inbox/result.md
-          sandbox: workspace-write
+      - name: Install project dependencies and Codex
+        run: |
+          npm ci --ignore-scripts
+          npm install --global --ignore-scripts @openai/codex@0.172.0
+      - name: Allow unprivileged sandbox namespaces
+        run: |
+          if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null || true) == 1 ]]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Execute claimed instructions with GitHub identity
+        env:
+          OPENAI_FEDERATION_RULE_ID: ${{ vars.OPENAI_FEDERATION_RULE_ID }}
+        run: bash scripts/run-codex-inbox.sh
       - name: Capture proposed changes
         env:
           BASE: ${{ needs.claim.outputs.revision }}
@@ -155,7 +161,7 @@ jobs:
             if (
               cd "$RUNNER_TEMP/codex-review" &&
               git apply --index "$result_dir/changes.patch" &&
-              git diff --cached --quiet -- .github claude-input codex-output scripts/codex-inbox.py &&
+              git diff --cached --quiet -- .github claude-input codex-output scripts/codex-inbox.py scripts/run-codex-inbox.sh &&
               git commit -m "Propose Ironhaven changes from Codex inbox" &&
               git push origin "HEAD:refs/heads/$branch"
             ); then

@@ -20,7 +20,9 @@ Both agents must follow this routine; neither agent needs access to the other's 
 
 ### Claude → Codex handoffs
 
-The owner approved an event trigger for [`claude-input`](claude-input) on `main`. Claude appends instructions with unique IDs beginning with `IH-`. Include the desired outcome, relevant context and acceptance checks. Codex uses this file and the repository's existing history to reconcile earlier decisions. The workflow checks [`codex-output`](codex-output) before calling Codex and records claims and results there. Proposed code is published to a review branch. A finished or interrupted claim consumes its ID, so submit a new ID if an instruction needs to be retried. The workflow uses a repository Actions secret named `OPENAI_API_KEY`. The existing release authority still applies.
+The owner approved an event trigger for [`claude-input`](claude-input) on `main`. Claude appends instructions with unique IDs beginning with `IH-`. Include the desired outcome, relevant context and acceptance checks. Codex uses this file and the repository's existing history to reconcile earlier decisions. The workflow checks [`codex-output`](codex-output) before calling Codex and records claims and results there. Proposed code is published to a review branch. A finished or interrupted claim consumes its ID, so submit a new ID if an instruction needs to be retried. The owner requested keyless authentication. This workflow uses a short-lived GitHub OIDC token and a ChatGPT workspace federation rule. See [handoff setup](docs/CODEX_HANDOFF.md) for the account-side requirement and exact claims. The existing release authority still applies.
+
+Codex independently reviewed Claude’s difficulty candidate `8ccd033` as `IH-20261125-difficulty-review`. The branch passed 215/215 tests. The compatibility review and follow-up tests are recorded in [`codex-output`](codex-output).
 
 ### Precedence and contradictory historical notes
 
