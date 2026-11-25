@@ -9,7 +9,7 @@ const md5=bytes=>createHash('md5').update(bytes).digest('hex');
 
 export async function assetFiles(){
  const manifest=JSON.parse(await readFile('assets/manifest.json','utf8'));
- return manifest.assets.flatMap(asset=>Object.entries(asset.files).map(([name,file])=>({asset,name,...file,path:join(CACHE,asset.kind==='hdri'?'sky':'textures',asset.id,name)})));
+ return manifest.assets.flatMap(asset=>Object.entries(asset.files).map(([name,file])=>({asset,name,...file,path:join(CACHE,{hdri:'sky',model:'models'}[asset.kind]??'textures',asset.id,name)})));
 }
 
 async function verified(file){

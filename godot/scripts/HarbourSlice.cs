@@ -196,28 +196,63 @@ public partial class HarbourSlice : Node3D
 		belts.Add(belt);
 	}
 
+	// Instanced CC0 scenery (Poly Haven, decimated in Blender): every mesh of a model becomes one MultiMesh.
+	void Scatter(string model, List<Transform3D> where)
+	{
+		if (where.Count == 0) return;
+		var scene = GD.Load<PackedScene>($"res://assets/models/{model}.glb").Instantiate<Node3D>();
+		void Visit(Node node, Transform3D parent)
+		{
+			var local = node is Node3D n3 ? parent * n3.Transform : parent;
+			if (node is MeshInstance3D mi && mi.Mesh != null)
+			{
+				var mm = new MultiMesh { TransformFormat = MultiMesh.TransformFormatEnum.Transform3D, Mesh = mi.Mesh, InstanceCount = where.Count };
+				for (int i = 0; i < where.Count; i++) mm.SetInstanceTransform(i, where[i] * local);
+				AddChild(new MultiMeshInstance3D { Multimesh = mm, CastShadow = GeometryInstance3D.ShadowCastingSetting.On });
+			}
+			foreach (var child in node.GetChildren()) Visit(child, local);
+		}
+		Visit(scene, Transform3D.Identity);
+		scene.Free();
+	}
+
+	Transform3D Placed(float x, float z, float scale, float sink = 0)
+	{
+		var basis = Basis.FromEuler(new Vector3(rng.RandfRange(-.04f, .04f), rng.RandfRange(0, Mathf.Tau), rng.RandfRange(-.04f, .04f))).Scaled(Vector3.One * scale);
+		return new Transform3D(basis, new Vector3(x, Height(x, z) - sink, z));
+	}
+
+	bool Clear(float x, float z) => !(x < -10 && x > -40 && z > -20 && z < 20) && Mathf.Sqrt(x * x + z * z) > 18;
+
 	void BuildGroves()
 	{
-		var bark = new StandardMaterial3D { AlbedoColor = new Color(0.27f, 0.2f, 0.14f), Roughness = 0.9f };
-		var needles = new StandardMaterial3D { AlbedoColor = new Color(0.12f, 0.27f, 0.16f), Roughness = 0.85f };
-		var cone = new CylinderMesh { TopRadius = 0, BottomRadius = 1, Height = 1, RadialSegments = 9 };
-		var trunk = new CylinderMesh { TopRadius = 0.08f, BottomRadius = 0.12f, Height = 1, RadialSegments = 6 };
-		int planted = 0;
-		for (int k = 0; k < 2200 && planted < 520; k++)
+		var firs = new List<Transform3D>(); var pines = new List<Transform3D>(); var ferns = new List<Transform3D>();
+		var shrubs = new List<Transform3D>(); var rocks = new List<Transform3D>(); var boulders = new List<Transform3D>(); var stumps = new List<Transform3D>();
+		for (int k = 0; k < 9000; k++)
 		{
-			float x = rng.RandfRange(-60, 60), z = rng.RandfRange(-60, 60), r = Mathf.Sqrt(x * x + z * z), y = Height(x, z);
-			if (y < 0.4f || r < 22 || Noise(x * 0.05f + 11, z * 0.05f) < 0.55f) continue;
-			if (x < -12 && x > -40 && z > -20 && z < 20) continue;
-			float h = rng.RandfRange(2.6f, 4.6f);
-			var tree = new Node3D { Position = new Vector3(x, y, z), RotationDegrees = new Vector3(0, rng.RandfRange(0, 360), 0) };
-			tree.AddChild(new MeshInstance3D { Mesh = trunk, MaterialOverride = bark, Scale = new Vector3(1, h * 0.35f, 1), Position = new Vector3(0, h * 0.17f, 0) });
-			for (int t = 0; t < 4; t++)
+			float x = rng.RandfRange(-62, 62), z = rng.RandfRange(-62, 62), y = Height(x, z);
+			if (y < 0.35f || !Clear(x, z)) continue;
+			float forest = Noise(x * 0.05f + 11, z * 0.05f);
+			if (forest > 0.56f && firs.Count + pines.Count < 900)
 			{
-				float s = (1 - t * 0.22f) * h * 0.24f;
-				tree.AddChild(new MeshInstance3D { Mesh = cone, MaterialOverride = needles, Scale = new Vector3(s, h * 0.34f, s), Position = new Vector3(0, h * (0.3f + t * 0.17f), 0) });
+				if (rng.Randf() < 0.65f) firs.Add(Placed(x, z, rng.RandfRange(2.2f, 3.6f))); else pines.Add(Placed(x, z, rng.RandfRange(1.6f, 2.6f)));
+				if (rng.Randf() < 0.5f) ferns.Add(Placed(x + rng.RandfRange(-1.5f, 1.5f), z + rng.RandfRange(-1.5f, 1.5f), rng.RandfRange(1.2f, 2f)));
 			}
-			AddChild(tree); planted++;
+			else if (forest > 0.48f && rng.Randf() < 0.25f) shrubs.Add(Placed(x, z, rng.RandfRange(1.1f, 1.8f)));
+			else if (Noise(x * 0.09f + 3, z * 0.09f) > 0.7f && rng.Randf() < 0.3f) rocks.Add(Placed(x, z, rng.RandfRange(0.8f, 1.6f), 0.1f));
+			else if (rng.Randf() < 0.004f) boulders.Add(Placed(x, z, rng.RandfRange(0.8f, 1.4f), 0.2f));
+			else if (forest > 0.5f && rng.Randf() < 0.02f) stumps.Add(Placed(x, z, rng.RandfRange(1f, 1.4f)));
 		}
+		Scatter("nature-fir_sapling", firs); Scatter("nature-pine_sapling_small", pines); Scatter("nature-fern_02", ferns);
+		Scatter("nature-shrub_04", shrubs); Scatter("nature-rock_moss_set_01", rocks); Scatter("nature-boulder_01", boulders); Scatter("nature-tree_stump_01", stumps);
+		// Harbour clutter around the warehouses.
+		var crates = new List<Transform3D>(); var barrels = new List<Transform3D>();
+		foreach (var (x, z) in new[] { (-3.2f, 12.2f), (-3.4f, 15.2f), (-3.1f, -0.6f), (-9.6f, -3.2f) })
+		{
+			crates.Add(Placed(x, z, 1.1f)); crates.Add(Placed(x + 0.9f, z + 0.3f, 1.0f));
+			barrels.Add(Placed(x - 0.2f, z + 1.4f, 1.0f));
+		}
+		Scatter("nature-wooden_crate_01", crates); Scatter("nature-wooden_barrels_01", barrels);
 	}
 
 	void BuildHostiles()

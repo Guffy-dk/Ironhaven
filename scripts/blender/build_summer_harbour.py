@@ -167,5 +167,19 @@ def creatures():
         keep.select_set(True); bpy.context.view_layer.objects.active = keep
         bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, f'creature-{kind}.glb'), export_format='GLB', use_selection=True, export_image_format='JPEG', export_jpeg_quality=88)
 
-smelter(); drill(); warehouse(); lighthouse(); creatures()
+def nature():
+    # CC0 Poly Haven nature and harbour props, decimated to game budgets for instancing.
+    budget = {'fir_sapling': 9000, 'pine_sapling_small': 6000, 'rock_moss_set_01': 6000, 'fern_02': 3000, 'wooden_crate_01': 2000,
+              'wooden_barrels_01': 4000, 'boulder_01': 4000, 'tree_stump_01': 3000, 'shrub_04': 4000}
+    for pid, target in budget.items():
+        reset()
+        bpy.ops.import_scene.gltf(filepath=os.path.join(CACHE, 'models', pid, pid + '.gltf'))
+        for o in [o for o in bpy.data.objects if o.type == 'MESH']:
+            faces = len(o.data.polygons)
+            if faces > target:
+                mod = o.modifiers.new('budget', 'DECIMATE'); mod.ratio = max(.01, target / faces)
+                bpy.context.view_layer.objects.active = o; bpy.ops.object.modifier_apply(modifier='budget')
+        bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'nature-' + pid + '.glb'), export_format='GLB', export_image_format='JPEG', export_jpeg_quality=88)
+
+smelter(); drill(); warehouse(); lighthouse(); creatures(); nature()
 print('BUILT', sorted(os.listdir(OUT)))

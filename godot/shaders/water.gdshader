@@ -1,11 +1,11 @@
 // North Atlantic summer sea: layered waves, fresnel sky reflection, depth tint and shore foam.
 shader_type spatial;
 render_mode depth_draw_always, cull_disabled, specular_schlick_ggx;
-uniform vec3 shallow : source_color = vec3(0.22, 0.52, 0.55);
+uniform vec3 shallow : source_color = vec3(0.10, 0.42, 0.46);
 uniform vec3 deep : source_color = vec3(0.04, 0.17, 0.27);
 uniform sampler2D depth_texture : hint_depth_texture, filter_linear_mipmap;
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
-uniform float foam_width = 0.9;
+uniform float foam_width = 0.22;
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
 	return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
@@ -23,11 +23,11 @@ void fragment(){
 	vec4 world_pos = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, scene_depth, 1.0);
 	world_pos.xyz /= world_pos.w;
 	float thickness = clamp(-world_pos.z + VERTEX.z, 0.0, 30.0);
-	float d = 1.0 - exp(-thickness * .35);
+	float d = 1.0 - exp(-thickness * .9);
 	vec3 refr = texture(screen_texture, SCREEN_UV + NORMAL.xz * .01).rgb;
-	vec3 colour = mix(mix(refr, shallow, .55), deep, d);
+	vec3 colour = mix(mix(refr * shallow * 2.2, shallow, .4), deep, d);
 	float foam = smoothstep(foam_width, 0.0, thickness) * (.6 + .4 * noise(world.xz * 4.0 + t));
-	ALBEDO = mix(colour, vec3(.95), foam * .85);
+	ALBEDO = mix(colour, vec3(.95), foam * .7);
 	ROUGHNESS = mix(.04, .6, foam);
 	METALLIC = 0.0; SPECULAR = .6;
 }
