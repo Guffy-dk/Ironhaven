@@ -44,7 +44,7 @@ async function prepareGameDocument() {
   const hash = createHash('sha256').update(script.replace(/\r\n?/g, '\n')).digest('base64');
   const headers = {
     'Content-Type': 'text/html; charset=utf-8',
-    'Content-Security-Policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src data:; object-src 'none'; base-uri 'none'`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src data:; connect-src 'self'; object-src 'none'; base-uri 'none'`,
   };
   return { html, headers };
 }
@@ -110,6 +110,16 @@ async function start() {
     if (request.method === 'GET' && request.url === gameUrl) {
       const { html, headers } = await gameDocument;
       return new Response(html, { headers });
+    }
+    // Packaged art (textures, sky) lives beside the game as files rather than inside the HTML bundle.
+    if (request.method === 'GET' && request.url.startsWith('ironhaven://game/assets/')) {
+      const relative = decodeURIComponent(new URL(request.url).pathname).replace(/^\/assets\//, '');
+      const root = path.join(__dirname, 'assets'), file = path.resolve(root, relative);
+      if (!file.startsWith(root + path.sep)) return new Response(null, { status: 403 });
+      try {
+        const types = { '.jpg': 'image/jpeg', '.png': 'image/png', '.hdr': 'application/octet-stream', '.glb': 'model/gltf-binary', '.ktx2': 'image/ktx2', '.json': 'application/json' };
+        return new Response(await readFile(file), { headers: { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' } });
+      } catch { return new Response(null, { status: 404 }); }
     }
     return new Response(null, { status: 404 });
   });

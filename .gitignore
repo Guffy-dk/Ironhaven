@@ -10,3 +10,4 @@ release/
 *.blend1
 desktop/patcher/**/bin/
 desktop/patcher/**/obj/
+assets-cache/

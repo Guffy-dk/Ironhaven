@@ -9,6 +9,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {ColorGradeShader} from './color-grade.js';
 import {CoastalMist} from './coastal-mist.js';
+import {summerTerrainMaterial,applySummerLight} from './summer-world.js';
 import {outlineBuilding,outlineMaterial} from './building-outlines.js';
 import {levelPlaque,tradeSign} from './building-levels.js';
 import {BUILDING_IDENTITIES} from './shared/building-identity.js';
@@ -397,6 +398,7 @@ export class View{
   this.sun.color.setHex(0xffe8ce);this.sun.intensity=1.7;this.sun.shadow.normalBias=.018;
   this.fill.color.setHex(0xc2ccda);this.fill.intensity=.51;
   this.renderer.toneMappingExposure=1.12;this.renderer.shadowMap.needsUpdate=true;
+  applySummerLight(this);
   this.shadowKey='';
   this.enemyBody.geometry=quarryActorGeometry('body');this.enemyBody.material=actorSkin;
   this.enemyHead.geometry=quarryActorGeometry('head');this.enemyHead.material=actorHead;
@@ -464,7 +466,7 @@ export class View{
   this.terrainKey=`${this.style}:${s.seed}:${s.terrain.trees.length}:${s.terrain.rocks.length}:${s.terrain.coast?.kind??s.terrain.coast?.shoreZ??'inland'}`;
   for(const group of [this.terrain,this.ground]){while(group.children.length){const o=group.children.pop();o.parent=null;if(o.isInstancedMesh){o.dispose();}else if(o.isMesh){o.geometry.dispose();o.material.dispose();}}}
   this.depositHighlights.clear();
-  const rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?340:104,s.terrain.coast?340:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
+  const mix=[],rand=rng(s.seed),color=new T.Color(),groundGeometry=new T.PlaneGeometry(SIZE+24,SIZE+24,s.terrain.coast?340:104,s.terrain.coast?340:104);groundGeometry.rotateX(-Math.PI/2);const colors=[],growth=[],vertices=groundGeometry.attributes.position;
   const shade=new T.Color(quarry?0x3e4937:0x223c39),gravel=new T.Color(0x8d8476),albedoTint=new T.Color(0xdcd8cc),mud=new T.Color(0x3f3a31),moss=new T.Color(0x4d5a3a);
   for(let i=0;i<vertices.count;i++){const x=vertices.getX(i),z=vertices.getZ(i),n=(Math.sin(x*.27+Math.cos(z*.19))+Math.cos(z*.33-x*.11)+2)/4,d=Math.hypot(x*.9,z);color.setHex(quarry?(d<13?0x7d7762:0x6b7052):(d<12?0x42504a:0x325148)).lerp(shade,n*.7);if(quarry){
     const exposed=Math.sin(x*.53+z*.28)+Math.cos(z*.51-x*.32)+.43*Math.sin(x*.96-z*.76);
@@ -479,10 +481,17 @@ export class View{
     const baseGrowth=T.MathUtils.smoothstep(meadow,-.74,.84)*T.MathUtils.smoothstep(Math.hypot(x,z),2.5,16);
     const coastalGrowth=(.6+T.MathUtils.smoothstep(meadow,-.74,.84)*.4)*T.MathUtils.smoothstep(Math.abs(x),.45,1.3)*T.MathUtils.smoothstep(Math.hypot(x,z+8),1,2)*T.MathUtils.smoothstep(coastalHeight(s.terrain,x,z),-.6,-.05);
     growth.push(s.terrain.coast&&z<-1?coastalGrowth:baseGrowth);
+    // Summer ground blend: meadow patches, sand on the shore, granite outcrops, gravel around the colony.
+    const shoreHeight=coastalHeight(s.terrain,x,z),sand=s.terrain.coast?T.MathUtils.smoothstep(-shoreHeight,-.02,.18):0;
+    const granite=T.MathUtils.smoothstep(exposed,.9,1.7)*.85,gravelW=T.MathUtils.smoothstep(20,9,d)*.55;
+    const meadowW=T.MathUtils.smoothstep(meadow,-.2,1.)*.85;
+    mix.push(meadowW*(1-sand),sand,granite*(1-sand),gravelW*(1-sand));
+    // Nordic summer: fresh green grass, lightly varied so the field never reads as one flat colour.
+    const tint=.9+.12*n;color.setRGB(tint*.74,tint*.98,tint*.6);
    }colors.push(color.r,color.g,color.b);vertices.setY(i,-.026+coastalHeight(s.terrain,x,z)+(d>12?Math.sin(x*.7)*Math.cos(z*.6)*.017:0));}
   groundGeometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();
-  if(quarry)groundGeometry.setAttribute('quarryGrowth',new T.Float32BufferAttribute(growth,1));
-  const ground=new T.Mesh(groundGeometry,quarry?quarryTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
+  if(quarry){groundGeometry.setAttribute('quarryGrowth',new T.Float32BufferAttribute(growth,1));groundGeometry.setAttribute('terrainMix',new T.Float32BufferAttribute(mix,4));}
+  const ground=new T.Mesh(groundGeometry,quarry?summerTerrainMaterial():new T.MeshStandardMaterial({vertexColors:true,roughness:1}));
   ground.receiveShadow=true;this.ground.add(ground);let i=0;
   if(s.terrain.coast){
    const coastRocks=[];for(let x=s.terrain.coast.kind==='island'?-178:-23;x<=(s.terrain.coast.kind==='island'?178:23);x+=1.4)for(let z=s.terrain.coast.kind==='island'?-170:-16;z<(s.terrain.coast.kind==='island'?170:2);z+=1.4){const y=coastalHeight(s.terrain,x,z);if(y<-.08&&y>-.93)coastRocks.push({x:x+(rand()-.5)*.4,z:z+(rand()-.5)*.4,y});}
@@ -739,7 +748,7 @@ export class View{
  draw(){
   const quarry=this.style==='quarry';
   if(this.inspectedId)this.camera.position.copy(this.center).add(new T.Vector3(Math.sin(this.inspectionHeading+(this.inspectionOrbit||0))*9,4.1,Math.cos(this.inspectionHeading+(this.inspectionOrbit||0))*9));else this.camera.position.copy(this.center).addScaledVector(quarry?QUARRY_CAMERA:CAMERA_OFFSET,Math.max(1,(this.zoom??14)/20));
-  if(this.scene.fog)this.scene.fog.density=(quarry?.0065:.011)/Math.max(1,(this.zoom??14)/20);
+  if(this.scene.fog)this.scene.fog.density=(quarry?.0032:.011)/Math.max(1,(this.zoom??14)/20);
   this.camera.lookAt(this.center);this.camera.updateMatrixWorld();
   if(quarry&&this.renderer.shadowMap.enabled){
    const x=Math.round(this.center.x/6)*6,z=Math.round(this.center.z/6)*6;

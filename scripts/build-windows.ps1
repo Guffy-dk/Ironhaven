@@ -35,7 +35,8 @@ try {
   $game = Join-Path $resources 'app'
   New-Item -ItemType Directory -Force -Path $game | Out-Null
   Copy-Item -LiteralPath 'desktop/game.cjs', 'desktop/mod-loader.cjs', 'release/Ironhaven.html', 'release/Studio-Intro.html', 'release/mod-base.json', 'release/mod-worker.cjs' -Destination $game -Force
-  Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt', 'release/FONT-LICENSES.txt' -Destination $gameFolder -Force
+  Copy-Item -LiteralPath 'release/assets' -Destination (Join-Path $game 'assets') -Recurse -Force
+  Copy-Item -LiteralPath 'release/FENGARI-LICENSE.txt', 'release/FONT-LICENSES.txt', 'release/assets/ASSET-LICENSES.txt' -Destination $gameFolder -Force
   $modding = Join-Path $gameFolder 'Modding'
   New-Item -ItemType Directory -Force -Path $modding | Out-Null
   Copy-Item -LiteralPath 'docs/MODDING.md' -Destination $modding -Force

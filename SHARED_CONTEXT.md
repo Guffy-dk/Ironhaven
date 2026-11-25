@@ -361,6 +361,16 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — Nordic summer harbour, phase A: asset pipeline and daylight
+
+- **Owner decisions (25 Nov 2026):** the game may be several GB. The minimal-size, code-drawn art is a browser-era leftover and must go. Theme: **Nordic summer harbour** (bright daylight, painted timber, darkness arrives with the swarms). Art is made with Blender. Codex notes that the editable creature models are on `main` (`docs/design/coastal-creatures.blend`) and that changes must be exported with `scripts/blender/build_coastal_assets.py` to `public/art/coastal-meshes.json` before they show in game. The owner says the monsters need some love.
+- Implemented (prototype branch):
+  - `assets/manifest.json` pins 14 CC0 Poly Haven PBR surfaces (2K colour, normal and ARM maps) and a summer HDRI by size and MD5, with source and licence.
+  - `scripts/fetch-assets.mjs` downloads and verifies them into `assets-cache/` (git-ignored, about 122 MB) and writes `ASSET-LICENSES.txt`. `npm run build` copies them to `release/assets`, and both platform packages ship them at `resources/app/assets`. The Electron `ironhaven://game/assets/` handler serves only files inside that folder.
+  - `public/summer-world.js` adds daylight (warm high sun, a light sky, thin haze, a toned-down grade, the HDRI as environment light) and a ground shader blending five CC0 surfaces (grass, meadow, sand on the shore, granite, gravel around the colony). It uses seven samplers so it stays within the 16 WebGL texture units alongside shadows; the first version broke shader linking.
+- Tests: `test/summer-assets.test.mjs` (5) covers the manifest (licences and checksums), the shipped files, the path-safe asset handler, the ground shader's sampler budget and fallback path, and daylight values. The full suite has 180 passing; the 61 legacy one-tile tests still fail on this branch.
+- Evidence: `docs/design/summer/phase-a-daylight.jpg` (Linux SwiftShader). Next: phase B, the monsters in Blender (Codex's `.blend`), then summer-painted buildings at the new sizes.
+
 ### 2026-11-25 — Claude Code — test coverage for recent work
 
 - `test/footprints.test.mjs` (10 tests): footprint sizes; every cell maps to its building for lookups and commands; whole-area placement; drills need a deposit cell under them; output at the edge-tile; work rate and cost scale with size; a minimal drill → smelter → warehouse chain delivers; island and starter deposits fit rows of 3×3 drills; the review factory places with no errors and stocks its warehouses; the rebuilt starter chains deliver plates and gears.

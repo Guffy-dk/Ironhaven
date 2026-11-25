@@ -1,0 +1,355 @@
+{
+ "note": "CC0 assets fetched by scripts/fetch-assets.mjs into assets-cache/ and packaged with the game. Verified by size and MD5 from the source API.",
+ "assets": [
+  {
+   "id": "terrain-grass",
+   "source": "https://polyhaven.com/a/aerial_grass_rock",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_grass_rock/aerial_grass_rock_diff_2k.jpg",
+     "size": 2624635,
+     "md5": "024018554c0002620127749d1f585f3d"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_grass_rock/aerial_grass_rock_nor_gl_2k.jpg",
+     "size": 3799025,
+     "md5": "0c5423ce365169df7c242933b5137696"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_grass_rock/aerial_grass_rock_arm_2k.jpg",
+     "size": 945301,
+     "md5": "1491ee517b5cf713639f3add1b91c933"
+    }
+   }
+  },
+  {
+   "id": "terrain-meadow",
+   "source": "https://polyhaven.com/a/leafy_grass",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_diff_2k.jpg",
+     "size": 4766204,
+     "md5": "8014f4dace676a62ed71b3dd76119dae"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_nor_gl_2k.jpg",
+     "size": 6047262,
+     "md5": "ea5e91abe01dc5e5d7028c68c3bc9194"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_arm_2k.jpg",
+     "size": 4116600,
+     "md5": "64f2eb364e806301df19edc7a67d65bb"
+    }
+   }
+  },
+  {
+   "id": "terrain-granite",
+   "source": "https://polyhaven.com/a/aerial_rocks_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_rocks_02/aerial_rocks_02_diff_2k.jpg",
+     "size": 2914545,
+     "md5": "f493fa9b31911f8a30ecd1d41cbc6f3d"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_rocks_02/aerial_rocks_02_nor_gl_2k.jpg",
+     "size": 4300188,
+     "md5": "7c405cfd3308a2672c99b44e102c328e"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_rocks_02/aerial_rocks_02_arm_2k.jpg",
+     "size": 818655,
+     "md5": "bfc2989858efc9bb32ca82a707741d35"
+    }
+   }
+  },
+  {
+   "id": "terrain-sand",
+   "source": "https://polyhaven.com/a/coast_sand_01",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_sand_01/coast_sand_01_diff_2k.jpg",
+     "size": 3552676,
+     "md5": "bde59bb3bcdd8d4e9d6fcadc19f038fa"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_sand_01/coast_sand_01_nor_gl_2k.jpg",
+     "size": 4630126,
+     "md5": "2a9d793676562b38b5760b9147aa40ea"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_sand_01/coast_sand_01_arm_2k.jpg",
+     "size": 2698547,
+     "md5": "06c766f0d541dacd85bb9c31a31b39e1"
+    }
+   }
+  },
+  {
+   "id": "terrain-gravel",
+   "source": "https://polyhaven.com/a/gravelly_sand",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravelly_sand/gravelly_sand_diff_2k.jpg",
+     "size": 4402825,
+     "md5": "b90aa766dac59af8c136321149ca86bc"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravelly_sand/gravelly_sand_nor_gl_2k.jpg",
+     "size": 5955314,
+     "md5": "cad65c6ba322bbd7f89e72f00d9508cf"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravelly_sand/gravelly_sand_arm_2k.jpg",
+     "size": 3413124,
+     "md5": "ada1448787709e295ea5cb6d87d075a6"
+    }
+   }
+  },
+  {
+   "id": "terrain-trail",
+   "source": "https://polyhaven.com/a/rocky_trail",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_trail/rocky_trail_diff_2k.jpg",
+     "size": 4208713,
+     "md5": "7327bf7d48d33688fb12465222ee3f22"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_trail/rocky_trail_nor_gl_2k.jpg",
+     "size": 5525906,
+     "md5": "4642b3c833d526b23c96baa84f5bf429"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_trail/rocky_trail_arm_2k.jpg",
+     "size": 3986946,
+     "md5": "97daa9ca7cc355d7fe3389a1b555a407"
+    }
+   }
+  },
+  {
+   "id": "painted-wood",
+   "source": "https://polyhaven.com/a/wood_peeling_paint_weathered",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_peeling_paint_weathered/wood_peeling_paint_weathered_diff_2k.jpg",
+     "size": 3287908,
+     "md5": "068bc6219393fa397ea419e8b399b310"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_peeling_paint_weathered/wood_peeling_paint_weathered_nor_gl_2k.jpg",
+     "size": 3817729,
+     "md5": "ac0ac16338d9e4f362a7cb87bf24ef3d"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_peeling_paint_weathered/wood_peeling_paint_weathered_arm_2k.jpg",
+     "size": 1671350,
+     "md5": "97076128f8b480b85766e577c2975b2e"
+    }
+   }
+  },
+  {
+   "id": "timber",
+   "source": "https://polyhaven.com/a/weathered_planks",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/weathered_planks/weathered_planks_diff_2k.jpg",
+     "size": 2385451,
+     "md5": "dd5f91445812117d216ed962c2607b7d"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/weathered_planks/weathered_planks_nor_gl_2k.jpg",
+     "size": 3184832,
+     "md5": "db8ad9ad21c8de018e009f9c27c2a63d"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/weathered_planks/weathered_planks_arm_2k.jpg",
+     "size": 2296561,
+     "md5": "dfe9c9bbefd9146d62852966f95ef096"
+    }
+   }
+  },
+  {
+   "id": "brick",
+   "source": "https://polyhaven.com/a/red_brick_03",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/red_brick_03/red_brick_03_diff_2k.jpg",
+     "size": 2969950,
+     "md5": "df521ebe6c4eb72c3329832acfecd95d"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/red_brick_03/red_brick_03_nor_gl_2k.jpg",
+     "size": 3684630,
+     "md5": "fd2d01b5e0f4de51ca4d7c2b4bcbc22c"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/red_brick_03/red_brick_03_arm_2k.jpg",
+     "size": 697262,
+     "md5": "9a627cb7b5f7e174f6a687b35ac10f0d"
+    }
+   }
+  },
+  {
+   "id": "corrugated-iron",
+   "source": "https://polyhaven.com/a/corrugated_iron",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/corrugated_iron/corrugated_iron_diff_2k.jpg",
+     "size": 2605861,
+     "md5": "fb7cfe9f978589b8e3d1155a859fed46"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/corrugated_iron/corrugated_iron_nor_gl_2k.jpg",
+     "size": 3453777,
+     "md5": "ba7b8088897242f5df20ab6fb1fe4124"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/corrugated_iron/corrugated_iron_arm_2k.jpg",
+     "size": 1862024,
+     "md5": "7349638f91a593c358b158e8bd713c31"
+    }
+   }
+  },
+  {
+   "id": "slate-roof",
+   "source": "https://polyhaven.com/a/roof_slates_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/roof_slates_02/roof_slates_02_diff_2k.jpg",
+     "size": 1838933,
+     "md5": "2bd2c8593d8cbaea04878203be4bc7ad"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/roof_slates_02/roof_slates_02_nor_gl_2k.jpg",
+     "size": 2919261,
+     "md5": "1256041f95f300753b867934324c7b91"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/roof_slates_02/roof_slates_02_arm_2k.jpg",
+     "size": 788012,
+     "md5": "956eb0bc1bea3356195f298b8458ef4c"
+    }
+   }
+  },
+  {
+   "id": "concrete",
+   "source": "https://polyhaven.com/a/concrete_wall_003",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_wall_003/concrete_wall_003_diff_2k.jpg",
+     "size": 1083378,
+     "md5": "e7d678d14c74d55105077093b545d31e"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_wall_003/concrete_wall_003_nor_gl_2k.jpg",
+     "size": 978992,
+     "md5": "447ffa2eafd213070ec62323abac654d"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_wall_003/concrete_wall_003_arm_2k.jpg",
+     "size": 843865,
+     "md5": "cf08d392b1be40811ccabf37e432d492"
+    }
+   }
+  },
+  {
+   "id": "rust",
+   "source": "https://polyhaven.com/a/rusty_metal_02",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rusty_metal_02/rusty_metal_02_diff_2k.jpg",
+     "size": 1952454,
+     "md5": "385195f8de0117418d99dc1d06b7ff38"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rusty_metal_02/rusty_metal_02_nor_gl_2k.jpg",
+     "size": 1307478,
+     "md5": "9d55427ccd90c8f54293232c87e36933"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rusty_metal_02/rusty_metal_02_arm_2k.jpg",
+     "size": 705888,
+     "md5": "d28c9c1446e2373ff48d0d9c3e7f2ebb"
+    }
+   }
+  },
+  {
+   "id": "steel-plate",
+   "source": "https://polyhaven.com/a/metal_plate",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "texture",
+   "files": {
+    "color.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_diff_2k.jpg",
+     "size": 2670774,
+     "md5": "91b841e7e619e55588f0183a703fb644"
+    },
+    "normal.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_nor_gl_2k.jpg",
+     "size": 2516654,
+     "md5": "797c3f3de91da0c03f44f493576e158e"
+    },
+    "arm.jpg": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_arm_2k.jpg",
+     "size": 3926194,
+     "md5": "4f7da15e97f3e8306743dff5084c8a46"
+    }
+   }
+  },
+  {
+   "id": "sky-summer",
+   "source": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+   "license": "CC0-1.0",
+   "author": "Poly Haven",
+   "kind": "hdri",
+   "files": {
+    "sky.hdr": {
+     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+     "size": 5451493,
+     "md5": "2eba3a4d7eeb23cbfbeca364c97e7980"
+    }
+   }
+  }
+ ]
+}
