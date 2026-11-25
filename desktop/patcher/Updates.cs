@@ -1,18 +1,16 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 internal sealed class GameRelease
 {
-    internal const string AssetName = "Ironhaven-Windows-x64.zip";
+    internal static readonly string AssetName = PatcherPlatform.AssetName;
     internal const string Repository = "https://github.com/Guffy-dk/Ironhaven";
-    internal const string LatestManifest = Repository + "/releases/latest/download/Ironhaven-Windows-manifest.json";
+    internal static readonly string LatestManifest = Repository + "/releases/latest/download/" + PatcherPlatform.ManifestName;
     internal Version Version;
     internal Uri Download;
     internal string Digest;
@@ -27,10 +25,10 @@ internal sealed class GameRelease
 
     internal static GameRelease FromJson(string json)
     {
-        var data = new JavaScriptSerializer().Deserialize<ReleaseMetadata>(json);
+        var data = PatcherPlatform.ParseMetadata(json);
         var version = ParseTag(data == null ? null : data.tag);
         if (version == null || data.size <= 0 || !Regex.IsMatch(data.digest ?? "", @"\Asha256:[a-fA-F0-9]{64}\z"))
-            throw new InvalidDataException("The Windows release is missing valid download verification metadata.");
+            throw new InvalidDataException("The " + PatcherPlatform.Name + " release is missing valid download verification metadata.");
         var download = new Uri(Repository + "/releases/download/v" + version + "/" + AssetName);
         return new GameRelease { Version = version, Download = download, Digest = data.digest, Size = data.size };
     }
@@ -60,7 +58,7 @@ internal sealed class GameUpdates
 
     internal string GamePath(Version version)
     {
-        return Path.Combine(installRoot, "v" + version, "Ironhaven", "Ironhaven.exe");
+        return Path.Combine(installRoot, "v" + version, "Ironhaven", PatcherPlatform.Executable);
     }
 
     internal Version LatestInstalled()
@@ -94,12 +92,12 @@ internal sealed class GameUpdates
                     while ((count = await source.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) != 0)
                     {
                         received += count;
-                        if (received > release.Size) throw new InvalidDataException("The Windows download exceeded its listed size.");
+                        if (received > release.Size) throw new InvalidDataException("The " + PatcherPlatform.Name + " download exceeded its listed size.");
                         await destination.WriteAsync(buffer, 0, count).ConfigureAwait(false);
                         int percent = (int)(received * 100 / release.Size);
                         if (percent != lastPercent) progress.Report(lastPercent = percent);
                     }
-                    if (received != release.Size) throw new InvalidDataException("The Windows download ended early. Please retry.");
+                    if (received != release.Size) throw new InvalidDataException("The " + PatcherPlatform.Name + " download ended early. Please retry.");
                 }
             }
             await Task.Run(() => InstallArchive(release, archive, Path.Combine(staging, "payload"))).ConfigureAwait(false);
@@ -117,27 +115,9 @@ internal sealed class GameUpdates
         var root = Path.GetFullPath(payload) + Path.DirectorySeparatorChar;
         var gameRoot = Path.Combine(root, "Ironhaven") + Path.DirectorySeparatorChar;
         Directory.CreateDirectory(root);
-        using (var zip = ZipFile.OpenRead(archive))
-        {
-            foreach (var entry in zip.Entries)
-            {
-                string name = entry.FullName.Replace('\\', '/');
-                if (name == "Ironhaven/") continue;
-                if (!name.StartsWith("Ironhaven/", StringComparison.Ordinal) || name.IndexOf(':') >= 0)
-                    throw new InvalidDataException("Unexpected path in the Windows archive.");
-                string target = Path.GetFullPath(Path.Combine(root, name));
-                if (!target.StartsWith(gameRoot, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("Unsafe path in the Windows archive.");
-                if (name.EndsWith("/", StringComparison.Ordinal)) Directory.CreateDirectory(target);
-                else
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(target));
-                    entry.ExtractToFile(target);
-                }
-            }
-        }
-        if (!File.Exists(Path.Combine(root, "Ironhaven", "Ironhaven.exe")))
-            throw new InvalidDataException("The Windows archive is missing Ironhaven.exe.");
+        PatcherPlatform.Extract(archive, root, gameRoot);
+        if (!File.Exists(Path.Combine(root, "Ironhaven", PatcherPlatform.Executable)))
+            throw new InvalidDataException("The " + PatcherPlatform.Name + " archive is missing " + PatcherPlatform.Executable + ".");
         var destination = Path.Combine(installRoot, "v" + release.Version);
         Directory.CreateDirectory(installRoot);
         try { Directory.Move(payload, destination); }

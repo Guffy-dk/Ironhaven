@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
-using System.Web.Script.Serialization;
 
 internal static class PatcherTests
 {
@@ -14,13 +12,9 @@ internal static class PatcherTests
 
     private static GameRelease WriteRelease(string archive, string tag, string entry)
     {
-        using (var zip = ZipFile.Open(archive, ZipArchiveMode.Create))
-        using (var writer = new StreamWriter(zip.CreateEntry(entry).Open())) writer.Write("test executable");
-        var json = new JavaScriptSerializer().Serialize(new {
-            tag = tag,
-            digest = GameUpdates.ArchiveDigest(archive),
-            size = new FileInfo(archive).Length
-        });
+        PatcherPlatform.WriteTestArchive(archive, entry);
+        var json = "{\"tag\":\"" + tag + "\",\"digest\":\"" + GameUpdates.ArchiveDigest(archive) +
+            "\",\"size\":" + new FileInfo(archive).Length + "}";
         return GameRelease.FromJson(json);
     }
 
@@ -33,6 +27,16 @@ internal static class PatcherTests
             using (var http = new HttpClient())
             {
                 var updates = new GameUpdates(Path.Combine(root, "versions"), http);
+                if (args.Length == 3 && args[0] == "--local")
+                {
+                    // Installs a locally built package exactly as a download would be installed.
+                    var local = GameRelease.FromJson(File.ReadAllText(args[2]));
+                    updates.InstallArchive(local, args[1], Path.Combine(root, "local"));
+                    Require(local.Version.Equals(updates.LatestInstalled()), "The local package was not installed.");
+                    Console.WriteLine("Installed local package " + local.Version + " to " + updates.GamePath(local.Version));
+                    root = null;
+                    return;
+                }
                 if (args.Length >= 1)
                 {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -40,12 +44,12 @@ internal static class PatcherTests
                     Require(GameRelease.ParseTag(args[0]) != null, "Invalid live release tag.");
                     Require(args.Length == 1 || args.Length == 2 && args[1] == "--exact", "Unexpected live test arguments.");
                     var metadata = args.Length == 2
-                        ? http.GetStringAsync(GameRelease.Repository + "/releases/download/" + args[0] + "/Ironhaven-Windows-manifest.json").GetAwaiter().GetResult()
+                        ? http.GetStringAsync(GameRelease.Repository + "/releases/download/" + args[0] + "/" + PatcherPlatform.ManifestName).GetAwaiter().GetResult()
                         : updates.LatestReleaseJson().GetAwaiter().GetResult();
                     var published = GameRelease.FromJson(metadata);
-                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0])), "Unexpected Windows release.");
+                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0])), "Unexpected " + PatcherPlatform.Name + " release.");
                     updates.Install(published, new Progress<int>()).GetAwaiter().GetResult();
-                    Require(published.Version.Equals(updates.LatestInstalled()), "The published Windows game was not installed.");
+                    Require(published.Version.Equals(updates.LatestInstalled()), "The published " + PatcherPlatform.Name + " game was not installed.");
                     Console.WriteLine("Installed and verified GitHub release " + published.Version + ".");
                     return;
                 }
@@ -53,12 +57,12 @@ internal static class PatcherTests
                 Require(GameRelease.ParseTag("v../0.1") == null, "Unsafe release tag accepted.");
                 try { GameRelease.FromJson("{\"tag\":\"v0.8.1\"}"); throw new Exception("Unverifiable release accepted."); }
                 catch (InvalidDataException) { }
-                var archive = Path.Combine(root, "valid.zip");
-                var first = WriteRelease(archive, "v0.8.1", "Ironhaven/Ironhaven.exe");
+                var archive = Path.Combine(root, "valid" + PatcherPlatform.ArchiveExtension);
+                var first = WriteRelease(archive, "v0.8.1", "Ironhaven/" + PatcherPlatform.Executable);
                 updates.InstallArchive(first, archive, Path.Combine(root, "stage1"));
                 Require(updates.LatestInstalled().Equals(first.Version), "The installed game was not detected.");
-                var secondArchive = Path.Combine(root, "next.zip");
-                var second = WriteRelease(secondArchive, "v0.8.2", "Ironhaven/Ironhaven.exe");
+                var secondArchive = Path.Combine(root, "next" + PatcherPlatform.ArchiveExtension);
+                var second = WriteRelease(secondArchive, "v0.8.2", "Ironhaven/" + PatcherPlatform.Executable);
                 string digest = second.Digest;
                 second.Digest = first.Digest.Substring(0, first.Digest.Length - 1) + (first.Digest.EndsWith("0") ? "1" : "0");
                 try { updates.InstallArchive(second, secondArchive, Path.Combine(root, "bad-hash")); throw new Exception("Hash mismatch accepted."); }
@@ -68,14 +72,19 @@ internal static class PatcherTests
                 updates.InstallArchive(second, secondArchive, Path.Combine(root, "stage2"));
                 Require(updates.LatestInstalled().Equals(second.Version), "The latest version was not selected.");
                 Require(File.Exists(updates.GamePath(first.Version)), "Installing the latest version removed a working version.");
-                var outsideArchive = Path.Combine(root, "escape.zip");
+                var outsideArchive = Path.Combine(root, "escape" + PatcherPlatform.ArchiveExtension);
                 var outside = WriteRelease(outsideArchive, "v0.8.3", "Ironhaven/../../escape.exe");
                 try { updates.InstallArchive(outside, outsideArchive, Path.Combine(root, "bad-path")); throw new Exception("Unsafe zip entry accepted."); }
                 catch (InvalidDataException) { }
                 Require(!File.Exists(Path.Combine(root,"escape.exe")), "Archive escaped its destination.");
+#if IRONHAVEN_LINUX
+                var mode = File.GetUnixFileMode(updates.GamePath(second.Version));
+                Require((mode & UnixFileMode.UserExecute) != 0, "The Linux executable lost its execute permission.");
+                Require((mode & UnixFileMode.SetUser) == 0, "A setuid bit from the download was kept.");
+#endif
             }
             Console.WriteLine("Patcher tests passed.");
         }
-        finally { Directory.Delete(root, true); }
+        finally { if (root != null) Directory.Delete(root, true); }
     }
 }

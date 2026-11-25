@@ -4,7 +4,7 @@ import {addPlayer,beltTravelTicks,BUILD_EDGE,command,createGame,createExpedition
 import {stockFlow} from '../public/shared/diagnostics.js';
 import {packWorldSave,parseSave} from '../public/shared/saves.js';
 import {RenderMotion} from '../public/motion.js';
-import {Lan} from '../public/network.js';
+import {Lan,ICE_SERVERS} from '../public/network.js';
 import {TUTORIAL_STEPS} from '../public/shared/tutorial.js';
 
 test('colonies can build, move and reload more than 700 buildings',()=>{
@@ -259,4 +259,24 @@ test('belt timing is based on when cargo entered the tile and rendering retains 
  motion.update(s,150);assert.deepEqual(rendered(left),[['gear',.75]]);assert.deepEqual(rendered(right),[]);
  motion.update(s,175);assert.deepEqual(rendered(left),[['gear',.875]]);
  motion.update(s,200);assert.deepEqual(rendered(left),[]);assert.deepEqual(rendered(right),[['gear',0]]);
+});
+
+test('co-op asks public STUN servers for an address so friends connect without port forwarding',()=>{
+ const urls=ICE_SERVERS.flatMap(server=>[server.urls].flat());
+ assert.ok(urls.length>=2);
+ assert.ok(urls.every(url=>/^stun:[a-z0-9.-]+:\d+$/.test(url)));
+ assert.ok(!urls.some(url=>url.startsWith('turn')),'no relay credentials are shipped');
+ assert.throws(()=>ICE_SERVERS.push({urls:'stun:example.invalid:1'}));
+});
+
+test('a cleared swarm schedules the next one after the difficulty interval; only the first walker is weakened',()=>{
+ for(const [difficulty,interval] of [['standard',110],['relaxed',135],['veteran',110]]){
+  const {s}=world();s.difficulty=difficulty;s.wave=2;s.nextWave=0;step(s);
+  assert.ok(Math.abs(s.nextWave-s.time-interval)<1e-9,difficulty);
+ }
+ const walker=wave=>{const {s}=world();s.wave=wave-1;s.nextWave=0;step(s);return s.enemies.find(e=>e.kind==='walker');};
+ const fifth=walker(5),tenth=walker(10);
+ const expected=(wave,scale)=>Math.round(8*(35+wave*5+.09*wave**2)*(1+.03*(wave-1))*scale*(1));
+ assert.ok([expected(5,.6),Math.round(expected(5,.6)*1.5)].includes(fifth.maxHp),'first walker has 60% HP');
+ assert.ok([expected(10,1),Math.round(expected(10,1)*1.5)].includes(tenth.maxHp),'later walkers keep full HP');
 });

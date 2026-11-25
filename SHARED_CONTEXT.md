@@ -49,7 +49,7 @@ Accepted priorities:
 - Several viable industrial/defense strategies. One fully upgraded turret must not trivialize the game or one-shot every late enemy.
 - A normal **25-swarm campaign** on all difficulties, with a victory screen and an **explicit optional Continue endlessly** choice. Only after that choice does the same colony continue without a fixed final swarm. Preserve victory/rewards and existing worlds. An earlier local candidate called `0.20.2.1` removed the victory stop; that behavior was rejected and is not the accepted baseline.
 - Long-term content matters more than a fixed number of hours. The older wish for 20+ hour sessions is **not a mandatory survival/playtime target** under the latest recorded mandate. Long horizons can still be stress tests.
-- **Windows x64 only for players.** No browser release or separate Node/server installation required for normal players. Linux/Chromium development tests are internal tooling.
+- **Windows x64 and Linux x64 for players (owner, 25 Nov 2026).** No macOS and no browser release. No separate Node/server installation required for normal players. Steam is future distribution. Playwright/Chromium tests remain internal tooling.
 - Future Steam release, Steam Cloud preferences/saves and Steam-friend co-op are desired, **not implemented integrations**.
 
 Rejected or superseded:
@@ -155,7 +155,7 @@ Implemented settings: pan and zoom speed (25–250%), master volume/mute and tes
 
 Portable preferences use a versioned schema and storage adapter. Keep device-specific graphics/display/window layout separate from account-portable controls/audio/interface preferences. Future Steam Cloud should sync dedicated account-scoped settings/save files with migration, backups and conflict handling; **not the entire Chromium profile**. Cloud preferences must not overwrite the host world.
 
-Steam identity, lobbies, invitations, relay/NAT traversal and friend co-op are future platform work. The current game uses LAN invitations. Preserve host authority, command ownership, version negotiation and local guest settings. Validate internet co-op across separate accounts and networks. [Valve's Cloud guide](https://partner.steamgames.com/doc/features/cloud) · [Valve's multiplayer guide](https://partner.steamgames.com/doc/features/multiplayer).
+Steam identity, lobbies and Steam relay are future platform work. Since 25 Nov 2026 co-op uses WebRTC with public STUN (Google, Cloudflare) and the existing copy-and-paste invitation codes. Friends connect over the internet without port forwarding; game traffic is direct between players. No TURN relay is shipped, so very strict NATs (some mobile, company or CGNAT networks) can still fail until Steam networking or a hosted relay exists. Preserve host authority, command ownership, version negotiation and local guest settings. Validate internet co-op across separate accounts and networks. [Valve's Cloud guide](https://partner.steamgames.com/doc/features/cloud) · [Valve's multiplayer guide](https://partner.steamgames.com/doc/features/multiplayer).
 
 Follow-up settings include rebinding, edge/middle-button camera movement, audio buses when available, display modes/render scale/FPS cap/VSync, individual graphical effects, UI scale/accessibility and autosave options. See [Settings and Steam](docs/SETTINGS_AND_STEAM.md).
 
@@ -216,7 +216,7 @@ npm run test:render
 CHROME_BIN=/usr/bin/chromium npm run test:render
 ```
 
-Playwright/Chromium is internal graphics automation. Electron also embeds Chromium; using it does not change Windows-only distribution. Software rendering is not a native Windows or hardware performance test.
+Playwright/Chromium is internal graphics automation. Electron also embeds Chromium; using it does not make Ironhaven a browser product. Software rendering is not a native Windows or hardware performance test.
 
 On Windows:
 
@@ -298,7 +298,9 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 | Factory building with enemies | Owner, current | Industrial progression drives the design |
 | No cross-map XP/benefit system | Owner, explicitly rejected | Do not implement proposed metaprogression |
 | Detailed realistic coastal art | Owner, repeated | No pixel/minimalist fallback; inspect actual runtime |
-| Windows-only player product | Owner, current | Browser tooling stays internal |
+| Windows x64 + Linux x64 desktop product, no macOS | Owner, 25 Nov 2026 (supersedes Windows-only) | Browser tooling stays internal; Steam later |
+| Internet co-op without port forwarding | Owner, 25 Nov 2026 | STUN now; TURN/Steam relay for strict NATs later |
+| Patcher for Windows and Linux | Owner, 25 Nov 2026 | Steam replaces it later |
 | Normal UI level numbers | Owner, current; implemented 0.20.1 | Roman numerals only if integrated physically into textures |
 | Global affordability, local warehouse exports | Owner direction; implemented schema 11 | Preserve physical ownership/conservation |
 | 25-swarm victory, voluntary endless | Latest recorded agent mandate | Do not skip victory or force continued play |
@@ -324,6 +326,19 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
+
+### 2026-11-25 — Claude Code — Windows and Linux desktop, internet co-op, two-platform patcher
+
+- **Owner decisions:** build for Windows and Linux, not macOS. Co-op must work without NAT/port configuration. Make a patcher for Windows and Linux now; Steam comes later. Remove browser-era leftovers.
+- **Implemented on branch `ccr-6dd57fd4-9a8hab`:**
+  - Linux package: `scripts/build-linux.sh` produces `Ironhaven-Linux-x64.tar.gz` and its manifest. The launcher `desktop/linux/ironhaven.sh` disables Chromium's OS sandbox only when the system blocks both unprivileged user namespaces and a root-owned setuid helper, or when running as root. The page keeps context isolation, CSP and no Node access.
+  - Co-op: `public/network.js` uses public STUN servers. The invitation and answer codes are unchanged. `scripts/check-coop-stun.mjs` checks for a public address in CI (`continue-on-error`).
+  - Patcher: the shared logic in `desktop/patcher/Updates.cs` is platform-neutral. `PlatformWindows.cs` keeps the published ZIP/.NET Framework behaviour. `PlatformLinux.cs` (.NET 8) installs tar.gz, keeps execute bits and strips setuid, and rejects links and paths outside the game folder. The Linux UI is Avalonia (`desktop/patcher/linux`), built by `scripts/build-linux-patcher.sh` as `Ironhaven-Patcher-Linux`.
+  - CI has a Linux job. The release workflow builds Linux, publishes both platforms in one release, verifies the published install on both, and only then promotes to latest. The release gate is unchanged: tags require an explicit owner request.
+  - Removed the browser HTTP/WebSocket server (`server.mjs`), its test, `npm start`/`dev` and the `ws` dependency. Updated texts in README, UI, mod guide and package metadata.
+- **Verified locally (Linux container, software rendering):** 216/216 tests, both packaged Linux smoke tests (`--smoke-test`, `--mod-smoke-test`) with captures, Linux patcher tests, installation of the real Linux package through the patcher code and a started smoke test of that installation, and an Avalonia patcher window capture. The Windows patcher sources compile against .NET Framework 4.8 reference assemblies with C# 7.3. They were not run on Windows here, and Windows CI must confirm. STUN could not be verified here because the container blocks UDP; see the CI step.
+- **Codex review IH-20261125-difficulty-review:** no conflicts. Its suggested regression for the next swarm timer and the walker HP at swarms 5 and 10 was added. Still open from it: a fully upgraded single-turret probe, a human Standard session, a matrix rerun on main, and a test that loads a pre-change save mid-attack.
+- **Still browser-era / next steps:** saves still live in Chromium `localStorage` inside Electron (move to files under the user-data folder, with migration; needed for Steam Cloud). Save export uses a download link (use a native save dialog). The game is still served as one inlined HTML bundle. The Linux patcher needs a desktop menu entry. No TURN relay.
 
 ### 2026-11-25 — Claude Code — difficulty pass for enjoyment
 

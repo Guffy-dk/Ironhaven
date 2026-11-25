@@ -1,7 +1,10 @@
 import { CURRENT_VERSION } from './shared/releases.js';
 import {CONTENT_SIGNATURE} from './shared/content.js';
 const CHUNK=16000,MAX_STATE=1500000,PART='IH:part:',END='IH:end:';
-// Direct LAN data channels. Signalling is exchanged by the players, not a service.
+// Direct peer-to-peer data channels. Signalling is exchanged by the players, not a game server.
+// Public STUN lets each game learn its public address so friends can connect across home routers
+// without port forwarding. Game traffic never passes through these servers.
+export const ICE_SERVERS=Object.freeze([{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},{urls:'stun:stun.cloudflare.com:3478'}]);
 export function encodeCode(description){return'IH2.'+btoa(JSON.stringify({type:description.type,sdp:description.sdp,version:CURRENT_VERSION,content:CONTENT_SIGNATURE}));}
 export function decodeCode(code,expected){
  const input=String(code).trim();if(input.length>32768||!input.startsWith('IH2.'))throw Error('This is not an Ironhaven code for version '+CURRENT_VERSION+'. Use the same game version and copy the entire code.');
@@ -13,7 +16,7 @@ export function decodeCode(code,expected){
 }
 function iceReady(pc){return new Promise((resolve,reject)=>{
  if(pc.iceGatheringState==='complete'){resolve();return;}
- const timeout=setTimeout(()=>{cleanup();if(pc.localDescription?.sdp.includes('a=candidate:'))resolve();else reject(Error('No local network address found. Check Windows Firewall and restart Ironhaven.'));},10000);
+ const timeout=setTimeout(()=>{cleanup();if(pc.localDescription?.sdp.includes('a=candidate:'))resolve();else reject(Error('No network address found. Check your internet connection and firewall, then restart Ironhaven.'));},10000);
  const changed=()=>{if(pc.iceGatheringState==='complete'){cleanup();resolve();}};
  function cleanup(){clearTimeout(timeout);pc.removeEventListener('icegatheringstatechange',changed);}
  pc.addEventListener('icegatheringstatechange',changed);
@@ -21,9 +24,8 @@ function iceReady(pc){return new Promise((resolve,reject)=>{
 export class Lan{
  constructor({onMessage,onPeerOpen,onPeerClose,onStatus}){this.peers=new Map();this.next=1;this.role=null;this.onMessage=onMessage;this.onPeerOpen=onPeerOpen;this.onPeerClose=onPeerClose;this.onStatus=onStatus;this.pending=null;}
  makePeer(id){
-  if(typeof RTCPeerConnection==='undefined')throw Error('LAN networking is unavailable. Reinstall the latest Windows release.');
-  // No STUN/TURN: traffic stays on the local network and needs no public server.
-  const pc=new RTCPeerConnection({iceServers:[],bundlePolicy:'max-bundle'}),peer={id,pc,channel:null,playerId:null,name:'Waiting for friend',ready:false,created:Date.now(),budget:0,budgetAt:Date.now()};this.peers.set(id,peer);
+  if(typeof RTCPeerConnection==='undefined')throw Error('Co-op networking is unavailable. Reinstall the latest Ironhaven release.');
+  const pc=new RTCPeerConnection({iceServers:ICE_SERVERS.map(server=>({...server})),bundlePolicy:'max-bundle'}),peer={id,pc,channel:null,playerId:null,name:'Waiting for friend',ready:false,created:Date.now(),budget:0,budgetAt:Date.now()};this.peers.set(id,peer);
   pc.onconnectionstatechange=()=>{this.onStatus?.();if(['failed','closed','disconnected'].includes(pc.connectionState)){if(pc.connectionState==='disconnected'){clearTimeout(peer.disconnectTimer);peer.disconnectTimer=setTimeout(()=>{if(pc.connectionState==='disconnected')this.drop(id);},10000);}else this.drop(id);}};
   return peer;
  }

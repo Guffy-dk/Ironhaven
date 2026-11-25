@@ -115,7 +115,7 @@ internal sealed class Patcher : Form
     private void Play()
     {
         string executable = updates.GamePath(installedVersion);
-        try { Process.Start(new ProcessStartInfo(executable) { WorkingDirectory = Path.GetDirectoryName(executable) }); }
+        try { Process.Start(PatcherPlatform.Launch(executable)); }
         catch (Exception error) { status.Text = "Could not start Ironhaven. " + error.Message; }
     }
 }

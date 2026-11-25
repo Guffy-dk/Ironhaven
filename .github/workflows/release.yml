@@ -1,11 +1,37 @@
-name: Release Windows game
+name: Release Windows and Linux game
 on:
   push:
     tags: ['v*']
 permissions:
   contents: write
 jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm ci
+      - run: npm test
+      - run: sudo apt-get update && sudo apt-get install -y xvfb
+      - run: ./scripts/build-linux.sh
+      - run: ./scripts/build-linux-patcher.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          retention-days: 1
+          path: |
+            release/Ironhaven-Linux-x64.tar.gz
+            release/Ironhaven-Linux-manifest.json
+            release/Ironhaven-Patcher-Linux
+
   release:
+    needs: linux
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +42,11 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: ./scripts/build-windows.ps1
-      - name: Publish Windows game and patcher
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-release
+          path: release
+      - name: Publish Windows and Linux game and patchers
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
@@ -32,11 +62,10 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Could not retrieve the existing patcher.' }
           }
           $captures = Get-ChildItem -Path release -Filter 'Ironhaven-*.png' | ForEach-Object { $_.FullName }
-          gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json @captures --latest=false --title "Ironhaven $env:RELEASE_TAG Windows Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
+          gh release create "$env:RELEASE_TAG" release/Ironhaven-Windows-x64.zip release/Ironhaven-Patcher.exe release/Ironhaven-Windows-manifest.json release/Ironhaven-Linux-x64.tar.gz release/Ironhaven-Linux-manifest.json release/Ironhaven-Patcher-Linux @captures --latest=false --title "Ironhaven $env:RELEASE_TAG Playtest" --notes-file release/RELEASE_NOTES.md --verify-tag
 
-      - name: Verify published installation and promote patcher update
+      - name: Verify published Windows installation
         env:
-          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
@@ -47,5 +76,33 @@ jobs:
             if ($LASTEXITCODE -eq 0) { $verified = $true; break }
             if ($attempt -lt 3) { Start-Sleep -Seconds 3 }
           }
-          if (!$verified) { throw 'Published Windows installation did not verify; latest patcher release was not changed.' }
-          gh release edit "$env:RELEASE_TAG" --latest
+          if (!$verified) { throw 'Published Windows installation did not verify; latest release was not changed.' }
+
+  verify-linux:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify published Linux installation
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          for attempt in 1 2 3; do
+            dotnet run --project desktop/patcher/linux/tests -c Release -- "$RELEASE_TAG" --exact && exit 0
+            sleep 3
+          done
+          echo 'Published Linux installation did not verify; latest release was not changed.' >&2
+          exit 1
+
+  promote:
+    needs: [release, verify-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promote verified release to latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release edit "$RELEASE_TAG" --latest --repo "$GITHUB_REPOSITORY"

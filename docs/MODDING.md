@@ -4,7 +4,7 @@ Ironhaven 0.21.1. Windows x64 remains the player platform. Mods use real Lua thr
 
 ## Install and enable a folder mod
 
-Close the game. Copy the provided `Modding/mods/harbor-machining` example folder into `%APPDATA%/Ironhaven/mods/harbor-machining`. On Windows this is the game's Electron user-data directory, not the installation's `resources` folder. Startup creates `mods` if absent. Create `mods/mod-list.json`:
+Close the game. Copy the provided `Modding/mods/harbor-machining` example folder into `%APPDATA%/Ironhaven/mods/harbor-machining`. On Linux use `~/.config/Ironhaven/mods/harbor-machining`. This is the game's Electron user-data directory, not the installation's `resources` folder. Startup creates `mods` if absent. Create `mods/mod-list.json`:
 
 ```json
 {"mods":[{"name":"harbor-machining","enabled":true}]}

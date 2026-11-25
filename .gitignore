@@ -8,3 +8,5 @@ public/vendor/
 release/
 
 *.blend1
+desktop/patcher/**/bin/
+desktop/patcher/**/obj/

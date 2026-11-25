@@ -207,7 +207,7 @@ function showLan(join=false){$('menu-dialog').close();$('lan-error').textContent
 function lanTab(join){$('host-pane').hidden=join;$('join-pane').hidden=!join;$('lan-host-tab').classList.toggle('active',!join);$('lan-join-tab').classList.toggle('active',join);}
 $('lan-host-tab').onclick=()=>lanTab(false);$('lan-join-tab').onclick=()=>lanTab(true);
 $('create-invite').onclick=async()=>{
- const btn=$('create-invite');btn.disabled=true;btn.textContent='Finding local connection…';$('lan-error').textContent='';
+ const btn=$('create-invite');btn.disabled=true;btn.textContent='Finding connection…';$('lan-error').textContent='';
  try{if(!started)startGame();mode='host';const invite=await lan.invite();$('invite-code').value=invite.code;$('answer-input').value='';$('invite-output').hidden=false;updateConnection();}catch(e){lanError(e);}finally{updatePeers();}
 };
 $('accept-answer').onclick=async()=>{try{$('lan-error').textContent='';await lan.accept($('answer-input').value);toast('Connecting to your friend…');$('invite-output').hidden=true;}catch(e){lanError(e);}};

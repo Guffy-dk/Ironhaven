@@ -44,4 +44,4 @@ for(const [name,file]of [['fengari','LICENSE'],['readline-sync','LICENSE'],['spr
 await writeFile('release/FENGARI-LICENSE.txt',notices.join('\n\n'));
 await cp('node_modules/three/LICENSE','release/THREE-LICENSE.txt');
 await cp('docs/design/THIRD_PARTY_ASSETS.txt','release/THIRD_PARTY_ASSETS.txt');
-console.log(`Built embedded Windows resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);
+console.log(`Built embedded desktop resource release/Ironhaven.html (${Math.round(Buffer.byteLength(html)/1024)} KiB). No CDN, external assets or install required.`);

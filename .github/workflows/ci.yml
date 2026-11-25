@@ -17,6 +17,37 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y xvfb
+      - run: ./scripts/build-linux.sh
+      - run: ./scripts/build-linux-patcher.sh
+      - name: Internet co-op address check (needs outbound UDP to STUN)
+        continue-on-error: true
+        run: npx playwright install chromium && node scripts/check-coop-stun.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ironhaven-Linux-preview
+          path: release/Ironhaven-*.png
+      - name: Keep the verified Linux build for internal playtesting
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ironhaven-Linux-internal-build
+          retention-days: 14
+          path: |
+            release/Ironhaven-Linux-x64.tar.gz
+            release/Ironhaven-Linux-manifest.json
+            release/Ironhaven-Patcher-Linux
   windows:
     runs-on: windows-latest
     steps:

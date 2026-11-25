@@ -4,11 +4,14 @@
 
 [Lua modding guide and example](docs/MODDING.md)
 
-Windows x64 factory survival for 1–4 players on a local network.
+Desktop factory survival for Windows x64 and Linux x64, for 1–4 players over the internet or a local network. No port forwarding is needed.
 
-**[Download the Windows patcher](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
+**[Download the patcher](https://github.com/Guffy-dk/Ironhaven/releases/latest)**
 
-Run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven**. For manual installation, extract the entire **Ironhaven-Windows-x64.zip** and launch **Ironhaven.exe**. No separate runtime is needed. Windows x64 is the sole supported distribution; the game is not published as a browser edition.
+- **Windows:** run **Ironhaven-Patcher.exe**, choose **Install latest**, then **Play Ironhaven**. For manual installation, extract the entire **Ironhaven-Windows-x64.zip** and launch **Ironhaven.exe**.
+- **Linux:** make **Ironhaven-Patcher-Linux** executable (`chmod +x`), run it, choose **Install latest**, then **Play Ironhaven**. For manual installation, extract **Ironhaven-Linux-x64.tar.gz** and run **Ironhaven/ironhaven.sh**.
+
+No separate runtime is needed. Ironhaven is a desktop game only: it is not published as a browser edition, and macOS is not supported. The Linux patcher appears from the first release after 0.21.3.
 
 ## The expedition
 

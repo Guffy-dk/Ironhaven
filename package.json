@@ -3,22 +3,21 @@
   "version": "0.21.3",
   "private": true,
   "type": "module",
-  "description": "Windows x64 coastal factory survival for 1\u20134 players on LAN",
+  "description": "Windows and Linux x64 coastal factory survival for 1\u20134 players",
   "scripts": {
-    "start": "node server.mjs",
-    "dev": "node server.mjs",
     "test": "node --test",
     "build": "node scripts/build.mjs",
     "test:render": "node scripts/check-render-regression.mjs",
-    "test:campaign": "node scripts/play-campaign.mjs"
+    "test:campaign": "node scripts/play-campaign.mjs",
+    "build:linux": "bash scripts/build-linux.sh",
+    "build:linux-patcher": "bash scripts/build-linux-patcher.sh"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
     "fengari": "0.1.5",
-    "three": "0.180.0",
-    "ws": "8.18.3"
+    "three": "0.180.0"
   },
   "devDependencies": {
     "esbuild": "0.25.11",

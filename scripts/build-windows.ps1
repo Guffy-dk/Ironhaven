@@ -47,9 +47,9 @@ try {
   $compilerArgs = @('/nologo', '/optimize+', '/platform:x64', '/codepage:65001') + ($references | ForEach-Object { "/reference:$_" })
   $patcherSource = Join-Path $project 'desktop\patcher'
   & $compiler @compilerArgs /target:winexe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll `
-    "/out:$release\Ironhaven-Patcher.exe" "$patcherSource\Program.cs" "$patcherSource\Updates.cs"
+    "/out:$release\Ironhaven-Patcher.exe" "$patcherSource\Program.cs" "$patcherSource\Updates.cs" "$patcherSource\PlatformWindows.cs"
   if ($LASTEXITCODE -ne 0) { throw 'Patcher compilation failed.' }
-  & $compiler @compilerArgs /target:exe "/out:$packageRoot\PatcherTests.exe" "$patcherSource\Tests.cs" "$patcherSource\Updates.cs"
+  & $compiler @compilerArgs /target:exe "/out:$packageRoot\PatcherTests.exe" "$patcherSource\Tests.cs" "$patcherSource\Updates.cs" "$patcherSource\PlatformWindows.cs"
   if ($LASTEXITCODE -ne 0) { throw 'Patcher test compilation failed.' }
   & "$packageRoot\PatcherTests.exe"
   if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed.' }
