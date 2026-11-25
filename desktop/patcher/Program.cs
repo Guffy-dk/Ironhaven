@@ -9,7 +9,9 @@ using System.Windows.Forms;
 internal sealed class Patcher : Form
 {
     private readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
-    private readonly GameUpdates updates;
+    private GameUpdates updates;
+    private string installBase;
+    private readonly Button channelSwitch = new Button { Text = "Godot preview ›" };
     private readonly Label installed = new Label();
     private readonly Label status = new Label();
     private readonly ProgressBar progress = new ProgressBar();
@@ -55,11 +57,15 @@ internal sealed class Patcher : Form
         }
         play.BackColor = Color.FromArgb(238, 185, 110);
         play.ForeColor = Color.FromArgb(16, 30, 33);
-        Controls.AddRange(new Control[] { title, installed, status, progress, check, install, play });
+        channelSwitch.SetBounds(326, 20, 140, 30);
+        channelSwitch.BackColor = Color.FromArgb(38, 65, 67);
+        channelSwitch.FlatStyle = FlatStyle.Flat;
+        Controls.AddRange(new Control[] { title, channelSwitch, installed, status, progress, check, install, play });
 
         http.DefaultRequestHeaders.UserAgent.ParseAdd("IronhavenPatcher/1.0");
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IronhavenPatcher", "versions");
-        updates = new GameUpdates(root, http);
+        installBase = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IronhavenPatcher");
+        updates = new GameUpdates(Path.Combine(installBase, ReleaseChannel.Game.Folder), http);
+        channelSwitch.Click += (sender, args) => SwitchChannel();
         Shown += (sender, args) => Check();
         check.Click += (sender, args) => Check();
         install.Click += (sender, args) => Install();
@@ -68,11 +74,28 @@ internal sealed class Patcher : Form
         RefreshButtons();
     }
 
+    // The Godot preview installs and plays beside the game; switching never touches the other install.
+    private void SwitchChannel()
+    {
+        if (busy) return;
+        var next = updates.Channel == ReleaseChannel.Game ? ReleaseChannel.Preview : ReleaseChannel.Game;
+        updates = new GameUpdates(Path.Combine(installBase, next.Folder), http, next);
+        channelSwitch.Text = next == ReleaseChannel.Game ? "Godot preview ›" : "‹ Back to the game";
+        install.Text = next == ReleaseChannel.Game ? "Install latest" : "Install preview";
+        play.Text = next == ReleaseChannel.Game ? "Play Ironhaven" : "Play preview";
+        release = null;
+        RefreshButtons();
+        Check();
+    }
+
+    private string Edition { get { return updates.Channel == ReleaseChannel.Game ? "Windows build" : "Godot preview"; } }
+
     private void RefreshButtons()
     {
         installedVersion = updates.LatestInstalled();
-        installed.Text = installedVersion == null ? "No game version installed" : "Installed · " + installedVersion;
+        installed.Text = installedVersion == null ? (updates.Channel == ReleaseChannel.Game ? "No game version installed" : "No Godot preview installed") : "Installed · " + installedVersion;
         check.Enabled = !busy;
+        channelSwitch.Enabled = !busy;
         install.Enabled = !busy && release != null && (installedVersion == null || release.Version.CompareTo(installedVersion) > 0);
         play.Enabled = installedVersion != null;
     }
@@ -82,11 +105,11 @@ internal sealed class Patcher : Form
         busy = true;
         release = null;
         RefreshButtons();
-        status.Text = "Checking GitHub for the latest Windows build…";
+        status.Text = "Checking GitHub for the latest " + Edition + "…";
         try
         {
             release = GameRelease.FromJson(await updates.LatestReleaseJson());
-            status.Text = installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest Windows build." :
+            status.Text = installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest " + Edition + "." :
                 "Version " + release.Version + " is ready to install (" + (release.Size / 1048576.0).ToString("0") + " MB).";
         }
         catch (Exception error) { status.Text = "Could not check for updates. " + error.Message; }

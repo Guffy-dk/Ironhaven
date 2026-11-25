@@ -1,0 +1,54 @@
+name: Release Godot preview
+# Owner decision (25 Nov 2026): the Godot vertical slice is published beside the game, never as
+# "latest". The release is a GitHub pre-release tagged preview-vX.Y.Z; the patcher finds it through
+# previews/channel.json on main, which is updated only after the published install verifies.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm ci
+      - name: Install Blender and Godot (.NET) with export templates
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tools" && cd "$RUNNER_TEMP/tools"
+          curl -fsSL https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz | tar -xJ
+          curl -fsSL -o godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_mono_linux_x86_64.zip && unzip -q godot.zip
+          curl -fsSL -o templates.tpz https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_mono_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable.mono && unzip -q templates.tpz -d tpl && mv tpl/templates/* ~/.local/share/godot/export_templates/4.4.1.stable.mono/
+          echo "BLENDER=$RUNNER_TEMP/tools/blender-4.3.2-linux-x64/blender" >> "$GITHUB_ENV"
+          echo "GODOT=$RUNNER_TEMP/tools/Godot_v4.4.1-stable_mono_linux_x86_64/Godot_v4.4.1-stable_mono_linux.x86_64" >> "$GITHUB_ENV"
+          echo "DOTNET=dotnet" >> "$GITHUB_ENV"
+      - run: npm run build
+      - run: ./scripts/build-godot-preview.sh
+      - name: Publish pre-release beside the game
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./godot/preview-version.json').version")"
+          tag="preview-v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then echo "Preview $tag already exists; bump godot/preview-version.json." >&2; exit 1; fi
+          gh release create "$tag" release/Ironhaven-Preview-Windows-x64.zip release/Ironhaven-Preview-Windows-manifest.json release/Ironhaven-Preview-Linux-x64.tar.gz release/Ironhaven-Preview-Linux-manifest.json \
+            --prerelease --latest=false --target "$GITHUB_SHA" --title "Ironhaven Godot preview $version" \
+            --notes "Godot 4 vertical slice of the Nordic summer harbour. A visual preview, not the playable game. Install it from the patcher with Godot preview. The playable game stays on the latest release."
+          echo "PREVIEW_TAG=$tag" >> "$GITHUB_ENV"
+      - name: Verify the published preview installs through the patcher
+        run: |
+          for attempt in 1 2 3; do
+            dotnet run --project desktop/patcher/linux/tests -c Release -- "$PREVIEW_TAG" --exact --preview && exit 0
+            sleep 5
+          done
+          exit 1

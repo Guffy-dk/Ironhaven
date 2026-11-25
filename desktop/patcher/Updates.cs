@@ -6,6 +6,18 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+// A release channel: the playable game (latest stable release) or the Godot preview, whose current
+// tag is published in previews/channel.json on main so it never replaces the game for players.
+internal sealed class ReleaseChannel
+{
+    internal string Name, TagPrefix, AssetPrefix, Folder;
+    internal static readonly ReleaseChannel Game = new ReleaseChannel { Name = "game", TagPrefix = "v", AssetPrefix = "Ironhaven", Folder = "versions" };
+    internal static readonly ReleaseChannel Preview = new ReleaseChannel { Name = "preview", TagPrefix = "preview-v", AssetPrefix = "Ironhaven-Preview", Folder = "previews" };
+    internal const string PreviewPointer = "https://raw.githubusercontent.com/Guffy-dk/Ironhaven/main/previews/channel.json";
+    internal string AssetName { get { return PatcherPlatform.AssetName.Replace("Ironhaven", AssetPrefix); } }
+    internal string ManifestName { get { return PatcherPlatform.ManifestName.Replace("Ironhaven", AssetPrefix); } }
+}
+
 internal sealed class GameRelease
 {
     internal static readonly string AssetName = PatcherPlatform.AssetName;
@@ -16,21 +28,28 @@ internal sealed class GameRelease
     internal string Digest;
     internal long Size;
 
-    internal static Version ParseTag(string tag)
+    internal ReleaseChannel Channel = ReleaseChannel.Game;
+
+    internal static Version ParseTag(string tag) { return ParseTag(tag, ReleaseChannel.Game); }
+
+    internal static Version ParseTag(string tag, ReleaseChannel channel)
     {
         Version version;
-        return tag != null && Regex.IsMatch(tag, @"\Av[0-9]+\.[0-9]+\.[0-9]+\z") &&
-            Version.TryParse(tag.Substring(1), out version) && "v" + version == tag ? version : null;
+        string prefix = channel.TagPrefix;
+        return tag != null && Regex.IsMatch(tag, @"\A" + Regex.Escape(prefix) + @"[0-9]+\.[0-9]+\.[0-9]+\z") &&
+            Version.TryParse(tag.Substring(prefix.Length), out version) && prefix + version == tag ? version : null;
     }
 
-    internal static GameRelease FromJson(string json)
+    internal static GameRelease FromJson(string json) { return FromJson(json, ReleaseChannel.Game); }
+
+    internal static GameRelease FromJson(string json, ReleaseChannel channel)
     {
         var data = PatcherPlatform.ParseMetadata(json);
-        var version = ParseTag(data == null ? null : data.tag);
+        var version = ParseTag(data == null ? null : data.tag, channel);
         if (version == null || data.size <= 0 || !Regex.IsMatch(data.digest ?? "", @"\Asha256:[a-fA-F0-9]{64}\z"))
             throw new InvalidDataException("The " + PatcherPlatform.Name + " release is missing valid download verification metadata.");
-        var download = new Uri(Repository + "/releases/download/v" + version + "/" + AssetName);
-        return new GameRelease { Version = version, Download = download, Digest = data.digest, Size = data.size };
+        var download = new Uri(Repository + "/releases/download/" + channel.TagPrefix + version + "/" + channel.AssetName);
+        return new GameRelease { Version = version, Download = download, Digest = data.digest, Size = data.size, Channel = channel };
     }
 
     public sealed class ReleaseMetadata
@@ -45,27 +64,37 @@ internal sealed class GameUpdates
 {
     private readonly string installRoot;
     private readonly HttpClient client;
-    internal GameUpdates(string installRoot, HttpClient client)
+    private readonly ReleaseChannel channel;
+    internal GameUpdates(string installRoot, HttpClient client) : this(installRoot, client, ReleaseChannel.Game) { }
+    internal GameUpdates(string installRoot, HttpClient client, ReleaseChannel channel)
     {
         this.installRoot = installRoot;
         this.client = client;
+        this.channel = channel;
     }
+    internal ReleaseChannel Channel { get { return channel; } }
 
-    internal Task<string> LatestReleaseJson()
+    internal async Task<string> LatestReleaseJson()
     {
-        return client.GetStringAsync(GameRelease.LatestManifest);
+        if (channel == ReleaseChannel.Game) return await client.GetStringAsync(GameRelease.LatestManifest).ConfigureAwait(false);
+        // The preview pointer names the current preview tag; its manifest is an asset of that release.
+        var pointer = await client.GetStringAsync(ReleaseChannel.PreviewPointer).ConfigureAwait(false);
+        var match = Regex.Match(pointer, "\"tag\"\\s*:\\s*\"(" + Regex.Escape(channel.TagPrefix) + "[0-9.]+)\"");
+        if (!match.Success || GameRelease.ParseTag(match.Groups[1].Value, channel) == null)
+            throw new InvalidDataException("No Godot preview is published yet.");
+        return await client.GetStringAsync(GameRelease.Repository + "/releases/download/" + match.Groups[1].Value + "/" + channel.ManifestName).ConfigureAwait(false);
     }
 
     internal string GamePath(Version version)
     {
-        return Path.Combine(installRoot, "v" + version, "Ironhaven", PatcherPlatform.Executable);
+        return Path.Combine(installRoot, channel.TagPrefix + version, "Ironhaven", PatcherPlatform.Executable);
     }
 
     internal Version LatestInstalled()
     {
         if (!Directory.Exists(installRoot)) return null;
         return Directory.EnumerateDirectories(installRoot)
-            .Select(directory => GameRelease.ParseTag(Path.GetFileName(directory)))
+            .Select(directory => GameRelease.ParseTag(Path.GetFileName(directory), channel))
             .Where(version => version != null && File.Exists(GamePath(version)))
             .OrderByDescending(version => version).FirstOrDefault();
     }
@@ -118,7 +147,7 @@ internal sealed class GameUpdates
         PatcherPlatform.Extract(archive, root, gameRoot);
         if (!File.Exists(Path.Combine(root, "Ironhaven", PatcherPlatform.Executable)))
             throw new InvalidDataException("The " + PatcherPlatform.Name + " archive is missing " + PatcherPlatform.Executable + ".");
-        var destination = Path.Combine(installRoot, "v" + release.Version);
+        var destination = Path.Combine(installRoot, channel.TagPrefix + release.Version);
         Directory.CreateDirectory(installRoot);
         try { Directory.Move(payload, destination); }
         catch (IOException) { if (!File.Exists(GamePath(release.Version))) throw; }

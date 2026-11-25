@@ -44,7 +44,9 @@ internal sealed class PatcherWindow : Window
     private static readonly IBrush Ink = new SolidColorBrush(Color.FromRgb(16, 30, 33));
 
     private readonly HttpClient http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
-    private readonly GameUpdates updates;
+    private GameUpdates updates;
+    private string installBase;
+    private readonly Button channelSwitch = new Button { Content = "Godot preview ›" };
     private readonly TextBlock installed = new TextBlock();
     private readonly TextBlock status = new TextBlock { TextWrapping = TextWrapping.Wrap, Height = 57 };
     private readonly ProgressBar progress = new ProgressBar { Minimum = 0, Maximum = 100, Height = 8, Foreground = Accent };
@@ -77,14 +79,15 @@ internal sealed class PatcherWindow : Window
             Margin = new Thickness(22, 12), Spacing = 8,
             Children =
             {
-                new TextBlock { Text = "IRONHAVEN", FontSize = 28, FontWeight = FontWeight.Bold, Foreground = Accent },
+                TitleRow(),
                 installed, status, progress, buttons
             }
         };
 
         http.DefaultRequestHeaders.UserAgent.ParseAdd("IronhavenPatcher/1.0");
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IronhavenPatcher", "versions");
-        updates = new GameUpdates(root, http);
+        installBase = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IronhavenPatcher");
+        updates = new GameUpdates(Path.Combine(installBase, ReleaseChannel.Game.Folder), http);
+        channelSwitch.Click += async (sender, args) => await SwitchChannel();
         Opened += async (sender, args) => await Check();
         check.Click += async (sender, args) => await Check();
         install.Click += async (sender, args) => await Install();
@@ -93,11 +96,37 @@ internal sealed class PatcherWindow : Window
         RefreshButtons();
     }
 
+    private Control TitleRow()
+    {
+        channelSwitch.Background = Panel; channelSwitch.Foreground = Text; channelSwitch.HorizontalAlignment = HorizontalAlignment.Right;
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        var title = new TextBlock { Text = "IRONHAVEN", FontSize = 28, FontWeight = FontWeight.Bold, Foreground = Accent };
+        Grid.SetColumn(channelSwitch, 1); row.Children.Add(title); row.Children.Add(channelSwitch);
+        return row;
+    }
+
+    // The Godot preview installs and plays beside the game; switching never touches the other install.
+    private async Task SwitchChannel()
+    {
+        if (busy) return;
+        var next = updates.Channel == ReleaseChannel.Game ? ReleaseChannel.Preview : ReleaseChannel.Game;
+        updates = new GameUpdates(Path.Combine(installBase, next.Folder), http, next);
+        channelSwitch.Content = next == ReleaseChannel.Game ? "Godot preview ›" : "‹ Back to the game";
+        install.Content = next == ReleaseChannel.Game ? "Install latest" : "Install preview";
+        play.Content = next == ReleaseChannel.Game ? "Play Ironhaven" : "Play preview";
+        release = null;
+        RefreshButtons();
+        await Check();
+    }
+
+    private string Edition => updates.Channel == ReleaseChannel.Game ? "Linux build" : "Godot preview";
+
     private void RefreshButtons()
     {
         installedVersion = updates.LatestInstalled();
-        installed.Text = installedVersion == null ? "No game version installed" : "Installed · " + installedVersion;
+        installed.Text = installedVersion == null ? (updates.Channel == ReleaseChannel.Game ? "No game version installed" : "No Godot preview installed") : "Installed · " + installedVersion;
         check.IsEnabled = !busy;
+        channelSwitch.IsEnabled = !busy;
         install.IsEnabled = !busy && release != null && (installedVersion == null || release.Version.CompareTo(installedVersion) > 0);
         play.IsEnabled = installedVersion != null;
     }
@@ -107,16 +136,16 @@ internal sealed class PatcherWindow : Window
         busy = true;
         release = null;
         RefreshButtons();
-        status.Text = "Checking GitHub for the latest Linux build…";
+        status.Text = "Checking GitHub for the latest " + Edition + "…";
         try
         {
             release = GameRelease.FromJson(await updates.LatestReleaseJson());
-            status.Text = installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest Linux build." :
+            status.Text = installedVersion != null && release.Version.CompareTo(installedVersion) <= 0 ? "You have the latest " + Edition + "." :
                 "Version " + release.Version + " is ready to install (" + (release.Size / 1048576.0).ToString("0") + " MB).";
         }
         catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            status.Text = "No Linux release has been published yet. Try again later.";
+            status.Text = "No " + Edition + " has been published yet. Try again later.";
         }
         catch (Exception error) { status.Text = "Could not check for updates. " + error.Message; }
         finally { busy = false; RefreshButtons(); }

@@ -41,13 +41,15 @@ internal static class PatcherTests
                 {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     http.DefaultRequestHeaders.UserAgent.ParseAdd("IronhavenPatcher/1.0");
-                    Require(GameRelease.ParseTag(args[0]) != null, "Invalid live release tag.");
-                    Require(args.Length == 1 || args.Length == 2 && args[1] == "--exact", "Unexpected live test arguments.");
-                    var metadata = args.Length == 2
-                        ? http.GetStringAsync(GameRelease.Repository + "/releases/download/" + args[0] + "/" + PatcherPlatform.ManifestName).GetAwaiter().GetResult()
+                    var channel = Array.IndexOf(args, "--preview") >= 0 ? ReleaseChannel.Preview : ReleaseChannel.Game;
+                    if (channel == ReleaseChannel.Preview) updates = new GameUpdates(Path.Combine(root, "previews"), http, channel);
+                    Require(GameRelease.ParseTag(args[0], channel) != null, "Invalid live release tag.");
+                    bool exact = Array.IndexOf(args, "--exact") >= 0;
+                    var metadata = exact
+                        ? http.GetStringAsync(GameRelease.Repository + "/releases/download/" + args[0] + "/" + channel.ManifestName).GetAwaiter().GetResult()
                         : updates.LatestReleaseJson().GetAwaiter().GetResult();
-                    var published = GameRelease.FromJson(metadata);
-                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0])), "Unexpected " + PatcherPlatform.Name + " release.");
+                    var published = GameRelease.FromJson(metadata, channel);
+                    Require(published != null && published.Version.Equals(GameRelease.ParseTag(args[0], channel)), "Unexpected " + PatcherPlatform.Name + " release.");
                     updates.Install(published, new Progress<int>()).GetAwaiter().GetResult();
                     Require(published.Version.Equals(updates.LatestInstalled()), "The published " + PatcherPlatform.Name + " game was not installed.");
                     Console.WriteLine("Installed and verified GitHub release " + published.Version + ".");
@@ -77,6 +79,21 @@ internal static class PatcherTests
                 try { updates.InstallArchive(outside, outsideArchive, Path.Combine(root, "bad-path")); throw new Exception("Unsafe zip entry accepted."); }
                 catch (InvalidDataException) { }
                 Require(!File.Exists(Path.Combine(root,"escape.exe")), "Archive escaped its destination.");
+                // Preview channel: separate tags, assets and install folder; never mixed with the game.
+                Require(GameRelease.ParseTag("preview-v0.1.0", ReleaseChannel.Preview) != null, "Preview tag rejected.");
+                Require(GameRelease.ParseTag("v0.1.0", ReleaseChannel.Preview) == null, "A game tag was accepted as a preview.");
+                Require(GameRelease.ParseTag("preview-v0.1.0") == null, "A preview tag was accepted as the game.");
+                var previews = new GameUpdates(Path.Combine(root, "previews"), http, ReleaseChannel.Preview);
+                var previewArchive = Path.Combine(root, "preview" + PatcherPlatform.ArchiveExtension);
+                PatcherPlatform.WriteTestArchive(previewArchive, "Ironhaven/" + PatcherPlatform.Executable);
+                var previewJson = "{\"tag\":\"preview-v0.1.0\",\"digest\":\"" + GameUpdates.ArchiveDigest(previewArchive) + "\",\"size\":" + new FileInfo(previewArchive).Length + "}";
+                var preview = GameRelease.FromJson(previewJson, ReleaseChannel.Preview);
+                Require(preview.Download.ToString().EndsWith("/releases/download/preview-v0.1.0/" + ReleaseChannel.Preview.AssetName), "Wrong preview download URL.");
+                Require(ReleaseChannel.Preview.AssetName.StartsWith("Ironhaven-Preview-"), "Preview assets must not share the game's names.");
+                previews.InstallArchive(preview, previewArchive, Path.Combine(root, "stage-preview"));
+                Require(preview.Version.Equals(previews.LatestInstalled()), "The preview was not installed.");
+                Require(previews.GamePath(preview.Version).Contains("preview-v0.1.0"), "The preview is not in its own folder.");
+                Require(updates.LatestInstalled().Equals(second.Version), "Installing a preview changed the game install.");
 #if IRONHAVEN_LINUX
                 var mode = File.GetUnixFileMode(updates.GamePath(second.Version));
                 Require((mode & UnixFileMode.UserExecute) != 0, "The Linux executable lost its execute permission.");
