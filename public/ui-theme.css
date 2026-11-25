@@ -310,8 +310,8 @@ html body.ih-theme .build-btn:hover .build-symbol{transform:translateY(-2px);box
 html body.ih-theme .build-btn .build-symbol{transition:transform .2s cubic-bezier(.2,.8,.3,1),box-shadow .2s ease}
 html body.ih-theme .tabs button.active::after{animation:ih-fade .25s ease}
 html body.ih-theme #right-dock>.intel:not([hidden]){animation:ih-slide-left .26s cubic-bezier(.2,.8,.3,1)}
-html body.ih-theme .left-panel:not([hidden]),html body.ih-theme .bottom-ui{animation:ih-fade .35s ease both}
-html body.ih-theme .topbar{animation:ih-rise .35s cubic-bezier(.2,.8,.3,1) both}
+html body.ih-theme .left-panel:not([hidden]),html body.ih-theme .bottom-ui{animation:ih-fade .35s ease}
+html body.ih-theme .topbar{animation:ih-rise .35s cubic-bezier(.2,.8,.3,1)}
 html body.ih-theme dialog[open]{animation:ih-dialog-in .24s cubic-bezier(.2,.8,.3,1)}
 html body.ih-theme dialog[open]::backdrop{animation:ih-fade .24s ease}
 html body.ih-theme .swarm-warning:not([hidden]),html body.ih-theme .ammo-alert:not([hidden]),html body.ih-theme .fuel-alert:not([hidden]){animation:ih-warning-in .28s cubic-bezier(.2,.8,.3,1)}
@@ -320,3 +320,6 @@ html body.ih-theme .left-panel #wave-fill{transition:width .5s linear}
 html body.ih-theme .hp-bar i{transition:width .3s ease}
 html body.ih-theme details[open]>:not(summary){animation:ih-rise .22s ease-out}
 @media(prefers-reduced-motion:reduce){html body.ih-theme *,html body.ih-theme *::before,html body.ih-theme *::after,html body.ih-theme dialog::backdrop{animation:none!important;transition:none!important}}
+html body.ih-theme .bottom-ui{width:min(1000px,calc(100vw - 512px))}
+html body.ih-theme .hotbar{grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:5px}
+@media(max-width:1400px){html body.ih-theme .build-btn{min-height:108px}html body.ih-theme .build-btn .build-symbol{width:40px;height:40px}html body.ih-theme .build-btn .build-name{font-size:12px}html body.ih-theme .tabs button{padding:0 9px;font-size:14px}}
