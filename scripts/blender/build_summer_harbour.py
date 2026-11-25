@@ -152,6 +152,16 @@ def roof(prefix, width, depth, base, rise, cover, trim, overhang=.22, gable=None
         cylinder(f'{prefix}-gutter{sx}', .055, depth + 2 * overhang, (sx * (half + .05), 0, base - .06), trim, 10, rot=(math.pi / 2, 0, 0))
         cylinder(f'{prefix}-down{sx}', .035, base - .1, (sx * (half + .05), depth / 2 + overhang - .1, (base - .1) / 2), trim, 10)
 
+def level_marks(prefix, width, depth, base, rise, level, mat, overhang=.22, at=(0, 0)):
+    # Painted bands across both roof slopes near the front gable: one band per level, countable at a glance.
+    half = width / 2 + overhang; slope = math.atan2(rise, half); length = math.hypot(half, rise) * .8
+    band, gap = (.16, .26) if depth > 1.5 else (.08, .14)
+    for k in range(level):
+        y = at[1] - depth / 2 + band + k * gap
+        for sx in (-1, 1):
+            n = (sx * math.sin(slope), math.cos(slope))
+            box(f'{prefix}-mark{k}{sx}', (length, band, .02), (at[0] + sx * half / 2 + n[0] * .035, y, base + rise / 2 + n[1] * .035), mat, rot=(0, sx * slope, 0))
+
 def chimney(prefix, at, w, top, brick, cap):
     x, y = at
     bbox(f'{prefix}-stack', (w, w, top), (x, y, top / 2), brick, w=.02)
@@ -168,6 +178,11 @@ def materials():
         'brick': texture_material('harbour-brick', 'brick', scale=.9),
         'slate': texture_material('slate-roof', 'slate-roof', (0.42, 0.45, 0.5, 1), .9),
         'tin': texture_material('corrugated-roof', 'corrugated-iron', (0.62, 0.64, 0.64, 1), 1.0),
+        # Type colours read from above (owner, 25 Nov 2026): every factory type has its own roof.
+        'charcoal': texture_material('charcoal-slate', 'slate-roof', (0.09, 0.095, 0.11, 1), .9),
+        'greentin': texture_material('green-tin', 'corrugated-iron', (0.22, 0.42, 0.3, 1), 1.0),
+        'bluetin': texture_material('blue-tin', 'corrugated-iron', (0.3, 0.42, 0.55, 1), 1.0),
+        'mark': flat_material('level-paint', (0.92, 0.91, 0.86, 1), .45),
         'stone': texture_material('granite-plinth', 'terrain-granite', (0.7, 0.68, 0.66, 1), .8),
         'timber': texture_material('tarred-timber', 'timber', (0.5, 0.42, 0.34, 1), 1.4),
         'steel': texture_material('painted-steel', 'steel-plate', (0.32, 0.36, 0.37, 1), 1.2),
@@ -180,15 +195,17 @@ def materials():
         'lamp': flat_material('lantern', (1, .93, .78, 1), .2, 0, ((1, .9, .65, 1), 8)),
     }
 
-def smelter():
-    # Brick smelting house (3x3 tiles): stone plinth, slate roof, corbelled stack, glowing furnace mouth, ore hopper.
+def smelter(level=1):
+    # Brick smelting house (3x3 tiles): charcoal slate roof, corbelled stack, glowing furnace mouth, ore hopper.
+    # Level 2 adds a furnace annex; level 3 a second stack and a covered ore gantry.
     reset(); m = materials()
     plinth('plinth', 2.8, 2.4, .3, m['stone'])
     bbox('hall', (2.5, 2.1, 1.45), (0, 0, 1.02), m['brick'], w=.02)
     for sx in (-1, 1):
         for sy in (-1, 1): bbox(f'pier{sx}{sy}', (.2, .2, 1.5), (sx * 1.25, sy * 1.05, 1.03), m['brick'], w=.02)
     bbox('string', (2.62, 2.22, .08), (0, 0, 1.72), m['stone'], w=.02)
-    roof('roof', 2.5, 2.1, 1.76, .78, m['slate'], m['white'], .2, m['brick'])
+    roof('roof', 2.5, 2.1, 1.76, .78, m['charcoal'], m['white'], .2, m['brick'])
+    level_marks('roof', 2.5, 2.1, 1.76, .78, level, m['mark'], .2)
     chimney('stack', (.7, .45), .42, 4.2, m['brick'], m['steel'])
     # Furnace mouth: brick arch surround, iron door frame and a hot opening.
     bbox('arch', (.9, .14, 1.05), (0, -1.09, .82), m['brick'], w=.03)
@@ -204,26 +221,42 @@ def smelter():
     for sx in (-1, 1):
         for sy in (-1, 1): bbox(f'hleg{sx}{sy}', (.07, .07, 1.3), (-1.6 + sx * .3, sy * .3, .65), m['steel'], w=.01)
     bbox('chute', (.5, .18, .14), (-1.3, 0, .95), m['steel'], rot=(0, -.5, 0), w=.01)
-    export('smelter')
+    if level >= 2:
+        bbox('annex', (.8, 1.7, 1.0), (1.6, 0, .8), m['brick'], w=.02)
+        bbox('annex-roof', (1.0, 1.9, .08), (1.65, 0, 1.38), m['charcoal'], rot=(0, -.35, 0), w=.02)
+        box('annex-glow', (.06, .6, .4), (2.01, 0, .7), m['furnace'])
+        for y in (-.45, .45): bbox(f'annex-jamb{y}', (.1, .08, .55), (2.02, y * .75, .7), m['rust'], w=.01)
+    if level >= 3:
+        chimney('stack2', (-.7, .45), .42, 4.8, m['brick'], m['steel'])
+        bbox('gantry', (.5, 1.8, .4), (-1.6, -1.4, 1.95), m['steel'], rot=(.55, 0, 0), w=.02)
+        for sy in (-1, 1): bbox(f'gantry-leg{sy}', (.08, .08, 2.0), (-1.6 + sy * .2, -2.1, 1.0), m['steel'], w=.01)
+    export(f'smelter-{level}')
 
-def drill():
-    # Timber mine headframe (3x3 tiles) with a spoked sheave, cable, shaft collar and a board-clad winding house.
+def drill(level=1):
+    # Mine headframe (3x3 tiles) with a spoked sheave, cable, shaft collar and a board-clad winding house under blue tin.
+    # Level 2 enlarges the ore bin and adds a second sheave; level 3 rebuilds the headframe in steel, taller.
     reset(); m = materials()
+    frame = m['steel'] if level >= 3 else m['timber']
     bbox('collar', (1.6, 1.6, .25), (-.35, .35, .12), m['stone'], w=.04)
     box('shaft', (.9, .9, .02), (-.35, .35, .26), flat_material('shaft-dark', (.02, .02, .02, 1), .9))
-    cx, cy, top = -.35, .35, 3.1
+    cx, cy, top = -.35, .35, 3.1 + (.6 if level >= 3 else 0)
     for sx in (-1, 1):
         for sy in (-1, 1):
-            bbox(f'leg{sx}{sy}', (.13, .13, 3.15), (cx + sx * .52, cy + sy * .52, 1.6), m['timber'], rot=(sy * .13, -sx * .13, 0), w=.015)
+            bbox(f'leg{sx}{sy}', (.13, .13, top + .05), (cx + sx * .52, cy + sy * .52, top / 2 + .05), frame, rot=(sy * .13, -sx * .13, 0), w=.015)
     for k, h in enumerate((.9, 1.75, 2.5)):
         r = .62 - h * .13
         for a in range(4):
-            if a % 2 == 0: bbox(f'girt{k}{a}', (2 * r + .2, .09, .11), (cx, cy + (r if a == 0 else -r), h), m['timber'], w=.01)
-            else: bbox(f'girt{k}{a}', (.09, 2 * r + .2, .11), (cx + (r if a == 1 else -r), cy, h), m['timber'], w=.01)
+            if a % 2 == 0: bbox(f'girt{k}{a}', (2 * r + .2, .09, .11), (cx, cy + (r if a == 0 else -r), h), frame, w=.01)
+            else: bbox(f'girt{k}{a}', (.09, 2 * r + .2, .11), (cx + (r if a == 1 else -r), cy, h), frame, w=.01)
     for sx in (-1, 1):
-        bbox(f'diag{sx}', (.07, .07, 1.25), (cx, cy + sx * .55, 1.33), m['timber'], rot=(0, .62, 0), w=.01)
-        bbox(f'diagb{sx}', (.07, .07, 1.25), (cx + sx * .55, cy, 1.33), m['timber'], rot=(.62, 0, 0), w=.01)
-    bbox('head', (1.0, .9, .16), (cx, cy, top), m['timber'], w=.02)
+        bbox(f'diag{sx}', (.07, .07, 1.25), (cx, cy + sx * .55, 1.33), frame, rot=(0, .62, 0), w=.01)
+        bbox(f'diagb{sx}', (.07, .07, 1.25), (cx + sx * .55, cy, 1.33), frame, rot=(.62, 0, 0), w=.01)
+    bbox('head', (1.0, .9, .16), (cx, cy, top), frame, w=.02)
+    # Level bands painted round the head of the frame as well as on the winding-house roof.
+    for k in range(level): bbox(f'headband{k}', (1.06, .96, .07), (cx, cy, top - .18 - k * .16), m['mark'], w=.01)
+    if level >= 2:
+        cylinder('sheave2-rim', .36, .06, (cx + .32, cy, top + .4), m['steel'], 32, rot=(0, math.pi / 2, 0))
+        cylinder('sheave2-hub', .07, .14, (cx + .32, cy, top + .4), m['steel'], 12, rot=(0, math.pi / 2, 0))
     cylinder('sheave-rim', .5, .07, (cx, cy, top + .52), m['steel'], 40, rot=(0, math.pi / 2, 0))
     cylinder('sheave-hub', .09, .18, (cx, cy, top + .52), m['steel'], 16, rot=(0, math.pi / 2, 0))
     for k in range(8):
@@ -240,23 +273,26 @@ def drill():
     for o in [o for o in bpy.data.objects if o.name.startswith('hplinth')]: o.location.x += .75; o.location.y -= .8
     clad('house', 1.1, .9, .2, .85, m['red'], m['redboard'], .22)
     for o in [o for o in bpy.data.objects if o.name.startswith('house')]: o.location.x += .75; o.location.y -= .8
-    roof('hroof', 1.1, .9, 1.05, .38, m['tin'], m['white'], .14, m['redboard'])
+    roof('hroof', 1.1, .9, 1.05, .38, m['bluetin'], m['white'], .14, m['redboard'])
+    level_marks('hroof', 1.1, .9, 1.05, .38, level, m['mark'], .14)
     for o in [o for o in bpy.data.objects if o.name.startswith('hroof')]: o.location.x += .75; o.location.y -= .8
     window('hw', (.75, -1.27, .7), 'y', .34, .38, m['lit'], m['white'], (2, 1))
     cylinder('stove', .05, .7, (1.05, -.6, 1.55), m['steel'], 12)
     # Ore bin with chute beside the shaft.
-    bbox('bin', (.7, .6, .55), (.85, .75, .85), m['timber'], w=.02)
+    bbox('bin', (.7, .6 + (.35 if level >= 2 else 0), .55 + (.25 if level >= 2 else 0)), (.85, .75 + (.15 if level >= 2 else 0), .85 + (.12 if level >= 2 else 0)), m['timber'], w=.02)
     for sx in (-1, 1):
         for sy in (-1, 1): bbox(f'binleg{sx}{sy}', (.08, .08, .6), (.85 + sx * .28, .75 + sy * .24, .3), m['timber'], w=.01)
     bbox('binchute', (.45, .3, .06), (.85, .25, .62), m['rust'], rot=(.5, 0, 0), w=.01)
-    export('drill')
+    export(f'drill-{level}')
 
-def warehouse():
-    # Falu-red board-and-batten harbour store (5x5 tiles): slate roof, white Z-braced doors, loft hoist, loading dock.
+def warehouse(level=1):
+    # Falu-red board-and-batten harbour store (5x5 tiles) under green tin: white Z-braced doors, loft hoist, loading dock.
+    # Level 2 adds a lean-to shed; level 3 a second shed and a jib crane on the dock.
     reset(); m = materials()
     plinth('plinth', 4.7, 4.1, .35, m['stone'])
     clad('hall', 4.5, 3.9, .35, 1.95, m['red'], m['redboard'])
-    roof('roof', 4.5, 3.9, 2.3, 1.35, m['slate'], m['white'], gable=m['redboard'])
+    roof('roof', 4.5, 3.9, 2.3, 1.35, m['greentin'], m['white'], gable=m['redboard'])
+    level_marks('roof', 4.5, 3.9, 2.3, 1.35, level, m['mark'])
     for i, x in enumerate((-1.5, 1.5)):
         y = -1.98
         bbox(f'door{i}', (1.0, .06, 1.45), (x, y - .02, 1.1), m['redboard'], w=.01)
@@ -273,7 +309,15 @@ def warehouse():
     cylinder('hoist-rope', .012, 1.6, (0, -2.88, 2.8), m['timber'], 6)
     bbox('dock', (4.7, .9, .32), (0, -2.55, .16), m['timber'], w=.02)
     for i in range(10): box(f'deck{i}', (.43, .92, .03), (-2.12 + i * .47, -2.55, .33), m['timber'])
-    export('warehouse')
+    for k, sx in enumerate((1, -1)[:max(0, level - 1)]):
+        bbox(f'shed{k}', (.9, 3.2, 1.3), (sx * 2.75, .2, .65), m['red'], w=.02)
+        bbox(f'shed{k}-roof', (1.15, 3.4, .07), (sx * 2.8, .2, 1.42), m['greentin'], rot=(0, sx * .32, 0), w=.02)
+        bbox(f'shed{k}-door', (.06, 1.0, 1.0), (sx * 3.21, .2, .6), m['white'], w=.01)
+    if level >= 3:
+        cylinder('jib-mast', .08, 3.2, (1.9, -2.7, 1.6), m['steel'], 12)
+        bbox('jib-arm', (.1, 1.7, .12), (1.9, -3.35, 3.0), m['steel'], rot=(-.25, 0, 0), w=.01)
+        cylinder('jib-rope', .012, 1.4, (1.9, -4.1, 2.4), m['steel'], 6)
+    export(f'warehouse-{level}')
 
 def lighthouse():
     # Rendered masonry tower in red and white bands with a gallery rail, glazed lantern, copper-green cap and keeper's cottage.
@@ -408,6 +452,10 @@ def nature():
         bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'nature-' + pid + '.glb'), export_format='GLB', export_image_format='JPEG', export_jpeg_quality=88)
 
 only = set(argv[2:])
-for step in (smelter, drill, warehouse, lighthouse, creatures, nature, fir):
+def levels():
+    for builder in (smelter, drill, warehouse):
+        for level in (1, 2, 3): builder(level)
+
+for step in (levels, lighthouse, creatures, nature, fir):
     if not only or step.__name__ in only: step()
 print('BUILT', sorted(os.listdir(OUT)))

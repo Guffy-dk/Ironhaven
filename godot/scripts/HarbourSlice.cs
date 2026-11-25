@@ -160,19 +160,21 @@ public partial class HarbourSlice : Node3D
 		for (int k = 0; k < 160; k++) { float x = -26 + rng.RandfRange(-8, 8), z = -6 + rng.RandfRange(-11, 11); pebbles.Add(Placed(x, z, rng.RandfRange(0.15f, 0.3f), 0.05f)); }
 		Scatter("nature-boulder_01", outcrops, null, ironStone);
 		Scatter("nature-rock_moss_set_01", pebbles, null, ironStone);
-		foreach (var z in new[] { -13f, -6f, 1f }) { Model("drill", new Vector3(-30, 0, z), 0); Model("drill", new Vector3(-22, 0, z), 180); }
+		// Levels 1-3 side by side: type reads from silhouette and roof colour, level from painted roof bands and growth.
+		int lv = 0;
+		foreach (var z in new[] { -13f, -6f, 1f }) { Model($"drill-{1 + lv % 3}", new Vector3(-30, 0, z), 0); Model($"drill-{1 + (lv + 1) % 3}", new Vector3(-22, 0, z), 180); lv++; }
 		AddBelt(new Vector3(-26, 0, -15), new Vector3(-26, 0, 6), 3.4f, new Color(0.75f, 0.45f, 0.33f));
 		// Smelter column fed from the collector, plates to two warehouses.
 		AddBelt(new Vector3(-26, 0, 6), new Vector3(-12, 0, 6), 3.4f, new Color(0.75f, 0.45f, 0.33f));
 		for (int i = 0; i < 3; i++)
 		{
 			float x = -18 + i * 4.2f;
-			Model("smelter", new Vector3(x, 0, 2.2f), 0);
-			Model("smelter", new Vector3(x, 0, 9.8f), 180);
+			Model($"smelter-{1 + i}", new Vector3(x, 0, 2.2f), 0);
+			Model($"smelter-{3 - i}", new Vector3(x, 0, 9.8f), 180);
 		}
 		AddBelt(new Vector3(-12, 0, 6), new Vector3(-6, 0, 6), 2.6f, new Color(0.7f, 0.72f, 0.74f), true);
-		Model("warehouse", new Vector3(-6.5f, 0, 13.5f), 180);
-		Model("warehouse", new Vector3(-6.5f, 0, -1.8f), 0);
+		Model("warehouse-3", new Vector3(-6.5f, 0, 13.5f), 180);
+		Model("warehouse-1", new Vector3(-6.5f, 0, -1.8f), 0);
 		AddBelt(new Vector3(-6, 0, 6), new Vector3(-6, 0, 10.8f), 2.6f, new Color(0.7f, 0.72f, 0.74f), true);
 	}
 

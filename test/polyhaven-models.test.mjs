@@ -37,7 +37,7 @@ test('buildings are built with trim, bevels and cladding, not bare boxes',async(
  const blender=await readFile('scripts/blender/build_summer_harbour.py','utf8');
  for(const kit of ['def bevel','def clad','def window','def roof','def plinth','def chimney'])assert.ok(blender.includes(kit),kit);
  for(const building of ['smelter','drill','warehouse','lighthouse']){
-  const body=blender.slice(blender.indexOf(`def ${building}():`));const end=body.indexOf('\ndef ',5);
+  const body=blender.slice(blender.search(new RegExp(`def ${building}\\((level=1)?\\):`)));const end=body.indexOf('\ndef ',5);
   const calls=(body.slice(0,end).match(/\b(bbox|box|cylinder|window|clad|roof|plinth|chimney)\(/g)??[]).length;
   assert.ok(calls>=12,`${building} has ${calls} detailed parts`);
  }
@@ -45,4 +45,21 @@ test('buildings are built with trim, bevels and cladding, not bare boxes',async(
 
 test('the Electron package leaves raw model scans to the Godot build',async()=>{
  assert.match(await readFile('scripts/build.mjs','utf8'),/filter:src=>!src\.startsWith\(`\$\{CACHE\}\/models`\)/);
+});
+
+test('factory type and level read at a glance (owner, 25 Nov 2026)',async()=>{
+ const blender=await readFile('scripts/blender/build_summer_harbour.py','utf8');
+ const roofOf=type=>{const body=blender.slice(blender.indexOf(`def ${type}(level=1):`));return body.slice(0,body.indexOf('\ndef ',5)).match(/roof\('h?roof', [^)]*?m\['(\w+)'\]/)[1];};
+ const roofs={smelter:roofOf('smelter'),drill:roofOf('drill'),warehouse:roofOf('warehouse')};
+ assert.equal(new Set(Object.values(roofs)).size,3,`each type has its own roof colour: ${JSON.stringify(roofs)}`);
+ for(const type of ['smelter','drill','warehouse']){
+  const body=blender.slice(blender.indexOf(`def ${type}(level=1):`));const fn=body.slice(0,body.indexOf('\ndef ',5));
+  assert.match(fn,/level_marks\(/,`${type} paints its level on the roof`);
+  assert.match(fn,/if level >= 2:|level - 1/,`${type} grows at level 2`);assert.match(fn,/level >= 3/,`${type} changes at level 3`);
+  assert.match(fn,new RegExp(`export\\(f'${type}-\\{level\\}'\\)`));
+ }
+ assert.match(blender,/for k in range\(level\):/,'one painted band per level');
+ assert.match(blender,/for level in \(1, 2, 3\): builder\(level\)/);
+ const slice=await readFile('godot/scripts/HarbourSlice.cs','utf8');
+ for(const model of ['drill-','smelter-','warehouse-1','warehouse-3'])assert.ok(slice.includes(model),model);
 });
