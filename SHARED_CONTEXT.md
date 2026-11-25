@@ -361,6 +361,16 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 - Simulation `6380255`, measuring driver `fb03be5`. 35 earned-resource scenarios. The optional reserve deferred non-lighthouse repairs after 60 seconds of observed combat power shortage to leave the cost of one sentry, while other construction remained possible. Paired outcome: 0 bedre, 1 dårligere og 14 lige.
 - No balance numbers or release metadata changed. Next measure time to power recovery and separate fuel shortages from missing rebuild materials. [Report](docs/playtests/balance-2026-11-24-outage-reserve.md).
 
+### 2026-11-25 — Claude Code — Godot 4 (C#) vertical slice started
+
+- **Owner decision (25 Nov 2026):** rewriting the engine is allowed if it improves the graphics. The game should be a visual "wow" to open and play. Claude recommended Godot 4 with C# (SDFGI global illumination, volumetric fog, native performance, direct Blender/glTF import, GodotSteam, MIT licence, text scene files that agents can edit) over Unreal or Unity, with a vertical slice first. The owner said: start the slice in Godot **and publish to the patcher**. Open question to the owner: publishing as "latest" would replace the playable game, so a side-by-side preview is proposed.
+- Pipeline:
+  - `scripts/blender/build_summer_harbour.py` (Blender 4.3) builds the smelter (brick, chimney, slate roof, lamplit windows), drill headframe with engine house, falu-red warehouse, and red/white lighthouse with keeper's house at game footprint scale, with CC0 PBR materials, and exports GLB to `godot/assets/models`. It also exports the four high-detail creature bases from Codex's `docs/design/coastal-creatures.blend`.
+  - `godot/` holds the C# project: `scripts/HarbourSlice.cs` (island height field with blended terrain shader, sea shader with waves, depth tint and foam, the factory with moving belt cargo, spruce groves, hostiles walking ashore, a rotating lighthouse beam in volumetric fog, day and `--dusk` modes, `--capture=<dir>` review frames) and `scripts/IslandShape.cs` (pure island maths).
+  - Generated assets (`godot/assets`, `.godot`) are git-ignored and rebuilt from the scripts and `assets-cache`.
+- Tests: `godot/tests` (5 checks on island maths: land at the lighthouse, sea beyond the shore, a level colony floor, no cliffs, determinism).
+- Headless rendering works here via the lavapipe Vulkan driver (Forward+, SDFGI, volumetric fog). It is slow and is not a GPU performance measurement. The first capture found the terrain triangles wound the wrong way for Godot (clockwise front faces); this is fixed.
+
 ### 2026-11-25 — Claude Code — licence compliance for a Steam sale
 
 - **Owner request:** the game will probably be sold on Steam, so it must be licence compliant. The register is `docs/LICENSING.md`, which lists each shipped component, its licence and how the obligation is met, plus rules for new content and the owner's Steam actions (AI content disclosure text, a name/trademark check, Steamworks SDK handling, repository visibility).

@@ -1,0 +1,15 @@
+/home/user/Ironhaven/godot/tests/bin/Debug/net8.0/SliceTests
+/home/user/Ironhaven/godot/tests/bin/Debug/net8.0/SliceTests.deps.json
+/home/user/Ironhaven/godot/tests/bin/Debug/net8.0/SliceTests.runtimeconfig.json
+/home/user/Ironhaven/godot/tests/bin/Debug/net8.0/SliceTests.dll
+/home/user/Ironhaven/godot/tests/bin/Debug/net8.0/SliceTests.pdb
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.GeneratedMSBuildEditorConfig.editorconfig
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.AssemblyInfoInputs.cache
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.AssemblyInfo.cs
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.csproj.CoreCompileInputs.cache
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.sourcelink.json
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.dll
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/refint/SliceTests.dll
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.pdb
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/SliceTests.genruntimeconfig.cache
+/home/user/Ironhaven/godot/tests/obj/Debug/net8.0/ref/SliceTests.dll
