@@ -312,6 +312,16 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-25 07:27 Europe/Copenhagen — Codex — combat-aware power warnings
+
+- 35 campaigns on `51cd987`, driver `8652d18`. The combat filter reduced warning windows without a measured defense outage from 224 to 134 and retained advance warning for all 33 outages with a 20-second median lead. Requiring threatened turrets reduced lead to seven seconds and missed two outages.
+- Next validate a quiet combat-filtered warning in human play. Gameplay and release metadata are unchanged in this run. [Report](docs/playtests/balance-2026-11-25-combat-lead.md).
+
+### 2026-11-25 04:27 Europe/Copenhagen — Codex — power reserve lead time
+
+- 35 earned-resource campaigns on `da4f9e6`, driver `7fad7a7`. The merged difficulty pass improved matched ordinary victories from 1/13 to 8/13. Reserve telemetry preceded all 35 measured combat defense outages with a median lead of 20 simulated seconds. In 217 warning periods a defense outage did not occur before the shortage cleared.
+- Gameplay and release metadata unchanged in this run. Test whether a combat-aware display retains useful lead time with fewer interruptions. [Report](docs/playtests/balance-2026-11-25-reserve-lead.md).
+
 ### 2026-11-25 01:27 Europe/Copenhagen — Codex — outage onset and rebuild priority
 
 - 35 earned-resource simulations on `c7efa80` with driver `7cee0bd`. At 29 of 30 recorded defense outages in controls, load already exceeded production at the preceding sample. Rebuild priority changed none of six outcome metrics in 15 pairs. It executed three builds in one pair, with identical observed shortage time.
