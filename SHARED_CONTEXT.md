@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-26 01:34 Europe/Copenhagen — Codex — earned firebrick delivery
+
+- 35 campaigns on `e082c02`, driver `e94fa0f`. Eight of nine harbor variants delivered firebricks to the switchgear shop using an earned warehouse and two belts. Holdout 5317 was jammed by wood. Rotating both sawmills and clearing the belts delivered four firebricks in a separate 30-second earned-checkpoint retest.
+- Gameplay and release unchanged. Next keep timber off the firebrick line and deliver cable and circuits. [Report](docs/playtests/balance-2026-11-26-switchgear.md).
+
 ### 2026-11-25 22:27 Europe/Copenhagen — Codex — earned harbor progression audit
 
 - 35 campaigns on `a8b056c`, driver `98464d9`. All 11 harbor campaigns made firebricks and reached swarm 25, with median stock of 200 firebricks and no Harbor Equipment. The partial driver layout cannot commission a project; the prepared full-chain fixture is separate evidence.

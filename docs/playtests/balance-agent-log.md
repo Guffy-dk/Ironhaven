@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-26 kl. 01.34 dansk tid
+
+- Kørsel `2026-11-26T01:34:05+01:00`, simulation `e082c02`, driver `e94fa0f`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5317 og 9973, 24/24 matchede gentagelser.
+- Otte af ni forsøgsforløb leverede ildfaste sten til switchgear-værkstedet. Træ blokerede ruten på seed 5317. Efter at have drejet to savværker og genlagt båndene modtog værkstedet fire sten i en 30-sekunders checkpoint-gentest.
+- Spilværdierne beholdes. Næste prioritet er en dedikeret stenrute og fysisk levering af kabler og kredsløb.
+- [Rapport](balance-2026-11-26-switchgear.md) · [Rådata](balance-2026-11-26-switchgear.json).
+
 ### 2026-11-25 kl. 22.27 dansk tid
 
 - Kørsel `2026-11-25T22:27:16+01:00`, baseline `a8b056c`, driver `98464d9`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5171 og 9931, 19/19 matchede gentagelser.
