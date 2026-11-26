@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-26 10:30 Europe/Copenhagen — Codex — shared circuit allocation
+
+- 35 campaigns on `124ef12`, driver `128e5e2`. The test player alternated one-quarter of available export time to the switchgear route and three-quarters to components. Eight of nine trials produced switchgear, median component production rose by 17, and wins/highest wave ranked four better, one worse, four tied.
+- Gameplay and release unchanged. Next test a fixed dispatch and route switchgear onward to Harbor Equipment. [Report](docs/playtests/balance-2026-11-26-shared-circuit.md).
+
 ### 2026-11-26 07:34 Europe/Copenhagen — Codex — dedicated circuit feed
 
 - 35 campaigns on `7dc39b6`, driver `48974d4`. Eight of nine variants produced switchgear. All three post-victory variants reached a full 200-item local store. Exporting circuits on the new belt cut median component production by 28 units. Five pairs worsened and four tied on victory and highest swarm.

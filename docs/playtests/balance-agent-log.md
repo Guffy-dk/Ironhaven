@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-26 kl. 10.30 dansk tid
+
+- Kørsel `2026-11-26T10:30:39+01:00`, simulation `124ef12`, driver `128e5e2`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5519 og 10039, 24/24 matchede gentagelser.
+- Otte af ni forsøgsforløb producerede switchgear med delt kredsløbsforsyning. Medianændringen i components var +17. Fire par klarede sig bedre, ét dårligere og fire lige.
+- Spilværdierne beholdes. Næste prioritet er fast dispatch og videre levering til Harbor Equipment.
+- [Rapport](balance-2026-11-26-shared-circuit.md) · [Rådata](balance-2026-11-26-shared-circuit.json).
+
 ### 2026-11-26 kl. 07.34 dansk tid
 
 - Kørsel `2026-11-26T07:34:32+01:00`, simulation `7dc39b6`, driver `48974d4`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5471 og 10007, 24/24 matchede gentagelser.
