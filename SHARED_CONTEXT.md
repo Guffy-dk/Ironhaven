@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-26 07:34 Europe/Copenhagen — Codex — dedicated circuit feed
+
+- 35 campaigns on `7dc39b6`, driver `48974d4`. Eight of nine variants produced switchgear. All three post-victory variants reached a full 200-item local store. Exporting circuits on the new belt cut median component production by 28 units. Five pairs worsened and four tied on victory and highest swarm.
+- Gameplay and release unchanged. Preserve the component feed while adding circuit supply. A separate earned-checkpoint retest cleared the stalled Relaxed 2026 wave without further pilot commands. [Report](docs/playtests/balance-2026-11-26-circuit-feed.md).
+
 ### 2026-11-26 04:26 Europe/Copenhagen — Codex — earned cable delivery
 
 - 35 campaigns on `f00bf59`, driver `3b5151b`. All nine variants delivered firebricks and cable by the swarm-13 sample. A paid circuit reroute from an earned swarm-25 checkpoint produced eight switchgear after isolating the cable source and clearing the shared belt. An unmodified merge was jammed.

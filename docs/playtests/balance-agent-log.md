@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-26 kl. 07.34 dansk tid
+
+- Kørsel `2026-11-26T07:34:32+01:00`, simulation `7dc39b6`, driver `48974d4`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5471 og 10007, 24/24 matchede gentagelser.
+- Otte af ni forsøgsforløb producerede switchgear. Alle tre lange forsøgsforløb efter sejr fyldte deres lokale lager. Medianen for komponentproduktion faldt med 28. Fem par klarede sig dårligere, fire lige.
+- Spilværdierne beholdes. Næste prioritet er kredsløbsforsyning, der bevarer komponentfabrikkens leverance, og et videre afløb for switchgear.
+- [Rapport](balance-2026-11-26-circuit-feed.md) · [Rådata](balance-2026-11-26-circuit-feed.json).
+
 ### 2026-11-26 kl. 04.26 dansk tid
 
 - Kørsel `2026-11-26T04:26:47+01:00`, simulation `f00bf59`, driver `3b5151b`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5431 og 9991, 24/24 matchede gentagelser.
