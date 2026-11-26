@@ -4,6 +4,13 @@ The balance agent records each completed or blocked run here. New entries go abo
 
 ## Run history
 
+### 2026-11-26 kl. 04.26 dansk tid
+
+- Kørsel `2026-11-26T04:26:47+01:00`, simulation `f00bf59`, driver `3b5151b`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5431 og 9991, 24/24 matchede gentagelser.
+- Alle ni kabelvarianter leverede sten og kabel ved swarm 13. En særskilt gentest fra seed 417 producerede otte switchgear efter at have ført kredsløb frem og afbrudt det fyldte kabelbånd.
+- Spilværdierne beholdes. Næste prioritet er vedvarende kredsløbsleverance uden blokering fra kabler.
+- [Rapport](balance-2026-11-26-cable-feed.md) · [Rådata](balance-2026-11-26-cable-feed.json).
+
 ### 2026-11-26 kl. 01.34 dansk tid
 
 - Kørsel `2026-11-26T01:34:05+01:00`, simulation `e082c02`, driver `e94fa0f`, eksisterende build `0.21.2.3`. 35/35 forløb, holdouts 5317 og 9973, 24/24 matchede gentagelser.

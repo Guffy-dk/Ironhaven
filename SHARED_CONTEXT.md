@@ -312,6 +312,11 @@ State reconciled 23 November 2026; this is a snapshot, not a scheduler configura
 
 ## 14. Shared work and decision log
 
+### 2026-11-26 04:26 Europe/Copenhagen — Codex — earned cable delivery
+
+- 35 campaigns on `f00bf59`, driver `3b5151b`. All nine variants delivered firebricks and cable by the swarm-13 sample. A paid circuit reroute from an earned swarm-25 checkpoint produced eight switchgear after isolating the cable source and clearing the shared belt. An unmodified merge was jammed.
+- Gameplay and release unchanged. Next establish sustained circuit delivery alongside brick and cable. [Report](docs/playtests/balance-2026-11-26-cable-feed.md).
+
 ### 2026-11-26 01:34 Europe/Copenhagen — Codex — earned firebrick delivery
 
 - 35 campaigns on `e082c02`, driver `e94fa0f`. Eight of nine harbor variants delivered firebricks to the switchgear shop using an earned warehouse and two belts. Holdout 5317 was jammed by wood. Rotating both sawmills and clearing the belts delivered four firebricks in a separate 30-second earned-checkpoint retest.
